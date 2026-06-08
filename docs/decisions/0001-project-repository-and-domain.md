@@ -10,11 +10,10 @@ The project is being started for a purchased domain, `crazyphrases.com`, and wil
 
 ## Decision
 
-Use a private GitHub repository named `crazyphrases` as the durable source of truth for the project. Keep local Codex work aligned with that repository once GitHub authentication is available.
+Use the private GitHub repository `vince-hardwick/crazyphrases` as the durable source of truth for the project. Keep local Codex work aligned with `origin/main`.
 
 ## Consequences
 
 - Project planning, implementation, and operational documentation should be committed with code changes.
 - Environment detection must not grant mutation authority for live systems; deployment or live changes require explicit authorization paths.
-- Until GitHub authentication is restored, remote repository creation and pushes remain blocked.
-
+- The remote repository is private and uses `main` as its default branch.

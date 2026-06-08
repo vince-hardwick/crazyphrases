@@ -33,7 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://www.crazyphrases.com/
     steps:
       - name: Check out repository
         uses: actions/checkout@v6

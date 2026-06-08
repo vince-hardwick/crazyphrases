@@ -21,6 +21,23 @@ The live web root is the hosting account directory that currently displays `Inde
 - Keep the Let's Encrypt certificate active for both `crazyphrases.com` and `www.crazyphrases.com`.
 - Do not add HTTP-only images, scripts, stylesheets, fonts, analytics, or embedded content.
 
+## GitHub Actions Deployment
+
+Production deployment is managed by `.github/workflows/deploy.yml`.
+
+The GitHub repository must have a `production` environment with a required reviewer gate and these environment secrets:
+
+- `FTP_SERVER`
+- `FTP_USERNAME`
+- `FTP_PASSWORD`
+- `FTP_SERVER_DIR`
+
+Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value should point at the live web root that contains `index.html` and `cgi-bin/`, for example `public_html/` or the domain-specific document root shown in cPanel.
+
+The workflow verifies required files and checks for insecure `http://` asset references before waiting for production approval and uploading over FTPS.
+
+Keep the workflow on `workflow_dispatch` only until the repository is public and the `production` environment required reviewer gate has been verified. After that gate is verified, adding a `push` trigger for `main` is allowed.
+
 ## Example Nginx Settings
 
 Use hosting-panel controls when available. If direct nginx configuration is available, the live server should follow this shape:

@@ -11,3 +11,7 @@ Planning, design, and implementation workspace for the `crazyphrases.com` web ap
 - Remote: `https://github.com/vince-hardwick/crazyphrases.git`
 
 The local `main` branch tracks `origin/main`.
+
+## Deployment
+
+The current public site is a static holding page. See `docs/runbooks/live-static-hosting.md` for the required upload path, HTTPS redirect, directory-listing, and certificate checks.

@@ -15,3 +15,5 @@ The local `main` branch tracks `origin/main`.
 ## Deployment
 
 The current public site is a static holding page. See `docs/runbooks/live-static-hosting.md` for the required upload path, HTTPS redirect, directory-listing, certificate checks, and GitHub Actions deployment setup.
+
+DNS, Cloudflare Access, and non-production environment access controls are documented in `docs/runbooks/cloudflare-dns-and-access.md`.

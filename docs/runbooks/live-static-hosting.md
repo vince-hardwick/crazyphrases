@@ -38,6 +38,8 @@ The workflow verifies required files and checks for insecure `http://` asset ref
 
 Keep the workflow on `workflow_dispatch` only until the repository is public and the `production` environment required reviewer gate has been verified. After that gate is verified, adding a `push` trigger for `main` is allowed.
 
+Non-production environment DNS and runtime access control are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
+
 ## Example Nginx Settings
 
 Use hosting-panel controls when available. If direct nginx configuration is available, the live server should follow this shape:

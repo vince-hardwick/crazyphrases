@@ -85,6 +85,7 @@ Use risk-tiered validation:
 
 - Documentation-only changes: inspect diffs and check links/paths where practical.
 - Static frontend changes: run the relevant local tests and a browser smoke test when available.
+- For local or deployed browser smoke tests, route through `docs/runbooks/in-app-browser-verification.md` before using standalone Playwright or other browser automation. The preferred path is the Codex in-app browser with its Playwright API.
 - Deployment workflow changes: validate workflow syntax or dry-run paths where practical, then use `dev` before `test`.
 - Production-impacting changes: require explicit approval or the documented GitHub Environment gate, plus post-deployment verification.
 

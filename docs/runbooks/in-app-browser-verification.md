@@ -6,6 +6,21 @@ Use the Codex in-app browser for user-observable browser verification, especiall
 
 Use Edge-backed or standalone Playwright only as a fallback after reporting why the in-app browser path is blocked. That fallback is not equivalent when the user wants to watch the run.
 
+## Discovery Rule
+
+When a task mentions browser smoke testing, local frontend verification, localhost, Playwright interaction automation, screenshots, or the in-app Codex browser, use this runbook before trying standalone Playwright, Edge-backed automation, shell-only HTTP checks, or ad hoc browser tooling.
+
+For local static site work in this repository, the successful path is:
+
+1. Start or confirm a local static server that the in-app browser can reach.
+2. Connect to the Codex in-app browser (`iab`) through the Browser plugin.
+3. Set browser visibility to `true`.
+4. Use the selected tab when the user already has one open, otherwise create a new tab.
+5. Navigate or reload `http://localhost:4173/`.
+6. Use the Browser plugin's Playwright API for snapshots, locators, clicks, fills, reloads, and assertions.
+
+Do not rediscover this through standalone Playwright first.
+
 ## Preferred Verification Path
 
 1. Open the Browser skill instructions for the current Codex session.
@@ -18,6 +33,104 @@ Use Edge-backed or standalone Playwright only as a fallback after reporting why 
 8. Keep the browser visible until the observed smoke run has finished.
 
 Do not treat shell network access, deployment approval, or environment detection as authority to mutate a live environment. Deployment authority remains the approved GitHub Environment workflow.
+
+## Local Static Site Fast Path
+
+For local verification of this static app, prefer `http://localhost:4173/`.
+
+If a shell-launched background server exits immediately or is not reachable from the in-app browser, start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
+
+Use this shape, adjusting only the absolute workspace path if the repository moves:
+
+```js
+const httpMod = await import("node:http");
+const fsPromises = await import("node:fs/promises");
+const pathMod = await import("node:path");
+
+if (globalThis.staticServer4173) {
+  await new Promise((resolve) => globalThis.staticServer4173.close(resolve));
+}
+
+const workspaceRoot =
+  "C:/Users/VinceHardwick/Documents/Development/Web dev/crazyphrases.com";
+const mimeTypes = new Map([
+  [".html", "text/html; charset=utf-8"],
+  [".js", "text/javascript; charset=utf-8"],
+  [".css", "text/css; charset=utf-8"],
+  [".json", "application/json; charset=utf-8"],
+]);
+
+globalThis.staticServer4173 = httpMod.createServer(async (req, res) => {
+  try {
+    const requestUrl = new URL(req.url, "http://localhost:4173");
+    const pathname = decodeURIComponent(requestUrl.pathname);
+    const relativePath = pathname === "/" ? "index.html" : pathname.replace(/^\//, "");
+    const filePath = pathMod.resolve(workspaceRoot, relativePath);
+
+    if (!filePath.startsWith(pathMod.resolve(workspaceRoot))) {
+      res.writeHead(403);
+      res.end("Forbidden");
+      return;
+    }
+
+    const bytes = await fsPromises.readFile(filePath);
+    res.writeHead(200, {
+      "Content-Type": mimeTypes.get(pathMod.extname(filePath)) ?? "application/octet-stream",
+    });
+    res.end(bytes);
+  } catch {
+    res.writeHead(404);
+    res.end("Not found");
+  }
+});
+
+await new Promise((resolve, reject) => {
+  globalThis.staticServer4173.once("error", reject);
+  globalThis.staticServer4173.listen(4173, "127.0.0.1", resolve);
+});
+```
+
+Then connect to the visible in-app browser and use supported Playwright calls:
+
+```js
+const visibility = await browser.capabilities.get("visibility");
+await visibility.set(true);
+
+let tab = await browser.tabs.selected();
+if (!tab) {
+  tab = await browser.tabs.new();
+}
+
+await tab.goto("http://localhost:4173/");
+await tab.playwright.waitForLoadState({ state: "load", timeoutMs: 5000 });
+const snapshot = await tab.playwright.domSnapshot();
+```
+
+Use `waitForLoadState({ state: "load" })`; do not use `networkidle` in the Browser plugin Playwright wrapper because it is not supported in the current in-app browser runtime.
+
+If the user already has the in-app browser open at `http://localhost:4173/`, attach to the selected tab after the server is running, then reload or navigate through the same `tab` object. A selected tab whose URL says localhost but whose title is `about:blank` or whose DOM snapshot is empty has not loaded the app.
+
+## Playwright Interaction Notes
+
+Use locators and snapshots from the Browser plugin's Playwright API. For example:
+
+```js
+const startButton = tab.playwright.getByRole("button", { name: "Start batch" });
+if ((await startButton.count()) !== 1) {
+  throw new Error("Expected one Start batch button.");
+}
+await startButton.click({});
+```
+
+When verifying input values, read the DOM property rather than the HTML attribute:
+
+```js
+const value = await tab.playwright.evaluate(
+  () => document.querySelector("[data-row-index=\"0\"]")?.value ?? null,
+);
+```
+
+The Browser plugin exposes a limited Playwright surface. Prefer documented methods such as `domSnapshot`, `locator`, `getByRole`, `click`, `fill`, `count`, `waitFor`, `reload`, and `evaluate`. If a method fails because the wrapper does not support it, switch to a documented method instead of falling back to a separate browser.
 
 ## Expected Smoke Shape For Anonymous Solo
 

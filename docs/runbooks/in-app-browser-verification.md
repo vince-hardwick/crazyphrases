@@ -51,6 +51,8 @@ Source `index.html` keeps `__ASSET_VERSION__` placeholders. GitHub Actions stamp
 
 Transitive browser module imports must be versioned as well. Source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and GitHub Actions stamps that placeholder during deployment. This prevents a freshly deployed `app.js` from importing an older cached `game-state.js`.
 
+The deployed `.htaccess` file sets `index.html` to no-store/no-cache and allows long-lived caching for versioned `.css` and `.js` files. If the root URL serves an older commit after a successful deployment, first check whether `.htaccess` was deployed, then consider Cloudflare edge cache or browser cache as the likely remaining layer.
+
 If the visible browser still shows mixed behaviour after a stamped deployment:
 
 1. Hard-refresh the visible in-app tab.

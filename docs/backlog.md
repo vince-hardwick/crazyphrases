@@ -267,3 +267,10 @@
 - **Why deferred**: MVP can use a tiny bundled seed list, while a full lexicon may be large enough that bundling or forcing client-side storage would harm load time and waste disk space.
 - **Revisit when**: The expanded word-bank source is selected and its compressed size, parse cost, and runtime access patterns are known.
 - **Remaining risk**: Runtime dice-click code should avoid assuming the full word bank is available inside the main client bundle.
+
+### Cloudflare deployment cache purge
+
+- **Deferred**: Automating Cloudflare cache purges after successful GitHub Actions deployments.
+- **Why deferred**: The repository does not currently document or require Cloudflare API deployment secrets, and adding cache purge automation needs explicit Cloudflare zone/token setup without exposing secrets in the public repository.
+- **Revisit when**: Deployed `index.html` remains stale after `.htaccess` cache headers are in place, or when Cloudflare API credentials are added to the relevant GitHub Environments.
+- **Remaining risk**: A browser or Cloudflare edge cache may temporarily serve an older HTML shell after a successful FTPS upload until the cache revalidates or is manually purged.

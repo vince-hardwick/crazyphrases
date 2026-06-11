@@ -8,6 +8,7 @@ This runbook describes how to publish the temporary `crazyphrases.com` static la
 
 Upload these repository paths to the live web root for `crazyphrases.com`:
 
+- `.htaccess`
 - `index.html`
 - `assets/site.css`
 - `assets/app.js`
@@ -21,6 +22,12 @@ The live web root is the hosting account directory that currently displays `Inde
 - Redirect all `http://crazyphrases.com` and `http://www.crazyphrases.com` traffic to HTTPS.
 - Keep the Let's Encrypt certificate active for both `crazyphrases.com` and `www.crazyphrases.com`.
 - Do not add HTTP-only images, scripts, stylesheets, fonts, analytics, or embedded content.
+
+## Cache Policy
+
+The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
+
+The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`.
 
 ## GitHub Actions Deployment
 

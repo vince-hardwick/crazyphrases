@@ -8,6 +8,7 @@ on:
       - "fix/**"
       - "chore/**"
     paths:
+      - ".htaccess"
       - "index.html"
       - "assets/**"
       - "package.json"

@@ -3,11 +3,14 @@ import {
   getActiveSection,
   renderPhrases,
   revealBatch,
+  startGame,
   submitActiveSection,
   updateEntry,
 } from "./game-state.js";
 
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
+const startButton = document.querySelector("[data-start-button]");
+const startAgainButton = document.querySelector("[data-start-again-button]");
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
 const progress = document.querySelector("[data-progress]");
@@ -29,11 +32,31 @@ helpToggle.addEventListener("click", () => {
 
 rowCountButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (game.started) {
+      return;
+    }
+
     const rowCount = Number(button.dataset.rowCount);
     game = createAnonymousSoloGame({ rowCount });
-    updateRowCountButtons(rowCount);
     renderGame();
   });
+});
+
+startButton.addEventListener("click", () => {
+  game = startGame(game);
+  renderGame();
+});
+
+startAgainButton.addEventListener("click", () => {
+  if (
+    hasEntries(game) &&
+    !window.confirm("Start again and discard your current entries?")
+  ) {
+    return;
+  }
+
+  game = createAnonymousSoloGame({ rowCount: game.rowCount });
+  renderGame();
 });
 
 entryForm.addEventListener("input", (event) => {
@@ -65,6 +88,15 @@ entryForm.addEventListener("submit", (event) => {
 renderGame();
 
 function renderGame() {
+  updateSetupControls();
+
+  if (!game.started) {
+    entryForm.hidden = true;
+    revealPanel.hidden = true;
+    progress.textContent = `${game.rowCount} phrases selected`;
+    return;
+  }
+
   if (game.revealed) {
     entryForm.hidden = true;
     revealPanel.hidden = false;
@@ -122,5 +154,18 @@ function updateNextButton() {
 function updateRowCountButtons(rowCount) {
   rowCountButtons.forEach((button) => {
     button.setAttribute("aria-pressed", String(Number(button.dataset.rowCount) === rowCount));
+    button.disabled = game.started;
   });
+}
+
+function updateSetupControls() {
+  updateRowCountButtons(game.rowCount);
+  startButton.hidden = game.started;
+  startAgainButton.hidden = !game.started;
+}
+
+function hasEntries(candidateGame) {
+  return candidateGame.sections.some((section) =>
+    section.rows.some((row) => row.value.trim() !== ""),
+  );
 }

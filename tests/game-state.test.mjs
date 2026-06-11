@@ -6,6 +6,7 @@ import {
   getActiveSection,
   renderPhrases,
   revealBatch,
+  startGame,
   submitActiveSection,
   updateEntry,
 } from "../assets/game-state.js";
@@ -22,6 +23,7 @@ describe("anonymous solo game state", () => {
     );
     assert.deepEqual(game.sectionOrder.toSorted(), [0, 1, 2]);
     assert.equal(game.activeSectionIndex, 0);
+    assert.equal(game.started, false);
 
     const activeSection = getActiveSection(game);
     assert.equal(activeSection.kind, "noun");
@@ -31,7 +33,7 @@ describe("anonymous solo game state", () => {
   });
 
   it("requires all active section rows before advancing", () => {
-    let game = createAnonymousSoloGame({ rowCount: 2, random: () => 0 });
+    let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
 
     game = updateEntry(game, { rowIndex: 0, value: "peculiar" });
     assert.throws(() => submitActiveSection(game), /all rows/i);
@@ -48,7 +50,7 @@ describe("anonymous solo game state", () => {
   });
 
   it("does not reveal or accept further entries until all sections are submitted", () => {
-    let game = createAnonymousSoloGame({ rowCount: 1, random: () => 0 });
+    let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
 
     game = updateEntry(game, { rowIndex: 0, value: "peculiar" });
     game = submitActiveSection(game);
@@ -67,7 +69,7 @@ describe("anonymous solo game state", () => {
   });
 
   it("reveals completed phrases in original row order", () => {
-    let game = createAnonymousSoloGame({ rowCount: 2, random: () => 0 });
+    let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
 
     game = updateEntry(game, { rowIndex: 0, value: "  peculiar " });
     game = updateEntry(game, { rowIndex: 1, value: "luminous" });
@@ -88,5 +90,36 @@ describe("anonymous solo game state", () => {
       "Peculiar turnip orchestra",
       "Luminous biscuit cabinet",
     ]);
+  });
+
+  it("does not add phrase or row numbers to rendered phrase text", () => {
+    let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
+
+    game = updateEntry(game, { rowIndex: 0, value: "brisk" });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "teapot" });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "ladder" });
+    game = submitActiveSection(game);
+    game = revealBatch(game);
+
+    assert.deepEqual(renderPhrases(game), ["Brisk teapot ladder"]);
+  });
+
+  it("does not accept entries before the phrase count is locked in", () => {
+    const game = createAnonymousSoloGame({ rowCount: 2, random: () => 0 });
+
+    assert.throws(
+      () => updateEntry(game, { rowIndex: 0, value: "peculiar" }),
+      /start/i,
+    );
+
+    const startedGame = startGame(game);
+    const updatedGame = updateEntry(startedGame, {
+      rowIndex: 0,
+      value: "peculiar",
+    });
+
+    assert.equal(updatedGame.sections[0].rows[0].value, "peculiar");
   });
 });

@@ -16,7 +16,15 @@ export function createAnonymousSoloGame({ rowCount = 20, random = Math.random } 
     sections,
     sectionOrder: shuffledIndexes(sections.length, random),
     activeSectionIndex: 0,
+    started: false,
     revealed: false,
+  };
+}
+
+export function startGame(game) {
+  return {
+    ...game,
+    started: true,
   };
 }
 
@@ -26,6 +34,8 @@ export function getActiveSection(game) {
 }
 
 export function updateEntry(game, { rowIndex, value }) {
+  assertStarted(game);
+
   if (game.revealed || game.activeSectionIndex >= game.sectionOrder.length) {
     throw new Error("Cannot edit a complete game.");
   }
@@ -46,6 +56,8 @@ export function updateEntry(game, { rowIndex, value }) {
 }
 
 export function submitActiveSection(game) {
+  assertStarted(game);
+
   const sectionIndex = game.sectionOrder[game.activeSectionIndex];
   const section = game.sections[sectionIndex];
 
@@ -65,6 +77,8 @@ export function submitActiveSection(game) {
 }
 
 export function revealBatch(game) {
+  assertStarted(game);
+
   if (game.sections.some((section) => !section.locked)) {
     throw new Error("Cannot reveal until every section is complete.");
   }
@@ -83,6 +97,12 @@ export function renderPhrases(game) {
 
     return capitalizeFirst(cleanWhitespace(phrase));
   });
+}
+
+function assertStarted(game) {
+  if (!game.started) {
+    throw new Error("Start the batch before entering words.");
+  }
 }
 
 function updateSection(game, sectionIndex, section) {

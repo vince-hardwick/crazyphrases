@@ -13,6 +13,7 @@ const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
+const gamePanel = document.querySelector("[data-game-panel]");
 const progress = document.querySelector("[data-progress]");
 const sectionProgress = document.querySelector("[data-section-progress]");
 const sectionTitle = document.querySelector("[data-section-title]");
@@ -88,6 +89,7 @@ entryForm.addEventListener("submit", (event) => {
 renderGame();
 
 function renderGame() {
+  updateGamePhase();
   updateSetupControls();
 
   if (!game.started) {
@@ -162,6 +164,18 @@ function updateSetupControls() {
   updateRowCountButtons(game.rowCount);
   startButton.hidden = game.started;
   startAgainButton.hidden = !game.started;
+}
+
+function updateGamePhase() {
+  gamePanel.dataset.gamePhase = getGamePhase();
+}
+
+function getGamePhase() {
+  if (!game.started) {
+    return "setup";
+  }
+
+  return game.revealed ? "reveal" : "entry";
 }
 
 function hasEntries(candidateGame) {

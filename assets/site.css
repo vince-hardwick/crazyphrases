@@ -130,6 +130,11 @@ h1 {
   background: linear-gradient(transparent, rgba(15, 118, 110, 0.18), transparent);
 }
 
+.game-panel[data-game-phase="setup"]::before,
+.game-panel[data-game-phase="setup"]::after {
+  display: none;
+}
+
 .setup-row {
   position: relative;
   z-index: 1;

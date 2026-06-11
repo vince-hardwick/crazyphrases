@@ -20,6 +20,8 @@ MVP UI is responsive from the start, with mobile as the primary constraint. The 
 
 MVP may hint at the folded-paper origin of the game, but uses a clean web-form interaction model. Avoid literal skeuomorphic folded-paper UI that harms mobile usability or entry speed.
 
+Folded-paper visual hints must not intersect setup controls. In the anonymous solo MVP setup state before "Start batch", the phrase-count and start controls should appear cleanly without column guide lines running underneath or through them.
+
 ### Onboarding
 
 Anonymous solo MVP starts directly in the playable game flow with minimal inline context. A small help icon may reveal a compact explainer section for users who want instructions, but there is no separate tutorial or landing screen before play.

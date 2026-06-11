@@ -94,6 +94,8 @@ Use separate `FTP_SERVER_DIR` values for each environment document root. Example
 
 The actual values must match cPanel's document roots for `dev.crazyphrases.com`, `test.crazyphrases.com`, and production.
 
+`FTP_SERVER_DIR` must end with `/`. The FTP deployment action rejects paths without a trailing slash.
+
 ### FTP Connectivity Rule
 
 GitHub Actions must connect to the cPanel FTP/FTPS endpoint directly. Do not point `FTP_SERVER` at a Cloudflare-proxied hostname.

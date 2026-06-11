@@ -32,7 +32,7 @@ The GitHub repository must have a `production` environment with a required revie
 - `FTP_PASSWORD`
 - `FTP_SERVER_DIR`
 
-Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value should point at the live web root that contains `index.html` and `cgi-bin/`, for example `public_html/` or the domain-specific document root shown in cPanel.
+Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value should point at the live web root that contains `index.html` and `cgi-bin/`, for example `public_html/` or the domain-specific document root shown in cPanel. The value must end with `/`.
 
 The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflare-proxied hostname. If using `ftp.crazyphrases.com`, keep that DNS record DNS only in Cloudflare.
 

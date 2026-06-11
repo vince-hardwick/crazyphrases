@@ -33,8 +33,9 @@ For the anonymous solo MVP, a deployment smoke should check:
 - `Start again` asks for confirmation when entries exist and returns to phrase-count selection.
 - Completing all three sections reveals the expected number of phrases.
 - Revealed phrase text does not contain generated row or phrase numbers.
+- Revealed default-template phrases render in adjective-noun-noun order.
 
-Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering.
+Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Fill these adjectives`, and noun words only when the page says `Fill these nouns`. Do not assume the first visible entry section is the adjective slot.
 
 ## Static Asset Cache Check
 

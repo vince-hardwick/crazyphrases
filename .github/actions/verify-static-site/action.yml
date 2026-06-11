@@ -8,7 +8,17 @@ runs:
       shell: bash
       run: |
         test -f index.html
+        test -f .htaccess
         test -f assets/site.css
+        test -f assets/app.js
+
+    - name: Verify static asset cache-busting placeholders
+      shell: bash
+      run: |
+        grep -q "assets/site.css?v=__ASSET_VERSION__" index.html
+        grep -q "assets/app.js?v=__ASSET_VERSION__" index.html
+        grep -q "./game-state.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "no-store" .htaccess
 
     - name: Check for insecure asset references
       shell: bash

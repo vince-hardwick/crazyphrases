@@ -20,6 +20,8 @@ MVP UI is responsive from the start, with mobile as the primary constraint. The 
 
 MVP may hint at the folded-paper origin of the game, but uses a clean web-form interaction model. Avoid literal skeuomorphic folded-paper UI that harms mobile usability or entry speed.
 
+Folded-paper visual hints must not intersect setup controls. In the anonymous solo MVP setup state before "Start batch", the phrase-count and start controls should appear cleanly without column guide lines running underneath or through them.
+
 ### Onboarding
 
 Anonymous solo MVP starts directly in the playable game flow with minimal inline context. A small help icon may reveal a compact explainer section for users who want instructions, but there is no separate tutorial or landing screen before play.
@@ -92,7 +94,7 @@ Anonymous solo games randomize the default template's slot order per game and sh
 
 Anonymous solo shows the actual active slot kind, such as adjectives or nouns, so the participant knows what to enter. It does not show the remaining slot kinds in their resolved order before they become active.
 
-Anonymous solo includes a "Start again" action. It discards the current local game and begins a new one with a fresh randomized slot order and empty entries. If the current game has entered values, the action asks for confirmation.
+Anonymous solo includes a "Start again" action. It discards the current local game and returns to phrase-count selection for a new local game with a fresh randomized slot order and empty entries. If the current game has entered values, the action asks for confirmation.
 
 The MVP default template renders each phrase by concatenating the three entries with spaces, trimming whitespace, collapsing extra spaces, and capitalizing the first character for display. It does not auto-insert articles or punctuation.
 
@@ -119,6 +121,8 @@ Templates use a controlled built-in vocabulary of entry kinds. Custom templates 
 Row count is configured per game. A template may provide a default row count, but the game setup determines the actual number of phrases in the batch.
 
 For the anonymous solo/default-template MVP, row count defaults to 20 phrases, with additional selectable options of 10, 15, 25, and 30.
+
+For the anonymous solo/default-template MVP, row count is selected before entries are made and is locked by starting the batch. Entry controls are hidden until the participant starts the batch. After start, row-count controls are disabled for the current batch; "Start again" is the only action that returns the participant to phrase-count selection.
 
 ### Template publishing
 

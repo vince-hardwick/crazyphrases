@@ -8,8 +8,10 @@ This runbook describes how to publish the temporary `crazyphrases.com` static la
 
 Upload these repository paths to the live web root for `crazyphrases.com`:
 
+- `.htaccess`
 - `index.html`
 - `assets/site.css`
+- `assets/app.js`
 
 The live web root is the hosting account directory that currently displays `Index of /` and contains `cgi-bin/`. On many shared hosts this is named `public_html`, `www`, `htdocs`, or the domain-specific document root shown in the hosting panel.
 
@@ -20,6 +22,12 @@ The live web root is the hosting account directory that currently displays `Inde
 - Redirect all `http://crazyphrases.com` and `http://www.crazyphrases.com` traffic to HTTPS.
 - Keep the Let's Encrypt certificate active for both `crazyphrases.com` and `www.crazyphrases.com`.
 - Do not add HTTP-only images, scripts, stylesheets, fonts, analytics, or embedded content.
+
+## Cache Policy
+
+The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
+
+The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`.
 
 ## GitHub Actions Deployment
 
@@ -39,6 +47,8 @@ The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflar
 The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
+
+Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. Browser module imports are stamped too; for example, source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and deployed `assets/app.js` should import `./game-state.js?v=<commit-sha>`. This prevents browsers from combining fresh HTML or JavaScript with stale transitive modules after a static deployment.
 
 ## Example Nginx Settings
 

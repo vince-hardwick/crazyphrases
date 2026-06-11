@@ -137,7 +137,7 @@ Feature slices move through environments in order:
 2. CI runs against the branch.
 3. `deploy-dev.yml` creates a deployment request for the shared `dev` environment when the branch changes current static runtime or test paths.
 4. Approve the `dev` GitHub Environment deployment when that branch is ready for engineering inspection.
-5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication.
+5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication. For user-observed Codex smoke tests, use the visible in-app browser path in `docs/runbooks/in-app-browser-verification.md`.
 6. Open or update the pull request into `main`.
 7. Merge the pull request after review and dev inspection.
 8. `promote.yml` deploys the merged `main` commit to `test`.

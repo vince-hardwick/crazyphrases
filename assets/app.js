@@ -2,6 +2,7 @@ import {
   createAnonymousSoloGame,
   generateEntryCandidate,
   getActiveSection,
+  getStartAgainConfirmation,
   needsStartAgainConfirmation,
   renderPhrases,
   revealBatch,
@@ -20,6 +21,9 @@ const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
 const startAgainConfirmation = document.querySelector(
   "[data-start-again-confirmation]",
+);
+const startAgainConfirmationMessage = document.querySelector(
+  "[data-start-again-confirmation-message]",
 );
 const confirmStartAgainButton = document.querySelector("[data-confirm-start-again]");
 const cancelStartAgainButton = document.querySelector("[data-cancel-start-again]");
@@ -258,6 +262,10 @@ function startAgain() {
 }
 
 function showStartAgainConfirmation() {
+  const confirmation = getStartAgainConfirmation(game);
+  startAgainConfirmationMessage.textContent = confirmation.message;
+  cancelStartAgainButton.textContent = confirmation.cancelLabel;
+  confirmStartAgainButton.textContent = confirmation.confirmLabel;
   startAgainConfirmation.hidden = false;
   cancelStartAgainButton.focus();
 }

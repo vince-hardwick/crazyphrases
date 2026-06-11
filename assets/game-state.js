@@ -155,6 +155,23 @@ export function needsStartAgainConfirmation(game) {
   return hasEntries(game);
 }
 
+export function getStartAgainConfirmation(game) {
+  if (game.revealed) {
+    return {
+      message:
+        "Start a new batch? Your revealed phrases will be cleared from this browser.",
+      cancelLabel: "View phrases",
+      confirmLabel: "Start new batch",
+    };
+  }
+
+  return {
+    message: "Start again and discard your current entries?",
+    cancelLabel: "Keep playing",
+    confirmLabel: "Discard entries",
+  };
+}
+
 export function renderPhrases(game, { wordBank } = {}) {
   return Array.from({ length: game.rowCount }, (_, rowIndex) => {
     const phrase = game.sections

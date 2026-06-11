@@ -6,6 +6,7 @@ import {
   createAnonymousSoloGame,
   generateEntryCandidate,
   getActiveSection,
+  getStartAgainConfirmation,
   needsStartAgainConfirmation,
   recoverAnonymousSoloGame,
   renderPhrases,
@@ -219,6 +220,29 @@ describe("anonymous solo game state", () => {
 
     assert.equal(needsStartAgainConfirmation(emptyGame), false);
     assert.equal(needsStartAgainConfirmation(gameWithEntry), true);
+  });
+
+  it("uses phase-specific Start again confirmation copy", () => {
+    let entryGame = startGame(createAnonymousSoloGame({ rowCount: 1 }));
+    entryGame = updateEntry(entryGame, { rowIndex: 0, value: "peculiar" });
+
+    let revealedGame = submitActiveSection(entryGame);
+    revealedGame = updateEntry(revealedGame, { rowIndex: 0, value: "turnip" });
+    revealedGame = submitActiveSection(revealedGame);
+    revealedGame = updateEntry(revealedGame, { rowIndex: 0, value: "orchestra" });
+    revealedGame = submitActiveSection(revealedGame);
+    revealedGame = revealBatch(revealedGame);
+
+    assert.deepEqual(getStartAgainConfirmation(entryGame), {
+      message: "Start again and discard your current entries?",
+      cancelLabel: "Keep playing",
+      confirmLabel: "Discard entries",
+    });
+    assert.deepEqual(getStartAgainConfirmation(revealedGame), {
+      message: "Start a new batch? Your revealed phrases will be cleared from this browser.",
+      cancelLabel: "View phrases",
+      confirmLabel: "Start new batch",
+    });
   });
 
   it("fills a requested row from the active section entry kind", () => {

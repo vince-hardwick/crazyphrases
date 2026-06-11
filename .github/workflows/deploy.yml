@@ -37,15 +37,15 @@ jobs:
           ! grep -R "http://" index.html assets
 
   deploy-manual:
-    name: Deploy to ${{ inputs.target_environment }}
+    name: Deploy to selected environment
     if: github.event_name == 'workflow_dispatch'
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
-      group: deploy-${{ inputs.target_environment }}
+      group: deploy-${{ github.event.inputs.target_environment }}
       cancel-in-progress: false
     environment:
-      name: ${{ inputs.target_environment }}
+      name: ${{ github.event.inputs.target_environment }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6

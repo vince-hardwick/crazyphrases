@@ -133,6 +133,27 @@ Manual deployment:
 4. Choose `dev`, `test`, or `production` as the target environment.
 5. Approve the selected GitHub Environment if a reviewer gate is configured.
 
+Codex/operator deployment:
+
+Use GitHub CLI to trigger non-production deployments from the repository root:
+
+```powershell
+gh workflow run deploy.yml --ref main -f target_environment=dev
+gh workflow run deploy.yml --ref main -f target_environment=test
+```
+
+Use `dev` for active development review and `test` for release testing. Do not deploy to `dev` or `test` by pushing to `main`; pushes to `main` are reserved for production verification and deployment.
+
+After triggering a run, inspect it in GitHub Actions or with GitHub CLI:
+
+```powershell
+gh run list --workflow deploy.yml --limit 5
+gh run view <run-id>
+gh run watch <run-id> --exit-status
+```
+
+If the selected GitHub Environment has a reviewer gate, the deployment job waits until the environment is approved in GitHub. Approval authorizes the FTPS upload only; browser access to `dev` and `test` is still controlled separately by Cloudflare Access.
+
 Automatic deployment:
 
 - Pushes to `main` run verification and then target the `production` environment only.

@@ -192,6 +192,12 @@ Required reviewer intent:
 - `test` approval means the merged `main` commit may overwrite the formal testing environment.
 - `production` approval means human testing has passed in `test` and the same `main` commit may mutate the live site.
 
+Codex/operator pause rule:
+
+- If a Codex-triggered commit, push, merge, or manual workflow request creates a deployment run that waits for GitHub Environment approval, Codex reports the run and then pauses.
+- The user approves or rejects the deployment in GitHub.
+- Codex resumes deployment-dependent checks only after the user confirms that approval has been granted.
+
 If the `production` GitHub Environment does not have a required reviewer gate, cancel the production job and restore the gate before deploying.
 
 The same secret names are used in each GitHub Environment. GitHub resolves the secret values from the selected environment, so `FTP_SERVER_DIR` must be different for `dev`, `test`, and `production` when their cPanel document roots differ.

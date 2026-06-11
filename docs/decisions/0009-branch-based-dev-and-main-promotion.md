@@ -30,6 +30,7 @@ Use a branch-to-environment promotion model:
 6. A push to `main` deploys that exact `main` commit to `test`.
 7. The same promotion workflow then waits at the `production` GitHub Environment gate. Production approval is granted only after human testing in `test` confirms no blocking issues.
 8. If the `production` environment reviewer gate is missing, unavailable, or suspected to be misconfigured, cancel the production job and restore an explicit approval gate before deploying.
+9. When an agent-triggered commit, push, merge, or manual workflow request creates a deployment run that waits for GitHub Environment approval, the agent must stop and wait for the owner to confirm approval before continuing deployment-dependent validation or promotion.
 
 `dev` is a shared inspection environment, not a stable release environment. It may be overwritten by the next approved feature-branch deployment. `test` and `production` deploy only from `main` unless a future ADR explicitly defines a hotfix exception.
 

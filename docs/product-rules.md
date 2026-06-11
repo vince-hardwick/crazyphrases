@@ -310,6 +310,8 @@ The MVP seed word bank is family-friendly by default and should not include prof
 
 The MVP seed word bank lives as a JSON data asset, not inline game code. It contains separate adjective and noun candidate arrays plus metadata such as version and family-friendly status.
 
+The anonymous solo MVP seed word bank asset lives at `assets/word-bank-seed.json`. The static app fetches it with the deployed asset version query string so dice assistance can be cache-busted alongside `assets/app.js`.
+
 Anonymous solo play must not require downloading the full production word bank. MVP anonymous solo may use the tiny bundled seed list, but production anonymous solo should use the same low-latency word-bank candidate service as signed-in play, with optional small client-side fallback shards.
 
 Anonymous solo games remain playable if the word-bank candidate service is unavailable. Manual entry still works, and dice assistance may fall back to a tiny bundled list for the default template's adjective and noun slots.

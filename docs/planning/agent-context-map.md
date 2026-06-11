@@ -40,6 +40,7 @@ Load the smallest authoritative set that can answer the task:
 | Domain language for game concepts | `CONTEXT.md` |
 | Deferred future features | `docs/backlog.md` |
 | Word-bank source candidates | `docs/research/word-bank-sources.md` |
+| MVP seed Word Bank asset and rules | `assets/word-bank-seed.json`, `docs/product-rules.md` |
 | Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md` |
 | Visible in-app browser verification | `docs/runbooks/in-app-browser-verification.md` |
 | Branch-based dev deployment and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md` |

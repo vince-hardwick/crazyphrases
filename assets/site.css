@@ -78,6 +78,7 @@ h1 {
 }
 
 .icon-button:hover,
+.dice-button:not(:disabled):hover,
 .segmented-control button:not(:disabled):hover,
 .primary-button:not(:disabled):hover,
 .secondary-button:not(:disabled):hover {
@@ -224,7 +225,7 @@ h1 {
 
 .entry-row {
   display: grid;
-  grid-template-columns: 42px 1fr;
+  grid-template-columns: 42px minmax(0, 1fr) 48px;
   gap: 10px;
   align-items: center;
 }
@@ -254,12 +255,45 @@ h1 {
 }
 
 .entry-row input:focus-visible,
+.dice-button:focus-visible,
 .icon-button:focus-visible,
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 2px;
+}
+
+.dice-button {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.dice-button::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 30% 30%, currentColor 0 2px, transparent 2.5px),
+    radial-gradient(circle at 70% 30%, currentColor 0 2px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, currentColor 0 2px, transparent 2.5px),
+    radial-gradient(circle at 30% 70%, currentColor 0 2px, transparent 2.5px),
+    radial-gradient(circle at 70% 70%, currentColor 0 2px, transparent 2.5px);
+}
+
+.dice-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .primary-button {
@@ -362,8 +396,13 @@ h1 {
   .entry-row {
     width: 100%;
     max-width: 342px;
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 1fr) 44px;
     gap: 8px;
+  }
+
+  .dice-button {
+    width: 44px;
+    height: 44px;
   }
 
   .segmented-control,

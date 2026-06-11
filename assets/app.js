@@ -1,5 +1,6 @@
 import {
   createAnonymousSoloGame,
+  generateEntryCandidate,
   getActiveSection,
   renderPhrases,
   revealBatch,
@@ -8,6 +9,7 @@ import {
   updateEntry,
 } from "./game-state.js?v=__ASSET_VERSION__";
 
+const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
@@ -24,6 +26,9 @@ const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 
 let game = createAnonymousSoloGame({ rowCount: 20 });
+let wordBank = null;
+
+loadWordBank();
 
 helpToggle.addEventListener("click", () => {
   const isExpanded = helpToggle.getAttribute("aria-expanded") === "true";
@@ -74,6 +79,22 @@ entryForm.addEventListener("input", (event) => {
   updateNextButton();
 });
 
+entryForm.addEventListener("click", (event) => {
+  const diceButton = event.target.closest("[data-dice-row-index]");
+
+  if (!diceButton || !wordBank) {
+    return;
+  }
+
+  const rowIndex = Number(diceButton.dataset.diceRowIndex);
+  game = generateEntryCandidate(game, {
+    rowIndex,
+    wordBank,
+  });
+  renderGame();
+  entryList.querySelector(`[data-row-index="${rowIndex}"]`)?.focus();
+});
+
 entryForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -104,7 +125,7 @@ function renderGame() {
     revealPanel.hidden = false;
     progress.textContent = `${game.rowCount} phrases complete`;
     phraseList.replaceChildren(
-      ...renderPhrases(game).map((phrase) => {
+      ...renderPhrases(game, { wordBank }).map((phrase) => {
         const item = document.createElement("li");
         item.textContent = phrase;
         return item;
@@ -120,14 +141,16 @@ function renderGame() {
   sectionProgress.textContent = `Section ${game.activeSectionIndex + 1} of ${game.sectionOrder.length}`;
   sectionTitle.textContent = activeSection.label;
   entryList.replaceChildren(
-    ...activeSection.rows.map((row, rowIndex) => renderEntryRow(row, rowIndex)),
+    ...activeSection.rows.map((row, rowIndex) =>
+      renderEntryRow(row, rowIndex, activeSection.kind),
+    ),
   );
   updateNextButton();
 }
 
-function renderEntryRow(row, rowIndex) {
-  const label = document.createElement("label");
-  label.className = "entry-row";
+function renderEntryRow(row, rowIndex, entryKind) {
+  const rowElement = document.createElement("div");
+  rowElement.className = "entry-row";
 
   const rowNumber = document.createElement("span");
   rowNumber.className = "row-number";
@@ -141,8 +164,20 @@ function renderEntryRow(row, rowIndex) {
   input.dataset.rowIndex = String(rowIndex);
   input.ariaLabel = `Entry ${rowIndex + 1}`;
 
-  label.append(rowNumber, input);
-  return label;
+  const diceButton = document.createElement("button");
+  diceButton.type = "button";
+  diceButton.className = "dice-button";
+  diceButton.dataset.diceRowIndex = String(rowIndex);
+  diceButton.disabled = !wordBank;
+  diceButton.ariaLabel = wordBank
+    ? `Generate ${entryKind} for row ${rowIndex + 1}`
+    : "Random word unavailable";
+  diceButton.title = wordBank
+    ? `Generate ${entryKind}`
+    : "Random word unavailable";
+
+  rowElement.append(rowNumber, input, diceButton);
+  return rowElement;
 }
 
 function updateNextButton() {
@@ -182,4 +217,20 @@ function hasEntries(candidateGame) {
   return candidateGame.sections.some((section) =>
     section.rows.some((row) => row.value.trim() !== ""),
   );
+}
+
+async function loadWordBank() {
+  try {
+    const response = await fetch(wordBankUrl);
+
+    if (!response.ok) {
+      throw new Error("Word Bank unavailable.");
+    }
+
+    wordBank = await response.json();
+    renderGame();
+  } catch {
+    wordBank = null;
+    renderGame();
+  }
 }

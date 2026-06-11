@@ -11,6 +11,7 @@ runs:
         test -f .htaccess
         test -f assets/site.css
         test -f assets/app.js
+        test -f assets/word-bank-seed.json
 
     - name: Verify static asset cache-busting placeholders
       shell: bash
@@ -18,7 +19,13 @@ runs:
         grep -q "assets/site.css?v=__ASSET_VERSION__" index.html
         grep -q "assets/app.js?v=__ASSET_VERSION__" index.html
         grep -q "./game-state.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "assets/word-bank-seed.json?v=__ASSET_VERSION__" assets/app.js
         grep -q "no-store" .htaccess
+
+    - name: Verify seed Word Bank shape
+      shell: bash
+      run: |
+        node -e "const fs=require('fs'); const bank=JSON.parse(fs.readFileSync('assets/word-bank-seed.json','utf8')); if (bank.metadata?.familyFriendly !== true) throw new Error('Seed Word Bank must be family-friendly'); if ((bank.entryKinds?.adjective ?? []).length < 90) throw new Error('Seed Word Bank needs at least 90 adjectives'); if ((bank.entryKinds?.noun ?? []).length < 180) throw new Error('Seed Word Bank needs at least 180 nouns');"
 
     - name: Check for insecure asset references
       shell: bash

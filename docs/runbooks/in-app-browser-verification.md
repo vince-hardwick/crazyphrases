@@ -50,7 +50,7 @@ assets/app.js?v=<commit-sha>
 
 Source `index.html` keeps `__ASSET_VERSION__` placeholders. GitHub Actions stamps those placeholders during deployment. If the placeholders are visible on a deployed environment, the deploy workflow did not stamp the file. If unversioned asset URLs are visible, cache-busting has regressed.
 
-Transitive browser module imports must be versioned as well. Source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and GitHub Actions stamps that placeholder during deployment. This prevents a freshly deployed `app.js` from importing an older cached `game-state.js`.
+Transitive browser module imports must be versioned as well. Source browser modules under `assets/*.js` keep `__ASSET_VERSION__` placeholders for module imports such as `./game-state.js?v=__ASSET_VERSION__` and `./local-game-storage.js?v=__ASSET_VERSION__`. GitHub Actions stamps those placeholders across `assets/*.js` during deployment. This prevents freshly deployed browser modules from importing older cached dependencies.
 
 The deployed `.htaccess` file sets `index.html` to no-store/no-cache and allows long-lived caching for versioned `.css` and `.js` files. If the root URL serves an older commit after a successful deployment, first check whether `.htaccess` was deployed, then consider Cloudflare edge cache or browser cache as the likely remaining layer.
 

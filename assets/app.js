@@ -8,6 +8,10 @@ import {
   submitActiveSection,
   updateEntry,
 } from "./game-state.js?v=__ASSET_VERSION__";
+import {
+  loadCurrentAnonymousSoloGame,
+  saveCurrentAnonymousSoloGame,
+} from "./local-game-storage.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
@@ -25,7 +29,9 @@ const nextButton = document.querySelector("[data-next-button]");
 const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 
-let game = createAnonymousSoloGame({ rowCount: 20 });
+let game =
+  loadCurrentAnonymousSoloGame(window.localStorage) ??
+  createAnonymousSoloGame({ rowCount: 20 });
 let wordBank = null;
 
 loadWordBank();
@@ -44,12 +50,14 @@ rowCountButtons.forEach((button) => {
 
     const rowCount = Number(button.dataset.rowCount);
     game = createAnonymousSoloGame({ rowCount });
+    persistGame();
     renderGame();
   });
 });
 
 startButton.addEventListener("click", () => {
   game = startGame(game);
+  persistGame();
   renderGame();
 });
 
@@ -62,6 +70,7 @@ startAgainButton.addEventListener("click", () => {
   }
 
   game = createAnonymousSoloGame({ rowCount: game.rowCount });
+  persistGame();
   renderGame();
 });
 
@@ -76,6 +85,7 @@ entryForm.addEventListener("input", (event) => {
     rowIndex: Number(input.dataset.rowIndex),
     value: input.value,
   });
+  persistGame();
   updateNextButton();
 });
 
@@ -91,6 +101,7 @@ entryForm.addEventListener("click", (event) => {
     rowIndex,
     wordBank,
   });
+  persistGame();
   renderGame();
   entryList.querySelector(`[data-row-index="${rowIndex}"]`)?.focus();
 });
@@ -104,6 +115,7 @@ entryForm.addEventListener("submit", (event) => {
     game = revealBatch(game);
   }
 
+  persistGame();
   renderGame();
 });
 
@@ -217,6 +229,10 @@ function hasEntries(candidateGame) {
   return candidateGame.sections.some((section) =>
     section.rows.some((row) => row.value.trim() !== ""),
   );
+}
+
+function persistGame() {
+  saveCurrentAnonymousSoloGame(window.localStorage, game);
 }
 
 async function loadWordBank() {

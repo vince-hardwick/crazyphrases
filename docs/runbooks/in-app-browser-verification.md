@@ -128,13 +128,16 @@ If the user already has the in-app browser open at `http://localhost:4173/`, att
 
 Local smoke runs may restore anonymous solo state from browser local storage. If the setup controls are missing and the page is already in `entry` or `reveal` phase, use the visible `Start again` flow to return to setup before checking phrase-count selection. Do not rely on `tab.playwright.evaluate(() => localStorage.clear())`; the Browser plugin's page-evaluate scope is read-oriented and may not expose `localStorage`.
 
-If `Start again` opens the in-app confirmation panel, click the visible destructive confirmation button. The app must not use browser-native `window.confirm` for this flow because it blocks Playwright automation and is not inspectable through normal DOM assertions.
+If `Start again` opens the in-app confirmation panel, click the visible confirmation button for the current phase. During entry, the confirmation button is `Discard entries`. After reveal, the confirmation button is `Start new batch`. The app must not use browser-native `window.confirm` for this flow because it blocks Playwright automation and is not inspectable through normal DOM assertions.
 
 ```js
 const startAgain = tab.playwright.getByRole("button", { name: "Start again" });
 await startAgain.click({});
+const startNewBatch = tab.playwright.getByRole("button", { name: "Start new batch" });
 const discardEntries = tab.playwright.getByRole("button", { name: "Discard entries" });
-await discardEntries.click({});
+const confirmationButton =
+  (await startNewBatch.count()) === 1 ? startNewBatch : discardEntries;
+await confirmationButton.click({});
 await tab.playwright.locator("[data-start-button]").waitFor({
   state: "visible",
   timeoutMs: 5000,
@@ -176,7 +179,7 @@ For the anonymous solo MVP, a deployment smoke should check:
 - Selecting 10 phrases changes setup copy to `10 phrases selected`.
 - `Start batch` reveals one active section and disables row-count controls.
 - Attempting to activate a different row count after start does not clear entered text.
-- `Start again` asks for confirmation when entries exist and returns to phrase-count selection.
+- `Start again` asks for phase-specific confirmation when entries or revealed phrases exist and returns to phrase-count selection.
 - Completing all three sections reveals the expected number of phrases.
 - Revealed phrase text does not contain generated row or phrase numbers.
 - Revealed default-template phrases render in adjective-noun-noun order.

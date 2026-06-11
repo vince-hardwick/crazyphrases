@@ -10,7 +10,15 @@ Use Edge-backed or standalone Playwright only as a fallback after reporting why 
 
 When a task mentions browser smoke testing, local frontend verification, localhost, Playwright interaction automation, screenshots, or the in-app Codex browser, use this runbook before trying standalone Playwright, Edge-backed automation, shell-only HTTP checks, or ad hoc browser tooling.
 
-For local static site work in this repository, the successful path is:
+Choose the scenario first:
+
+| Scenario | URL shape | Successful approach |
+| --- | --- | --- |
+| Local ad hoc static site before deployment | `http://localhost:4173/` | Start or confirm a local server, then drive the visible `iab` tab with the Browser plugin's Playwright API. Use the local fast path below. |
+| Deployed `dev` or `test` environment | `https://dev.crazyphrases.com/`, `https://test.crazyphrases.com/` | Use the visible `iab` tab against the deployed URL. Let the user complete Cloudflare Access authentication if prompted, then verify the deployed commit and cache-busted assets. |
+| Production environment | `https://www.crazyphrases.com/` | Use the visible `iab` tab only after the documented promotion and approval path. Production is public, but verification does not authorize mutation. |
+
+For local static site work in this repository before any branch deployment, the successful path is:
 
 1. Start or confirm a local static server that the in-app browser can reach.
 2. Connect to the Codex in-app browser (`iab`) through the Browser plugin.
@@ -21,22 +29,30 @@ For local static site work in this repository, the successful path is:
 
 Do not rediscover this through standalone Playwright first.
 
-## Preferred Verification Path
+## Deployed Environment Verification Path
 
 1. Open the Browser skill instructions for the current Codex session.
 2. Connect to the `iab` browser through the Browser plugin's `browser-client` module.
 3. Set browser visibility to `true` before interaction when the user wants to observe the run.
 4. Use the currently selected tab if available; otherwise create a new in-app tab.
-5. Navigate to the deployed environment URL, normally `https://dev.crazyphrases.com/` or `https://test.crazyphrases.com/`.
-6. If Cloudflare Access appears, yield to the user to complete authentication in the visible browser.
+5. Navigate to the deployed environment URL:
+   - `https://dev.crazyphrases.com/` for approved feature-branch inspection.
+   - `https://test.crazyphrases.com/` for formal testing after merge to `main`.
+   - `https://www.crazyphrases.com/` for post-production verification after promotion approval.
+6. If Cloudflare Access appears on `dev` or `test`, yield to the user to complete authentication in the visible browser. Do not replace this with shell access or standalone browser automation; the visible in-app browser is expected to reuse the user's authenticated browser context.
 7. Use the Browser plugin's Playwright API for snapshots, locators, clicks, fills, and targeted assertions.
-8. Keep the browser visible until the observed smoke run has finished.
+8. For deployed `dev`/`test`/`production`, include the static asset cache check below so the browser is not mixing fresh HTML with stale JavaScript.
+9. Keep the browser visible until the observed smoke run has finished.
 
 Do not treat shell network access, deployment approval, or environment detection as authority to mutate a live environment. Deployment authority remains the approved GitHub Environment workflow.
 
+Do not use the local static-server snippet for deployed environments. Live sites are served by the documented GitHub Actions and hosting path, and deployment authority comes from GitHub Environment approvals, not from detecting a hostname or branch.
+
 ## Local Static Site Fast Path
 
-For local verification of this static app, prefer `http://localhost:4173/`.
+For local verification of this static app before deployment to `dev`, `test`, or production, prefer `http://localhost:4173/`.
+
+This local fast path is specifically for ad hoc local files in the current working tree. It is useful before a branch has been deployed or when checking browser behaviour before push. It does not prove that `dev`, `test`, or production received the same files; deployed environments still need the deployed environment path above.
 
 If a shell-launched background server exits immediately or is not reachable from the in-app browser, start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
 
@@ -109,6 +125,8 @@ const snapshot = await tab.playwright.domSnapshot();
 Use `waitForLoadState({ state: "load" })`; do not use `networkidle` in the Browser plugin Playwright wrapper because it is not supported in the current in-app browser runtime.
 
 If the user already has the in-app browser open at `http://localhost:4173/`, attach to the selected tab after the server is running, then reload or navigate through the same `tab` object. A selected tab whose URL says localhost but whose title is `about:blank` or whose DOM snapshot is empty has not loaded the app.
+
+For live `dev`, `test`, or production verification, skip this local server setup entirely and navigate the visible in-app browser to the deployed HTTPS URL instead.
 
 ## Playwright Interaction Notes
 

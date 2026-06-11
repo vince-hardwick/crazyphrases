@@ -143,12 +143,31 @@ Feature slices move through environments in order:
 8. `promote.yml` deploys the merged `main` commit to `test`.
 9. Complete formal/human testing at `https://test.crazyphrases.com/`.
 10. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
+11. After production deployment and post-promotion verification succeed, delete the merged feature branch from GitHub and prune stale local tracking refs.
 
 The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
 
 Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml` in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+
+### Branch Lifecycle
+
+Feature branches are short-lived scaffolding for one implementation slice, documentation slice, or operational change. The durable history is the issue, pull request, merge commit, deployment run, and environment deployment record, not the branch name itself.
+
+Use this branch lifecycle:
+
+1. Start each issue or documentation slice from fresh `main`.
+2. Create a focused branch such as `codex/issue-4-local-recovery` or `codex/document-branch-lifecycle`.
+3. Push the branch and open a pull request.
+4. Use the branch deployment to `dev` when runtime files change and the implementation needs engineering inspection.
+5. Merge the pull request to `main` only after review and required verification.
+6. Let the `main` merge commit promote through `test` and then `production` using the gated workflow.
+7. Delete the feature branch after production verification succeeds, unless there is an explicit rollback, audit, or follow-up reason to keep it temporarily.
+
+Do not keep old issue branches until the whole MVP is complete. Keeping merged or superseded branches makes the repository harder to read and increases the chance that future work starts from a stale ref.
+
+Superseded branches may be deleted once their intended changes are present on `main` through another merged pull request. Before deleting a branch whose pull request was closed rather than merged, check that `git log --cherry-pick main...origin/<branch>` shows no unique commits that still need preservation.
 
 ### Operator Commands
 

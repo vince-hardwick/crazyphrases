@@ -1,8 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   createAnonymousSoloGame,
+  generateEntryCandidate,
   getActiveSection,
   renderPhrases,
   revealBatch,
@@ -10,6 +12,10 @@ import {
   submitActiveSection,
   updateEntry,
 } from "../assets/game-state.js";
+
+const seedWordBank = JSON.parse(
+  readFileSync(new URL("../assets/word-bank-seed.json", import.meta.url), "utf8"),
+);
 
 describe("anonymous solo game state", () => {
   it("starts the default template with a concealed active section in resolved order", () => {
@@ -92,6 +98,32 @@ describe("anonymous solo game state", () => {
     ]);
   });
 
+  it("normalizes Word Bank matches for display without rewriting stored entries", () => {
+    const wordBank = {
+      entryKinds: {
+        adjective: ["brisk"],
+        noun: ["teapot"],
+      },
+    };
+    let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
+
+    game = updateEntry(game, { rowIndex: 0, value: "BRISK" });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "TEAPOT" });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "QwOrbLe" });
+    game = submitActiveSection(game);
+    game = revealBatch(game);
+
+    assert.deepEqual(
+      game.sections.map((section) => section.rows[0].value),
+      ["BRISK", "TEAPOT", "QwOrbLe"],
+    );
+    assert.deepEqual(renderPhrases(game, { wordBank }), [
+      "Brisk teapot QwOrbLe",
+    ]);
+  });
+
   it("does not add phrase or row numbers to rendered phrase text", () => {
     let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
 
@@ -121,5 +153,94 @@ describe("anonymous solo game state", () => {
     });
 
     assert.equal(updatedGame.sections[0].rows[0].value, "peculiar");
+  });
+
+  it("fills a requested row from the active section entry kind", () => {
+    const wordBank = {
+      entryKinds: {
+        adjective: ["brisk", "calm"],
+        noun: ["teapot"],
+      },
+    };
+    let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
+
+    game = generateEntryCandidate(game, {
+      rowIndex: 1,
+      wordBank,
+      random: () => 0,
+    });
+
+    assert.equal(game.sections[0].rows[0].value, "");
+    assert.equal(game.sections[0].rows[1].value, "brisk");
+  });
+
+  it("avoids repeated dice candidates per entry kind until candidates are exhausted", () => {
+    const wordBank = {
+      entryKinds: {
+        adjective: ["brisk", "calm"],
+        noun: ["teapot"],
+      },
+    };
+    let game = startGame(createAnonymousSoloGame({ rowCount: 3, random: () => 0 }));
+
+    game = generateEntryCandidate(game, {
+      rowIndex: 0,
+      wordBank,
+      random: () => 0,
+    });
+    game = generateEntryCandidate(game, {
+      rowIndex: 1,
+      wordBank,
+      random: () => 0,
+    });
+    game = generateEntryCandidate(game, {
+      rowIndex: 2,
+      wordBank,
+      random: () => 0,
+    });
+
+    assert.deepEqual(
+      game.sections[0].rows.map((row) => row.value),
+      ["brisk", "calm", "brisk"],
+    );
+  });
+});
+
+describe("seed Word Bank", () => {
+  it("loads a family-friendly adjective and noun seed asset", () => {
+    assert.equal(seedWordBank.metadata.version, "2026-06-issue-3-seed");
+    assert.equal(seedWordBank.metadata.familyFriendly, true);
+    assert.equal(seedWordBank.entryKinds.adjective.length >= 90, true);
+    assert.equal(seedWordBank.entryKinds.noun.length >= 180, true);
+  });
+
+  it("keeps seed entries unique and suitable for family-friendly play", () => {
+    const unsuitableTerms = new Set([
+      "blood",
+      "damn",
+      "hate",
+      "hell",
+      "kill",
+      "murder",
+      "nude",
+      "sex",
+      "weapon",
+    ]);
+
+    for (const [entryKind, entries] of Object.entries(seedWordBank.entryKinds)) {
+      const normalizedEntries = entries.map((entry) => entry.trim().toLowerCase());
+
+      assert.deepEqual(
+        normalizedEntries,
+        [...new Set(normalizedEntries)],
+        `${entryKind} entries should be unique`,
+      );
+
+      assert.equal(
+        normalizedEntries.every((entry) => !unsuitableTerms.has(entry)),
+        true,
+        `${entryKind} entries should avoid obvious unsuitable terms`,
+      );
+    }
   });
 });

@@ -18,6 +18,7 @@ export function createAnonymousSoloGame({ rowCount = 20, random = Math.random } 
     activeSectionIndex: 0,
     started: false,
     revealed: false,
+    usedCandidates: {},
   };
 }
 
@@ -55,6 +56,38 @@ export function updateEntry(game, { rowIndex, value }) {
   });
 }
 
+export function generateEntryCandidate(
+  game,
+  { rowIndex, wordBank, random = Math.random },
+) {
+  assertStarted(game);
+
+  const activeSection = getActiveSection(game);
+  const candidates = getWordBankCandidates(wordBank, activeSection.kind);
+
+  if (candidates.length === 0) {
+    throw new Error(`No candidates available for ${activeSection.kind}.`);
+  }
+
+  const candidate = chooseCandidate(candidates, {
+    random,
+    used: game.usedCandidates?.[activeSection.kind] ?? [],
+  });
+
+  const updatedGame = updateEntry(game, { rowIndex, value: candidate });
+
+  return {
+    ...updatedGame,
+    usedCandidates: {
+      ...updatedGame.usedCandidates,
+      [activeSection.kind]: [
+        ...(updatedGame.usedCandidates?.[activeSection.kind] ?? []),
+        candidateKey(candidate),
+      ],
+    },
+  };
+}
+
 export function submitActiveSection(game) {
   assertStarted(game);
 
@@ -89,10 +122,15 @@ export function revealBatch(game) {
   };
 }
 
-export function renderPhrases(game) {
+export function renderPhrases(game, { wordBank } = {}) {
   return Array.from({ length: game.rowCount }, (_, rowIndex) => {
     const phrase = game.sections
-      .map((section) => section.rows[rowIndex].value)
+      .map((section) =>
+        normalizeEntryForDisplay(section.rows[rowIndex].value, {
+          entryKind: section.kind,
+          wordBank,
+        }),
+      )
       .join(" ");
 
     return capitalizeFirst(cleanWhitespace(phrase));
@@ -120,6 +158,36 @@ function cleanWhitespace(value) {
 
 function capitalizeFirst(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function getWordBankCandidates(wordBank, entryKind) {
+  return (wordBank?.entryKinds?.[entryKind] ?? [])
+    .map((candidate) => candidate.trim())
+    .filter(Boolean);
+}
+
+function normalizeEntryForDisplay(value, { entryKind, wordBank }) {
+  const cleanedValue = cleanWhitespace(value);
+  const candidate = getWordBankCandidates(wordBank, entryKind).find(
+    (word) => candidateKey(word) === candidateKey(cleanedValue),
+  );
+
+  return candidate ?? cleanedValue;
+}
+
+function chooseCandidate(candidates, { random, used }) {
+  const usedCandidateKeys = new Set(used);
+  const unusedCandidates = candidates.filter(
+    (candidate) => !usedCandidateKeys.has(candidateKey(candidate)),
+  );
+  const candidatePool =
+    unusedCandidates.length > 0 ? unusedCandidates : candidates;
+
+  return candidatePool[Math.floor(random() * candidatePool.length)];
+}
+
+function candidateKey(candidate) {
+  return candidate.trim().toLowerCase();
 }
 
 function shuffledIndexes(length, random) {

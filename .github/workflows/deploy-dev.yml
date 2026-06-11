@@ -1,0 +1,72 @@
+name: Deploy dev
+
+on:
+  push:
+    branches:
+      - "codex/**"
+      - "feature/**"
+      - "fix/**"
+      - "chore/**"
+    paths:
+      - "index.html"
+      - "assets/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify static site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Verify site
+        uses: ./.github/actions/verify-static-site
+
+  deploy-dev:
+    name: Deploy branch to dev
+    needs: verify
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    environment:
+      name: dev
+      url: https://dev.crazyphrases.com/
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Deploy over FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .github/**
+            AGENTS.md
+            CONTEXT.md
+            README.md
+            docs/**
+            output/**
+            package.json
+            package-lock.json
+            tests/**

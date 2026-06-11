@@ -12,6 +12,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0006-cloudflare-dns-and-access-for-environments.md` - Cloudflare DNS and Access model for dev/test/production environments.
 - `0007-account-deletion-preserves-collaborative-history.md` - account deletion and collaborative history preservation.
 - `0008-static-first-anonymous-solo.md` - static-first anonymous solo implementation boundary.
+- `0009-branch-based-dev-and-main-promotion.md` - feature-branch dev deployment and main-line test/production promotion.
 
 ## Status Values
 
@@ -45,4 +46,3 @@ Amend an existing ADR when the change clarifies or records implementation progre
 - links to follow-up ADRs that supersede one part of the original decision.
 
 Do not use ADRs for every product preference. Product behaviour normally belongs in `docs/product-rules.md`; implementation tasks belong in plans or GitHub Issues; deferred ideas belong in `docs/backlog.md`.
-

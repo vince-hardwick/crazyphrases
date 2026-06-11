@@ -71,6 +71,7 @@ Do not create ADRs for every product preference. Product behaviour normally belo
 ## Environment and Mutation Policy
 
 - Development review happens in `dev`; formal testing happens in `test`; production promotion happens only after automated tests pass and human acceptance is completed in `test`.
+- Feature-branch pushes may request gated deployment to the shared `dev` environment. Merged `main` commits promote through `test` before any gated `production` deployment. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md` and `docs/runbooks/cloudflare-dns-and-access.md`.
 - Detecting a hostname, branch, GitHub Environment, deployment target, or runtime context does not authorize mutation.
 - GitHub Environment approval authorizes deployment; Cloudflare Access authorizes browser access; cPanel access authorizes origin hosting changes. These authorities are separate.
 - Authenticated GitHub CLI commands from Codex may need sandbox escalation to access the Windows keyring. See `docs/runbooks/github-cli-auth-for-codex.md`.
@@ -100,4 +101,3 @@ Before ending or switching away from design, planning, runbook, or operational-m
 ## Style
 
 Use UK English in user-facing copy and domain documentation. Be concise, exact, and implementation-oriented.
-

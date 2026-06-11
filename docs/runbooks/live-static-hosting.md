@@ -41,7 +41,7 @@ The promotion workflow verifies required files, runs available static-site tests
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 
-Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. This prevents browsers from combining fresh HTML with stale JavaScript or CSS after a static deployment.
+Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. Browser module imports are stamped too; for example, source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and deployed `assets/app.js` should import `./game-state.js?v=<commit-sha>`. This prevents browsers from combining fresh HTML or JavaScript with stale transitive modules after a static deployment.
 
 ## Example Nginx Settings
 

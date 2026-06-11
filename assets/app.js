@@ -6,7 +6,7 @@ import {
   startGame,
   submitActiveSection,
   updateEntry,
-} from "./game-state.js";
+} from "./game-state.js?v=__ASSET_VERSION__";
 
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
 const startButton = document.querySelector("[data-start-button]");

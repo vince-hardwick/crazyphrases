@@ -49,6 +49,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" index.html
+          sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" assets/app.js
 
       - name: Deploy over FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -92,6 +93,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" index.html
+          sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" assets/app.js
 
       - name: Deploy over FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0

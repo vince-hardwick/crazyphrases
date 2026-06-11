@@ -49,12 +49,15 @@ assets/app.js?v=<commit-sha>
 
 Source `index.html` keeps `__ASSET_VERSION__` placeholders. GitHub Actions stamps those placeholders during deployment. If the placeholders are visible on a deployed environment, the deploy workflow did not stamp the file. If unversioned asset URLs are visible, cache-busting has regressed.
 
+Transitive browser module imports must be versioned as well. Source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and GitHub Actions stamps that placeholder during deployment. This prevents a freshly deployed `app.js` from importing an older cached `game-state.js`.
+
 If the visible browser still shows mixed behaviour after a stamped deployment:
 
 1. Hard-refresh the visible in-app tab.
-2. Confirm the script URL includes the current deployed commit SHA.
-3. Confirm the GitHub deployment run deployed the expected branch and SHA.
-4. Treat persistent mismatch as a deployment or hosting cache defect, not as a gameplay bug.
+2. Confirm the top-level script URL includes the current deployed commit SHA.
+3. Confirm imported browser modules also include the current deployed commit SHA.
+4. Confirm the GitHub deployment run deployed the expected branch and SHA.
+5. Treat persistent mismatch as a deployment or hosting cache defect, not as a gameplay bug.
 
 ## Localhost Notes
 

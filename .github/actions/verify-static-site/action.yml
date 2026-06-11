@@ -16,6 +16,7 @@ runs:
       run: |
         grep -q "assets/site.css?v=__ASSET_VERSION__" index.html
         grep -q "assets/app.js?v=__ASSET_VERSION__" index.html
+        grep -q "./game-state.js?v=__ASSET_VERSION__" assets/app.js
 
     - name: Check for insecure asset references
       shell: bash

@@ -47,7 +47,7 @@ Load the smallest authoritative set that can answer the task:
 | Deployed dev/test/production browser smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
 | Branch-based dev deployment and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |
-| GitHub CLI authentication from Codex | `docs/runbooks/github-cli-auth-for-codex.md` |
+| Git and GitHub CLI authentication from Codex | `docs/runbooks/github-cli-auth-for-codex.md` |
 | Node, npm, npx, and package installs from Codex | `docs/runbooks/node-npm-for-codex.md` |
 | Static-first anonymous solo architecture | `docs/decisions/0008-static-first-anonymous-solo.md` |
 | Cached word-bank architecture | `docs/decisions/0004-cached-word-bank-for-entry-candidates.md` |

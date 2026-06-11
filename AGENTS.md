@@ -75,7 +75,7 @@ Do not create ADRs for every product preference. Product behaviour normally belo
 - If a Codex action triggers a deployment workflow that waits for GitHub Environment approval, Codex must pause and wait for the user to confirm that approval has been granted before continuing deployment-dependent work.
 - Detecting a hostname, branch, GitHub Environment, deployment target, or runtime context does not authorize mutation.
 - GitHub Environment approval authorizes deployment; Cloudflare Access authorizes browser access; cPanel access authorizes origin hosting changes. These authorities are separate.
-- Authenticated GitHub CLI commands from Codex may need sandbox escalation to access the Windows keyring. See `docs/runbooks/github-cli-auth-for-codex.md`.
+- Authenticated GitHub CLI commands and networked Git commands from Codex may need sandbox escalation to access the Windows keyring or write `.git` metadata. See `docs/runbooks/github-cli-auth-for-codex.md`.
 - Node/npm/npx from NVM for Windows may need sandbox escalation to execute. See `docs/runbooks/node-npm-for-codex.md`.
 - Do not store tokens in the repository, project-local config, checked-in scripts, or long-lived plaintext environment variables.
 

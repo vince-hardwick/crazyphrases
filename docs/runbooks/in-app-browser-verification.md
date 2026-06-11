@@ -126,6 +126,22 @@ Use `waitForLoadState({ state: "load" })`; do not use `networkidle` in the Brows
 
 If the user already has the in-app browser open at `http://localhost:4173/`, attach to the selected tab after the server is running, then reload or navigate through the same `tab` object. A selected tab whose URL says localhost but whose title is `about:blank` or whose DOM snapshot is empty has not loaded the app.
 
+Local smoke runs may restore anonymous solo state from browser local storage. If the setup controls are missing and the page is already in `entry` or `reveal` phase, use the visible `Start again` flow to return to setup before checking phrase-count selection. Do not rely on `tab.playwright.evaluate(() => localStorage.clear())`; the Browser plugin's page-evaluate scope is read-oriented and may not expose `localStorage`.
+
+If `Start again` opens a confirmation dialog, click the button, then accept the dialog through the visible browser interaction path, such as a focused `Enter` keypress:
+
+```js
+const startAgain = tab.playwright.getByRole("button", { name: "Start again" });
+const clickReset = startAgain.click({ timeoutMs: 1000 }).catch((error) => String(error.message ?? error));
+await tab.playwright.waitForTimeout(200);
+await tab.cua.keypress({ keys: ["ENTER"] });
+await clickReset;
+await tab.playwright.locator("[data-start-button]").waitFor({
+  state: "visible",
+  timeoutMs: 5000,
+});
+```
+
 For live `dev`, `test`, or production verification, skip this local server setup entirely and navigate the visible in-app browser to the deployed HTTPS URL instead.
 
 ## Playwright Interaction Notes

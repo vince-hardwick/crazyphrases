@@ -1,0 +1,25 @@
+name: Verify static site
+description: Verify static Crazy Phrases site files before CI or deployment.
+
+runs:
+  using: composite
+  steps:
+    - name: Verify required site files exist
+      shell: bash
+      run: |
+        test -f index.html
+        test -f assets/site.css
+
+    - name: Check for insecure asset references
+      shell: bash
+      run: |
+        ! grep -R "http://" index.html assets
+
+    - name: Run Node tests when present
+      shell: bash
+      run: |
+        if [ -f package.json ]; then
+          node --test
+        else
+          echo "No package.json found; skipping Node tests."
+        fi

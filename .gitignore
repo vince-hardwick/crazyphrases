@@ -6,6 +6,7 @@ dist/
 build/
 .next/
 out/
+output/
 
 # Environment
 .env
@@ -23,4 +24,3 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
-

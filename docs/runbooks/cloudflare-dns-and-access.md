@@ -123,50 +123,82 @@ Expected:
 
 ## GitHub Actions Deployment
 
-Deployment is managed by `.github/workflows/deploy.yml`.
+Deployment is managed by these workflows:
 
-Manual deployment:
+- `.github/workflows/ci.yml` - verifies feature branches, `main`, and pull requests.
+- `.github/workflows/deploy-dev.yml` - deploys approved feature-branch commits to `dev`.
+- `.github/workflows/promote.yml` - promotes `main` commits through `test` and gated `production`.
 
-1. Open GitHub Actions.
-2. Select **Deploy website**.
-3. Select **Run workflow**.
-4. Choose `dev`, `test`, or `production` as the target environment.
-5. Approve the selected GitHub Environment if a reviewer gate is configured.
+### Promotion Model
 
-Codex/operator deployment:
+Feature slices move through environments in order:
 
-Use GitHub CLI to trigger non-production deployments from the repository root:
-
-```powershell
-gh workflow run deploy.yml --ref main -f target_environment=dev
-gh workflow run deploy.yml --ref main -f target_environment=test
-```
-
-Use `dev` for active development review and `test` for release testing. Do not deploy to `dev` or `test` by pushing to `main`; pushes to `main` are reserved for production verification and deployment.
-
-Feature slices should move through environments in order:
-
-1. Deploy to `dev` so the implementing engineer can verify the functionality.
-2. Deploy to `test` for formal testing after development verification passes.
-3. Deploy to `production` only after required automated tests pass and human acceptance is completed in `test`.
+1. Push a feature branch such as `codex/issue-2-manual-anonymous-solo`.
+2. CI runs against the branch.
+3. `deploy-dev.yml` creates a deployment request for the shared `dev` environment when the branch changes current static runtime or test paths.
+4. Approve the `dev` GitHub Environment deployment when that branch is ready for engineering inspection.
+5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication.
+6. Open or update the pull request into `main`.
+7. Merge the pull request after review and dev inspection.
+8. `promote.yml` deploys the merged `main` commit to `test`.
+9. Complete formal/human testing at `https://test.crazyphrases.com/`.
+10. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
 
 The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
-After triggering a run, inspect it in GitHub Actions or with GitHub CLI:
+`dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
+
+Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml` in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+
+### Operator Commands
+
+Inspect workflow runs:
 
 ```powershell
-gh run list --workflow deploy.yml --limit 5
+gh run list --workflow ci.yml --limit 5
+gh run list --workflow deploy-dev.yml --limit 5
+gh run list --workflow promote.yml --limit 5
 gh run view <run-id>
 gh run watch <run-id> --exit-status
 ```
 
+Manually request or re-request a feature-branch `dev` deployment:
+
+```powershell
+gh workflow run deploy-dev.yml --ref <feature-branch-name>
+```
+
+Manually re-run the `main` promotion workflow:
+
+```powershell
+gh workflow run promote.yml --ref main -f promote_production=false
+```
+
+Manually request production promotion from `main` after test acceptance:
+
+```powershell
+gh workflow run promote.yml --ref main -f promote_production=true
+```
+
+The normal path is the automatic `promote.yml` run created by a push to `main`. The manual commands are for re-running or recovering a known commit path, not for bypassing review.
+
+### Approval Boundaries
+
 If the selected GitHub Environment has a reviewer gate, the deployment job waits until the environment is approved in GitHub. Approval authorizes the FTPS upload only; browser access to `dev` and `test` is still controlled separately by Cloudflare Access.
 
-Automatic deployment:
+Required reviewer intent:
 
-- Pushes to `main` run verification and then target the `production` environment only.
-- The production environment reviewer gate remains the authority boundary for live production mutation.
-- Pushes to `main` do not deploy to `dev` or `test`.
+- `dev` approval means the branch commit may overwrite the shared engineering inspection environment.
+- `test` approval means the merged `main` commit may overwrite the formal testing environment.
+- `production` approval means human testing has passed in `test` and the same `main` commit may mutate the live site.
+
+Codex/operator pause rule:
+
+- If a Codex-triggered commit, push, merge, or manual workflow request creates a deployment run that waits for GitHub Environment approval, Codex reports the run and then pauses.
+- The user approves or rejects the deployment in GitHub.
+- Codex resumes deployment-dependent checks only after the user confirms that approval has been granted.
+
+If the `production` GitHub Environment does not have a required reviewer gate, cancel the production job and restore the gate before deploying.
 
 The same secret names are used in each GitHub Environment. GitHub resolves the secret values from the selected environment, so `FTP_SERVER_DIR` must be different for `dev`, `test`, and `production` when their cPanel document roots differ.
 

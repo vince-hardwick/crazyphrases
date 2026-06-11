@@ -23,7 +23,7 @@ The live web root is the hosting account directory that currently displays `Inde
 
 ## GitHub Actions Deployment
 
-Production deployment is managed by `.github/workflows/deploy.yml`.
+Production deployment is managed by `.github/workflows/promote.yml`.
 
 The GitHub repository must have a `production` environment with a required reviewer gate and these environment secrets:
 
@@ -36,9 +36,9 @@ Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value shoul
 
 The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflare-proxied hostname. If using `ftp.crazyphrases.com`, keep that DNS record DNS only in Cloudflare.
 
-The workflow verifies required files and checks for insecure `http://` asset references before waiting for production approval and uploading over FTPS. Pushes to `main` target production only. Manual runs can target `dev`, `test`, or `production`.
+The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
 
-Non-production environment DNS and runtime access control are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
+Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 
 ## Example Nginx Settings
 

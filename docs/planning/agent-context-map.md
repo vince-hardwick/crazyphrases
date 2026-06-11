@@ -41,6 +41,7 @@ Load the smallest authoritative set that can answer the task:
 | Deferred future features | `docs/backlog.md` |
 | Word-bank source candidates | `docs/research/word-bank-sources.md` |
 | Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md` |
+| Branch-based dev deployment and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |
 | GitHub CLI authentication from Codex | `docs/runbooks/github-cli-auth-for-codex.md` |
 | Static-first anonymous solo architecture | `docs/decisions/0008-static-first-anonymous-solo.md` |
@@ -49,4 +50,3 @@ Load the smallest authoritative set that can answer the task:
 ## Historical Context
 
 Open older plans, specs, generated output, and screenshots only when investigating provenance, debugging a regression, or resuming an explicitly routed unfinished task.
-

@@ -81,7 +81,8 @@ h1 {
 .dice-button:not(:disabled):hover,
 .segmented-control button:not(:disabled):hover,
 .primary-button:not(:disabled):hover,
-.secondary-button:not(:disabled):hover {
+.secondary-button:not(:disabled):hover,
+.danger-button:not(:disabled):hover {
   transform: translateY(-1px);
 }
 
@@ -259,7 +260,8 @@ h1 {
 .icon-button:focus-visible,
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
-.secondary-button:focus-visible {
+.secondary-button:focus-visible,
+.danger-button:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 2px;
 }
@@ -321,6 +323,18 @@ h1 {
   cursor: pointer;
 }
 
+.danger-button {
+  min-height: 44px;
+  border: 1px solid rgba(221, 95, 62, 0.34);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #8f331f;
+  background: #fff1ed;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .setup-button {
   width: auto;
   min-width: 132px;
@@ -330,6 +344,28 @@ h1 {
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.start-again-confirmation {
+  flex-basis: 100%;
+  width: min(100%, 420px);
+  border: 1px solid rgba(221, 95, 62, 0.28);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff8f5;
+}
+
+.start-again-confirmation p {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .phrase-list {

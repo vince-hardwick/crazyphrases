@@ -151,6 +151,10 @@ export function revealBatch(game) {
   };
 }
 
+export function needsStartAgainConfirmation(game) {
+  return hasEntries(game);
+}
+
 export function renderPhrases(game, { wordBank } = {}) {
   return Array.from({ length: game.rowCount }, (_, rowIndex) => {
     const phrase = game.sections
@@ -226,6 +230,12 @@ function isRecoverableAnonymousSoloGame(game) {
     Array.isArray(game.sections) &&
     Array.isArray(game.sectionOrder) &&
     Number.isInteger(game.activeSectionIndex)
+  );
+}
+
+function hasEntries(game) {
+  return game.sections.some((section) =>
+    section.rows.some((row) => row.value.trim() !== ""),
   );
 }
 

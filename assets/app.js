@@ -2,6 +2,7 @@ import {
   createAnonymousSoloGame,
   generateEntryCandidate,
   getActiveSection,
+  needsStartAgainConfirmation,
   renderPhrases,
   revealBatch,
   startGame,
@@ -17,6 +18,11 @@ const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
+const startAgainConfirmation = document.querySelector(
+  "[data-start-again-confirmation]",
+);
+const confirmStartAgainButton = document.querySelector("[data-confirm-start-again]");
+const cancelStartAgainButton = document.querySelector("[data-cancel-start-again]");
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
 const gamePanel = document.querySelector("[data-game-panel]");
@@ -62,16 +68,31 @@ startButton.addEventListener("click", () => {
 });
 
 startAgainButton.addEventListener("click", () => {
-  if (
-    hasEntries(game) &&
-    !window.confirm("Start again and discard your current entries?")
-  ) {
+  if (needsStartAgainConfirmation(game)) {
+    showStartAgainConfirmation();
     return;
   }
 
-  game = createAnonymousSoloGame({ rowCount: game.rowCount });
-  persistGame();
-  renderGame();
+  startAgain();
+});
+
+confirmStartAgainButton.addEventListener("click", () => {
+  startAgain();
+});
+
+cancelStartAgainButton.addEventListener("click", () => {
+  hideStartAgainConfirmation();
+  startAgainButton.focus();
+});
+
+startAgainConfirmation.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  event.preventDefault();
+  hideStartAgainConfirmation();
+  startAgainButton.focus();
 });
 
 entryForm.addEventListener("input", (event) => {
@@ -122,6 +143,7 @@ entryForm.addEventListener("submit", (event) => {
 renderGame();
 
 function renderGame() {
+  hideStartAgainConfirmation();
   updateGamePhase();
   updateSetupControls();
 
@@ -225,14 +247,23 @@ function getGamePhase() {
   return game.revealed ? "reveal" : "entry";
 }
 
-function hasEntries(candidateGame) {
-  return candidateGame.sections.some((section) =>
-    section.rows.some((row) => row.value.trim() !== ""),
-  );
-}
-
 function persistGame() {
   saveCurrentAnonymousSoloGame(window.localStorage, game);
+}
+
+function startAgain() {
+  game = createAnonymousSoloGame({ rowCount: game.rowCount });
+  persistGame();
+  renderGame();
+}
+
+function showStartAgainConfirmation() {
+  startAgainConfirmation.hidden = false;
+  cancelStartAgainButton.focus();
+}
+
+function hideStartAgainConfirmation() {
+  startAgainConfirmation.hidden = true;
 }
 
 async function loadWordBank() {

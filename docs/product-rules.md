@@ -94,7 +94,7 @@ Anonymous solo games randomize the default template's slot order per game and sh
 
 Anonymous solo shows the actual active slot kind, such as adjectives or nouns, so the participant knows what to enter. It does not show the remaining slot kinds in their resolved order before they become active.
 
-Anonymous solo includes a "Start again" action. It discards the current local game and returns to phrase-count selection for a new local game with a fresh randomized slot order and empty entries. If the current game has entered values, the action asks for confirmation.
+Anonymous solo includes a "Start again" action. It discards the current local game and returns to phrase-count selection for a new local game with a fresh randomized slot order and empty entries. If the current game has entered values, the action asks for confirmation through in-app UI rather than a browser-native `window.confirm` dialog.
 
 The MVP default template renders each phrase by concatenating the three entries with spaces, trimming whitespace, collapsing extra spaces, and capitalizing the first character for display. It does not auto-insert articles or punctuation.
 

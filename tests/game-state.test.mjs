@@ -6,6 +6,7 @@ import {
   createAnonymousSoloGame,
   generateEntryCandidate,
   getActiveSection,
+  needsStartAgainConfirmation,
   recoverAnonymousSoloGame,
   renderPhrases,
   revealBatch,
@@ -205,6 +206,19 @@ describe("anonymous solo game state", () => {
     });
 
     assert.equal(updatedGame.sections[0].rows[0].value, "peculiar");
+  });
+
+  it("requires Start again confirmation only when entered values exist", () => {
+    const emptyGame = startGame(createAnonymousSoloGame({ rowCount: 1 }));
+    let gameWithEntry = startGame(createAnonymousSoloGame({ rowCount: 1 }));
+
+    gameWithEntry = updateEntry(gameWithEntry, {
+      rowIndex: 0,
+      value: "peculiar",
+    });
+
+    assert.equal(needsStartAgainConfirmation(emptyGame), false);
+    assert.equal(needsStartAgainConfirmation(gameWithEntry), true);
   });
 
   it("fills a requested row from the active section entry kind", () => {

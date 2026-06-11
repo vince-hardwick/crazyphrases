@@ -10,6 +10,7 @@ Upload these repository paths to the live web root for `crazyphrases.com`:
 
 - `index.html`
 - `assets/site.css`
+- `assets/app.js`
 
 The live web root is the hosting account directory that currently displays `Index of /` and contains `cgi-bin/`. On many shared hosts this is named `public_html`, `www`, `htdocs`, or the domain-specific document root shown in the hosting panel.
 
@@ -39,6 +40,8 @@ The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflar
 The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
+
+Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. This prevents browsers from combining fresh HTML with stale JavaScript or CSS after a static deployment.
 
 ## Example Nginx Settings
 

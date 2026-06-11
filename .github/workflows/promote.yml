@@ -45,6 +45,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Stamp static asset version
+        shell: bash
+        run: |
+          sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" index.html
+
       - name: Deploy over FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -82,6 +87,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Stamp static asset version
+        shell: bash
+        run: |
+          sed -i "s/__ASSET_VERSION__/${GITHUB_SHA}/g" index.html
 
       - name: Deploy over FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0

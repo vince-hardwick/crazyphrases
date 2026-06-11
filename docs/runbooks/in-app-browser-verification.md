@@ -128,14 +128,13 @@ If the user already has the in-app browser open at `http://localhost:4173/`, att
 
 Local smoke runs may restore anonymous solo state from browser local storage. If the setup controls are missing and the page is already in `entry` or `reveal` phase, use the visible `Start again` flow to return to setup before checking phrase-count selection. Do not rely on `tab.playwright.evaluate(() => localStorage.clear())`; the Browser plugin's page-evaluate scope is read-oriented and may not expose `localStorage`.
 
-If `Start again` opens a confirmation dialog, click the button, then accept the dialog through the visible browser interaction path, such as a focused `Enter` keypress:
+If `Start again` opens the in-app confirmation panel, click the visible destructive confirmation button. The app must not use browser-native `window.confirm` for this flow because it blocks Playwright automation and is not inspectable through normal DOM assertions.
 
 ```js
 const startAgain = tab.playwright.getByRole("button", { name: "Start again" });
-const clickReset = startAgain.click({ timeoutMs: 1000 }).catch((error) => String(error.message ?? error));
-await tab.playwright.waitForTimeout(200);
-await tab.cua.keypress({ keys: ["ENTER"] });
-await clickReset;
+await startAgain.click({});
+const discardEntries = tab.playwright.getByRole("button", { name: "Discard entries" });
+await discardEntries.click({});
 await tab.playwright.locator("[data-start-button]").waitFor({
   state: "visible",
   timeoutMs: 5000,

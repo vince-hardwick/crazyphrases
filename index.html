@@ -3,23 +3,79 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
+    <meta name="color-scheme" content="light">
     <meta
       name="description"
-      content="Crazy Phrases is coming soon. Contact hello@crazyphrases.com."
+      content="Play Crazy Phrases, a hidden-column word game for absurd three-word phrases."
     >
     <title>Crazy Phrases</title>
     <link rel="stylesheet" href="assets/site.css">
+    <script type="module" src="assets/app.js"></script>
   </head>
   <body>
-    <main class="page-shell" aria-labelledby="site-title">
-      <section class="intro">
-        <p class="eyebrow">crazyphrases.com</p>
-        <h1 id="site-title">Crazy Phrases</h1>
-        <p class="lede">A new phrase game is taking shape.</p>
-        <a class="contact-link" href="mailto:hello@crazyphrases.com">
-          hello@crazyphrases.com
-        </a>
+    <main class="app-shell" aria-labelledby="site-title">
+      <header class="app-header">
+        <div>
+          <p class="site-domain">crazyphrases.com</p>
+          <h1 id="site-title">Crazy Phrases</h1>
+        </div>
+        <button
+          class="icon-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="help-panel"
+          data-help-toggle
+        >
+          <span aria-hidden="true">?</span>
+          <span class="sr-only">How to play</span>
+        </button>
+      </header>
+
+      <section class="help-panel" id="help-panel" hidden>
+        <p>
+          Crazy Phrases was invented by two friends seeking ways to create their
+          own absurd amusement and pass the time in lessons.
+        </p>
+        <ol>
+          <li>Choose how many phrases you want to make.</li>
+          <li>Fill the current section without seeing the others.</li>
+          <li>Reveal the completed batch and enjoy the strange combinations.</li>
+        </ol>
+      </section>
+
+      <section class="game-panel" aria-live="polite">
+        <div class="setup-row">
+          <div>
+            <p class="control-label">Phrases</p>
+            <div class="segmented-control" data-row-count-options>
+              <button type="button" data-row-count="10">10</button>
+              <button type="button" data-row-count="15">15</button>
+              <button type="button" data-row-count="20" aria-pressed="true">20</button>
+              <button type="button" data-row-count="25">25</button>
+              <button type="button" data-row-count="30">30</button>
+            </div>
+          </div>
+          <p class="progress-text" data-progress></p>
+        </div>
+
+        <form class="entry-form" data-entry-form>
+          <div class="section-heading">
+            <p class="section-kicker" data-section-progress></p>
+            <h2 data-section-title></h2>
+          </div>
+          <div class="entry-list" data-entry-list></div>
+          <button class="primary-button" type="submit" data-next-button disabled>
+            Next section
+          </button>
+        </form>
+
+        <section class="reveal-panel" data-reveal-panel hidden>
+          <div class="section-heading">
+            <p class="section-kicker">Reveal</p>
+            <h2>Your crazy phrases</h2>
+          </div>
+          <ol class="phrase-list" data-phrase-list></ol>
+        </section>
       </section>
     </main>
   </body>

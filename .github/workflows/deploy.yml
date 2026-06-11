@@ -2,16 +2,22 @@ name: Deploy website
 
 on:
   workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Environment to deploy
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - test
+          - production
   push:
     branches:
       - main
 
 permissions:
   contents: read
-
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
 
 jobs:
   verify:
@@ -30,10 +36,45 @@ jobs:
         run: |
           ! grep -R "http://" index.html assets
 
-  deploy:
-    name: Deploy to production
+  deploy-manual:
+    name: Deploy to ${{ inputs.target_environment }}
+    if: github.event_name == 'workflow_dispatch'
     needs: verify
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ inputs.target_environment }}
+      cancel-in-progress: false
+    environment:
+      name: ${{ inputs.target_environment }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Deploy over FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .github/**
+            README.md
+            docs/**
+
+  deploy-production:
+    name: Deploy to production
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     environment:
       name: production
     steps:

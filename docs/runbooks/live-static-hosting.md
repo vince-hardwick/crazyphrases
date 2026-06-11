@@ -34,9 +34,7 @@ The GitHub repository must have a `production` environment with a required revie
 
 Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value should point at the live web root that contains `index.html` and `cgi-bin/`, for example `public_html/` or the domain-specific document root shown in cPanel.
 
-The workflow verifies required files and checks for insecure `http://` asset references before waiting for production approval and uploading over FTPS.
-
-Keep the workflow on `workflow_dispatch` only until the repository is public and the `production` environment required reviewer gate has been verified. After that gate is verified, adding a `push` trigger for `main` is allowed.
+The workflow verifies required files and checks for insecure `http://` asset references before waiting for production approval and uploading over FTPS. Pushes to `main` target production only. Manual runs can target `dev`, `test`, or `production`.
 
 Non-production environment DNS and runtime access control are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 

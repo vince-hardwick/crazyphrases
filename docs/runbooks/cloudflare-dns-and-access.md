@@ -94,6 +94,26 @@ Use separate `FTP_SERVER_DIR` values for each environment document root. Example
 
 The actual values must match cPanel's document roots for `dev.crazyphrases.com`, `test.crazyphrases.com`, and production.
 
+## GitHub Actions Deployment
+
+Deployment is managed by `.github/workflows/deploy.yml`.
+
+Manual deployment:
+
+1. Open GitHub Actions.
+2. Select **Deploy website**.
+3. Select **Run workflow**.
+4. Choose `dev`, `test`, or `production` as the target environment.
+5. Approve the selected GitHub Environment if a reviewer gate is configured.
+
+Automatic deployment:
+
+- Pushes to `main` run verification and then target the `production` environment only.
+- The production environment reviewer gate remains the authority boundary for live production mutation.
+- Pushes to `main` do not deploy to `dev` or `test`.
+
+The same secret names are used in each GitHub Environment. GitHub resolves the secret values from the selected environment, so `FTP_SERVER_DIR` must be different for `dev`, `test`, and `production` when their cPanel document roots differ.
+
 ## Verification
 
 After DNS and Access setup:
@@ -119,4 +139,3 @@ Expected:
 - cPanel controls origin file hosting.
 - Cloudflare controls DNS and edge access policy.
 - These authority boundaries are separate and must not be treated as interchangeable.
-

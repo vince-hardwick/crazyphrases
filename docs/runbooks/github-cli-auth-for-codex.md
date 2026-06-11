@@ -1,8 +1,8 @@
-# GitHub CLI Auth for Codex
+# Git and GitHub CLI Auth for Codex
 
 ## Purpose
 
-This runbook records how Codex sessions should use the GitHub CLI for this repository without rediscovering authentication behaviour each time.
+This runbook records how Codex sessions should use Git and the GitHub CLI for this repository without rediscovering authentication behaviour each time.
 
 ## Current Setup
 
@@ -37,7 +37,7 @@ gh auth status -h github.com
 gh repo view vince-hardwick/crazyphrases --json nameWithOwner,hasIssuesEnabled,isPrivate
 ```
 
-## Codex Sandbox Behaviour
+## GitHub CLI Sandbox Behaviour
 
 Codex can find and execute `gh` inside the project sandbox, but sandboxed commands may not be able to read the Windows keyring token.
 
@@ -68,6 +68,33 @@ Examples of operations that may need escalation because they read the keyring to
 
 Do not copy tokens into the repository, commit credentials, or create project-local token files. Do not work around keyring access by setting a persistent project-level `GH_TOKEN`.
 
+## Plain Git Commands in Codex
+
+Plain `git` commands have two separate Codex constraints in this Windows workspace:
+
+1. The sandbox can read `.git`, but cannot write there. Commands such as `git fetch --prune` update `.git/FETCH_HEAD`, so sandboxed runs can fail with:
+
+   ```text
+   error: cannot open '.git/FETCH_HEAD': Permission denied
+   ```
+
+2. Networked Git commands may invoke Git Credential Manager and the Windows `schannel` credential path. Sandboxed runs can fail even when the desktop user's credentials are valid:
+
+   ```text
+   fatal: unable to access 'https://github.com/vince-hardwick/crazyphrases.git/': schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS (0x8009030e) - No credentials are available in the security package
+   ```
+
+These symptoms do not mean the repository is corrupt and do not justify changing remotes, storing tokens, disabling credential helpers, or editing project-local credentials.
+
+Run networked Git commands that write `.git` or use Git Credential Manager outside the sandbox with an explicit escalation request. Known examples:
+
+```powershell
+git fetch --prune
+git remote prune origin
+```
+
+Read-only commands that do not write `.git`, such as `git status`, `git branch --list`, and many `git ls-remote` checks, may still work inside the sandbox. Do not treat a successful `git ls-remote` as proof that `git fetch --prune` or `git remote prune origin` will work without escalation; they exercise different local write and credential paths.
+
 ## Troubleshooting
 
 If authenticated `gh` commands fail in Codex:
@@ -85,7 +112,12 @@ If authenticated `gh` commands fail in Codex:
    gh auth login -h github.com --web --git-protocol https --scopes repo,workflow
    ```
 
+If `git fetch --prune` fails with `.git/FETCH_HEAD` permission errors or `git remote prune origin` fails with `schannel` credential errors:
+
+1. Confirm the command shape is expected and not destructive.
+2. Rerun the same Git command with sandbox escalation.
+3. If the escalated command also fails, then investigate normal Git authentication or repository state from a desktop PowerShell session.
+
 ## Security Boundary
 
 Detecting that `gh` is installed, that a repository is public, or that a branch targets an environment does not authorize mutation. Repository changes, issue creation, workflow runs, deployment actions, and settings changes still require the relevant user request or approved workflow.
-

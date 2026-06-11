@@ -20,4 +20,4 @@ The current public site is a static holding page. See `docs/runbooks/live-static
 
 DNS, Cloudflare Access, and non-production environment access controls are documented in `docs/runbooks/cloudflare-dns-and-access.md`.
 
-GitHub CLI authentication behaviour for Codex sessions is documented in `docs/runbooks/github-cli-auth-for-codex.md`.
+Git and GitHub CLI authentication behaviour for Codex sessions is documented in `docs/runbooks/github-cli-auth-for-codex.md`.

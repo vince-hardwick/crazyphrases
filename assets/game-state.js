@@ -3,6 +3,7 @@ const DEFAULT_SECTIONS = [
   { kind: "noun", label: "Fill these nouns" },
   { kind: "noun", label: "Fill these nouns" },
 ];
+const ANONYMOUS_SOLO_STORAGE_SCHEMA = 1;
 
 export function createAnonymousSoloGame({ rowCount = 20, random = Math.random } = {}) {
   const sections = DEFAULT_SECTIONS.map((section) => ({
@@ -20,6 +21,34 @@ export function createAnonymousSoloGame({ rowCount = 20, random = Math.random } 
     revealed: false,
     usedCandidates: {},
   };
+}
+
+export function serializeAnonymousSoloGame(game) {
+  return JSON.stringify({
+    schemaVersion: ANONYMOUS_SOLO_STORAGE_SCHEMA,
+    game,
+  });
+}
+
+export function recoverAnonymousSoloGame(serializedGame) {
+  if (typeof serializedGame !== "string" || serializedGame.trim() === "") {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(serializedGame);
+
+    if (
+      payload?.schemaVersion !== ANONYMOUS_SOLO_STORAGE_SCHEMA ||
+      !isRecoverableAnonymousSoloGame(payload.game)
+    ) {
+      return null;
+    }
+
+    return payload.game;
+  } catch {
+    return null;
+  }
 }
 
 export function startGame(game) {
@@ -188,6 +217,16 @@ function chooseCandidate(candidates, { random, used }) {
 
 function candidateKey(candidate) {
   return candidate.trim().toLowerCase();
+}
+
+function isRecoverableAnonymousSoloGame(game) {
+  return (
+    game?.mode === "anonymous-solo" &&
+    Number.isInteger(game.rowCount) &&
+    Array.isArray(game.sections) &&
+    Array.isArray(game.sectionOrder) &&
+    Number.isInteger(game.activeSectionIndex)
+  );
 }
 
 function shuffledIndexes(length, random) {

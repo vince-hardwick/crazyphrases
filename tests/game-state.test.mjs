@@ -6,8 +6,10 @@ import {
   createAnonymousSoloGame,
   generateEntryCandidate,
   getActiveSection,
+  recoverAnonymousSoloGame,
   renderPhrases,
   revealBatch,
+  serializeAnonymousSoloGame,
   startGame,
   submitActiveSection,
   updateEntry,
@@ -96,6 +98,56 @@ describe("anonymous solo game state", () => {
       "Peculiar turnip orchestra",
       "Luminous biscuit cabinet",
     ]);
+  });
+
+  it("recovers a serialized local anonymous solo game with its resolved progress", () => {
+    let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
+
+    game = updateEntry(game, { rowIndex: 0, value: "peculiar" });
+    game = updateEntry(game, { rowIndex: 1, value: "luminous" });
+    game = submitActiveSection(game);
+    game = generateEntryCandidate(game, {
+      rowIndex: 0,
+      wordBank: {
+        entryKinds: {
+          adjective: ["brisk"],
+          noun: ["teapot", "cabinet"],
+        },
+      },
+      random: () => 0,
+    });
+
+    const recoveredGame = recoverAnonymousSoloGame(
+      serializeAnonymousSoloGame(game),
+    );
+
+    assert.deepEqual(recoveredGame, game);
+    assert.deepEqual(recoveredGame.sectionOrder, [0, 1, 2]);
+    assert.equal(recoveredGame.activeSectionIndex, 1);
+    assert.equal(getActiveSection(recoveredGame).rows[0].value, "teapot");
+  });
+
+  it("ignores invalid local anonymous solo recovery payloads", () => {
+    assert.equal(recoverAnonymousSoloGame(null), null);
+    assert.equal(recoverAnonymousSoloGame("not json"), null);
+    assert.equal(
+      recoverAnonymousSoloGame(
+        JSON.stringify({
+          schemaVersion: 0,
+          game: createAnonymousSoloGame({ rowCount: 2 }),
+        }),
+      ),
+      null,
+    );
+    assert.equal(
+      recoverAnonymousSoloGame(
+        JSON.stringify({
+          schemaVersion: 1,
+          game: { mode: "signed-in-solo" },
+        }),
+      ),
+      null,
+    );
   });
 
   it("normalizes Word Bank matches for display without rewriting stored entries", () => {

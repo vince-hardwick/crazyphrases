@@ -43,6 +43,8 @@ Load the smallest authoritative set that can answer the task:
 | MVP seed Word Bank asset and rules | `assets/word-bank-seed.json`, `docs/product-rules.md` |
 | Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md` |
 | Visible in-app browser verification | `docs/runbooks/in-app-browser-verification.md` |
+| Local static frontend smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md` |
+| Deployed dev/test/production browser smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
 | Branch-based dev deployment and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |
 | GitHub CLI authentication from Codex | `docs/runbooks/github-cli-auth-for-codex.md` |

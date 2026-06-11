@@ -222,6 +222,8 @@ Local-storage recovery restores the same anonymous solo game state, including ra
 
 Anonymous local storage keeps only the current or latest anonymous game, including its revealed state if completed. It does not maintain anonymous game history; "Start again" replaces the old local game.
 
+The anonymous solo recovery record uses the browser local-storage key `crazyphrases.anonymousSolo.currentGame.v1`. Version `v1` stores only the current or latest anonymous solo game payload and may be ignored by the client if the payload is malformed, incompatible, or not an anonymous solo game.
+
 Anonymous solo MVP should replace the homepage in dev and test environments during review, while production keeps the holding page until the slice is accepted for production promotion.
 
 ### Account deletion

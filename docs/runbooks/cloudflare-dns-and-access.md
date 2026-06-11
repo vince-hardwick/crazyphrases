@@ -94,6 +94,31 @@ Use separate `FTP_SERVER_DIR` values for each environment document root. Example
 
 The actual values must match cPanel's document roots for `dev.crazyphrases.com`, `test.crazyphrases.com`, and production.
 
+### FTP Connectivity Rule
+
+GitHub Actions must connect to the cPanel FTP/FTPS endpoint directly. Do not point `FTP_SERVER` at a Cloudflare-proxied hostname.
+
+Preferred `FTP_SERVER` values:
+
+- The hosting provider's raw FTP hostname.
+- A DNS-only hostname such as `ftp.crazyphrases.com` when it resolves directly to the cPanel server IP.
+- The cPanel server IP address if the host permits it.
+
+Do not use a proxied Cloudflare hostname for FTP/FTPS. Cloudflare's orange-cloud proxy is for HTTP(S) traffic and will not proxy normal FTP/FTPS control connections.
+
+Before rerunning a failed deployment, verify:
+
+```powershell
+Resolve-DnsName ftp.crazyphrases.com
+Test-NetConnection ftp.crazyphrases.com -Port 21
+```
+
+Expected:
+
+- `Resolve-DnsName` returns the cPanel origin IP, not Cloudflare edge IPs.
+- `Test-NetConnection` reports `TcpTestSucceeded: True`.
+- The `ftp` DNS record in Cloudflare is DNS only.
+
 ## GitHub Actions Deployment
 
 Deployment is managed by `.github/workflows/deploy.yml`.

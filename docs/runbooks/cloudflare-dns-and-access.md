@@ -68,8 +68,8 @@ Record the allowed GitHub users or teams below once configured:
 
 | Environment | Allowed GitHub users/teams |
 | --- | --- |
-| `dev` | Not configured yet |
-| `test` | Not configured yet |
+| `dev` | Configured and tested; exact allow policy to be confirmed before public documentation is treated as complete |
+| `test` | Configured and tested; exact allow policy to be confirmed before public documentation is treated as complete |
 
 ## GitHub Environment Setup
 
@@ -143,6 +143,14 @@ gh workflow run deploy.yml --ref main -f target_environment=test
 ```
 
 Use `dev` for active development review and `test` for release testing. Do not deploy to `dev` or `test` by pushing to `main`; pushes to `main` are reserved for production verification and deployment.
+
+Feature slices should move through environments in order:
+
+1. Deploy to `dev` so the implementing engineer can verify the functionality.
+2. Deploy to `test` for formal testing after development verification passes.
+3. Deploy to `production` only after required automated tests pass and human acceptance is completed in `test`.
+
+The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
 After triggering a run, inspect it in GitHub Actions or with GitHub CLI:
 

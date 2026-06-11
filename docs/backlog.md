@@ -1,0 +1,269 @@
+# Backlog
+
+## Deferred Product Decisions
+
+### Custom templates
+
+- **Deferred**: Creating, publishing, remixing, and discovering custom templates.
+- **Why deferred**: A safe template ecosystem requires editor UX, versioning, publishing, moderation, remix lineage, and discovery; the MVP should prove the default-template game loop first.
+- **Revisit when**: Default-template play, accounts, sharing, and core social loops are working.
+- **Remaining risk**: Game and template data models should preserve the template/version boundaries already documented so custom templates can be added without rewriting game history.
+
+### Template favourites
+
+- **Deferred**: Marking templates as favourites for easier reuse.
+- **Why deferred**: MVP uses only the default template, so template favourites do not add value until custom or published templates exist.
+- **Revisit when**: Custom template creation, publishing, or discovery is implemented.
+- **Remaining risk**: Favourite models should distinguish template favourites from phrase and batch favourites.
+
+### Manual slot allocation and ordering controls
+
+- **Deferred**: Letting the game creator manually allocate slots or manually choose slot order during setup.
+- **Why deferred**: MVP default-template setup should stay simple with random slot allocation and order, while manual controls fit better with later custom template tooling.
+- **Revisit when**: Custom templates or repeated player feedback need creator control over who fills which slot and when.
+- **Remaining risk**: Game setup should still model resolved allocation and order separately so manual controls can be added later.
+
+### CPU-participant games
+
+- **Deferred**: Games where one or more slots are filled by CPU participants.
+- **Why deferred**: MVP can prove anonymous solo, signed-in solo, and signed-in 2-player play without implementing automated participant behavior.
+- **Revisit when**: Players need a low-friction opponent beyond solo play or when entry-candidate generation can support credible CPU turns.
+- **Remaining risk**: Participant and provenance models should preserve CPU participant concepts already documented.
+
+### 3-player games
+
+- **Deferred**: Games with three human participants.
+- **Why deferred**: MVP focuses on the default 2-player version of the original game while keeping allocation and invitation flows simpler.
+- **Revisit when**: 2-player multiplayer is working and players want each default-template slot assigned to a different person.
+- **Remaining risk**: Game setup and slot allocation should avoid assuming exactly two human participants forever.
+
+### Live synchronous play
+
+- **Deferred**: Realtime games where all participants are present together and see live turn progress.
+- **Why deferred**: The core folded-paper game is turn-based, and asynchronous play avoids presence, realtime update, and connection-state complexity in the first product shape.
+- **Revisit when**: Players need a party-room or live-session experience beyond asynchronous invitations and nudges.
+- **Remaining risk**: Game state should avoid assuming that asynchronous turn-taking is the only possible execution profile forever.
+
+### Template visibility rules
+
+- **Deferred**: Allowing templates to declare custom visibility rules, such as exposing selected earlier entries to later players.
+- **Why deferred**: Classic play can use a simpler concealment rule for the first implementation: players see guidance for their assigned slot and their own entries, but not other players' entries until reveal.
+- **Revisit when**: Custom templates need richer play styles that deliberately trade surprise for coherence.
+- **Remaining risk**: Early data models and UI flows should avoid assuming that all non-owner entries are always invisible in every future mode.
+
+### Full automatic batch population
+
+- **Deferred**: Automatically filling a whole slot or batch with generated entries.
+- **Why deferred**: Per-entry assistance preserves the hidden-contribution game loop, while full auto-fill risks making the product feel like a generic phrase generator.
+- **Revisit when**: Solo, CPU, accessibility, or onboarding flows need a faster way to create complete batches.
+- **Remaining risk**: Entry-assist interfaces and services should avoid assuming generation can only ever be requested for one entry.
+
+### User-defined entry kinds
+
+- **Deferred**: Letting users create arbitrary entry kinds beyond the built-in vocabulary.
+- **Why deferred**: Generation, validation, guidance, and template editing all need predictable categories for the first product shape.
+- **Revisit when**: Template creators repeatedly need categories that cannot be represented with the built-in entry kinds.
+- **Remaining risk**: Template storage should avoid hard-coding the initial vocabulary so tightly that adding new kinds later requires migrating every template.
+
+### Batch ratings
+
+- **Deferred**: Letting participants rate or react to whole batches.
+- **Why deferred**: Phrase reactions are easier to understand, rank, and use in feeds, while batch favourites already cover saving a whole revealed set.
+- **Revisit when**: Leaderboard or sharing designs need batch-level scoring rather than phrase-level scoring.
+- **Remaining risk**: Reaction and leaderboard code should not assume that phrases are the only possible reaction target forever.
+
+### Friend-only leaderboards
+
+- **Deferred**: Leaderboards scoped to a user's friends.
+- **Why deferred**: Friend-only ranking depends on mature social graph behavior and creates edge cases around whose friend network defines the leaderboard.
+- **Revisit when**: The friend graph is actively used beyond game invitations and players need smaller social ranking surfaces.
+- **Remaining risk**: Leaderboard services should avoid assuming global scope is the only possible scope forever.
+
+### Public feed and leaderboards
+
+- **Deferred**: Public feed, global leaderboards, phrase reactions in public discovery, and related moderation operations.
+- **Why deferred**: Public discovery requires consent, safety screening, reporting, moderation, ranking, and abuse handling; MVP should prove the core game loop first.
+- **Revisit when**: Default-template games, accounts, handle invites, external sharing, and private favourites are working.
+- **Remaining risk**: Sharing, consent, provenance, and reaction concepts should remain available for future public discovery.
+
+### Phrase reactions
+
+- **Deferred**: Laugh and like reactions for shared phrases.
+- **Why deferred**: Reactions are most useful once phrases appear in public discovery surfaces; MVP uses private favourites and plaintext external sharing instead.
+- **Revisit when**: Public feed or leaderboards are being implemented.
+- **Remaining risk**: Phrase storage should leave room for reaction counts without making reactions part of MVP completion.
+
+### Leaderboard timezone rule
+
+- **Deferred**: Choosing the canonical timezone for today, this week, and this month leaderboard windows.
+- **Why deferred**: The product shape can be agreed before implementation chooses whether windows use UTC, viewer-local time, or a project-defined timezone.
+- **Revisit when**: Leaderboard persistence, querying, or caching is designed.
+- **Remaining risk**: Date-window code must not ship without a clear timezone rule.
+
+### Pending invite expiry duration
+
+- **Deferred**: Choosing the fixed duration after which pending game invites expire.
+- **Why deferred**: The lifecycle rule is clear, but the exact duration is a product tuning value.
+- **Revisit when**: Multiplayer invite UX and notification cadence are designed.
+- **Remaining risk**: Pending game state should not assume invites can remain pending forever.
+
+### Phrase image generation
+
+- **Deferred**: Generating an image from a completed phrase.
+- **Why deferred**: Image generation is likely to incur LLM or image-model API costs and should be designed as a premium or paid feature rather than part of the free core loop.
+- **Revisit when**: The product has account, billing, moderation, and sharing foundations strong enough to support paid generated media.
+- **Remaining risk**: Phrase sharing and favourites should avoid assuming that phrases are text-only forever.
+
+### Public share links
+
+- **Deferred**: Public or permalink URLs for externally shared phrases or batches.
+- **Why deferred**: Public URLs add access control, revocation, indexing, moderation, and consent-state complexity, while plaintext sharing is enough for the MVP external sharing flow.
+- **Revisit when**: Players need durable web links for shared phrases or batches outside the in-app feed and leaderboards.
+- **Remaining risk**: External sharing code should avoid assuming plaintext is the only possible share artifact forever.
+
+### Web Share API
+
+- **Deferred**: Native device/browser share-sheet integration using the Web Share API.
+- **Why deferred**: Clipboard copy is simpler, more predictable, and easier to test for MVP; Web Share support varies by browser and device.
+- **Revisit when**: Plaintext copy formatting is stable and mobile sharing needs a native share-sheet flow.
+- **Remaining risk**: Sharing code should keep plaintext formatting separate from the delivery mechanism so Web Share can be added later.
+
+### Celebratory reveal effects
+
+- **Deferred**: Heavy reveal animation, confetti, or other celebratory effects.
+- **Why deferred**: MVP should keep reveal readable and focused on the phrase content, with only subtle transitions if needed.
+- **Revisit when**: The core reveal flow is tested and needs more delight without harming readability.
+- **Remaining risk**: Reveal UI should leave room for optional animation without depending on it.
+
+### Custom keyboard shortcuts
+
+- **Deferred**: App-specific keyboard shortcuts for faster entry, dice use, navigation, or reveal.
+- **Why deferred**: Standard form navigation is enough for MVP and keeps mobile and accessibility behaviour simpler.
+- **Revisit when**: Repeated desktop play shows clear speed or ergonomics needs.
+- **Remaining risk**: Form and button structure should not block future shortcut handling.
+
+### Cloudflare Access allow-list documentation
+
+- **Deferred**: Recording the exact allowed GitHub users or teams for `dev` and `test` Cloudflare Access policies.
+- **Why deferred**: Dev/test environments have been created, configured, and tested, but the exact allow-list was not provided in this thread.
+- **Revisit when**: The configured Cloudflare Access allow policies are available for documentation.
+- **Remaining risk**: Runtime access reviewers and GitHub Environment deployment approvers may be confused if the Access allow-list remains undocumented.
+
+### Privacy-preserving telemetry
+
+- **Deferred**: Minimal internal event logging or analytics for product learning.
+- **Why deferred**: The first anonymous solo slice can be validated manually, and telemetry should wait until privacy, consent, and dev/test/production environment boundaries are clear.
+- **Revisit when**: Product decisions require usage data that cannot be gathered through manual testing or direct feedback.
+- **Remaining risk**: App structure should not make it hard to add explicit, privacy-preserving telemetry later.
+
+### Frontend framework
+
+- **Deferred**: Introducing a frontend framework for app structure, routing, or components.
+- **Why deferred**: The anonymous solo MVP is small enough for plain static HTML, CSS, and JavaScript, and the repository already has a static deployment path.
+- **Revisit when**: Signed-in state, routing, backend integration, or component complexity makes plain JavaScript costly.
+- **Remaining risk**: Plain JavaScript modules should be structured so a later framework migration is possible without rewriting domain logic.
+
+### One-way following
+
+- **Deferred**: Letting users follow other users without a mutual friend relationship.
+- **Why deferred**: Multiplayer invitations, consent, and nudges are clearer when friends are mutual accepted relationships.
+- **Revisit when**: Public feed, creator discovery, or template publishing needs a lightweight subscription model.
+- **Remaining risk**: Social graph data should avoid assuming all future relationships are mutual.
+
+### Friend relationships
+
+- **Deferred**: Mutual friend relationships and friend-based invite shortcuts.
+- **Why deferred**: MVP can support 2-player games through handle invites without building the full social graph first.
+- **Revisit when**: Players repeatedly invite the same accounts or need a faster trusted-player workflow.
+- **Remaining risk**: Invite and notification code should avoid assuming all invited accounts are friends.
+
+### Manual pokes
+
+- **Deferred**: Letting participants manually poke another participant to take their turn.
+- **Why deferred**: Automatic nudges are more predictable and reduce the risk of participant-triggered notification spam.
+- **Revisit when**: Multiplayer engagement needs a participant-initiated reminder separate from inactivity timeouts.
+- **Remaining risk**: Notification settings should avoid assuming every future game reminder is system-scheduled.
+
+### Android app and push notifications
+
+- **Deferred**: A companion Android app and push notification delivery.
+- **Why deferred**: MVP notification delivery is in-app only, avoiding mobile app, push token, delivery preference, and abuse-control complexity before the core web game is proven.
+- **Revisit when**: The web app has active multiplayer usage and players need out-of-app reminders for invites, consent requests, turns, and nudges.
+- **Remaining risk**: Notification models should avoid assuming every notification is web-only or in-app-only forever.
+
+### Uploaded profile pictures
+
+- **Deferred**: User-uploaded profile pictures.
+- **Why deferred**: Uploaded images require storage, resizing, moderation, abuse handling, and privacy controls that are not needed for MVP identity.
+- **Revisit when**: Generated/default avatars are no longer enough for player recognition or social expression.
+- **Remaining risk**: Profile UI should avoid assuming avatars are always generated assets forever.
+
+### Multiple gamer profiles
+
+- **Deferred**: Multiple personas or gamer profiles under one account.
+- **Why deferred**: MVP attribution, consent, moderation, and notifications are simpler with one active gamer profile per account.
+- **Revisit when**: Roleplay or persona-specific play becomes a clear user need.
+- **Remaining risk**: Account models should avoid merging account identity and gamer profile so tightly that personas are impossible later.
+
+### Social profile URLs
+
+- **Deferred**: Adding external social profile URLs to player profiles.
+- **Why deferred**: Social links are not needed for play, invites, consent, sharing, or leaderboards, and they add moderation, impersonation, privacy, and link-safety work.
+- **Revisit when**: Player profiles need richer public identity beyond gamer name, handle, and avatar.
+- **Remaining risk**: Profile models should leave room for verified or moderated external links later.
+
+### Partial or timeout reveal
+
+- **Deferred**: Revealing incomplete batches, partially completed rows, or batches after an inactivity timeout.
+- **Why deferred**: Completion-gated reveal preserves the payoff of unexpected complete phrases.
+- **Revisit when**: Abandoned games become common enough that participants need recovery options.
+- **Remaining risk**: Game state should leave room for abandoned, cancelled, or replaced-participant outcomes without treating every non-revealed game as active forever.
+
+### Participant replacement
+
+- **Deferred**: Replacing an invited participant who declines or an active participant who abandons a game.
+- **Why deferred**: Replacement creates edge cases around existing acceptances, setup changes, random assignment fairness, and in-progress concealment.
+- **Revisit when**: Declined or abandoned games are common enough that recreating or cancelling games becomes a poor user experience.
+- **Remaining risk**: Game lifecycle state should leave room for participant replacement without assuming cancellation is the only possible outcome forever.
+
+### Post-submission correction requests
+
+- **Deferred**: Letting a participant request correction to submitted entries before reveal.
+- **Why deferred**: Locking entries at turn submission keeps concealment and turn state simple, especially once later slots have started.
+- **Revisit when**: Real users frequently submit obvious mistakes and need a controlled correction flow.
+- **Remaining risk**: Entry state should distinguish active-turn drafts from submitted locked entries.
+
+### Shareable word packs
+
+- **Deferred**: Sharing or publishing reusable word collections.
+- **Why deferred**: Personal word lists may contain private jokes, names, and context-sensitive words, while shareable packs need separate privacy, moderation, and discovery rules.
+- **Revisit when**: Players want reusable themed word collections beyond their own private lists.
+- **Remaining risk**: Personal word-list code should avoid becoming the only possible model for reusable word collections.
+
+### Personal word lists
+
+- **Deferred**: Account-owned reusable word lists with optional entry-kind tags.
+- **Why deferred**: MVP already supports manual entry and global word-bank dice candidates; personal lists add account-specific storage, tagging UI, privacy, and source-selection controls.
+- **Revisit when**: Players want to reuse favourite private words across games.
+- **Remaining risk**: Entry-assistance code should preserve the distinction between global and personal candidate sources.
+
+### Expanded word-bank source selection
+
+- **Deferred**: Selecting and integrating a comprehensive open-source lexical dataset for the default word bank.
+- **Why deferred**: A tiny hand-curated seed list can unblock MVP dice-click implementation while licensing, parsing, part-of-speech quality, and packaging are researched.
+- **Revisit when**: The MVP dice feature works with the seed list and needs broader candidate variety.
+- **Remaining risk**: Word-bank storage should be able to grow beyond a small seed list without changing the entry-assistance interface.
+
+### Word-bank family-friendly setting
+
+- **Deferred**: Account setting to toggle family-friendly filtering for generated word-bank candidates.
+- **Why deferred**: MVP candidate generation is family-friendly by default, and account-level content preferences require signed-in settings and broader moderation design.
+- **Revisit when**: Signed-in settings and expanded word-bank candidate categories are implemented.
+- **Remaining risk**: Word-bank entries should be taggable for content suitability rather than assuming every candidate is family-friendly forever.
+
+### Production word-bank delivery
+
+- **Deferred**: Designing the production delivery path for a large tagged word bank, such as a cached candidate endpoint, CDN-hosted entry-kind shards, or edge-backed read model.
+- **Why deferred**: MVP can use a tiny bundled seed list, while a full lexicon may be large enough that bundling or forcing client-side storage would harm load time and waste disk space.
+- **Revisit when**: The expanded word-bank source is selected and its compressed size, parse cost, and runtime access patterns are known.
+- **Remaining risk**: Runtime dice-click code should avoid assuming the full word bank is available inside the main client bundle.

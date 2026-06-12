@@ -7,6 +7,11 @@ const workflowPaths = [
   new URL("../.github/workflows/promote.yml", import.meta.url),
 ];
 
+const ftpsPreflightActionPath = new URL(
+  "../.github/actions/verify-ftps-deploy-target/action.yml",
+  import.meta.url,
+);
+
 const requiredSourceOnlyExcludes = [
   ".github/**",
   "AGENTS.md",
@@ -54,4 +59,38 @@ describe("workflow deployment surface", () => {
       }
     });
   }
+
+  it("preflights each FTPS upload with strict certificate verification", () => {
+    const preflightAction = readFileSync(ftpsPreflightActionPath, "utf8");
+
+    assert.match(preflightAction, /curl/);
+    assert.match(preflightAction, /--ssl-reqd/);
+    assert.doesNotMatch(preflightAction, /--insecure/);
+    assert.match(preflightAction, /FTP_SERVER_DIR must end with/);
+    assert.match(preflightAction, /--quote "CWD \$\{server_dir\}"/);
+    assert.match(preflightAction, /--list-only/);
+
+    for (const workflowPath of workflowPaths) {
+      const workflow = readFileSync(workflowPath, "utf8");
+      const ftpDeployCount = workflow.split("uses: SamKirkland/FTP-Deploy-Action@v4.4.0").length - 1;
+      const preflightCount =
+        workflow.match(/uses: \.\/\.github\/actions\/verify-ftps-deploy-target/g)?.length ?? 0;
+
+      assert.ok(
+        preflightCount >= ftpDeployCount,
+        `${workflowPath.pathname} must run strict FTPS preflight before each FTPS upload`,
+      );
+    }
+  });
+
+  it("provides read-only strict FTPS preflight modes for environment secrets", () => {
+    const deployDevWorkflow = readFileSync(workflowPaths[0], "utf8");
+    const promoteWorkflow = readFileSync(workflowPaths[1], "utf8");
+
+    assert.match(deployDevWorkflow, /ftps_preflight_only/);
+    assert.match(deployDevWorkflow, /name: Verify dev FTPS target/);
+    assert.match(promoteWorkflow, /ftps_preflight_target/);
+    assert.match(promoteWorkflow, /name: Verify test FTPS target/);
+    assert.match(promoteWorkflow, /name: Verify production FTPS target/);
+  });
 });

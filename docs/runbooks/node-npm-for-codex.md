@@ -30,6 +30,12 @@ C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\
 
 Use the bundled Node executable for local no-network commands such as `node --test` when it is sufficient.
 
+The project owner's Windows user account has NVM and the active Node.js install
+on its normal `PATH`. When a Codex sandboxed shell reports `node`, `npm`, `npx`,
+or `nvm` as missing, do not treat that as machine state. Prefer an explicit
+sandbox escalation request for commands that should run through the owner's
+normal NVM-managed toolchain.
+
 ## Sandbox Behaviour
 
 The Codex workspace sandbox can see `NVM_HOME` and `NVM_SYMLINK`, but it may be denied permission to list or execute files under those paths.
@@ -39,6 +45,7 @@ Known symptoms from sandboxed PowerShell:
 ```text
 Access to the path 'C:\nvm4w\nodejs' is denied.
 Program 'node.exe' failed to run ... Access is denied.
+The term 'node' is not recognized as a name of a cmdlet, function, script file, or executable program.
 ```
 
 This does not mean Node.js, npm, npx, or NVM are missing from the machine. It means the sandbox is blocking execution outside the workspace.
@@ -47,13 +54,32 @@ This does not mean Node.js, npm, npx, or NVM are missing from the machine. It me
 
 Use these rules:
 
-- For project tests that need no package install, prefer the bundled Node executable:
+- When the repository workflow calls for the owner's installed Node.js, npm,
+  npx, or NVM, run the command outside the sandbox with an explicit escalation
+  request instead of rediscovering or reinstalling Node:
+
+  ```powershell
+  node --version
+  node --test
+  npm --version
+  npx --version
+  nvm version
+  ```
+
+  Most escalated CLI commands should still run as the owner account without a
+  separate Windows UAC prompt. UAC is only expected for installers or operations
+  that write to protected machine locations.
+
+- For quick local tests that need no package install and do not depend on the
+  owner's exact Node version, the bundled Node executable is an acceptable
+  fallback:
 
   ```powershell
   & 'C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test
   ```
 
-- For npm, npx, or NVM operations, run the command outside the sandbox with an explicit escalation request. Examples:
+- For npm, npx, or NVM operations, default to the owner's installed toolchain
+  through sandbox escalation. Examples:
 
   ```powershell
   npm --version

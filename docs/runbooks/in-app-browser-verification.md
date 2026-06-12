@@ -10,6 +10,8 @@ Use Edge-backed or standalone Playwright only as a fallback after reporting why 
 
 When a task mentions browser smoke testing, local frontend verification, localhost, Playwright interaction automation, screenshots, or the in-app Codex browser, use this runbook before trying standalone Playwright, Edge-backed automation, shell-only HTTP checks, or ad hoc browser tooling.
 
+For this repository, smoke testing is user-observable by default. The Browser plugin's generic default of background browser work does not override this runbook. Unless the user explicitly asks for a hidden local confidence check, set the Browser `visibility` capability to `true` before the first navigation or click so the Codex browser side pane is revealed while the smoke runs.
+
 Choose the scenario first:
 
 | Scenario | URL shape | Successful approach |
@@ -20,14 +22,26 @@ Choose the scenario first:
 
 For local static site work in this repository before any branch deployment, the successful path is:
 
-1. Start or confirm a local static server that the in-app browser can reach.
-2. Connect to the Codex in-app browser (`iab`) through the Browser plugin.
-3. Set browser visibility to `true`.
+1. Connect to the Codex in-app browser (`iab`) through the Browser plugin and read the Browser API documentation for the current session.
+2. Set browser visibility to `true`.
+3. Start or confirm a local static server that the in-app browser can reach, using the Local Static Site Fast Path below.
 4. Use the selected tab when the user already has one open, otherwise create a new tab.
 5. Navigate or reload `http://localhost:4173/`.
 6. Use the Browser plugin's Playwright API for snapshots, locators, clicks, fills, reloads, and assertions.
 
-Do not rediscover this through standalone Playwright first.
+Do not rediscover this through shell-launched Python servers, random local ports, standalone Playwright, or Edge-backed Playwright first.
+
+### Failure Mode To Avoid
+
+On 2026-06-12, an agent failed local smoke verification by reading this runbook too late, starting a shell-launched Python server on a random port, omitting `visibility.set(true)`, and then switching to hidden Edge-backed Playwright when the in-app browser reported `ERR_CONNECTION_REFUSED`. That was the wrong order.
+
+The correct recovery for a local static smoke is:
+
+1. Keep the Browser plugin path active.
+2. Reveal the side pane with `await (await browser.capabilities.get("visibility")).set(true)`.
+3. Start the local static server in the same persistent JavaScript runtime as the Browser-control code, using the snippet below on port `4173`.
+4. Navigate the visible `iab` tab to `http://localhost:4173/`.
+5. Only after that visible `iab` path fails should standalone or Edge-backed Playwright be used, and only as a non-equivalent local confidence check with the blocker recorded.
 
 ## Deployed Environment Verification Path
 
@@ -54,7 +68,7 @@ For local verification of this static app before deployment to `dev`, `test`, or
 
 This local fast path is specifically for ad hoc local files in the current working tree. It is useful before a branch has been deployed or when checking browser behaviour before push. It does not prove that `dev`, `test`, or production received the same files; deployed environments still need the deployed environment path above.
 
-If a shell-launched background server exits immediately or is not reachable from the in-app browser, start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
+Do not start with a shell-launched `python -m http.server` or an arbitrary free port for smoke verification. A shell server can exit between shell turns and can make the in-app browser failure look like a Browser plugin problem. Start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
 
 Use this shape, adjusting only the absolute workspace path if the repository moves:
 
@@ -183,8 +197,13 @@ For the anonymous solo MVP, a deployment smoke should check:
 - Completing all three sections reveals the expected number of phrases.
 - Revealed phrase text does not contain generated row or phrase numbers.
 - Revealed default-template phrases render in adjective-noun-noun order.
+- Revealed phrases have per-phrase copy actions.
+- The reveal view has a copy-all action that copies a title and unnumbered phrase lines.
+- The reveal view has optional entry details grouped by section.
 
 Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Fill these adjectives`, and noun words only when the page says `Fill these nouns`. Do not assume the first visible entry section is the adjective slot.
+
+When checking clipboard output from the visible browser on Windows, normalize `\r\n` to `\n` before comparing expected copy text. The assertion must still prove that per-phrase copy contains only the phrase text and that copy-all contains the short title followed by unnumbered phrase lines.
 
 ## Static Asset Cache Check
 
@@ -213,13 +232,15 @@ If the visible browser still shows mixed behaviour after a stamped deployment:
 
 ## Localhost Notes
 
-The Browser plugin supports localhost targets in principle. If `localhost` or `127.0.0.1` navigation fails with a browser-client error such as `ERR_BLOCKED_BY_CLIENT`, record the exact symptom and do not silently fall back to hidden browser automation.
+The Browser plugin supports localhost targets in principle. If `localhost` or `127.0.0.1` navigation fails with a browser-client error such as `ERR_BLOCKED_BY_CLIENT` or `ERR_CONNECTION_REFUSED`, record the exact symptom and do not silently fall back to hidden browser automation.
 
 Preferred recovery order:
 
-1. Retry with the alternate host form, `localhost` or `127.0.0.1`.
-2. Confirm the local server is still running and accepting connections.
-3. If the in-app browser remains blocked, use the approved `dev` deployment path for user-observed verification.
-4. Use standalone Playwright only for local pre-push confidence, and state clearly that it will not be visible in the Codex side pane.
+1. Confirm the Browser side pane has been revealed with `visibility.set(true)`.
+2. Retry with the alternate host form, `localhost` or `127.0.0.1`.
+3. If a shell-launched server was used, stop relying on it and restart the local static server inside the persistent Browser-control JavaScript runtime on port `4173`.
+4. Confirm the selected visible `iab` tab is not stuck on `about:blank` with an empty DOM snapshot.
+5. If the in-app browser remains blocked, use the approved `dev` deployment path for user-observed verification.
+6. Use standalone Playwright only for local pre-push confidence, and state clearly that it will not be visible in the Codex side pane.
 
 The long-term desired path is for Codex sessions in this repository to use the visible in-app browser for both deployed environment checks and local web-app checks whenever the Browser plugin can reach the target.

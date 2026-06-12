@@ -261,7 +261,8 @@ h1 {
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
-.danger-button:focus-visible {
+.danger-button:focus-visible,
+.reveal-details summary:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 2px;
 }
@@ -377,12 +378,84 @@ h1 {
 }
 
 .phrase-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px 16px;
   background: rgba(238, 246, 243, 0.72);
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+.reveal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+.copy-status {
+  min-height: 1.3em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.phrase-copy-button {
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.reveal-details {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.reveal-details summary {
+  width: fit-content;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  color: var(--accent-strong);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reveal-detail-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.reveal-detail-group h3 {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.reveal-entry-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reveal-entry-list li {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.78);
+  overflow-wrap: anywhere;
 }
 
 .sr-only {
@@ -458,5 +531,13 @@ h1 {
   .setup-button {
     width: 100%;
     max-width: 342px;
+  }
+
+  .phrase-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .phrase-copy-button {
+    width: 100%;
   }
 }

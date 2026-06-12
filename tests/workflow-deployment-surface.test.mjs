@@ -63,6 +63,7 @@ describe("workflow deployment surface", () => {
     assert.doesNotMatch(workflow, /from ftplib import/);
     assert.match(workflow, /curl/);
     assert.match(workflow, /--ssl-reqd/);
+    assert.match(workflow, /--insecure/);
     assert.match(workflow, /--ipv4/);
     assert.match(workflow, /--retry-all-errors/);
     assert.match(

@@ -121,6 +121,19 @@ Expected:
 - `Test-NetConnection` reports `TcpTestSucceeded: True`.
 - The `ftp` DNS record in Cloudflare is DNS only.
 
+Current FTPS deployments use `SamKirkland/FTP-Deploy-Action@v4.4.0` without a
+`security` override. In that action version, the effective certificate mode is
+loose rather than strict, so the action can connect when the cPanel FTPS
+certificate does not match the configured `FTP_SERVER` hostname. A strict client
+such as `curl --ssl-reqd` can fail with `curl: (60) SSL: no alternative
+certificate subject name matches target host name`.
+
+If a maintenance step uses `curl` against the same FTPS endpoint, it must either
+use a certificate-matching FTP hostname or explicitly use `--insecure` with a
+clear one-off justification and the GitHub Environment approval gate. The
+preferred long-term fix is to configure `FTP_SERVER` to a DNS-only hostname that
+both resolves to the cPanel origin and matches the FTPS certificate.
+
 ## GitHub Actions Deployment
 
 Deployment is managed by these workflows:

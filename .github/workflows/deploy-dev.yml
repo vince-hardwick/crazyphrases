@@ -137,6 +137,7 @@ jobs:
             --silent
             --show-error
             --ssl-reqd
+            --insecure
             --ipv4
             --ftp-pasv
             --ftp-skip-pasv-ip

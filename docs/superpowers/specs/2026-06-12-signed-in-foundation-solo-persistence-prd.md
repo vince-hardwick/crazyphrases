@@ -2,6 +2,16 @@
 
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/22
 
+## Child Issues
+
+1. #23 `Record backend/auth/source-of-truth ADR` - HITL, blocks all implementation slices.
+2. #24 `Add minimal signed-in Account shell` - AFK, blocked by #23.
+3. #25 `Start and resume a signed-in Solo Game setup` - AFK, blocked by #24.
+4. #26 `Save in-progress signed-in solo turns` - AFK, blocked by #25.
+5. #27 `Guard signed-in persistence failures and stale writes` - AFK, blocked by #26.
+6. #28 `Complete signed-in solo reveal and Start again lifecycle` - AFK, blocked by #26 and #27.
+7. #29 `Add signed-in browser smoke and deployment verification` - AFK, blocked by #28.
+
 ## Problem Statement
 
 Anonymous solo play is live and proves the core Crazy Phrases loop, but it is intentionally local and ephemeral. A participant cannot sign in, see a stable game-facing identity, or resume a solo game from another browser or device. The product also needs a durable backend and authentication boundary before multiplayer, favourites, invites, consent, notifications, or public sharing can be implemented responsibly.

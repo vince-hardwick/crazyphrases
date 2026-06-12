@@ -6,6 +6,28 @@ This note informs GitHub issue #23, `Record backend/auth/source-of-truth ADR`.
 It is research, not an accepted ADR. The eventual ADR should re-check provider
 pricing, quotas, and product names before locking a decision.
 
+## Context7 Documentation Verification
+
+On 2026-06-12, the shortlist was re-checked against current Context7-indexed
+provider documentation, including the candidates added after the first research
+pass. This docs pass did not change the top recommendation, but it sharpened the
+trade-offs:
+
+| Candidate | Context7 library ID used | Docs-backed suitability conclusion |
+| --- | --- | --- |
+| Supabase Auth + Postgres | `/supabase/supabase` | Best fit. Supabase docs show browser SDK auth, Auth-to-Postgres RLS flow via `auth.uid()`, and server-side/admin paths for privileged operations. It can own both authentication and signed-in game-state persistence. |
+| Firebase Auth + Firestore | `/llmstxt/firebase_google_llms_txt` | Strong all-in-one fallback. Firebase docs show mature social/email/passwordless auth and Firestore Security Rules for client access, but the document model remains less natural for future relational game history and consent queries. |
+| Cloudflare Workers + D1 | `/llmstxt/developers_cloudflare_d1_llms-full_txt` | Strong low-cost SQL persistence layer, but D1 docs are persistence-focused. End-user auth/session handling still needs Auth.js, Better Auth, SuperTokens, or custom Worker code. |
+| Auth.js | `/websites/authjs_dev` | Useful free auth/session plumbing for OAuth and framework integrations. It does not provide application persistence and would put more session, adapter, edge-runtime, and route-security decisions in project code. |
+| Better Auth | `/better-auth/better-auth` | More feature-rich than Auth.js for a TypeScript-owned auth layer: email/password, social providers, plugins, rate limiting, database migrations, passkeys/magic-link options. Still an auth/session framework, not a game-state backend. |
+| Appwrite Cloud | `/websites/appwrite_io` | Viable all-in-one BaaS alternative. Docs show built-in auth, OAuth, Magic URL, email OTP, MFA, anonymous sessions, permissions, databases, functions, and realtime. The main drawback remains data-model fit versus Postgres/RLS. |
+| Clerk | `/clerk/clerk-docs` | Excellent prebuilt auth and user-management UX. Docs confirm strong sign-in/profile components and hosted/account portal options, but Clerk still needs a separate backend for game state. |
+| WorkOS AuthKit | `/websites/workos` | Excellent hosted auth with Magic Auth, social login, email/password, MFA/passkeys, org/RBAC/SSO strengths. Docs confirm it is auth/user-management infrastructure, not a game persistence backend. |
+| Convex | `/llmstxt/convex_dev_llms-full_txt` | Strong backend platform if the project wants realtime server functions and a reactive database. Docs show auth-aware queries/mutations and optional RLS-style helpers, but it is a bigger stack direction change than the first signed-in slice needs. |
+| Neon Postgres + Neon Auth/Better Auth/Auth.js | `/websites/neon` | More credible than the first pass implied because Neon docs now show Neon Auth UI and Supabase-compatible auth calls. Still less proven for this project than Supabase's integrated Auth + Postgres + RLS path. |
+| PocketBase | `/pocketbase/pocketbase` | Compact self-hosted option with SQLite, auth, realtime, JS SDKs, and collection rules. The suitability issue is operational ownership: hosting, backups, upgrades, TLS, and production care. |
+| SuperTokens | `/supertokens/supertokens-core`, `/supertokens/supertokens-auth-react` | Strong auth/session option with email/password, social login, passwordless magic link/OTP, MFA/TOTP/WebAuthn/passkeys, and robust cookie/session design. It still needs a separate application database/backend for signed-in game state. |
+
 ## Project Constraints
 
 - Crazy Phrases is a personal, fun, passion project, so fixed monthly cost should
@@ -15,7 +37,7 @@ pricing, quotas, and product names before locking a decision.
 - User convenience matters: prefer social sign-in and passwordless email over
   forcing users to create another password.
 - Security matters: use managed auth where practical, avoid storing secrets in
-  the repo, enforce per-account authorization in the data store, and keep
+  the repo, enforce per-account authorisation in the data store, and keep
   service/admin credentials server-side only.
 - The data model is likely relational over time: Account, Handle, Gamer Name,
   Avatar, current signed-in Solo Game, later Game Invites, Turns, consent
@@ -50,7 +72,7 @@ Recommended initial shape:
 Why this is the best fit:
 
 - It gives the project managed auth, a relational database, row-level
-  authorization, generated APIs, and enough free quota for hobby validation in
+  authorisation, generated APIs, and enough free quota for hobby validation in
   one provider.
 - Postgres fits the future game-history, consent, deletion, and template lineage
   boundaries better than a document-only model.
@@ -63,12 +85,13 @@ Why this is the best fit:
 | --- | --- | --- | --- | --- | --- |
 | Supabase Auth + Postgres | Free tier includes 2 projects, 500 MB database per project, 50k MAU, 5 GB egress, and 500k Edge Function invocations. Paid usage adds fixed and variable costs. | Built-in password, magic link/OTP, social login, SSO options. | Strong when every exposed table has RLS enabled; browser access can be scoped by JWT + RLS. | Strong relational fit for accounts, games, turns, consent, favourites, deletion, and history. | Best balanced default. |
 | Firebase Auth + Firestore | Spark has no payment method and generous no-cost limits; Firestore has daily read/write quotas. | Excellent drop-in auth, social login, account recovery, provider linking. | Strong if Firestore Security Rules are written narrowly; easy to make broad rules too permissive. | Good for simple current-game documents, weaker for future relational history/consent queries. | Best fallback if auth convenience beats relational modelling. |
-| Cloudflare Workers + D1 + Auth.js/Better Auth | D1 and Workers have very generous free usage and no D1 egress charge. | Depends on custom auth implementation; not end-user auth out of the box. | Can be strong, but the project owns more session, OAuth, CSRF, and authorization work. | Good lightweight SQL fit; migrations and privileged routes are custom. | Cheapest runtime fit, but more work and security responsibility. |
-| Appwrite Cloud | Free plan is explicitly aimed at passion projects, with 75k MAU, 1 database, 2 functions, 2 GB storage, and 5 GB bandwidth; free projects pause after inactivity. | Built-in auth, OAuth2, email OTP, magic URL, MFA options. | Good BaaS posture, but authorization model and ecosystem are less familiar than Supabase/Firebase. | Mostly document-oriented; enough for MVP, less ideal for future relational history. | Viable but not better than Supabase for this project. |
+| Cloudflare Workers + D1 + Auth.js/Better Auth/SuperTokens | D1 and Workers have very generous free usage and no D1 egress charge. | Depends on chosen auth layer; not end-user auth out of the box. | Can be strong, but the project owns more session, OAuth, CSRF, and authorisation work. | Good lightweight SQL fit; migrations and privileged routes are custom. | Cheapest runtime fit, but more work and security responsibility. |
+| Appwrite Cloud | Free plan is explicitly aimed at passion projects, with 75k MAU, 1 database, 2 functions, 2 GB storage, and 5 GB bandwidth; free projects pause after inactivity. | Built-in auth, OAuth2, email OTP, magic URL, MFA options. | Good BaaS posture, but authorisation model and ecosystem are less familiar than Supabase/Firebase. | Mostly document-oriented; enough for MVP, less ideal for future relational history. | Viable but not better than Supabase for this project. |
 | Clerk + Supabase/Neon/D1 | Clerk Hobby is free up to 50k retained users and has polished prebuilt auth UI. Backend still needs a second provider. | Best UX for prebuilt sign-up/sign-in/profile surfaces. | Strong managed auth, bot protection, breached password checks; passkeys/MFA require paid plan. | Depends on chosen backend. | Consider only if auth UX polish is worth an extra provider and possible branding/paid limits. |
-| WorkOS AuthKit + Supabase/Neon/D1 | AuthKit is currently free up to 1M MAU, but custom domains, Radar scale, SSO connections, and Directory Sync can add meaningful monthly cost. Backend still needs a second provider. | Very strong hosted auth: social, email/password, Magic Auth, MFA, passkeys, organizations, RBAC, and enterprise SSO. | Strong managed auth and enterprise controls, but the project still owns backend authorization for game state. | Depends on chosen backend. | Feature-rich and not cost-prohibitive for auth alone, but overpowered for the first consumer game slice unless enterprise auth is a near-term goal. |
-| Convex | Free/Starter is aimed at personal projects and includes auth, realtime, storage, functions, and preview deployments. | Good modern app experience, often with Convex Auth or external auth. | Good if staying in Convex's model; less standard for SQL/RLS-style authorization. | Reactive document database, not a natural fit for relational consent/history modelling. | Attractive for a full app rewrite, not the least disruptive #23 choice. |
-| Neon Postgres + Better Auth/Auth.js | Neon free includes Postgres, scale-to-zero, 0.5 GB storage, and Neon Auth with 60k MAU. | Good if the project adopts an app server/framework and owns more auth code. | Can be strong, but more is in project code: sessions, auth routes, CSRF, migrations. | Strong Postgres fit. | Promising but higher implementation complexity than Supabase. |
+| WorkOS AuthKit + Supabase/Neon/D1 | AuthKit is currently free up to 1M MAU, but custom domains, Radar scale, SSO connections, and Directory Sync can add meaningful monthly cost. Backend still needs a second provider. | Very strong hosted auth: social, email/password, Magic Auth, MFA, passkeys, organisations, RBAC, and enterprise SSO. | Strong managed auth and enterprise controls, but the project still owns backend authorisation for game state. | Depends on chosen backend. | Feature-rich and not cost-prohibitive for auth alone, but overpowered for the first consumer game slice unless enterprise auth is a near-term goal. |
+| Convex | Free/Starter is aimed at personal projects and includes auth, realtime, storage, functions, and preview deployments. | Good modern app experience, often with Convex Auth or external auth. | Good if staying in Convex's model; less standard for SQL/RLS-style authorisation. | Reactive document database, not a natural fit for relational consent/history modelling. | Attractive for a full app rewrite, not the least disruptive #23 choice. |
+| Neon Postgres + Neon Auth/Better Auth/Auth.js | Neon free includes Postgres, scale-to-zero, 0.5 GB storage, and Neon Auth with 60k MAU. | Good if the project adopts an app server/framework and owns more auth code. | Can be strong, but more is in project code: sessions, auth routes, CSRF, migrations. | Strong Postgres fit. | Promising but higher implementation complexity than Supabase. |
+| SuperTokens + Supabase/Neon/D1 | Managed cloud is free under 5k MAU, then per-MAU; self-hosted open-source features can be free but add ops burden. Backend still needs a second provider. | Strong auth recipes: email/password, social, passwordless magic link/OTP, sessions, MFA/TOTP/WebAuthn/passkeys. | Strong session design and customisability, but the project owns backend integration and app-data authorisation. | Depends on chosen backend. | Good if auth customisation/control matters more than all-in-one simplicity; not the smallest first slice. |
 | PocketBase self-hosted | Software cost is zero, but hosting, backups, patching, uptime, and TLS are on the project owner. | Built-in auth, OAuth2, OTP, MFA. | Acceptable for small self-hosted apps if operated carefully, but more ops burden. | SQLite-backed, simple and fast for small data. | Not recommended for production-critical direction; docs say v1.0 compatibility is not guaranteed. |
 
 ## Recommended Auth UX
@@ -100,7 +123,7 @@ The ADR should require:
   browser use.
 - Server-only service/admin keys for migrations, admin repair tools, account
   deletion jobs, and any future moderation tasks.
-- RLS or equivalent server-enforced authorization before any browser client can
+- RLS or equivalent server-enforced authorisation before any browser client can
   read or write account-backed data.
 - Account-owned current Solo Game rows keyed by immutable Account/user id, not
   by mutable Handle or Gamer Name.
@@ -123,7 +146,7 @@ The issue #23 ADR should answer:
 4. Which auth methods are enabled at launch?
 5. How are local, dev, test, and production projects/configuration separated?
 6. Where are secrets stored, and which keys are allowed in browser code?
-7. What row-level or rule-based authorization model protects user-owned rows?
+7. What row-level or rule-based authorisation model protects user-owned rows?
 8. How does signed-in Solo Game save/resume prevent stale overwrites?
 9. What is deleted for account deletion in this slice?
 10. What explicit costs or quota risks does the owner accept?
@@ -196,7 +219,9 @@ Sources:
 Appwrite Cloud's free plan is explicitly described as suitable for passion
 projects and small apps. It includes auth, one database, functions, storage,
 realtime, and high MAU allowance. Appwrite supports email/password, OTP, magic
-URL, OAuth2, anonymous login, JWT login, and MFA options.
+URL, OAuth2, anonymous login, JWT login, and MFA options. Context7 docs also
+confirm built-in user/group permissions, user preferences, server-side session
+patterns, and admin clients for privileged operations.
 
 Key risk: free projects pause after inactivity, and the database shape is less
 natural for relational game-history and consent boundaries than Postgres.
@@ -205,6 +230,33 @@ Sources:
 
 - https://appwrite.io/pricing
 - https://appwrite.io/docs/products/auth
+
+### Auth.js and Better Auth
+
+Auth.js remains a credible free/open-source auth layer if Crazy Phrases adopts
+an app-server shape. Context7 docs show provider configuration, session
+strategies, database adapters, secrets/cookie-oriented security settings, and
+edge-runtime caveats. It is best understood as OAuth/session plumbing, not a
+backend platform.
+
+Better Auth is the stronger candidate if the owner wants the project to own a
+modern TypeScript auth layer. Context7 docs show email/password, social
+providers such as Google, account/session management, rate limiting, automatic
+database management/migrations, and plugin routes for magic link, email OTP,
+passkeys, 2FA, organisations, and access control.
+
+Key risk: both options require more app-owned security code than Supabase or
+Appwrite. They need an application backend and database for signed-in game
+state, and the project must design the account-to-game authorisation boundary
+itself.
+
+Sources:
+
+- https://authjs.dev/getting-started/authentication/oauth
+- https://authjs.dev/concepts/session-strategies
+- https://authjs.dev/guides/edge-compatibility
+- https://better-auth.com/docs/introduction
+- https://better-auth.com/docs/concepts/database
 
 ### Clerk
 
@@ -229,13 +281,13 @@ lists AuthKit as free up to 1 million monthly active users. It is overkill from 
 product-scope perspective for the first signed-in Crazy Phrases slice because it
 is primarily an enterprise-grade auth and user-management platform. Its strengths
 are social auth, email/password, Magic Auth, MFA, email verification,
-organization policies, JIT provisioning, passkeys, RBAC, enterprise SSO,
+organisation policies, JIT provisioning, passkeys, RBAC, enterprise SSO,
 Directory Sync, Admin Portal, and audit/security-adjacent products.
 
 For Crazy Phrases, WorkOS would still need a separate backend for signed-in game
 state. That means WorkOS plus Supabase/Neon/D1 instead of one provider that owns
 both auth and persistence. The extra provider can be justified if the owner wants
-the most polished hosted auth and expects organizations, enterprise SSO, RBAC, or
+the most polished hosted auth and expects organisations, enterprise SSO, RBAC, or
 admin portal features soon. It is not the smallest path to account-backed Solo
 Game save/resume.
 
@@ -254,7 +306,9 @@ Sources:
 
 Convex is strong for realtime apps and has an appealing personal-project tier.
 It includes a reactive database, auth, functions, file storage, preview
-deployments, and a TypeScript-first workflow.
+deployments, and a TypeScript-first workflow. Context7 docs show authenticated
+queries/mutations using identity checks and RLS-style helper patterns, so it can
+protect user-owned game state when the app is built around Convex functions.
 
 Key risk: it would steer Crazy Phrases toward a broader app-stack migration and
 a document/reactive model. That may be useful later, but it is not the smallest
@@ -265,23 +319,53 @@ Sources:
 - https://www.convex.dev/pricing
 - https://docs.convex.dev/auth/overview
 
-### Neon + Better Auth/Auth.js
+### Neon + Neon Auth/Better Auth/Auth.js
 
 Neon is a strong low-cost Postgres option. Current free plan details include
 0.5 GB storage per project, scale-to-zero compute, 100 CU-hours/month per
-project, and Neon Auth with 60k MAU. Better Auth is framework-agnostic and offers
-email/password, social sign-on, account/session management, rate limiting, and a
-plugin ecosystem including passkeys.
+project, and Neon Auth with 60k MAU. Context7 docs show serverless driver
+patterns for Next.js/serverless/edge runtimes and Neon Auth UI with
+Supabase-compatible sign-up, sign-in, OAuth, user, session, and sign-out calls.
+Better Auth is framework-agnostic and offers email/password, social sign-on,
+account/session management, rate limiting, and a plugin ecosystem including
+passkeys.
 
 Key risk: it requires more application/backend code than Supabase. That may be a
-good long-term engineering choice, but it is less frictionless for the immediate
-signed-in foundation.
+good long-term engineering choice, and Neon Auth is now more credible than a
+pure roll-your-own auth stack, but it is still less frictionless for the
+immediate signed-in foundation than Supabase's established Auth + Postgres + RLS
+workflow.
 
 Sources:
 
 - https://neon.com/pricing
+- https://neon.com/docs/auth/overview
 - https://better-auth.com/docs/introduction
 - https://better-auth.com/docs/plugins/passkey
+
+### SuperTokens
+
+SuperTokens is a strong auth/session candidate, especially if the owner wants
+customisable auth flows while retaining the option to self-host. Current pricing
+lists managed cloud as free under 5k MAU and open-source self-hosted features as
+free without an MAU cap; paid add-ons such as MFA and account linking have
+minimum monthly billing. Context7 docs show email/password, social login,
+passwordless magic link/OTP, email verification, sessions, MFA/TOTP, WebAuthn
+passkeys, user roles, multitenancy, and React prebuilt UI/custom API support.
+The session docs show robust cookie, refresh-token, anti-CSRF, and token-theft
+handling.
+
+Key risk: SuperTokens is not an application data backend. Crazy Phrases would
+still need Supabase, Neon, D1, Firebase, or another database/API layer for
+signed-in Solo Game state. Self-hosting also reintroduces operational
+responsibility, while managed cloud plus paid add-ons could become a fixed-cost
+decision earlier than Supabase/Appwrite.
+
+Sources:
+
+- https://supertokens.com/pricing
+- https://supertokens.com/docs/authentication/overview
+- https://supertokens.com/docs/deployment/self-host-supertokens
 
 ### PocketBase
 

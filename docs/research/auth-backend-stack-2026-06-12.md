@@ -66,6 +66,7 @@ Why this is the best fit:
 | Cloudflare Workers + D1 + Auth.js/Better Auth | D1 and Workers have very generous free usage and no D1 egress charge. | Depends on custom auth implementation; not end-user auth out of the box. | Can be strong, but the project owns more session, OAuth, CSRF, and authorization work. | Good lightweight SQL fit; migrations and privileged routes are custom. | Cheapest runtime fit, but more work and security responsibility. |
 | Appwrite Cloud | Free plan is explicitly aimed at passion projects, with 75k MAU, 1 database, 2 functions, 2 GB storage, and 5 GB bandwidth; free projects pause after inactivity. | Built-in auth, OAuth2, email OTP, magic URL, MFA options. | Good BaaS posture, but authorization model and ecosystem are less familiar than Supabase/Firebase. | Mostly document-oriented; enough for MVP, less ideal for future relational history. | Viable but not better than Supabase for this project. |
 | Clerk + Supabase/Neon/D1 | Clerk Hobby is free up to 50k retained users and has polished prebuilt auth UI. Backend still needs a second provider. | Best UX for prebuilt sign-up/sign-in/profile surfaces. | Strong managed auth, bot protection, breached password checks; passkeys/MFA require paid plan. | Depends on chosen backend. | Consider only if auth UX polish is worth an extra provider and possible branding/paid limits. |
+| WorkOS AuthKit + Supabase/Neon/D1 | AuthKit is currently free up to 1M MAU, but custom domains, Radar scale, SSO connections, and Directory Sync can add meaningful monthly cost. Backend still needs a second provider. | Very strong hosted auth: social, email/password, Magic Auth, MFA, passkeys, organizations, RBAC, and enterprise SSO. | Strong managed auth and enterprise controls, but the project still owns backend authorization for game state. | Depends on chosen backend. | Feature-rich and not cost-prohibitive for auth alone, but overpowered for the first consumer game slice unless enterprise auth is a near-term goal. |
 | Convex | Free/Starter is aimed at personal projects and includes auth, realtime, storage, functions, and preview deployments. | Good modern app experience, often with Convex Auth or external auth. | Good if staying in Convex's model; less standard for SQL/RLS-style authorization. | Reactive document database, not a natural fit for relational consent/history modelling. | Attractive for a full app rewrite, not the least disruptive #23 choice. |
 | Neon Postgres + Better Auth/Auth.js | Neon free includes Postgres, scale-to-zero, 0.5 GB storage, and Neon Auth with 60k MAU. | Good if the project adopts an app server/framework and owns more auth code. | Can be strong, but more is in project code: sessions, auth routes, CSRF, migrations. | Strong Postgres fit. | Promising but higher implementation complexity than Supabase. |
 | PocketBase self-hosted | Software cost is zero, but hosting, backups, patching, uptime, and TLS are on the project owner. | Built-in auth, OAuth2, OTP, MFA. | Acceptable for small self-hosted apps if operated carefully, but more ops burden. | SQLite-backed, simple and fast for small data. | Not recommended for production-critical direction; docs say v1.0 compatibility is not guaranteed. |
@@ -220,6 +221,34 @@ Sources:
 
 - https://clerk.com/pricing
 - https://clerk.com/docs/guides/configure/auth-strategies/social-connections/overview
+
+### WorkOS
+
+WorkOS AuthKit is not overkill from a cost-only perspective: current pricing
+lists AuthKit as free up to 1 million monthly active users. It is overkill from a
+product-scope perspective for the first signed-in Crazy Phrases slice because it
+is primarily an enterprise-grade auth and user-management platform. Its strengths
+are social auth, email/password, Magic Auth, MFA, email verification,
+organization policies, JIT provisioning, passkeys, RBAC, enterprise SSO,
+Directory Sync, Admin Portal, and audit/security-adjacent products.
+
+For Crazy Phrases, WorkOS would still need a separate backend for signed-in game
+state. That means WorkOS plus Supabase/Neon/D1 instead of one provider that owns
+both auth and persistence. The extra provider can be justified if the owner wants
+the most polished hosted auth and expects organizations, enterprise SSO, RBAC, or
+admin portal features soon. It is not the smallest path to account-backed Solo
+Game save/resume.
+
+Key cost caveats: AuthKit's free MAU allowance is generous, but custom domain is
+listed as a paid monthly add-on, Radar has a small free allowance before paid
+blocks, and SSO/Directory Sync connections are priced per connection. Those are
+fine to defer, but they are exactly the features WorkOS is strongest at.
+
+Sources:
+
+- https://workos.com/pricing
+- https://workos.com/docs/authkit
+- https://workos.com/docs/authkit/hosted-ui
 
 ### Convex
 

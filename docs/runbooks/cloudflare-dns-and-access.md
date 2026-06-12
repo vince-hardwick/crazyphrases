@@ -149,7 +149,7 @@ The anonymous solo MVP may replace the homepage in `dev` and `test` during revie
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
 
-Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml` in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
 
 ### Branch Lifecycle
 

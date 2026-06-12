@@ -72,6 +72,7 @@ jobs:
             output/**
             package.json
             package-lock.json
+            supabase/**
             tests/**
 
   deploy-production:
@@ -116,4 +117,5 @@ jobs:
             output/**
             package.json
             package-lock.json
+            supabase/**
             tests/**

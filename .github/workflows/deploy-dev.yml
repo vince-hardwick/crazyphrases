@@ -76,4 +76,5 @@ jobs:
             output/**
             package.json
             package-lock.json
+            supabase/**
             tests/**

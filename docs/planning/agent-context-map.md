@@ -37,6 +37,7 @@ Load the smallest authoritative set that can answer the task:
 | Topic | Open |
 | --- | --- |
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
+| Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
 | Domain language for game concepts | `CONTEXT.md` |
 | Deferred future features | `docs/backlog.md` |
 | Word-bank source candidates | `docs/research/word-bank-sources.md` |

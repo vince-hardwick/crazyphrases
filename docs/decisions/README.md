@@ -13,6 +13,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0007-account-deletion-preserves-collaborative-history.md` - account deletion and collaborative history preservation.
 - `0008-static-first-anonymous-solo.md` - static-first anonymous solo implementation boundary.
 - `0009-branch-based-dev-and-main-promotion.md` - feature-branch dev deployment and main-line test/production promotion.
+- `0010-supabase-auth-and-postgres-for-signed-in-state.md` - Supabase Auth and Postgres source-of-truth boundary for signed-in accounts and game state.
 
 ## Status Values
 

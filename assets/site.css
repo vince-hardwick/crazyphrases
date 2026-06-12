@@ -45,6 +45,59 @@ body {
   margin: 10px 0 22px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.account-shell {
+  min-width: 132px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(23, 33, 31, 0.08);
+}
+
+.account-shell p {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.account-shell span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.text-button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0;
+  color: var(--accent-strong);
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.text-button:hover {
+  text-decoration: underline;
+}
+
 .site-domain {
   margin: 0 0 8px;
   color: var(--accent-strong);
@@ -258,6 +311,7 @@ h1 {
 .entry-row input:focus-visible,
 .dice-button:focus-visible,
 .icon-button:focus-visible,
+.text-button:focus-visible,
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
@@ -472,6 +526,20 @@ h1 {
 @media (max-width: 720px) {
   .app-shell {
     padding: 18px 12px;
+  }
+
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: space-between;
+  }
+
+  .account-shell {
+    min-width: 0;
+    flex: 1;
   }
 
   .game-panel {

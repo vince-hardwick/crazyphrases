@@ -1,4 +1,8 @@
 import {
+  createAccountShell,
+  createSignedOutShell,
+} from "./account-shell.js?v=__ASSET_VERSION__";
+import {
   createAnonymousSoloGame,
   formatBatchCopyText,
   formatPhraseCopyText,
@@ -44,13 +48,32 @@ const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 const revealDetails = document.querySelector("[data-reveal-details]");
 const copyStatus = document.querySelector("[data-copy-status]");
+const accountStatus = document.querySelector("[data-account-status]");
+const accountDetail = document.querySelector("[data-account-detail]");
+const testSignInButton = document.querySelector("[data-test-sign-in-button]");
+const signOutButton = document.querySelector("[data-sign-out-button]");
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
   createAnonymousSoloGame({ rowCount: 20 });
 let wordBank = null;
+let accountShell = createSignedOutShell();
 
 loadWordBank();
+renderAccountShell(accountShell);
+
+testSignInButton.addEventListener("click", () => {
+  accountShell = createAccountShell({
+    account: { id: "test-account" },
+    profile: null,
+  });
+  renderAccountShell(accountShell);
+});
+
+signOutButton.addEventListener("click", () => {
+  accountShell = createSignedOutShell();
+  renderAccountShell(accountShell);
+});
 
 helpToggle.addEventListener("click", () => {
   const isExpanded = helpToggle.getAttribute("aria-expanded") === "true";
@@ -206,6 +229,21 @@ function renderGame() {
     ),
   );
   updateNextButton();
+}
+
+function renderAccountShell(shell) {
+  accountStatus.textContent = shell.statusLabel;
+  accountDetail.textContent =
+    shell.persistenceAuthority.type === "local-browser"
+      ? "Local play in this browser"
+      : `@${shell.profile.handle}`;
+  testSignInButton.hidden =
+    shell.mode !== "anonymous-solo" || !isLocalTestAuthAvailable();
+  signOutButton.hidden = shell.mode !== "signed-in";
+}
+
+function isLocalTestAuthAvailable() {
+  return ["127.0.0.1", "localhost"].includes(window.location.hostname);
 }
 
 function renderEntryRow(row, rowIndex, entryKind) {

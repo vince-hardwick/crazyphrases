@@ -19,16 +19,35 @@
           <p class="site-domain">crazyphrases.com</p>
           <h1 id="site-title">Crazy Phrases</h1>
         </div>
-        <button
-          class="icon-button"
-          type="button"
-          aria-expanded="false"
-          aria-controls="help-panel"
-          data-help-toggle
-        >
-          <span aria-hidden="true">?</span>
-          <span class="sr-only">How to play</span>
-        </button>
+        <div class="header-actions">
+          <section class="account-shell" aria-label="Account mode" data-account-shell>
+            <p data-account-status></p>
+            <span data-account-detail></span>
+            <div class="account-actions">
+              <button
+                class="text-button"
+                type="button"
+                data-test-sign-in-button
+                hidden
+              >
+                Test sign in
+              </button>
+              <button class="text-button" type="button" data-sign-out-button hidden>
+                Sign out
+              </button>
+            </div>
+          </section>
+          <button
+            class="icon-button"
+            type="button"
+            aria-expanded="false"
+            aria-controls="help-panel"
+            data-help-toggle
+          >
+            <span aria-hidden="true">?</span>
+            <span class="sr-only">How to play</span>
+          </button>
+        </div>
       </header>
 
       <section class="help-panel" id="help-panel" hidden>

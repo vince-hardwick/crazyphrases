@@ -41,6 +41,16 @@ describe("anonymous solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
     await assertTextVisible(page, "Crazy Phrases");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "Local play in this browser");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "@player-test-account");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "Local play in this browser");
 
     await page.getByRole("button", { name: "How to play" }).click();
     assert.equal(await page.locator("#help-panel").isVisible(), true);

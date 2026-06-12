@@ -94,6 +94,18 @@ operations:
 For repository work, keep SQL migrations, generated types, and any Edge Function
 source in git. Keep runtime secrets in environment-specific secret stores.
 
+## Local Test Auth
+
+The static app may expose a local-only `Test sign in` control when served from
+`localhost` or `127.0.0.1`. This control is a test fixture for the Account shell
+and browser smoke coverage. It creates an in-memory signed-in shell with a
+non-secret test Account id and does not call Supabase, create backend data,
+configure Auth providers, or authorise live mutation.
+
+Do not treat the local test auth control as production authentication. Hosted
+sign-in must use Supabase Auth after the project has redirect URLs and providers
+configured.
+
 ## First Integration Checklist
 
 Before implementing hosted signed-in flows:

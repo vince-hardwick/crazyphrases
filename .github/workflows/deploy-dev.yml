@@ -15,12 +15,6 @@ on:
       - "package-lock.json"
       - "tests/**"
   workflow_dispatch:
-    inputs:
-      cleanup_dev_supabase_directory:
-        description: Type delete-dev-supabase-directory to remove accidental supabase/ directory from the dev static host.
-        required: false
-        default: ""
-        type: string
 
 permissions:
   contents: read
@@ -28,7 +22,6 @@ permissions:
 jobs:
   verify:
     name: Verify static site
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.cleanup_dev_supabase_directory != 'delete-dev-supabase-directory' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -44,7 +37,6 @@ jobs:
 
   deploy-dev:
     name: Deploy branch to dev
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.cleanup_dev_supabase_directory != 'delete-dev-supabase-directory' }}
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
@@ -86,92 +78,3 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
-
-  cleanup-dev-supabase-directory:
-    name: Remove accidental dev Supabase directory
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.cleanup_dev_supabase_directory == 'delete-dev-supabase-directory' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    concurrency:
-      group: deploy-dev
-      cancel-in-progress: false
-    environment:
-      name: dev
-      url: https://dev.crazyphrases.com/
-    steps:
-      - name: Delete only supabase directory over FTPS
-        shell: bash
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
-        run: |
-          set -euo pipefail
-
-          : "${FTP_SERVER:?Missing FTP_SERVER}"
-          : "${FTP_USERNAME:?Missing FTP_USERNAME}"
-          : "${FTP_PASSWORD:?Missing FTP_PASSWORD}"
-          : "${FTP_SERVER_DIR:?Missing FTP_SERVER_DIR}"
-
-          server_dir="${FTP_SERVER_DIR//\\//}"
-          if [[ -z "${server_dir}" || "${server_dir}" == "/" || "${server_dir}" == "." || "${server_dir}" == ".." ]]; then
-            echo "::error::Refusing unsafe FTP_SERVER_DIR."
-            exit 1
-          fi
-          if [[ "${server_dir}" != */ ]]; then
-            echo "::error::FTP_SERVER_DIR must end with '/'."
-            exit 1
-          fi
-          if [[ "${server_dir}" == *"*"* || "${server_dir}" == *"?"* ]]; then
-            echo "::error::Refusing wildcard characters in FTP_SERVER_DIR."
-            exit 1
-          fi
-
-          target_file="${server_dir}supabase/migrations/20260612152050_create_signed_in_solo_current_games.sql"
-          target_migrations="${server_dir}supabase/migrations"
-          target_dir="${server_dir}supabase"
-          cleanup_url="ftp://${FTP_SERVER}/"
-
-          curl_common=(
-            --silent
-            --show-error
-            --ssl-reqd
-            --insecure
-            --ipv4
-            --ftp-pasv
-            --ftp-skip-pasv-ip
-            --connect-timeout 20
-            --max-time 90
-            --retry 3
-            --retry-all-errors
-            --retry-connrefused
-            --retry-delay 5
-            --user "${FTP_USERNAME}:${FTP_PASSWORD}"
-            --url "${cleanup_url}"
-          )
-
-          echo "Deleting known accidental dev Supabase migration file and directories."
-          curl "${curl_common[@]}" \
-            --quote "*DELE ${target_file}" \
-            --quote "*RMD ${target_migrations}" \
-            --quote "*RMD ${target_dir}" \
-            --list-only \
-            --output /dev/null
-
-          echo "Verifying supabase/ no longer exists under the configured dev FTP_SERVER_DIR."
-          if curl "${curl_common[@]}" \
-            --quote "CWD ${target_dir}" \
-            --list-only \
-            --output /dev/null; then
-            echo "::error::supabase/ still exists under the configured dev FTP_SERVER_DIR."
-            exit 1
-          else
-            curl_status=$?
-            if [[ "${curl_status}" == "21" ]]; then
-              echo "Verified supabase/ is absent from the configured dev FTP_SERVER_DIR."
-            else
-              echo "::error::Cleanup verification failed with curl exit code ${curl_status}."
-              exit "${curl_status}"
-            fi
-          fi

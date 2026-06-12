@@ -85,7 +85,8 @@ Use risk-tiered validation:
 
 - Documentation-only changes: inspect diffs and check links/paths where practical.
 - Static frontend changes: run the relevant local tests and a browser smoke test when available.
-- For local or deployed browser smoke tests, route through `docs/runbooks/in-app-browser-verification.md` before using standalone Playwright or other browser automation. The preferred path is the Codex in-app browser with its Playwright API.
+- For local or deployed browser smoke tests, route through `docs/runbooks/in-app-browser-verification.md` before using standalone Playwright or other browser automation. In this repository, browser smoke tests are user-observable by default: reveal the Codex in-app browser side pane with the Browser plugin visibility capability before navigating or interacting, unless the user explicitly asks for a hidden pre-push confidence check.
+- For local static frontend checks, follow the runbook's Local Static Site Fast Path before trying shell-launched servers, random ports, Edge-backed Playwright, or standalone Playwright. If a local server is needed, prefer the runbook's in-process JavaScript static server in the same persistent Browser-control runtime so the server remains alive while the visible `iab` tab is driven.
 - Deployment workflow changes: validate workflow syntax or dry-run paths where practical, then use `dev` before `test`.
 - Production-impacting changes: require explicit approval or the documented GitHub Environment gate, plus post-deployment verification.
 

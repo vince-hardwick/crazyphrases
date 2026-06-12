@@ -4,8 +4,11 @@ import { readFileSync } from "node:fs";
 
 import {
   createAnonymousSoloGame,
+  formatBatchCopyText,
+  formatPhraseCopyText,
   generateEntryCandidate,
   getActiveSection,
+  getRevealDetails,
   getStartAgainConfirmation,
   needsStartAgainConfirmation,
   recoverAnonymousSoloGame,
@@ -190,6 +193,46 @@ describe("anonymous solo game state", () => {
     game = revealBatch(game);
 
     assert.deepEqual(renderPhrases(game), ["Brisk teapot ladder"]);
+  });
+
+  it("formats copy-all plaintext with a title and unnumbered phrase lines", () => {
+    assert.equal(
+      formatBatchCopyText([
+        "Brisk teapot ladder",
+        "Curious biscuit moon",
+      ]),
+      "Crazy Phrases\nBrisk teapot ladder\nCurious biscuit moon",
+    );
+  });
+
+  it("formats per-phrase copy as only the phrase text", () => {
+    assert.equal(
+      formatPhraseCopyText("Brisk teapot ladder"),
+      "Brisk teapot ladder",
+    );
+  });
+
+  it("groups revealed contributing entries by section", () => {
+    let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
+
+    game = updateEntry(game, { rowIndex: 0, value: "brisk" });
+    game = updateEntry(game, { rowIndex: 1, value: "curious" });
+    game = submitActiveSection(game);
+
+    game = updateEntry(game, { rowIndex: 0, value: "teapot" });
+    game = updateEntry(game, { rowIndex: 1, value: "biscuit" });
+    game = submitActiveSection(game);
+
+    game = updateEntry(game, { rowIndex: 0, value: "ladder" });
+    game = updateEntry(game, { rowIndex: 1, value: "moon" });
+    game = submitActiveSection(game);
+    game = revealBatch(game);
+
+    assert.deepEqual(getRevealDetails(game), [
+      { label: "Adjectives", entries: ["brisk", "curious"] },
+      { label: "Nouns", entries: ["teapot", "biscuit"] },
+      { label: "Nouns", entries: ["ladder", "moon"] },
+    ]);
   });
 
   it("does not accept entries before the phrase count is locked in", () => {

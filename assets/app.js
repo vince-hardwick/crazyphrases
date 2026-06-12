@@ -1,7 +1,10 @@
 import {
   createAnonymousSoloGame,
+  formatBatchCopyText,
+  formatPhraseCopyText,
   generateEntryCandidate,
   getActiveSection,
+  getRevealDetails,
   getStartAgainConfirmation,
   needsStartAgainConfirmation,
   renderPhrases,
@@ -38,6 +41,8 @@ const entryList = document.querySelector("[data-entry-list]");
 const nextButton = document.querySelector("[data-next-button]");
 const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
+const revealDetails = document.querySelector("[data-reveal-details]");
+const copyStatus = document.querySelector("[data-copy-status]");
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
@@ -144,6 +149,24 @@ entryForm.addEventListener("submit", (event) => {
   renderGame();
 });
 
+revealPanel.addEventListener("click", (event) => {
+  const phraseCopyButton = event.target.closest("[data-copy-phrase-index]");
+
+  if (phraseCopyButton) {
+    const phrases = renderPhrases(game, { wordBank });
+    const phrase = phrases[Number(phraseCopyButton.dataset.copyPhraseIndex)];
+    void copyText(formatPhraseCopyText(phrase), "Phrase copied.");
+    return;
+  }
+
+  if (event.target.closest("[data-copy-all-button]")) {
+    void copyText(
+      formatBatchCopyText(renderPhrases(game, { wordBank })),
+      "Batch copied.",
+    );
+  }
+});
+
 renderGame();
 
 function renderGame() {
@@ -162,13 +185,11 @@ function renderGame() {
     entryForm.hidden = true;
     revealPanel.hidden = false;
     progress.textContent = `${game.rowCount} phrases complete`;
+    copyStatus.textContent = "";
     phraseList.replaceChildren(
-      ...renderPhrases(game, { wordBank }).map((phrase) => {
-        const item = document.createElement("li");
-        item.textContent = phrase;
-        return item;
-      }),
+      ...renderPhrases(game, { wordBank }).map(renderPhraseItem),
     );
+    revealDetails.replaceChildren(...getRevealDetails(game).map(renderDetailGroup));
     return;
   }
 
@@ -216,6 +237,44 @@ function renderEntryRow(row, rowIndex, entryKind) {
 
   rowElement.append(rowNumber, input, diceButton);
   return rowElement;
+}
+
+function renderPhraseItem(phrase, phraseIndex) {
+  const item = document.createElement("li");
+
+  const phraseText = document.createElement("span");
+  phraseText.textContent = phrase;
+
+  const copyButton = document.createElement("button");
+  copyButton.type = "button";
+  copyButton.className = "secondary-button phrase-copy-button";
+  copyButton.dataset.copyPhraseIndex = String(phraseIndex);
+  copyButton.textContent = "Copy";
+  copyButton.ariaLabel = `Copy phrase ${phraseIndex + 1}`;
+
+  item.append(phraseText, copyButton);
+  return item;
+}
+
+function renderDetailGroup(group, groupIndex) {
+  const section = document.createElement("section");
+  section.className = "reveal-detail-group";
+
+  const heading = document.createElement("h3");
+  heading.textContent = `Section ${groupIndex + 1}: ${group.label}`;
+
+  const list = document.createElement("ol");
+  list.className = "reveal-entry-list";
+  list.replaceChildren(
+    ...group.entries.map((entry) => {
+      const item = document.createElement("li");
+      item.textContent = entry;
+      return item;
+    }),
+  );
+
+  section.append(heading, list);
+  return section;
 }
 
 function updateNextButton() {
@@ -272,6 +331,19 @@ function showStartAgainConfirmation() {
 
 function hideStartAgainConfirmation() {
   startAgainConfirmation.hidden = true;
+}
+
+async function copyText(text, successMessage) {
+  try {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("Clipboard unavailable.");
+    }
+
+    await navigator.clipboard.writeText(text);
+    copyStatus.textContent = successMessage;
+  } catch {
+    copyStatus.textContent = "Copy unavailable.";
+  }
 }
 
 async function loadWordBank() {

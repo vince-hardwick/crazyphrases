@@ -187,6 +187,21 @@ export function renderPhrases(game, { wordBank } = {}) {
   });
 }
 
+export function formatBatchCopyText(phrases, { title = "Crazy Phrases" } = {}) {
+  return [title, ...phrases].join("\n");
+}
+
+export function formatPhraseCopyText(phrase) {
+  return phrase;
+}
+
+export function getRevealDetails(game) {
+  return game.sections.map((section) => ({
+    label: getRevealDetailLabel(section.kind),
+    entries: section.rows.map((row) => row.value),
+  }));
+}
+
 function assertStarted(game) {
   if (!game.started) {
     throw new Error("Start the batch before entering words.");
@@ -238,6 +253,10 @@ function chooseCandidate(candidates, { random, used }) {
 
 function candidateKey(candidate) {
   return candidate.trim().toLowerCase();
+}
+
+function getRevealDetailLabel(entryKind) {
+  return entryKind === "adjective" ? "Adjectives" : "Nouns";
 }
 
 function isRecoverableAnonymousSoloGame(game) {

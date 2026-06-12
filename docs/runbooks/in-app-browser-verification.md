@@ -197,8 +197,13 @@ For the anonymous solo MVP, a deployment smoke should check:
 - Completing all three sections reveals the expected number of phrases.
 - Revealed phrase text does not contain generated row or phrase numbers.
 - Revealed default-template phrases render in adjective-noun-noun order.
+- Revealed phrases have per-phrase copy actions.
+- The reveal view has a copy-all action that copies a title and unnumbered phrase lines.
+- The reveal view has optional entry details grouped by section.
 
 Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Fill these adjectives`, and noun words only when the page says `Fill these nouns`. Do not assume the first visible entry section is the adjective slot.
+
+When checking clipboard output from the visible browser on Windows, normalize `\r\n` to `\n` before comparing expected copy text. The assertion must still prove that per-phrase copy contains only the phrase text and that copy-all contains the short title followed by unnumbered phrase lines.
 
 ## Static Asset Cache Check
 

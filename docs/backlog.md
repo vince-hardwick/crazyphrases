@@ -86,6 +86,13 @@
 - **Revisit when**: Default-template games, accounts, handle invites, external sharing, and private favourites are working.
 - **Remaining risk**: Sharing, consent, provenance, and reaction concepts should remain available for future public discovery.
 
+### Private phrase and batch favourites follow-up slice
+
+- **Deferred**: Private Phrase Favourites and Batch Favourites from the signed-in foundation and solo save/resume PRD.
+- **Why deferred**: The first signed-in slice should prove Account identity and current-game persistence before adding saved-output collections.
+- **Revisit when**: Signed-in solo current-game save/resume is working in dev/test and the persistence model can distinguish current game state from saved favourites.
+- **Remaining risk**: Favourite storage still needs to decide whether a favourite stores rendered text, entry provenance, a game reference, or a combination of those fields.
+
 ### Phrase reactions
 
 - **Deferred**: Laugh and like reactions for shared phrases.
@@ -177,6 +184,13 @@
 - **Revisit when**: Players repeatedly invite the same accounts or need a faster trusted-player workflow.
 - **Remaining risk**: Invite and notification code should avoid assuming all invited accounts are friends.
 
+### Signed-in 2-player asynchronous game
+
+- **Deferred**: The first signed-in 2-player asynchronous Game slice, including handle invites, Pending Game lifecycle, multi-participant Slot Allocation, Slot Order, Turn completion, Reveal, Share Consent, Nudges, and In-App Notifications.
+- **Why deferred**: The product needs a working Account, identity, and backend-backed persistence boundary before collaborative game state is designed.
+- **Revisit when**: Signed-in solo current-game save/resume has passed automated and browser smoke verification.
+- **Remaining risk**: Account and solo persistence models must leave room for collaborative history, participant snapshots, consent records, cancellation, and account deletion anonymisation.
+
 ### Manual pokes
 
 - **Deferred**: Letting participants manually poke another participant to take their turn.
@@ -246,6 +260,13 @@
 - **Why deferred**: MVP already supports manual entry and global word-bank dice candidates; personal lists add account-specific storage, tagging UI, privacy, and source-selection controls.
 - **Revisit when**: Players want to reuse favourite private words across games.
 - **Remaining risk**: Entry-assistance code should preserve the distinction between global and personal candidate sources.
+
+### Anonymous solo import to signed-in state
+
+- **Deferred**: Automatically or manually importing a current anonymous solo local game into signed-in account persistence.
+- **Why deferred**: Silent upload would blur the boundary between local anonymous recovery and Account-backed persistence; manual import needs explicit user consent and conflict handling.
+- **Revisit when**: Signed-in save/resume is working and the product introduces sign-in prompts around active anonymous games or revealed anonymous batches.
+- **Remaining risk**: Visitors may expect a current local game to follow them after sign-in, so UI copy must avoid implying migration until an import flow exists.
 
 ### Expanded word-bank source selection
 

@@ -214,6 +214,14 @@ MVP authentication may use simple provider-backed sign-in, including social logi
 
 Signed-in solo games can be saved and resumed. Anonymous solo games are local and ephemeral. Multiplayer in-progress state is persisted because multiplayer requires accounts, invites, and turns.
 
+Signed-in solo persistence stores the current signed-in Solo Game as backend-backed state by Account. Browser local storage is not the authority for signed-in game state.
+
+Anonymous solo local recovery and signed-in account persistence are separate lifecycle paths. Signing in must not silently upload or import a current anonymous local game. Explicit import from anonymous solo to signed-in state is a later product decision.
+
+The first signed-in solo persistence slice stores the current signed-in Solo Game rather than a full signed-in game-history browser. A revealed signed-in solo batch remains resumable as the current game until the participant starts again. Private Phrase Favourites and Batch Favourites are separate saved-output features.
+
+Signed-in solo save/resume should prevent stale clients from silently overwriting newer account-backed progress, using a revision, version, or equivalent concurrency rule.
+
 MVP anonymous solo is a client-only experience using manual entry and the tiny bundled seed word bank. It does not require account state, backend persistence, invite state, or server-side word-bank access.
 
 The first implementation is static-first for anonymous solo, with a clear backend boundary for signed-in features. Accounts, signed-in persistence, multiplayer, invites, consent, and private favourites require backend-backed state rather than static hosting alone.

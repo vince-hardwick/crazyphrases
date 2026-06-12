@@ -178,6 +178,8 @@ Per-phrase copy copies only that phrase text. Copy-all includes a short title fo
 
 MVP uses clipboard copy for plaintext phrase and batch sharing. Web Share API integration is deferred as a later progressive enhancement.
 
+Clipboard copy should use the browser Clipboard API when available, and fall back to a temporary plaintext selection/copy path when that API is unavailable or blocked. If the browser exposes no usable copy mechanism, the UI should report that copy is unavailable rather than silently claiming success.
+
 ### Public safety
 
 Shared phrases and published templates become eligible for public discovery only after automated safety screening. Published public content can be reported by participants and handled through later human or admin review for edge cases. Private saved templates remain outside public discovery.

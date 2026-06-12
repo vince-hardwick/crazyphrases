@@ -13,6 +13,7 @@ import {
   submitActiveSection,
   updateEntry,
 } from "./game-state.js?v=__ASSET_VERSION__";
+import { writePlainText } from "./clipboard.js?v=__ASSET_VERSION__";
 import {
   loadCurrentAnonymousSoloGame,
   saveCurrentAnonymousSoloGame,
@@ -334,16 +335,12 @@ function hideStartAgainConfirmation() {
 }
 
 async function copyText(text, successMessage) {
-  try {
-    if (!navigator.clipboard?.writeText) {
-      throw new Error("Clipboard unavailable.");
-    }
-
-    await navigator.clipboard.writeText(text);
+  if (await writePlainText(text)) {
     copyStatus.textContent = successMessage;
-  } catch {
-    copyStatus.textContent = "Copy unavailable.";
+    return;
   }
+
+  copyStatus.textContent = "Copy unavailable.";
 }
 
 async function loadWordBank() {

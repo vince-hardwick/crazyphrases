@@ -94,6 +94,12 @@ operations:
 For repository work, keep SQL migrations, generated types, and any Edge Function
 source in git. Keep runtime secrets in environment-specific secret stores.
 
+Source-controlled Supabase migrations live in `supabase/migrations/`. Prefer
+creating new migration files with `supabase migration new <name>` when the
+Supabase CLI is installed. On 2026-06-12 the CLI was not available on this
+Codex workspace `PATH`, so the first migration file was created manually using
+the normal timestamped filename convention.
+
 ## Local Test Auth
 
 The static app may expose a local-only `Test sign in` control when served from
@@ -105,6 +111,31 @@ configure Auth providers, or authorise live mutation.
 Do not treat the local test auth control as production authentication. Hosted
 sign-in must use Supabase Auth after the project has redirect URLs and providers
 configured.
+
+For local browser tests, the fixture may persist a signed-in current Solo Game
+under account-scoped local test storage keys. This is a backend seam simulator,
+not signed-in production authority. It must remain separate from anonymous solo
+local recovery and must not upload, merge, or import anonymous local games when
+the participant clicks `Test sign in`.
+
+The first signed-in current-game migration is:
+
+```text
+supabase/migrations/20260612152050_create_signed_in_solo_current_games.sql
+```
+
+It creates `public.signed_in_solo_current_games`, keyed by Supabase Auth
+`auth.users.id`, with Row Level Security, explicit Data API grants for
+`authenticated`, no `anon` grants, and a `revision` field for the stale-write
+slice.
+
+As of 2026-06-12, this migration is source-controlled but has not been applied
+to the hosted Supabase project by Codex. Applying it mutates the managed backend
+schema and requires explicit owner approval for that live DDL action. Revisit
+when the owner approves applying
+`create_signed_in_solo_current_games`; until then, local tests can prove the
+provider-independent contract, but hosted Supabase signed-in persistence cannot
+be validated.
 
 ## First Integration Checklist
 

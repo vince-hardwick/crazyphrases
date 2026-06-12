@@ -137,6 +137,47 @@ describe("anonymous solo browser smoke", () => {
 
     assertNoConsoleErrors();
   });
+
+  it("resumes local test signed-in setup without importing anonymous local play", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "15" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "20 phrases selected");
+    assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    const signedInSectionTitle = await page.locator("[data-section-title]").innerText();
+    assert.equal(await page.locator("[data-row-index]").count(), 10);
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(await page.locator("[data-section-title]").innerText(), signedInSectionTitle);
+    assert.equal(await page.locator("[data-row-index]").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
 });
 
 async function startStaticServer() {

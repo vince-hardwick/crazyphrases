@@ -4,6 +4,7 @@ import {
 } from "./account-shell.js?v=__ASSET_VERSION__";
 import {
   createAnonymousSoloGame,
+  createSignedInSoloGame,
   formatBatchCopyText,
   formatPhraseCopyText,
   generateEntryCandidate,
@@ -22,6 +23,7 @@ import {
   loadCurrentAnonymousSoloGame,
   saveCurrentAnonymousSoloGame,
 } from "./local-game-storage.js?v=__ASSET_VERSION__";
+import { createLocalTestSignedInSoloGameRepository } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
@@ -58,21 +60,33 @@ let game =
   createAnonymousSoloGame({ rowCount: 20 });
 let wordBank = null;
 let accountShell = createSignedOutShell();
+const signedInGameRepository = createLocalTestSignedInSoloGameRepository(
+  window.localStorage,
+);
 
 loadWordBank();
 renderAccountShell(accountShell);
 
-testSignInButton.addEventListener("click", () => {
+testSignInButton.addEventListener("click", async () => {
   accountShell = createAccountShell({
     account: { id: "test-account" },
     profile: null,
   });
+  game =
+    (await signedInGameRepository.loadCurrentGame({
+      accountId: accountShell.accountId,
+    })) ?? createCurrentModeSoloGame({ rowCount: 20 });
   renderAccountShell(accountShell);
+  renderGame();
 });
 
 signOutButton.addEventListener("click", () => {
   accountShell = createSignedOutShell();
+  game =
+    loadCurrentAnonymousSoloGame(window.localStorage) ??
+    createAnonymousSoloGame({ rowCount: 20 });
   renderAccountShell(accountShell);
+  renderGame();
 });
 
 helpToggle.addEventListener("click", () => {
@@ -88,15 +102,15 @@ rowCountButtons.forEach((button) => {
     }
 
     const rowCount = Number(button.dataset.rowCount);
-    game = createAnonymousSoloGame({ rowCount });
-    persistGame();
+    game = createCurrentModeSoloGame({ rowCount });
+    void persistGame();
     renderGame();
   });
 });
 
 startButton.addEventListener("click", () => {
   game = startGame(game);
-  persistGame();
+  void persistGame();
   renderGame();
 });
 
@@ -139,7 +153,7 @@ entryForm.addEventListener("input", (event) => {
     rowIndex: Number(input.dataset.rowIndex),
     value: input.value,
   });
-  persistGame();
+  void persistGame();
   updateNextButton();
 });
 
@@ -155,7 +169,7 @@ entryForm.addEventListener("click", (event) => {
     rowIndex,
     wordBank,
   });
-  persistGame();
+  void persistGame();
   renderGame();
   entryList.querySelector(`[data-row-index="${rowIndex}"]`)?.focus();
 });
@@ -169,7 +183,7 @@ entryForm.addEventListener("submit", (event) => {
     game = revealBatch(game);
   }
 
-  persistGame();
+  void persistGame();
   renderGame();
 });
 
@@ -349,14 +363,37 @@ function getGamePhase() {
   return game.revealed ? "reveal" : "entry";
 }
 
-function persistGame() {
+async function persistGame() {
+  if (accountShell.persistenceAuthority.type === "account") {
+    if (!game.started) {
+      return;
+    }
+
+    await signedInGameRepository.saveCurrentGame({
+      accountId: accountShell.accountId,
+      game,
+    });
+    return;
+  }
+
   saveCurrentAnonymousSoloGame(window.localStorage, game);
 }
 
 function startAgain() {
-  game = createAnonymousSoloGame({ rowCount: game.rowCount });
-  persistGame();
+  game = createCurrentModeSoloGame({ rowCount: game.rowCount });
+  void persistGame();
   renderGame();
+}
+
+function createCurrentModeSoloGame({ rowCount }) {
+  if (accountShell.persistenceAuthority.type === "account") {
+    return createSignedInSoloGame({
+      accountId: accountShell.accountId,
+      rowCount,
+    });
+  }
+
+  return createAnonymousSoloGame({ rowCount });
 }
 
 function showStartAgainConfirmation() {

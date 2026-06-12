@@ -23,6 +23,20 @@ export function createAnonymousSoloGame({ rowCount = 20, random = Math.random } 
   };
 }
 
+export function createSignedInSoloGame({
+  accountId,
+  rowCount = 20,
+  random = Math.random,
+} = {}) {
+  assertAccountId(accountId);
+
+  return {
+    ...createAnonymousSoloGame({ rowCount, random }),
+    mode: "signed-in-solo",
+    accountId,
+  };
+}
+
 export function serializeAnonymousSoloGame(game) {
   return JSON.stringify({
     schemaVersion: ANONYMOUS_SOLO_STORAGE_SCHEMA,
@@ -205,6 +219,12 @@ export function getRevealDetails(game) {
 function assertStarted(game) {
   if (!game.started) {
     throw new Error("Start the batch before entering words.");
+  }
+}
+
+function assertAccountId(accountId) {
+  if (typeof accountId !== "string" || accountId.trim() === "") {
+    throw new Error("A signed-in Account id is required.");
   }
 }
 

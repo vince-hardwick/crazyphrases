@@ -15,6 +15,12 @@ on:
       - "package-lock.json"
       - "tests/**"
   workflow_dispatch:
+    inputs:
+      cleanup_dev_supabase_directory:
+        description: Type delete-dev-supabase-directory to remove accidental supabase/ directory from the dev static host.
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +28,7 @@ permissions:
 jobs:
   verify:
     name: Verify static site
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.cleanup_dev_supabase_directory != 'delete-dev-supabase-directory' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -37,6 +44,7 @@ jobs:
 
   deploy-dev:
     name: Deploy branch to dev
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.cleanup_dev_supabase_directory != 'delete-dev-supabase-directory' }}
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
@@ -78,3 +86,123 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
+
+  cleanup-dev-supabase-directory:
+    name: Remove accidental dev Supabase directory
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.cleanup_dev_supabase_directory == 'delete-dev-supabase-directory' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    environment:
+      name: dev
+      url: https://dev.crazyphrases.com/
+    steps:
+      - name: Delete only supabase directory over FTPS
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+        run: |
+          python3 <<'PY'
+          from ftplib import FTP_TLS, error_perm
+          import os
+          import posixpath
+          import sys
+
+          target = "supabase"
+
+          def require_env(name):
+              value = os.environ.get(name, "")
+              if not value:
+                  raise SystemExit(f"Missing required environment variable: {name}")
+              return value
+
+          def require_safe_name(name):
+              if name in {"", ".", ".."} or "/" in name or "\\" in name:
+                  raise RuntimeError(f"Refusing unsafe FTP path segment: {name!r}")
+
+          def clean_dir(path):
+              value = path.replace("\\", "/")
+              if "\x00" in value or "*" in value or "?" in value:
+                  raise RuntimeError("Refusing unsafe FTP_SERVER_DIR value.")
+              if not value.endswith("/"):
+                  raise RuntimeError("FTP_SERVER_DIR must end with '/'.")
+              return value
+
+          def list_entries(ftps):
+              try:
+                  return [
+                      (name, facts.get("type", "").lower())
+                      for name, facts in ftps.mlsd()
+                      if name not in {".", ".."}
+                  ]
+              except Exception:
+                  return [
+                      (posixpath.basename(name.rstrip("/")), "")
+                      for name in ftps.nlst()
+                      if posixpath.basename(name.rstrip("/")) not in {"", ".", ".."}
+                  ]
+
+          def remove_dir(ftps, dirname, depth=0):
+              require_safe_name(dirname)
+              ftps.cwd(dirname)
+              current_pwd = ftps.pwd()
+              if depth == 0 and posixpath.basename(current_pwd.rstrip("/")) != target:
+                  raise RuntimeError(f"Refusing to remove unexpected FTP directory: {current_pwd}")
+
+              for name, kind in list_entries(ftps):
+                  require_safe_name(name)
+                  if kind in {"cdir", "pdir"}:
+                      continue
+                  if kind == "dir":
+                      remove_dir(ftps, name, depth + 1)
+                      continue
+                  try:
+                      ftps.delete(name)
+                      print(f"Deleted file {posixpath.join(current_pwd, name)}")
+                  except error_perm:
+                      remove_dir(ftps, name, depth + 1)
+
+              ftps.cwd("..")
+              ftps.rmd(dirname)
+              print(f"Removed directory {current_pwd}")
+
+          server = require_env("FTP_SERVER")
+          username = require_env("FTP_USERNAME")
+          password = require_env("FTP_PASSWORD")
+          server_dir = clean_dir(require_env("FTP_SERVER_DIR"))
+
+          ftps = FTP_TLS(timeout=30)
+          ftps.connect(server, 21)
+          ftps.login(username, password)
+          ftps.prot_p()
+          ftps.cwd(server_dir)
+
+          root_pwd = ftps.pwd()
+          try:
+              ftps.cwd(target)
+          except error_perm:
+              print("No supabase/ directory found under the configured dev FTP_SERVER_DIR.")
+              ftps.quit()
+              sys.exit(0)
+
+          target_pwd = ftps.pwd()
+          ftps.cwd(root_pwd)
+
+          root_clean = root_pwd.rstrip("/") or "/"
+          target_parent = posixpath.dirname(target_pwd.rstrip("/") or "/")
+          if posixpath.basename(target_pwd.rstrip("/")) != target:
+              raise RuntimeError(f"Refusing unexpected target directory: {target_pwd}")
+          if target_parent != root_clean:
+              raise RuntimeError(
+                  f"Refusing to remove target outside configured root: {target_pwd}"
+              )
+
+          remove_dir(ftps, target)
+          ftps.quit()
+          print("Targeted dev supabase/ cleanup complete.")
+          PY

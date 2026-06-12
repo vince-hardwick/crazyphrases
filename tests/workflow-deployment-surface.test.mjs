@@ -54,4 +54,23 @@ describe("workflow deployment surface", () => {
       }
     });
   }
+
+  it("uses bounded curl FTPS commands for the targeted dev Supabase cleanup", () => {
+    const workflow = readFileSync(workflowPaths[0], "utf8");
+
+    assert.match(workflow, /cleanup_dev_supabase_directory/);
+    assert.match(workflow, /delete-dev-supabase-directory/);
+    assert.doesNotMatch(workflow, /from ftplib import/);
+    assert.match(workflow, /curl/);
+    assert.match(workflow, /--ssl-reqd/);
+    assert.match(workflow, /--ipv4/);
+    assert.match(workflow, /--retry-all-errors/);
+    assert.match(
+      workflow,
+      /DELE \$\{target_file\}/,
+      "cleanup must target the accidental migration file before removing directories",
+    );
+    assert.match(workflow, /RMD \$\{target_migrations\}/);
+    assert.match(workflow, /RMD \$\{target_dir\}/);
+  });
 });

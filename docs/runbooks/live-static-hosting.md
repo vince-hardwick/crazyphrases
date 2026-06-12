@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This runbook describes how to publish the temporary `crazyphrases.com` static landing page without exposing the server directory index or creating mixed-content browser warnings.
+This runbook describes how to publish the static `crazyphrases.com` site without exposing the server directory index or creating mixed-content browser warnings. The current production site is the static anonymous solo Crazy Phrases app.
 
 ## Files To Upload
 
@@ -12,6 +12,9 @@ Upload these repository paths to the live web root for `crazyphrases.com`:
 - `index.html`
 - `assets/site.css`
 - `assets/app.js`
+- `assets/game-state.js`
+- `assets/local-game-storage.js`
+- `assets/word-bank-seed.json`
 
 The live web root is the hosting account directory that currently displays `Index of /` and contains `cgi-bin/`. On many shared hosts this is named `public_html`, `www`, `htdocs`, or the domain-specific document root shown in the hosting panel.
 
@@ -27,7 +30,7 @@ The live web root is the hosting account directory that currently displays `Inde
 
 The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
 
-The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`.
+The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`. Runtime data assets fetched by browser code, such as `assets/word-bank-seed.json`, must also use a deployed asset-version query string when referenced from JavaScript.
 
 ## GitHub Actions Deployment
 
@@ -48,7 +51,7 @@ The promotion workflow verifies required files, runs available static-site tests
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 
-Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. Browser module imports are stamped too; for example, source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, and deployed `assets/app.js` should import `./game-state.js?v=<commit-sha>`. This prevents browsers from combining fresh HTML or JavaScript with stale transitive modules after a static deployment.
+Static asset URLs in deployed `index.html` are stamped with the workflow commit SHA before FTPS upload. Source `index.html` keeps `__ASSET_VERSION__` placeholders; deployed environments should show asset URLs such as `assets/app.js?v=<commit-sha>`. Browser module imports and runtime data fetches are stamped too; for example, source `assets/app.js` imports `./game-state.js?v=__ASSET_VERSION__`, imports `./local-game-storage.js?v=__ASSET_VERSION__`, and fetches `assets/word-bank-seed.json?v=__ASSET_VERSION__`. Deployed files should use the same commit SHA in those URLs. This prevents browsers from combining fresh HTML or JavaScript with stale transitive modules or stale word-bank data after a static deployment.
 
 ## Example Nginx Settings
 
@@ -88,6 +91,7 @@ Expected:
 - The HTTPS response is `200`.
 - The page source contains no `http://` asset URLs.
 - The browser no longer shows `Index of /`.
+- The page opens the Crazy Phrases anonymous solo game rather than a holding page.
 
 ## Authority Boundary
 

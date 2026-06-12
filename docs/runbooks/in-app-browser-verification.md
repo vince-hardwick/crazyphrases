@@ -68,6 +68,14 @@ For local verification of this static app before deployment to `dev`, `test`, or
 
 This local fast path is specifically for ad hoc local files in the current working tree. It is useful before a branch has been deployed or when checking browser behaviour before push. It does not prove that `dev`, `test`, or production received the same files; deployed environments still need the deployed environment path above.
 
+The committed automated confidence check is:
+
+```powershell
+npm test
+```
+
+That command runs the unit tests and the headless Playwright browser smoke in `tests/browser-smoke.test.mjs`. It is appropriate for local and CI confidence before pushing, and it documents the full anonymous solo smoke path expected by issue implementation work. It is not a replacement for the visible Codex in-app browser path when a task requires user-observed local, `dev`, `test`, or production verification.
+
 Do not start with a shell-launched `python -m http.server` or an arbitrary free port for smoke verification. A shell server can exit between shell turns and can make the in-app browser failure look like a Browser plugin problem. Start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
 
 Use this shape, adjusting only the absolute workspace path if the repository moves:

@@ -65,6 +65,12 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
 
+      - name: Render Supabase runtime config
+        uses: ./.github/actions/render-supabase-runtime-config
+        with:
+          url: ${{ vars.SUPABASE_URL }}
+          publishable-key: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+
       - name: Stamp static asset version
         shell: bash
         run: |

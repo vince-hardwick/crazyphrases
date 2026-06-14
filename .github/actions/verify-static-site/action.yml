@@ -14,6 +14,7 @@ runs:
         test -f assets/account-shell.js
         test -f assets/local-game-storage.js
         test -f assets/signed-in-game-storage.js
+        test -f assets/supabase-config.js
         test -f assets/word-bank-seed.json
 
     - name: Verify static asset cache-busting placeholders
@@ -27,6 +28,7 @@ runs:
         grep -q "./signed-in-game-storage.js?v=__ASSET_VERSION__" assets/app.js
         grep -q "./game-state.js?v=__ASSET_VERSION__" assets/local-game-storage.js
         grep -q "assets/word-bank-seed.json?v=__ASSET_VERSION__" assets/app.js
+        grep -q "SUPABASE_RUNTIME_CONFIG" assets/supabase-config.js
         grep -q "no-store" .htaccess
 
     - name: Verify seed Word Bank shape
@@ -38,6 +40,8 @@ runs:
       shell: bash
       run: |
         ! grep -R "http://" index.html assets
+        ! grep -R "sb_secret_" index.html assets
+        ! grep -R "service_role" index.html assets
 
     - name: Install npm dependencies when present
       shell: bash

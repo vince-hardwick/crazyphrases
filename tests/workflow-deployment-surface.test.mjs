@@ -11,6 +11,10 @@ const ftpsPreflightActionPath = new URL(
   "../.github/actions/verify-ftps-deploy-target/action.yml",
   import.meta.url,
 );
+const supabaseConfigActionPath = new URL(
+  "../.github/actions/render-supabase-runtime-config/action.yml",
+  import.meta.url,
+);
 
 const requiredSourceOnlyExcludes = [
   ".github/**",
@@ -93,4 +97,43 @@ describe("workflow deployment surface", () => {
     assert.match(promoteWorkflow, /name: Verify test FTPS target/);
     assert.match(promoteWorkflow, /name: Verify production FTPS target/);
   });
+
+  it("renders Supabase runtime config from environment variables before each upload", () => {
+    const configAction = readFileSync(supabaseConfigActionPath, "utf8");
+
+    assert.match(configAction, /SUPABASE_URL/);
+    assert.match(configAction, /SUPABASE_PUBLISHABLE_KEY/);
+    assert.match(configAction, /assets\/supabase-config\.js/);
+    assert.match(configAction, /sb_publishable_/);
+    assert.doesNotMatch(configAction, /sb_secret_/);
+
+    for (const workflowPath of workflowPaths) {
+      const workflow = readFileSync(workflowPath, "utf8");
+      const ftpDeployIndexes = matchIndexes(
+        workflow,
+        /uses: SamKirkland\/FTP-Deploy-Action@v4\.4\.0/g,
+      );
+      const configRenderIndexes = matchIndexes(
+        workflow,
+        /uses: \.\/\.github\/actions\/render-supabase-runtime-config/g,
+      );
+
+      assert.equal(
+        configRenderIndexes.length,
+        ftpDeployIndexes.length,
+        `${workflowPath.pathname} must render Supabase runtime config before each FTPS upload`,
+      );
+
+      for (const [index, ftpDeployIndex] of ftpDeployIndexes.entries()) {
+        assert.ok(
+          configRenderIndexes[index] < ftpDeployIndex,
+          `${workflowPath.pathname} must render Supabase runtime config before FTPS upload ${index + 1}`,
+        );
+      }
+    }
+  });
 });
+
+function matchIndexes(value, pattern) {
+  return [...value.matchAll(pattern)].map((match) => match.index);
+}

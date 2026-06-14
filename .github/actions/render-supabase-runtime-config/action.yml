@@ -1,0 +1,54 @@
+name: Render Supabase runtime config
+description: Render browser-safe Supabase configuration into the static asset tree.
+
+inputs:
+  url:
+    description: Supabase project URL.
+    required: true
+  publishable-key:
+    description: Supabase publishable API key.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Render config module
+      shell: bash
+      env:
+        SUPABASE_URL: ${{ inputs.url }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ inputs.publishable-key }}
+      run: |
+        python3 - <<'PY'
+        import json
+        import os
+        import pathlib
+        import sys
+        from urllib.parse import urlparse
+
+        url = os.environ.get("SUPABASE_URL", "").strip()
+        publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+
+        parsed_url = urlparse(url)
+        if parsed_url.scheme != "https" or not parsed_url.netloc:
+          print("::error::SUPABASE_URL must be an HTTPS URL.", file=sys.stderr)
+          sys.exit(1)
+
+        if not publishable_key.startswith("sb_publishable_"):
+          print("::error::SUPABASE_PUBLISHABLE_KEY must be a modern publishable key.", file=sys.stderr)
+          sys.exit(1)
+
+        config = {
+          "publishableKey": publishable_key,
+          "url": url,
+        }
+        module_source = (
+          "export const SUPABASE_RUNTIME_CONFIG = Object.freeze("
+          + json.dumps(config, indent=2)
+          + ");\n"
+        )
+
+        pathlib.Path("assets/supabase-config.js").write_text(
+          module_source,
+          encoding="utf-8",
+        )
+        PY

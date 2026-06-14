@@ -62,15 +62,19 @@ Do not commit, paste into chat, or store in project-local plaintext files:
 - JWT signing secrets;
 - repair/admin credentials.
 
-Browser-safe values, such as the project URL and anon/public key, may be used in
+Browser-safe values, such as the project URL and publishable key, may be used in
 client configuration only when Supabase documents them as browser-safe. Prefer
 environment variables for these values so deployment environments can differ
 without code changes.
 
-Recommended environment variable names:
+Static deployment environment variable names:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+
+Use a modern publishable key with the `sb_publishable_` prefix for new browser
+code. Do not use the legacy JWT-shaped `anon` key unless a future compatibility
+need is explicitly documented.
 
 Server-only values, if needed later, must use server-only deployment secret
 stores and must not be exposed through Vite/browser bundles.
@@ -99,6 +103,41 @@ creating new migration files with `supabase migration new <name>` when the
 Supabase CLI is installed. On 2026-06-12 the CLI was not available on this
 Codex workspace `PATH`, so the first migration file was created manually using
 the normal timestamped filename convention.
+
+## Browser Runtime Config
+
+The source-controlled runtime config module is:
+
+```text
+assets/supabase-config.js
+```
+
+In repository source it exports empty values, so local static runs remain
+Supabase-disabled until a test or operator deliberately supplies browser-safe
+configuration. Deployment workflows render the same module from GitHub
+Environment variables immediately before static asset stamping and FTPS upload.
+
+The render action is:
+
+```text
+.github/actions/render-supabase-runtime-config/action.yml
+```
+
+It validates that `SUPABASE_URL` is an HTTPS URL and that
+`SUPABASE_PUBLISHABLE_KEY` uses the modern `sb_publishable_` prefix before
+writing `assets/supabase-config.js` into the deployment workspace.
+
+As of 2026-06-14, the `dev`, `test`, and `production` GitHub Environments each
+define:
+
+| Variable | Value shape |
+| --- | --- |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` |
+
+These values are browser-safe and will be visible in deployed JavaScript. They
+are still kept out of source so each environment can later point at a different
+Supabase project without code changes.
 
 ## Local Test Auth
 
@@ -172,7 +211,7 @@ Before implementing hosted signed-in flows:
 1. Configure Google sign-in and email magic link/OTP in the Supabase Dashboard.
 2. Add local, dev, test, and production redirect URLs to the Supabase Auth
    allowlist.
-3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to local and deployment
+3. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to local and deployment
    environment configuration.
 4. Use the applied `signed_in_solo_current_games` table for account-owned
    signed-in Solo Game state.

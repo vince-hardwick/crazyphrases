@@ -239,6 +239,85 @@ Expected:
 - Users not listed in Access policies cannot reach dev/test.
 - Mail still works for `hello@crazyphrases.com`.
 
+### Mobile SSL Protocol Error Triage
+
+If a mobile browser reports `ERR_SSL_PROTOCOL_ERROR` while desktop browsers can
+load production, treat it as a client or network-path symptom until public edge
+TLS is checked. Do not use the failing client as authority to change DNS,
+Cloudflare SSL mode, or cPanel certificates without a separate approval.
+
+Run read-only checks first:
+
+```powershell
+Resolve-DnsName crazyphrases.com -Type A
+Resolve-DnsName crazyphrases.com -Type AAAA
+Resolve-DnsName www.crazyphrases.com -Type A
+Resolve-DnsName www.crazyphrases.com -Type AAAA
+curl.exe -4 -I --max-time 15 https://crazyphrases.com/
+curl.exe -4 -I --max-time 15 https://www.crazyphrases.com/
+```
+
+Expected:
+
+- Apex and `www` resolve to Cloudflare proxied A records.
+- If IPv6 is enabled, apex and `www` also resolve to Cloudflare proxied AAAA
+  records.
+- Both HTTPS requests return `200` from Cloudflare.
+- The response may advertise `alt-svc: h3=":443"` when HTTP/3 is enabled.
+
+Then use an external TLS scanner, such as SSL Labs, to confirm that every
+Cloudflare edge endpoint has a trusted certificate chain for Android and that
+modern Android, Chrome, and Edge simulated handshakes succeed. A non-A grade
+caused only by Cloudflare permitting TLS 1.0 or TLS 1.1 is not the same as an
+Android certificate failure.
+
+If public edge TLS passes, isolate the Android path before changing the site:
+
+- Test the same URL in Chrome for Android and Edge InPrivate.
+- Test the phone on mobile data and on Wi-Fi.
+- Temporarily disable Android or Edge VPN, filtering, ad-blocking, antivirus,
+  and custom Secure DNS settings.
+- Clear Edge site data for `crazyphrases.com`, then retry
+  `https://www.crazyphrases.com/`.
+- If only Android Edge fails and the response advertises HTTP/3, temporarily
+  disable Cloudflare HTTP/3 as a reversible diagnostic. Re-enable it unless the
+  failure is confirmed to be tied to HTTP/3 or QUIC on the affected network.
+
+If switching Android Private DNS from a filtered provider to `Automatic` fixes
+the failure, treat the filtered resolver as the cause. For AdGuardDNS or similar
+providers:
+
+- Inspect the provider query log for the affected Android device immediately
+  after reproducing the failure.
+- Look for blocked, rewritten, empty, or refused answers for
+  `crazyphrases.com`, `www.crazyphrases.com`, or related Cloudflare service
+  names returned during navigation.
+- If AdGuardDNS classifies the query as `NRD` (newly-registered domain), use
+  the query log's `Unblock domain` action for `crazyphrases.com`.
+- If the provider does not offer a one-click unblock, add an exception rule for
+  the site, such as `@@||crazyphrases.com^`, so the apex and subdomains resolve
+  normally.
+- Keep the device on the same private DNS hostname and retry
+  `https://www.crazyphrases.com/`.
+- If the exception is not enough, disable only the specific AdGuardDNS filter or
+  security category shown in the query log. Do not disable filtering globally
+  unless the provider cannot identify the blocking rule.
+
+DNS filtering failures may surface in the browser as an SSL protocol error when
+the browser connects to a block or rewrite target instead of the Cloudflare edge
+that owns the production certificate. Confirm the DNS answer before changing
+Cloudflare or cPanel.
+
+If public edge TLS fails, check Cloudflare before changing the origin:
+
+- SSL/TLS mode is `Full (strict)`, not `Flexible`.
+- The Cloudflare edge certificate covers `crazyphrases.com` and
+  `*.crazyphrases.com`.
+- The cPanel origin certificate covers the same web hostnames used by
+  Cloudflare.
+- Cloudflare records for apex and `www` are deliberately proxied or DNS-only
+  according to the current hosting plan.
+
 ## Operational Notes
 
 - GitHub Environment reviewers approve deployment.

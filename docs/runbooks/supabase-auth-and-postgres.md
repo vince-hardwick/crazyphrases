@@ -129,13 +129,41 @@ It creates `public.signed_in_solo_current_games`, keyed by Supabase Auth
 `authenticated`, no `anon` grants, and a `revision` field for the stale-write
 slice.
 
-As of 2026-06-12, this migration is source-controlled but has not been applied
-to the hosted Supabase project by Codex. Applying it mutates the managed backend
-schema and requires explicit owner approval for that live DDL action. Revisit
-when the owner approves applying
-`create_signed_in_solo_current_games`; until then, local tests can prove the
-provider-independent contract, but hosted Supabase signed-in persistence cannot
-be validated.
+The corrective grant migration is:
+
+```text
+supabase/migrations/20260614232532_tighten_signed_in_solo_current_games_grants.sql
+```
+
+It revokes default public-schema table privileges from `anon`, `authenticated`,
+and `service_role`, then grants back only `select`, `insert`, `update`, and
+`delete` to `authenticated` and `service_role`. This is required because a new
+Supabase public-schema table can inherit broader default table privileges than
+the app needs.
+
+As of 2026-06-14, both migrations have been applied to the hosted Supabase
+project after explicit owner approval. Supabase MCP recorded them in hosted
+migration history as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260614222419` | `create_signed_in_solo_current_games` |
+| `20260614222554` | `tighten_signed_in_solo_current_games_grants` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.signed_in_solo_current_games` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, `update`,
+  and `delete` table grants.
+- Account-owned `select`, `insert`, `update`, and `delete` policies exist for
+  the `authenticated` role.
+- Constraints enforce the Account foreign key, primary key, `revision >= 1`,
+  `signed-in-solo` mode, matching `accountId`, and started-game payload.
+
+Hosted Supabase signed-in persistence is still not fully validated until the
+browser app uses Supabase Auth and the Supabase-backed current-game repository.
 
 ## First Integration Checklist
 
@@ -146,9 +174,9 @@ Before implementing hosted signed-in flows:
    allowlist.
 3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to local and deployment
    environment configuration.
-4. Create the first schema migration for account-owned signed-in Solo Game
-   state with Row Level Security enabled before browser access.
-5. Add stale-write protection with a revision/version field.
+4. Use the applied `signed_in_solo_current_games` table for account-owned
+   signed-in Solo Game state.
+5. Add stale-write protection against the existing `revision` field.
 6. Generate TypeScript types after migrations are applied.
 7. Run local tests before validating hosted auth redirects and browser SDK
    behaviour against the Supabase project.

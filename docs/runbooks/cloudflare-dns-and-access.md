@@ -292,8 +292,11 @@ providers:
 - Look for blocked, rewritten, empty, or refused answers for
   `crazyphrases.com`, `www.crazyphrases.com`, or related Cloudflare service
   names returned during navigation.
-- Add an exception rule for the site, such as `@@||crazyphrases.com^`, so the
-  apex and subdomains resolve normally.
+- If AdGuardDNS classifies the query as `NRD` (newly-registered domain), use
+  the query log's `Unblock domain` action for `crazyphrases.com`.
+- If the provider does not offer a one-click unblock, add an exception rule for
+  the site, such as `@@||crazyphrases.com^`, so the apex and subdomains resolve
+  normally.
 - Keep the device on the same private DNS hostname and retry
   `https://www.crazyphrases.com/`.
 - If the exception is not enough, disable only the specific AdGuardDNS filter or

@@ -10,6 +10,7 @@ import { saveCurrentAnonymousSoloGame } from "../assets/local-game-storage.js";
 import {
   createLocalTestSignedInSoloGameRepository,
   createMemorySignedInSoloGameRepository,
+  createSupabaseSignedInSoloGameRepository,
 } from "../assets/signed-in-game-storage.js";
 
 describe("signed-in solo current-game persistence", () => {
@@ -103,6 +104,165 @@ describe("signed-in solo current-game persistence", () => {
       null,
     );
   });
+
+  it("stores and resumes a started signed-in Solo Game setup through Supabase by Account", async () => {
+    const supabase = createFakeSupabaseClient();
+    const repository = createSupabaseSignedInSoloGameRepository({ supabase });
+    const accountId = "00000000-0000-4000-8000-000000000025";
+    const otherAccountId = "00000000-0000-4000-8000-000000000999";
+
+    assert.equal(await repository.loadCurrentGame({ accountId }), null);
+
+    const startedGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 10,
+        random: () => 0.99,
+      }),
+    );
+
+    const savedGame = await repository.saveCurrentGame({
+      accountId,
+      game: startedGame,
+    });
+
+    assert.deepEqual(savedGame, startedGame);
+    assert.deepEqual(
+      await repository.loadCurrentGame({ accountId }),
+      startedGame,
+    );
+    assert.equal(
+      await repository.loadCurrentGame({ accountId: otherAccountId }),
+      null,
+    );
+  });
+
+  it("advances the Supabase current-game revision when replacing a fresh Account record", async () => {
+    const supabase = createFakeSupabaseClient();
+    const repository = createSupabaseSignedInSoloGameRepository({ supabase });
+    const accountId = "00000000-0000-4000-8000-000000000026";
+    const firstGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 10,
+        random: () => 0.99,
+      }),
+    );
+    const replacementGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 15,
+        random: () => 0,
+      }),
+    );
+
+    const firstRecord = await repository.saveCurrentGameRecord({
+      accountId,
+      game: firstGame,
+    });
+    const savedReplacementGame = await repository.saveCurrentGame({
+      accountId,
+      expectedRevision: firstRecord.revision,
+      game: replacementGame,
+    });
+    const replacementRecord = await repository.loadCurrentGameRecord({
+      accountId,
+    });
+
+    assert.equal(firstRecord.revision, 1);
+    assert.equal(replacementRecord.revision, 2);
+    assert.deepEqual(savedReplacementGame, replacementGame);
+    assert.deepEqual(replacementRecord.game, replacementGame);
+  });
+
+  it("does not silently overwrite an existing Supabase current game without an expected revision", async () => {
+    const supabase = createFakeSupabaseClient();
+    const repository = createSupabaseSignedInSoloGameRepository({ supabase });
+    const accountId = "00000000-0000-4000-8000-000000000027";
+    const firstGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 10,
+        random: () => 0.99,
+      }),
+    );
+    const replacementGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 15,
+        random: () => 0,
+      }),
+    );
+
+    const firstRecord = await repository.saveCurrentGameRecord({
+      accountId,
+      game: firstGame,
+    });
+
+    await assert.rejects(
+      () =>
+        repository.saveCurrentGameRecord({
+          accountId,
+          game: replacementGame,
+        }),
+      /could not save current signed-in solo game/i,
+    );
+    assert.deepEqual(
+      await repository.loadCurrentGameRecord({ accountId }),
+      firstRecord,
+    );
+  });
+
+  it("rejects a stale Supabase current-game save when the expected revision no longer matches", async () => {
+    const supabase = createFakeSupabaseClient();
+    const repository = createSupabaseSignedInSoloGameRepository({ supabase });
+    const accountId = "00000000-0000-4000-8000-000000000028";
+    const firstGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 10,
+        random: () => 0.99,
+      }),
+    );
+    const newerGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 15,
+        random: () => 0,
+      }),
+    );
+    const staleGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 20,
+        random: () => 0.5,
+      }),
+    );
+
+    const firstRecord = await repository.saveCurrentGameRecord({
+      accountId,
+      game: firstGame,
+    });
+    const newerRecord = await repository.saveCurrentGameRecord({
+      accountId,
+      expectedRevision: firstRecord.revision,
+      game: newerGame,
+    });
+
+    await assert.rejects(
+      () =>
+        repository.saveCurrentGameRecord({
+          accountId,
+          expectedRevision: firstRecord.revision,
+          game: staleGame,
+        }),
+      /changed before it could be saved/i,
+    );
+    assert.deepEqual(
+      await repository.loadCurrentGameRecord({ accountId }),
+      newerRecord,
+    );
+  });
 });
 
 function createFakeStorage() {
@@ -125,4 +285,122 @@ function createFakeStorage() {
       items.set(key, String(value));
     },
   };
+}
+
+function createFakeSupabaseClient() {
+  const currentGames = new Map();
+
+  return {
+    from(tableName) {
+      assert.equal(tableName, "signed_in_solo_current_games");
+      return new FakeCurrentGamesQuery(currentGames);
+    },
+  };
+}
+
+class FakeCurrentGamesQuery {
+  constructor(
+    currentGames,
+    { filters = {}, operation = "select", row = null } = {},
+  ) {
+    this.currentGames = currentGames;
+    this.filters = filters;
+    this.operation = operation;
+    this.row = row;
+  }
+
+  eq(column, value) {
+    return new FakeCurrentGamesQuery(this.currentGames, {
+      filters: {
+        ...this.filters,
+        [column]: value,
+      },
+      operation: this.operation,
+      row: this.row,
+    });
+  }
+
+  insert(row) {
+    return new FakeCurrentGamesQuery(this.currentGames, {
+      filters: this.filters,
+      operation: "insert",
+      row,
+    });
+  }
+
+  update(row) {
+    return new FakeCurrentGamesQuery(this.currentGames, {
+      filters: this.filters,
+      operation: "update",
+      row,
+    });
+  }
+
+  select() {
+    return this;
+  }
+
+  async maybeSingle() {
+    if (this.operation === "select") {
+      return {
+        data: this.currentGames.get(this.filters.account_id) ?? null,
+        error: null,
+      };
+    }
+
+    if (this.operation === "update") {
+      const existingRow = this.currentGames.get(this.filters.account_id);
+
+      if (!existingRow || existingRow.revision !== this.filters.revision) {
+        return {
+          data: null,
+          error: null,
+        };
+      }
+
+      const row = {
+        ...existingRow,
+        ...this.row,
+      };
+      this.currentGames.set(row.account_id, row);
+
+      return {
+        data: row,
+        error: null,
+      };
+    }
+
+    throw new Error(
+      `Unsupported fake Supabase maybeSingle operation: ${this.operation}`,
+    );
+  }
+
+  async single() {
+    if (this.operation !== "insert") {
+      throw new Error(
+        `Unsupported fake Supabase single operation: ${this.operation}`,
+      );
+    }
+
+    if (this.currentGames.has(this.row.account_id)) {
+      return {
+        data: null,
+        error: {
+          message:
+            "duplicate key value violates unique constraint signed_in_solo_current_games_pkey",
+        },
+      };
+    }
+
+    const row = {
+      ...this.row,
+      revision: 1,
+    };
+    this.currentGames.set(row.account_id, row);
+
+    return {
+      data: row,
+      error: null,
+    };
+  }
 }

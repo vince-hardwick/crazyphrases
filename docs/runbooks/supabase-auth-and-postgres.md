@@ -204,6 +204,40 @@ The hosted schema was verified through read-only SQL after application:
 Hosted Supabase signed-in persistence is still not fully validated until the
 browser app uses Supabase Auth and the Supabase-backed current-game repository.
 
+## Current Game Repository Adapter
+
+The provider-facing browser repository adapter lives in:
+
+```text
+assets/signed-in-game-storage.js
+```
+
+`createSupabaseSignedInSoloGameRepository({ supabase })` accepts an already
+created Supabase browser client. This keeps provider client creation and Auth
+session setup separate from the game persistence contract.
+
+The adapter uses `public.signed_in_solo_current_games` through the Supabase Data
+API:
+
+- `loadCurrentGame({ accountId })` returns only the stored domain game or
+  `null`, preserving the existing app-facing repository interface.
+- `saveCurrentGame({ accountId, game })` inserts the first current game for an
+  Account and returns only the stored domain game.
+- `loadCurrentGameRecord({ accountId })` returns `{ game, revision }` for code
+  that needs provider metadata.
+- `saveCurrentGameRecord({ accountId, game })` inserts the first record with the
+  database default revision.
+- `saveCurrentGameRecord({ accountId, expectedRevision, game })` updates only
+  the row matching both `account_id` and `revision`, writes
+  `revision = expectedRevision + 1`, and rejects if no row matches. This is the
+  stale-write guard used by later signed-in UI work.
+
+Automated repository tests use a fake Supabase client and do not mutate the
+hosted project. As of 2026-06-15, a read-only metadata check confirmed the
+hosted `public.signed_in_solo_current_games` table still has Row Level Security
+enabled, `account_id` as primary key, `game` as JSONB, and `revision` as an
+integer with `revision >= 1`.
+
 ## First Integration Checklist
 
 Before implementing hosted signed-in flows:

@@ -283,6 +283,28 @@ If public edge TLS passes, isolate the Android path before changing the site:
   disable Cloudflare HTTP/3 as a reversible diagnostic. Re-enable it unless the
   failure is confirmed to be tied to HTTP/3 or QUIC on the affected network.
 
+If switching Android Private DNS from a filtered provider to `Automatic` fixes
+the failure, treat the filtered resolver as the cause. For AdGuardDNS or similar
+providers:
+
+- Inspect the provider query log for the affected Android device immediately
+  after reproducing the failure.
+- Look for blocked, rewritten, empty, or refused answers for
+  `crazyphrases.com`, `www.crazyphrases.com`, or related Cloudflare service
+  names returned during navigation.
+- Add an exception rule for the site, such as `@@||crazyphrases.com^`, so the
+  apex and subdomains resolve normally.
+- Keep the device on the same private DNS hostname and retry
+  `https://www.crazyphrases.com/`.
+- If the exception is not enough, disable only the specific AdGuardDNS filter or
+  security category shown in the query log. Do not disable filtering globally
+  unless the provider cannot identify the blocking rule.
+
+DNS filtering failures may surface in the browser as an SSL protocol error when
+the browser connects to a block or rewrite target instead of the Cloudflare edge
+that owns the production certificate. Confirm the DNS answer before changing
+Cloudflare or cPanel.
+
 If public edge TLS fails, check Cloudflare before changing the origin:
 
 - SSL/TLS mode is `Full (strict)`, not `Flexible`.

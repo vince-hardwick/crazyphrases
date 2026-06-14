@@ -105,6 +105,8 @@ describe("workflow deployment surface", () => {
     assert.match(configAction, /SUPABASE_PUBLISHABLE_KEY/);
     assert.match(configAction, /assets\/supabase-config\.js/);
     assert.match(configAction, /sb_publishable_/);
+    assert.match(configAction, /getSupabaseRuntimeConfig/);
+    assert.match(configAction, /read_text/);
     assert.doesNotMatch(configAction, /sb_secret_/);
 
     for (const workflowPath of workflowPaths) {

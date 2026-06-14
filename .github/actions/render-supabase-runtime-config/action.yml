@@ -22,6 +22,7 @@ runs:
         import json
         import os
         import pathlib
+        import re
         import sys
         from urllib.parse import urlparse
 
@@ -41,13 +42,30 @@ runs:
           "publishableKey": publishable_key,
           "url": url,
         }
-        module_source = (
+        config_source = (
           "export const SUPABASE_RUNTIME_CONFIG = Object.freeze("
           + json.dumps(config, indent=2)
           + ");\n"
         )
 
-        pathlib.Path("assets/supabase-config.js").write_text(
+        config_path = pathlib.Path("assets/supabase-config.js")
+        module_source = config_path.read_text(encoding="utf-8")
+        if "export function getSupabaseRuntimeConfig" not in module_source:
+          print("::error::Supabase config module must export getSupabaseRuntimeConfig.", file=sys.stderr)
+          sys.exit(1)
+
+        module_source = re.sub(
+          r"export const SUPABASE_RUNTIME_CONFIG = Object\.freeze\(\{.*?\}\);\s*",
+          config_source,
+          module_source,
+          count=1,
+          flags=re.DOTALL,
+        )
+        if config_source not in module_source:
+          print("::error::Could not render Supabase runtime config.", file=sys.stderr)
+          sys.exit(1)
+
+        config_path.write_text(
           module_source,
           encoding="utf-8",
         )

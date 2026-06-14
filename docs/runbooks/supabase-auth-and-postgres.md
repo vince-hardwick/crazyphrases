@@ -126,6 +126,9 @@ The render action is:
 It validates that `SUPABASE_URL` is an HTTPS URL and that
 `SUPABASE_PUBLISHABLE_KEY` uses the modern `sb_publishable_` prefix before
 writing `assets/supabase-config.js` into the deployment workspace.
+It must preserve the source module's public exports, including
+`getSupabaseRuntimeConfig`, and replace only the `SUPABASE_RUNTIME_CONFIG`
+value. Browser modules may import either export after deployment.
 
 As of 2026-06-14, the `dev`, `test`, and `production` GitHub Environments each
 define:

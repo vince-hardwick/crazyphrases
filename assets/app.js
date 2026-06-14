@@ -23,7 +23,14 @@ import {
   loadCurrentAnonymousSoloGame,
   saveCurrentAnonymousSoloGame,
 } from "./local-game-storage.js?v=__ASSET_VERSION__";
-import { createLocalTestSignedInSoloGameRepository } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
+import { createBrowserSupabaseClient } from "./supabase-browser-client.js?v=__ASSET_VERSION__";
+import { SUPABASE_RUNTIME_CONFIG } from "./supabase-config.js?v=__ASSET_VERSION__";
+import { createSupabaseAuthSession } from "./supabase-auth-session.js?v=__ASSET_VERSION__";
+import {
+  createLocalTestSignedInSoloGameRepository,
+  createSupabaseSignedInSoloGameRepository,
+} from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
+import { createSignedInGameSession } from "./signed-in-game-session.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
@@ -53,6 +60,10 @@ const copyStatus = document.querySelector("[data-copy-status]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
 const testSignInButton = document.querySelector("[data-test-sign-in-button]");
+const googleSignInButton = document.querySelector("[data-google-sign-in-button]");
+const emailSignInForm = document.querySelector("[data-email-sign-in-form]");
+const emailSignInInput = document.querySelector("[data-email-sign-in-input]");
+const authMessage = document.querySelector("[data-auth-message]");
 const signOutButton = document.querySelector("[data-sign-out-button]");
 
 let game =
@@ -60,33 +71,65 @@ let game =
   createAnonymousSoloGame({ rowCount: 20 });
 let wordBank = null;
 let accountShell = createSignedOutShell();
-const signedInGameRepository = createLocalTestSignedInSoloGameRepository(
-  window.localStorage,
-);
+let hostedAuthSession = null;
+let hostedAuthAvailable = false;
+const localTestSignedInGameSession = createSignedInGameSession({
+  repository: createLocalTestSignedInSoloGameRepository(window.localStorage),
+});
+let signedInGameSession = localTestSignedInGameSession;
 
 loadWordBank();
 renderAccountShell(accountShell);
+void initialiseHostedAuth();
 
 testSignInButton.addEventListener("click", async () => {
-  accountShell = createAccountShell({
-    account: { id: "test-account" },
-    profile: null,
-  });
-  game =
-    (await signedInGameRepository.loadCurrentGame({
-      accountId: accountShell.accountId,
-    })) ?? createCurrentModeSoloGame({ rowCount: 20 });
-  renderAccountShell(accountShell);
-  renderGame();
+  signedInGameSession = localTestSignedInGameSession;
+  await applyAccountShell(
+    createAccountShell({
+      account: { id: "test-account" },
+      profile: null,
+    }),
+  );
 });
 
-signOutButton.addEventListener("click", () => {
-  accountShell = createSignedOutShell();
-  game =
-    loadCurrentAnonymousSoloGame(window.localStorage) ??
-    createAnonymousSoloGame({ rowCount: 20 });
-  renderAccountShell(accountShell);
-  renderGame();
+googleSignInButton.addEventListener("click", async () => {
+  authMessage.textContent = "";
+
+  try {
+    await hostedAuthSession?.signInWithGoogle();
+  } catch {
+    authMessage.textContent = "Google sign-in is unavailable.";
+  }
+});
+
+emailSignInForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  authMessage.textContent = "";
+
+  try {
+    await hostedAuthSession?.sendEmailMagicLink({
+      email: emailSignInInput.value,
+    });
+    emailSignInInput.value = "";
+    authMessage.textContent = "Check your email for the sign-in link.";
+  } catch {
+    authMessage.textContent = "Could not send sign-in email.";
+  }
+});
+
+signOutButton.addEventListener("click", async () => {
+  authMessage.textContent = "";
+
+  try {
+    if (hostedAuthSession) {
+      await hostedAuthSession.signOut();
+    }
+  } catch {
+    authMessage.textContent = "Could not sign out.";
+    return;
+  }
+
+  applySignedOutShell();
 });
 
 helpToggle.addEventListener("click", () => {
@@ -252,7 +295,12 @@ function renderAccountShell(shell) {
       ? "Local play in this browser"
       : `@${shell.profile.handle}`;
   testSignInButton.hidden =
-    shell.mode !== "anonymous-solo" || !isLocalTestAuthAvailable();
+    shell.mode !== "anonymous-solo" ||
+    hostedAuthAvailable ||
+    !isLocalTestAuthAvailable();
+  googleSignInButton.hidden =
+    shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
+  emailSignInForm.hidden = shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   signOutButton.hidden = shell.mode !== "signed-in";
 }
 
@@ -369,10 +417,15 @@ async function persistGame() {
       return;
     }
 
-    await signedInGameRepository.saveCurrentGame({
-      accountId: accountShell.accountId,
-      game,
-    });
+    try {
+      await signedInGameSession.saveCurrentGame({
+        accountId: accountShell.accountId,
+        game,
+      });
+      authMessage.textContent = "";
+    } catch {
+      authMessage.textContent = "Could not save account-backed progress.";
+    }
     return;
   }
 
@@ -432,4 +485,59 @@ async function loadWordBank() {
     wordBank = null;
     renderGame();
   }
+}
+
+async function initialiseHostedAuth() {
+  try {
+    const supabase = await createBrowserSupabaseClient({
+      config: SUPABASE_RUNTIME_CONFIG,
+    });
+
+    if (!supabase) {
+      return;
+    }
+
+    hostedAuthSession = createSupabaseAuthSession({ supabase });
+    hostedAuthAvailable = true;
+    signedInGameSession = createSignedInGameSession({
+      repository: createSupabaseSignedInSoloGameRepository({ supabase }),
+    });
+
+    await applyAccountShell(await hostedAuthSession.loadAccountShell());
+  } catch {
+    hostedAuthSession = null;
+    hostedAuthAvailable = false;
+    signedInGameSession = localTestSignedInGameSession;
+    authMessage.textContent = "Sign in unavailable.";
+    renderAccountShell(accountShell);
+  }
+}
+
+async function applyAccountShell(shell) {
+  accountShell = shell;
+
+  if (accountShell.persistenceAuthority.type === "account") {
+    game =
+      (await signedInGameSession.loadCurrentGame({
+        accountId: accountShell.accountId,
+      })) ?? createCurrentModeSoloGame({ rowCount: 20 });
+  } else {
+    signedInGameSession.reset();
+    game =
+      loadCurrentAnonymousSoloGame(window.localStorage) ??
+      createAnonymousSoloGame({ rowCount: 20 });
+  }
+
+  renderAccountShell(accountShell);
+  renderGame();
+}
+
+function applySignedOutShell() {
+  accountShell = createSignedOutShell();
+  signedInGameSession.reset();
+  game =
+    loadCurrentAnonymousSoloGame(window.localStorage) ??
+    createAnonymousSoloGame({ rowCount: 20 });
+  renderAccountShell(accountShell);
+  renderGame();
 }

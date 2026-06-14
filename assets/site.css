@@ -77,8 +77,41 @@ body {
 
 .account-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 6px;
+}
+
+.email-sign-in-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.email-sign-in-form[hidden] {
+  display: none;
+}
+
+.email-sign-in-form input {
+  width: min(100%, 168px);
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.account-shell .auth-message {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .text-button {

@@ -32,10 +32,32 @@
               >
                 Test sign in
               </button>
+              <button
+                class="text-button"
+                type="button"
+                data-google-sign-in-button
+                hidden
+              >
+                Sign in with Google
+              </button>
+              <form class="email-sign-in-form" data-email-sign-in-form hidden>
+                <label class="sr-only" for="email-sign-in">Email address</label>
+                <input
+                  id="email-sign-in"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="Email"
+                  data-email-sign-in-input
+                  required
+                >
+                <button class="text-button" type="submit">Send link</button>
+              </form>
               <button class="text-button" type="button" data-sign-out-button hidden>
                 Sign out
               </button>
             </div>
+            <p class="auth-message" data-auth-message aria-live="polite"></p>
           </section>
           <button
             class="icon-button"

@@ -268,6 +268,13 @@
 - **Revisit when**: Signed-in save/resume is working and the product introduces sign-in prompts around active anonymous games or revealed anonymous batches.
 - **Remaining risk**: Visitors may expect a current local game to follow them after sign-in, so UI copy must avoid implying migration until an import flow exists.
 
+### Email OTP code entry
+
+- **Deferred**: Six-digit email OTP entry for hosted Supabase Auth.
+- **Why deferred**: The first hosted email sign-in path uses Supabase magic links, which are enabled by default and avoid extra verification UI. OTP code entry requires email-template handling and an additional in-app verification form; Supabase free-tier email template customisation changed on 2026-06-03.
+- **Revisit when**: Magic-link usability is poor, template customisation is available and approved, or production sign-in needs an in-app code-entry fallback.
+- **Remaining risk**: Some users prefer typing a code instead of clicking a link, so the Auth adapter should keep email sign-in isolated from game persistence to allow an OTP path later.
+
 ### Expanded word-bank source selection
 
 - **Deferred**: Selecting and integrating a comprehensive open-source lexical dataset for the default word bank.

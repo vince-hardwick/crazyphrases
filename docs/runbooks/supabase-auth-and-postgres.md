@@ -157,6 +157,92 @@ not signed-in production authority. It must remain separate from anonymous solo
 local recovery and must not upload, merge, or import anonymous local games when
 the participant clicks `Test sign in`.
 
+## Hosted Browser Auth Wiring
+
+The hosted static app creates a Supabase browser client only when deployment
+runtime config supplies both `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
+Source-controlled config remains empty, so local static runs keep the local
+`Test sign in` fixture and do not load hosted Supabase Auth.
+
+The browser client module is:
+
+```text
+assets/supabase-browser-client.js
+```
+
+As of 2026-06-15, the static no-build deployment loads the official
+`@supabase/supabase-js@2` browser bundle from `https://cdn.jsdelivr.net/` only
+after browser-safe Supabase runtime config is present. This preserves the
+current static deployment pipeline without introducing a frontend build step. If
+a bundler or frontend framework is introduced later, revisit this CDN dependency
+and prefer a packaged dependency in that build.
+
+The Auth session adapter is:
+
+```text
+assets/supabase-auth-session.js
+```
+
+It maps `supabase.auth.getUser()` to the existing Account shell, starts Google
+OAuth with `redirectTo` set to the current app root, sends email magic links
+with `emailRedirectTo` set to the current app root, and signs out through
+`supabase.auth.signOut()`. It must not expose user email as the game-facing
+Handle, Gamer Name, or persistence authority.
+
+The app uses the revision-aware current-game session wrapper:
+
+```text
+assets/signed-in-game-session.js
+```
+
+This wrapper stores the Supabase `revision` returned by
+`loadCurrentGameRecord()` or `saveCurrentGameRecord()` and sends
+`expectedRevision` on later saves. Hosted signed-in UI must use this wrapper
+rather than calling `saveCurrentGame()` blindly against the Supabase repository.
+
+## Hosted Auth Provider Configuration
+
+Hosted Auth configuration is a live Supabase project mutation. Do not change it
+merely because Codex can detect the project ref or because the app is running on
+a particular hostname. Use explicit owner approval, the Supabase Dashboard, or a
+task-specific approved Management API run.
+
+For the `egnudphshvqdhrotxrfs` project, configure Supabase Auth URL
+Configuration as follows unless a later environment ADR changes canonical
+hostnames:
+
+- Site URL: `https://www.crazyphrases.com/`
+- Additional Redirect URLs:
+  - `http://localhost:4173/**`
+  - `http://127.0.0.1:4173/**`
+  - `https://dev.crazyphrases.com/`
+  - `https://test.crazyphrases.com/`
+  - `https://www.crazyphrases.com/`
+  - `https://crazyphrases.com/`
+
+Supabase redirect URL wildcards are useful for local development, but production
+redirects should stay exact. The current app redirects to the app root rather
+than to a dedicated callback route.
+
+For Google sign-in:
+
+1. Create a Google OAuth client for a web application.
+2. Add authorised JavaScript origins for:
+   - `http://localhost:4173`
+   - `http://127.0.0.1:4173`
+   - `https://dev.crazyphrases.com`
+   - `https://test.crazyphrases.com`
+   - `https://www.crazyphrases.com`
+   - `https://crazyphrases.com`
+3. Add this authorised redirect URI:
+   - `https://egnudphshvqdhrotxrfs.supabase.co/auth/v1/callback`
+4. Enter the Google Client ID and Client Secret directly into the Supabase
+   Dashboard Google provider settings. Do not paste the secret into chat, git,
+   scripts, issue text, or project-local config files.
+
+For email sign-in, the current hosted app sends Supabase email magic links. It
+does not yet implement an in-app six-digit OTP entry flow.
+
 The first signed-in current-game migration is:
 
 ```text
@@ -242,7 +328,7 @@ integer with `revision >= 1`.
 
 Before implementing hosted signed-in flows:
 
-1. Configure Google sign-in and email magic link/OTP in the Supabase Dashboard.
+1. Configure Google sign-in and email magic link in the Supabase Dashboard.
 2. Add local, dev, test, and production redirect URLs to the Supabase Auth
    allowlist.
 3. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to local and deployment
@@ -253,3 +339,7 @@ Before implementing hosted signed-in flows:
 6. Generate TypeScript types after migrations are applied.
 7. Run local tests before validating hosted auth redirects and browser SDK
    behaviour against the Supabase project.
+
+As of 2026-06-15, items 3, 4, 5, and 7 are implemented for the browser app.
+Items 1 and 2 still require live Supabase Auth provider and redirect
+configuration before a real hosted sign-in smoke can pass in `dev`.

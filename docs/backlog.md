@@ -91,8 +91,8 @@
 - **No longer deferred**: Private Phrase Favourites and Batch Favourites from the signed-in foundation and solo save/resume PRD.
 - **Why deferred**: The first signed-in slice should prove Account identity and current-game persistence before adding saved-output collections.
 - **Revisit when**: Signed-in solo current-game save/resume is working in dev/test and the persistence model can distinguish current game state from saved favourites.
-- **Status**: Revisit trigger satisfied on 2026-06-15 after the signed-in foundation shipped through production. PRD #33 is published, with implementation tracked by issues #34, #35, #36, and #37. Issues #34 and #35 now have source-controlled local implementation and tests for Phrase and Batch Favourites.
-- **Remaining risk**: The accepted MVP contract stores immutable saved-output snapshots rather than live current-game references. Implementation still needs removal and duplicate-state polish (#36) plus deployed hosted-data verification (#37) behind explicit approval gates.
+- **Status**: Revisit trigger satisfied on 2026-06-15 after the signed-in foundation shipped through production. PRD #33 is published, with implementation tracked by issues #34, #35, #36, and #37. Issues #34 and #35 now have source-controlled local implementation and tests for Phrase and Batch Favourites. The private Batch Favourite migration and signed-in `dev` write smoke were completed against hosted Supabase on 2026-06-15 after explicit approval.
+- **Remaining risk**: The accepted MVP contract stores immutable saved-output snapshots rather than live current-game references. Implementation still needs removal and duplicate-state polish (#36), plus any remaining deployed hosted-data verification and environment promotion for the completed favourites slices (#37) behind explicit approval gates.
 
 ### Phrase reactions
 

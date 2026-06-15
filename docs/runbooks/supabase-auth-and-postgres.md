@@ -446,11 +446,43 @@ table grants, an Account foreign key with `on delete cascade`, an
 account-scoped unique source fingerprint, and JSON checks for the Batch
 Favourite snapshot shape, row count, rendered phrase list, and row context.
 
-As of 2026-06-15, this migration is source-controlled and covered by
-migration-surface tests, but it has not yet been applied to the hosted Supabase
-project. Applying it to hosted Supabase is a live schema mutation and requires
-explicit owner approval under this runbook's Mutation Authority section before
-hosted Batch Favourite writes can be validated.
+As of 2026-06-15, this migration is source-controlled, covered by
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615164651` | `create_private_batch_favourites` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.private_batch_favourites` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `delete` table grants.
+- Account-owned `select`, `insert`, and `delete` policies exist for the
+  `authenticated` role.
+- Constraints enforce the primary key, Account foreign key with
+  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
+  private Batch Favourite snapshots.
+- The table had zero rows immediately after migration application.
+- Supabase advisors reported no performance warnings and no
+  `private_batch_favourites` security warning. The only security advisor was
+  the existing project-level Auth leaked-password-protection warning.
+
+After the migration was applied, branch `codex/private-favourites` commit
+`962d17302fe2831ea14c3d23e6e6db7fb4adeee4` was deployed to `dev` through the
+approved GitHub Environment workflow. The hosted assets were stamped with that
+commit in `assets/app.js` and `assets/site.css`. A visible signed-in browser
+smoke on `https://dev.crazyphrases.com/` used the existing Google-authenticated
+Account shell, started a 10-phrase batch, revealed it, saved a Batch Favourite,
+confirmed all 10 rendered phrases appeared under `Batch Favourite`, clicked
+"Start again", and confirmed the saved Batch Favourite remained visible. The
+page had no horizontal overflow, the browser error/warning log was empty, and a
+read-only SQL check confirmed one hosted `public.private_batch_favourites` row
+with latest `created_at` `2026-06-15 16:56:27.748878+00`.
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,

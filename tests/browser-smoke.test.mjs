@@ -44,14 +44,19 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "Local play in this browser");
     assert.equal(await page.locator(".site-domain").count(), 0);
+    await assertNoFavouriteDom(page);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "@player-test-account");
+    await assertFavouriteSurfaceMounted(page);
+    assert.equal(await page.locator("[data-save-batch-button]").count(), 0);
+    assert.equal(await page.locator("[data-save-phrase-index]").count(), 0);
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "Local play in this browser");
+    await assertNoFavouriteDom(page);
 
     await page.getByRole("button", { name: "How to play" }).click();
     assert.equal(await page.locator("#help-panel").isVisible(), true);
@@ -76,7 +81,7 @@ describe("solo browser smoke", () => {
 
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
-    assert.equal(await page.getByRole("button", { name: "Save batch" }).isVisible(), false);
+    await assertNoFavouriteDom(page);
     await assertNoHorizontalOverflow(page);
 
     const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
@@ -265,6 +270,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
     await assertRowCountSelected(page, "15");
+    await assertNoFavouriteDom(page);
     await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
@@ -604,6 +610,20 @@ async function assertTextVisible(page, text) {
 
 async function assertTextHidden(page, text) {
   assert.equal(await page.getByText(text).first().isVisible(), false);
+}
+
+async function assertNoFavouriteDom(page) {
+  assert.equal(await page.locator("[data-favourites-panel]").count(), 0);
+  assert.equal(await page.locator("[data-favourites-status]").count(), 0);
+  assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 0);
+  assert.equal(await page.locator("[data-save-batch-button]").count(), 0);
+  assert.equal(await page.locator("[data-save-phrase-index]").count(), 0);
+}
+
+async function assertFavouriteSurfaceMounted(page) {
+  assert.equal(await page.locator("[data-favourites-panel]").count(), 1);
+  assert.equal(await page.locator("[data-favourites-status]").count(), 1);
+  assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 1);
 }
 
 async function assertRowCountSelected(page, rowCount) {

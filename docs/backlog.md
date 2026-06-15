@@ -96,10 +96,11 @@
 
 ### Auth-gated favourites DOM loading
 
-- **Deferred**: Avoid rendering or wiring private favourites UI, favourite action controls, and related client capability until a participant has successfully signed in; remove those DOM nodes and event paths again on sign-out.
+- **No longer deferred**: Avoid rendering or wiring private favourites UI, favourite action controls, and related client capability until a participant has successfully signed in; remove those DOM nodes and event paths again on sign-out.
 - **Why deferred**: The current MVP hides favourites UI when the session is anonymous, but hidden DOM can still be revealed with browser developer tools. The security boundary should remain Supabase Auth and Row Level Security, but the client should not expose account-only affordances in anonymous mode or create any ambiguity about whether favourites work without sign-in.
 - **Revisit when**: Private favourites receive another UI/security hardening pass, a dedicated favourites page is introduced, or before broader public onboarding where anonymous users may inspect or manipulate hidden controls.
-- **Remaining risk**: If hidden controls remain mounted, users can reveal misleading account-only UI. If anonymous-mode event handlers or repository paths are accidentally callable, implementation bugs could weaken the incentive to sign in or rely too heavily on backend rejection rather than clear client capability boundaries.
+- **Status**: Source-controlled implementation added on 2026-06-15 in `codex/auth-gated-favourites-dom`. Local browser smoke now asserts that anonymous initial load, revealed anonymous play, and sign-out after saved favourites leave no favourites panel, Phrase Favourite save controls, or Batch Favourite save controls in the DOM; signed-in Account-backed mode still mounts the minimal favourites surface.
+- **Remaining risk**: Hosted `dev`/`test` verification still needs to confirm the deployed static assets match the source-controlled behaviour before public onboarding relies on this client hardening. Future account-only event paths should keep using Supabase Auth and Row Level Security as the authority and keep anonymous DOM absence covered by browser tests.
 
 ### Icon-first favourite and copy actions
 

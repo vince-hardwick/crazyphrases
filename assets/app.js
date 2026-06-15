@@ -63,7 +63,6 @@ const nextButton = document.querySelector("[data-next-button]");
 const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 const revealDetails = document.querySelector("[data-reveal-details]");
-const saveBatchButton = document.querySelector("[data-save-batch-button]");
 const copyStatus = document.querySelector("[data-copy-status]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
@@ -80,11 +79,6 @@ const persistenceRecoveryMessage = document.querySelector(
 const retryCurrentGameButton = document.querySelector("[data-retry-current-game]");
 const startNewCurrentGameButton = document.querySelector(
   "[data-start-new-current-game]",
-);
-const favouritesPanel = document.querySelector("[data-favourites-panel]");
-const favouritesStatus = document.querySelector("[data-favourites-status]");
-const phraseFavouritesList = document.querySelector(
-  "[data-phrase-favourites-list]",
 );
 
 const loadFailureMessage =
@@ -110,6 +104,10 @@ let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
+let saveBatchButton = null;
+let favouritesPanel = null;
+let favouritesStatus = null;
+let phraseFavouritesList = null;
 
 loadWordBank();
 renderAccountShell(accountShell);
@@ -306,25 +304,6 @@ revealPanel.addEventListener("click", (event) => {
   }
 });
 
-favouritesPanel.addEventListener("click", (event) => {
-  const phraseRemoveButton = event.target.closest(
-    "[data-remove-phrase-favourite-id]",
-  );
-
-  if (phraseRemoveButton) {
-    void removePhraseFavourite(phraseRemoveButton.dataset.removePhraseFavouriteId);
-    return;
-  }
-
-  const batchRemoveButton = event.target.closest(
-    "[data-remove-batch-favourite-id]",
-  );
-
-  if (batchRemoveButton) {
-    void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
-  }
-});
-
 renderGame();
 renderFavourites();
 
@@ -336,7 +315,7 @@ function renderGame() {
   if (!game.started) {
     entryForm.hidden = true;
     revealPanel.hidden = true;
-    saveBatchButton.hidden = true;
+    clearRevealSurface();
     progress.textContent = "";
     return;
   }
@@ -344,10 +323,15 @@ function renderGame() {
   if (game.revealed) {
     entryForm.hidden = true;
     revealPanel.hidden = false;
-    saveBatchButton.hidden =
-      accountShell.persistenceAuthority.type !== "account";
-    saveBatchButton.disabled = isBatchFavouriteSaved();
-    saveBatchButton.textContent = saveBatchButton.disabled ? "Saved" : "Save batch";
+    if (accountShell.persistenceAuthority.type === "account") {
+      const currentSaveBatchButton = ensureSaveBatchButton();
+      currentSaveBatchButton.disabled = isBatchFavouriteSaved();
+      currentSaveBatchButton.textContent = currentSaveBatchButton.disabled
+        ? "Saved"
+        : "Save batch";
+    } else {
+      removeSaveBatchButton();
+    }
     progress.textContent = "";
     copyStatus.textContent = "";
     phraseList.replaceChildren(
@@ -360,7 +344,7 @@ function renderGame() {
   const activeSection = getActiveSection(game);
   entryForm.hidden = false;
   revealPanel.hidden = true;
-  saveBatchButton.hidden = true;
+  clearRevealSurface();
   progress.textContent = "";
   sectionProgress.textContent = `Section ${game.activeSectionIndex + 1} of ${game.sectionOrder.length}`;
   sectionTitle.textContent = activeSection.label;
@@ -494,13 +478,13 @@ function renderPhraseItem(phrase, phraseIndex) {
 
 function renderFavourites() {
   const isSignedIn = accountShell.persistenceAuthority.type === "account";
-  favouritesPanel.hidden = !isSignedIn;
 
   if (!isSignedIn) {
-    favouritesStatus.textContent = "";
-    phraseFavouritesList.replaceChildren();
+    removeFavouritesPanel();
     return;
   }
+
+  ensureFavouritesPanel();
 
   const favouriteItems = [
     ...batchFavourites.map(renderBatchFavourite),
@@ -510,6 +494,92 @@ function renderFavourites() {
   favouritesStatus.textContent =
     favouriteItems.length === 0 ? "No favourites yet." : "";
   phraseFavouritesList.replaceChildren(...favouriteItems);
+}
+
+function ensureSaveBatchButton() {
+  if (saveBatchButton) {
+    return saveBatchButton;
+  }
+
+  saveBatchButton = document.createElement("button");
+  saveBatchButton.type = "button";
+  saveBatchButton.className = "secondary-button";
+  saveBatchButton.dataset.saveBatchButton = "";
+  copyStatus.before(saveBatchButton);
+  return saveBatchButton;
+}
+
+function removeSaveBatchButton() {
+  saveBatchButton?.remove();
+  saveBatchButton = null;
+}
+
+function clearRevealSurface() {
+  removeSaveBatchButton();
+  phraseList.replaceChildren();
+  revealDetails.replaceChildren();
+  copyStatus.textContent = "";
+}
+
+function ensureFavouritesPanel() {
+  if (favouritesPanel) {
+    return favouritesPanel;
+  }
+
+  favouritesPanel = document.createElement("section");
+  favouritesPanel.className = "favourites-panel";
+  favouritesPanel.dataset.favouritesPanel = "";
+  favouritesPanel.addEventListener("click", handleFavouritesPanelClick);
+
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const kicker = document.createElement("p");
+  kicker.className = "section-kicker";
+  kicker.textContent = "Favourites";
+
+  const title = document.createElement("h2");
+  title.textContent = "Saved favourites";
+
+  favouritesStatus = document.createElement("p");
+  favouritesStatus.className = "favourites-status";
+  favouritesStatus.dataset.favouritesStatus = "";
+  favouritesStatus.setAttribute("aria-live", "polite");
+
+  phraseFavouritesList = document.createElement("ol");
+  phraseFavouritesList.className = "favourites-list";
+  phraseFavouritesList.dataset.phraseFavouritesList = "";
+
+  heading.append(kicker, title);
+  favouritesPanel.append(heading, favouritesStatus, phraseFavouritesList);
+  gamePanel.after(favouritesPanel);
+  return favouritesPanel;
+}
+
+function removeFavouritesPanel() {
+  favouritesPanel?.remove();
+  favouritesPanel = null;
+  favouritesStatus = null;
+  phraseFavouritesList = null;
+}
+
+function handleFavouritesPanelClick(event) {
+  const phraseRemoveButton = event.target.closest(
+    "[data-remove-phrase-favourite-id]",
+  );
+
+  if (phraseRemoveButton) {
+    void removePhraseFavourite(phraseRemoveButton.dataset.removePhraseFavouriteId);
+    return;
+  }
+
+  const batchRemoveButton = event.target.closest(
+    "[data-remove-batch-favourite-id]",
+  );
+
+  if (batchRemoveButton) {
+    void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
+  }
 }
 
 function renderPhraseFavourite(record) {

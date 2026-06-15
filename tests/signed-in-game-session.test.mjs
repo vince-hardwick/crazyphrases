@@ -101,4 +101,65 @@ describe("signed-in current-game session", () => {
       },
     ]);
   });
+
+  it("resets the loaded revision after deleting the current game", async () => {
+    const calls = [];
+    const game = {
+      mode: "signed-in-solo",
+      accountId: "account-789",
+      started: true,
+    };
+    const repository = {
+      async saveCurrentGameRecord(request) {
+        calls.push({
+          method: "save",
+          request,
+        });
+        return {
+          game: request.game,
+          revision: request.expectedRevision ? request.expectedRevision + 1 : 1,
+        };
+      },
+      async deleteCurrentGame(request) {
+        calls.push({
+          method: "delete",
+          request,
+        });
+      },
+    };
+    const session = createSignedInGameSession({ repository });
+
+    await session.saveCurrentGame({
+      accountId: "account-789",
+      game,
+    });
+    await session.deleteCurrentGame({ accountId: "account-789" });
+    await session.saveCurrentGame({
+      accountId: "account-789",
+      game,
+    });
+
+    assert.deepEqual(calls, [
+      {
+        method: "save",
+        request: {
+          accountId: "account-789",
+          game,
+        },
+      },
+      {
+        method: "delete",
+        request: {
+          accountId: "account-789",
+        },
+      },
+      {
+        method: "save",
+        request: {
+          accountId: "account-789",
+          game,
+        },
+      },
+    ]);
+  });
 });

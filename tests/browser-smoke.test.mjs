@@ -179,6 +179,81 @@ describe("anonymous solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("persists signed-in reveal until confirmed Start again replaces it", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin: staticServer.origin,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "15" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+
+    const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
+    const copiedPhrase = await copiedPhraseItem.locator("span").innerText();
+    assertDefaultTemplatePhrase(copiedPhrase);
+
+    await page.getByRole("button", { name: "Copy phrase 2" }).click();
+    assert.equal(await readClipboard(page), copiedPhrase);
+
+    await page.getByRole("button", { name: "Copy all" }).click();
+    const batchCopy = normalizeLineEndings(await readClipboard(page));
+    assert.equal(batchCopy.split("\n")[0], "Crazy Phrases");
+    assert.equal(batchCopy.split("\n").length, 11);
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+
+    await page.getByRole("button", { name: "Start again" }).click();
+    await assertTextVisible(
+      page,
+      "Start a new batch? Your revealed phrases will be cleared from this browser.",
+    );
+    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "10 phrases selected");
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
+    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+
+    assertNoConsoleErrors();
+  });
+
   it("warns signed-in players when account-backed saves fail", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

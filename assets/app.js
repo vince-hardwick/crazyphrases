@@ -187,11 +187,11 @@ startAgainButton.addEventListener("click", () => {
     return;
   }
 
-  startAgain();
+  void startAgain();
 });
 
 confirmStartAgainButton.addEventListener("click", () => {
-  startAgain();
+  void startAgain();
 });
 
 cancelStartAgainButton.addEventListener("click", () => {
@@ -472,8 +472,24 @@ async function persistGame() {
   saveCurrentAnonymousSoloGame(window.localStorage, game);
 }
 
-function startAgain() {
-  game = createCurrentModeSoloGame({ rowCount: game.rowCount });
+async function startAgain() {
+  const rowCount = game.rowCount;
+
+  if (accountShell.persistenceAuthority.type === "account") {
+    try {
+      await signedInGameSession.deleteCurrentGame({
+        accountId: accountShell.accountId,
+      });
+      authMessage.textContent = "";
+    } catch {
+      authMessage.textContent =
+        "Account-backed progress could not be replaced. Keep this tab open and try again.";
+      renderGame();
+      return;
+    }
+  }
+
+  game = createCurrentModeSoloGame({ rowCount });
   void persistGame();
   renderGame();
 }

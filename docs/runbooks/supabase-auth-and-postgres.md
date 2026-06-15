@@ -230,8 +230,11 @@ assets/signed-in-game-session.js
 
 This wrapper stores the Supabase `revision` returned by
 `loadCurrentGameRecord()` or `saveCurrentGameRecord()` and sends
-`expectedRevision` on later saves. Hosted signed-in UI must use this wrapper
-rather than calling `saveCurrentGame()` blindly against the Supabase repository.
+`expectedRevision` on later saves. Calling `deleteCurrentGame()` through the
+wrapper clears the stored revision so the next started signed-in batch inserts a
+fresh current-game row rather than trying to update the deleted row. Hosted
+signed-in UI must use this wrapper rather than calling `saveCurrentGame()`
+blindly against the Supabase repository.
 
 ## Hosted Auth Provider Configuration
 
@@ -387,6 +390,11 @@ API:
   the row matching both `account_id` and `revision`, writes
   `revision = expectedRevision + 1`, and rejects if no row matches. This is the
   stale-write guard used by later signed-in UI work.
+- `deleteCurrentGame({ accountId })` deletes the current-game row for the
+  signed-in Account. The Supabase adapter uses `.delete().eq("account_id",
+  accountId)` and does not chain `.select()`, so callers should only treat
+  returned errors as meaningful. The authenticated table grant and RLS delete
+  policy authorize only the account-owned row.
 
 Automated repository tests use a fake Supabase client and do not mutate the
 hosted project. As of 2026-06-15, a read-only metadata check confirmed the

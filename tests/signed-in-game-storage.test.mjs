@@ -105,6 +105,26 @@ describe("signed-in solo current-game persistence", () => {
     );
   });
 
+  it("deletes local test signed-in persistence without deleting anonymous recovery", async () => {
+    const storage = createFakeStorage();
+    const accountId = "account-local-delete";
+    const repository = createLocalTestSignedInSoloGameRepository(storage);
+    const anonymousGame = startGame(
+      createAnonymousSoloGame({ rowCount: 15, random: () => 0 }),
+    );
+    const signedInGame = startGame(
+      createSignedInSoloGame({ accountId, rowCount: 10, random: () => 0.99 }),
+    );
+
+    saveCurrentAnonymousSoloGame(storage, anonymousGame);
+    await repository.saveCurrentGame({ accountId, game: signedInGame });
+
+    await repository.deleteCurrentGame({ accountId });
+
+    assert.equal(await repository.loadCurrentGame({ accountId }), null);
+    assert.equal(storage.length, 1);
+  });
+
   it("stores and resumes a started signed-in Solo Game setup through Supabase by Account", async () => {
     const supabase = createFakeSupabaseClient();
     const repository = createSupabaseSignedInSoloGameRepository({ supabase });
@@ -135,6 +155,39 @@ describe("signed-in solo current-game persistence", () => {
       await repository.loadCurrentGame({ accountId: otherAccountId }),
       null,
     );
+  });
+
+  it("deletes a Supabase current game so the next save starts a fresh record", async () => {
+    const supabase = createFakeSupabaseClient();
+    const repository = createSupabaseSignedInSoloGameRepository({ supabase });
+    const accountId = "00000000-0000-4000-8000-000000000029";
+    const firstGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 10,
+        random: () => 0.99,
+      }),
+    );
+    const nextGame = startGame(
+      createSignedInSoloGame({
+        accountId,
+        rowCount: 15,
+        random: () => 0,
+      }),
+    );
+
+    await repository.saveCurrentGame({ accountId, game: firstGame });
+    await repository.deleteCurrentGame({ accountId });
+
+    assert.equal(await repository.loadCurrentGame({ accountId }), null);
+
+    const savedRecord = await repository.saveCurrentGameRecord({
+      accountId,
+      game: nextGame,
+    });
+
+    assert.equal(savedRecord.revision, 1);
+    assert.deepEqual(savedRecord.game, nextGame);
   });
 
   it("advances the Supabase current-game revision when replacing a fresh Account record", async () => {
@@ -336,8 +389,34 @@ class FakeCurrentGamesQuery {
     });
   }
 
+  delete() {
+    return new FakeCurrentGamesQuery(this.currentGames, {
+      filters: this.filters,
+      operation: "delete",
+      row: this.row,
+    });
+  }
+
   select() {
     return this;
+  }
+
+  then(resolve, reject) {
+    return this.execute().then(resolve, reject);
+  }
+
+  async execute() {
+    if (this.operation === "delete") {
+      this.currentGames.delete(this.filters.account_id);
+      return {
+        data: null,
+        error: null,
+      };
+    }
+
+    throw new Error(
+      `Unsupported fake Supabase await operation: ${this.operation}`,
+    );
   }
 
   async maybeSingle() {

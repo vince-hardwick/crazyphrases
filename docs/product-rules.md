@@ -220,6 +220,8 @@ Anonymous solo local recovery and signed-in account persistence are separate lif
 
 The first signed-in solo persistence slice stores the current signed-in Solo Game rather than a full signed-in game-history browser. A revealed signed-in solo batch remains resumable as the current game until the participant starts again. Private Phrase Favourites and Batch Favourites are separate saved-output features.
 
+Only started signed-in Solo Games are persisted as account-backed current-game state. In signed-in solo, confirmed "Start again" clears the account-backed current-game record and returns the participant to phrase-count selection for a fresh local setup. The next account-backed current-game record is created when the participant starts the next batch. Reloading after confirmed "Start again" but before starting the next batch must not restore the old revealed signed-in batch.
+
 Signed-in solo save/resume should prevent stale clients from silently overwriting newer account-backed progress, using a revision, version, or equivalent concurrency rule.
 
 If signed-in solo current-game loading fails, the participant remains signed in,
@@ -246,6 +248,8 @@ Anonymous solo MVP should replace the homepage in dev and test environments duri
 ### Account deletion
 
 Account deletion deactivates or anonymizes the account identity while preserving completed game history, shared phrases, consent records, leaderboard integrity, and template lineage where needed. Personal/private data such as personal word lists should be deleted.
+
+Signed-in solo current-game state is personal/private working state rather than completed collaborative history. It should be deleted when the Account is deleted, and it may also be cleared by the participant's signed-in solo "Start again" flow. Future collaborative game history remains governed by the preservation and anonymization rules in this section.
 
 Public attribution for a deleted account shows "Deleted user" and removes the old gamer name and handle from public surfaces. Collaborative records may still indicate that a deleted participant or creator existed.
 

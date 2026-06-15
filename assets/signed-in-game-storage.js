@@ -22,6 +22,11 @@ export function createMemorySignedInSoloGameRepository() {
       currentGames.set(accountId, savedGame);
       return cloneGame(savedGame);
     },
+
+    async deleteCurrentGame({ accountId }) {
+      assertAccountId(accountId);
+      currentGames.delete(accountId);
+    },
   };
 }
 
@@ -72,6 +77,11 @@ export function createLocalTestSignedInSoloGameRepository(
       );
 
       return cloneGame(savedGame);
+    },
+
+    async deleteCurrentGame({ accountId }) {
+      assertAccountId(accountId);
+      storage.removeItem(getLocalTestStorageKey(accountId));
     },
   };
 }
@@ -141,6 +151,17 @@ export function createSupabaseSignedInSoloGameRepository({ supabase }) {
     return recoverSupabaseCurrentGameRecord(response.data, { accountId });
   }
 
+  async function deleteCurrentGame({ accountId }) {
+    assertAccountId(accountId);
+
+    const response = await supabase
+      .from(SIGNED_IN_SOLO_CURRENT_GAMES_TABLE)
+      .delete()
+      .eq("account_id", accountId);
+
+    assertNoSupabaseError(response, "Could not delete current signed-in Solo Game");
+  }
+
   return {
     async loadCurrentGame({ accountId }) {
       const record = await loadCurrentGameRecord({ accountId });
@@ -158,6 +179,7 @@ export function createSupabaseSignedInSoloGameRepository({ supabase }) {
 
     loadCurrentGameRecord,
     saveCurrentGameRecord,
+    deleteCurrentGame,
   };
 }
 

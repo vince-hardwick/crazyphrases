@@ -37,11 +37,21 @@ export function createSignedInGameSession({ repository } = {}) {
     return repository.saveCurrentGame({ accountId, game });
   }
 
+  async function deleteCurrentGame({ accountId }) {
+    if (typeof repository.deleteCurrentGame !== "function") {
+      throw new Error("A signed-in game repository with delete support is required.");
+    }
+
+    await repository.deleteCurrentGame({ accountId });
+    currentRevision = null;
+  }
+
   function reset() {
     currentRevision = null;
   }
 
   return {
+    deleteCurrentGame,
     loadCurrentGame,
     reset,
     saveCurrentGame,

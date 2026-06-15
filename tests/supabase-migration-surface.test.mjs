@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const createCurrentGameMigration = readFileSync(
   new URL(
@@ -29,6 +29,10 @@ const createPrivatePhraseFavouritesMigration = readFileSync(
     import.meta.url,
   ),
   "utf8",
+);
+const createPrivateBatchFavouritesMigrationUrl = new URL(
+  "../supabase/migrations/20260615172000_create_private_batch_favourites.sql",
+  import.meta.url,
 );
 
 describe("Supabase migration surface", () => {
@@ -126,6 +130,60 @@ describe("Supabase migration surface", () => {
       assert.match(
         createPrivatePhraseFavouritesMigration,
         new RegExp(`Account holders can ${operation} their private Phrase Favourites`),
+      );
+    }
+  });
+
+  it("creates private Batch Favourites with account-owned RLS and immutable snapshots", () => {
+    assert.equal(existsSync(createPrivateBatchFavouritesMigrationUrl), true);
+
+    const createPrivateBatchFavouritesMigration = readFileSync(
+      createPrivateBatchFavouritesMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /create table if not exists public\.private_batch_favourites/,
+    );
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /account_id uuid not null references auth\.users \(id\) on delete cascade/,
+    );
+    assert.match(createPrivateBatchFavouritesMigration, /favourite jsonb not null/);
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /source_fingerprint text not null/,
+    );
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /unique \(account_id, source_fingerprint\)/,
+    );
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /favourite ->> 'type' = 'batch'/,
+    );
+    assert.match(
+      createPrivateBatchFavouritesMigration,
+      /jsonb_array_length\(favourite -> 'phrases'\) = \(favourite ->> 'rowCount'\)::integer/,
+    );
+    assert.match(createPrivateBatchFavouritesMigration, /enable row level security/);
+
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      assert.match(
+        createPrivateBatchFavouritesMigration,
+        new RegExp(`revoke all on table public\\.private_batch_favourites from ${role}`),
+      );
+    }
+
+    assert.match(createPrivateBatchFavouritesMigration, /grant select, insert, delete/);
+    assert.doesNotMatch(createPrivateBatchFavouritesMigration, /grant all/i);
+    assert.doesNotMatch(createPrivateBatchFavouritesMigration, /update/i);
+
+    for (const operation of ["view", "create", "delete"]) {
+      assert.match(
+        createPrivateBatchFavouritesMigration,
+        new RegExp(`Account holders can ${operation} their private Batch Favourites`),
       );
     }
   });

@@ -434,6 +434,24 @@ The hosted schema was verified through read-only SQL after application:
   duplicate source fingerprint inserted zero rows, selected the inserted row
   through RLS, deleted it through RLS, and rolled the transaction back.
 
+The first private Batch Favourite migration is:
+
+```text
+supabase/migrations/20260615172000_create_private_batch_favourites.sql
+```
+
+It creates `public.private_batch_favourites` for account-owned immutable
+saved-output snapshots of revealed batches, with Row Level Security, no `anon`
+table grants, an Account foreign key with `on delete cascade`, an
+account-scoped unique source fingerprint, and JSON checks for the Batch
+Favourite snapshot shape, row count, rendered phrase list, and row context.
+
+As of 2026-06-15, this migration is source-controlled and covered by
+migration-surface tests, but it has not yet been applied to the hosted Supabase
+project. Applying it to hosted Supabase is a live schema mutation and requires
+explicit owner approval under this runbook's Mutation Authority section before
+hosted Batch Favourite writes can be validated.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

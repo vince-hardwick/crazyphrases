@@ -73,6 +73,7 @@ describe("solo browser smoke", () => {
 
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    assert.equal(await page.getByRole("button", { name: "Save batch" }).isVisible(), false);
     await assertNoHorizontalOverflow(page);
 
     const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
@@ -205,6 +206,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
     await assertNoHorizontalOverflow(page);
+    assert.equal(await page.getByRole("button", { name: "Save batch" }).isVisible(), false);
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -231,6 +233,10 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Phrase favourite saved.");
     await assertTextVisible(page, "Saved favourites");
     await assertFavouriteVisible(page, copiedPhrase);
+
+    await page.getByRole("button", { name: "Save batch" }).click();
+    await assertTextVisible(page, "Batch favourite saved.");
+    await assertBatchFavouriteVisible(page, batchCopy);
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
@@ -261,6 +267,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "10 phrases selected");
     await assertTextVisible(page, "Saved favourites");
     await assertFavouriteVisible(page, copiedPhrase);
+    await assertBatchFavouriteVisible(page, batchCopy);
     await assertNoHorizontalOverflow(page);
 
     await page.reload();
@@ -524,9 +531,28 @@ async function assertTextVisible(page, text) {
 
 async function assertFavouriteVisible(page, phrase) {
   assert.equal(
-    await page.locator("[data-phrase-favourites-list]").getByText(phrase).isVisible(),
+    await page.locator("[data-phrase-favourites-list] > li").evaluateAll(
+      (items, expectedPhrase) =>
+        items.some(
+          (item) =>
+            item.childElementCount === 0 &&
+            item.textContent?.trim() === expectedPhrase,
+        ),
+      phrase,
+    ),
     true,
   );
+}
+
+async function assertBatchFavouriteVisible(page, batchCopy) {
+  const batchLines = batchCopy.split("\n").slice(1);
+  const favouritesList = page.locator("[data-phrase-favourites-list]");
+
+  assert.equal(await favouritesList.getByText("Batch Favourite").isVisible(), true);
+
+  for (const phrase of batchLines) {
+    assert.equal(await favouritesList.getByText(phrase).first().isVisible(), true);
+  }
 }
 
 function assertDefaultTemplatePhrase(phrase) {

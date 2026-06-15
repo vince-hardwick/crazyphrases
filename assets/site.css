@@ -540,13 +540,32 @@ h1 {
   list-style: none;
 }
 
-.favourites-list li {
+.favourites-list > li {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
   background: rgba(238, 246, 243, 0.72);
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.batch-favourite-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.batch-favourite-detail {
+  margin: 2px 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.batch-favourite-phrases {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  font-weight: 600;
 }
 
 .phrase-copy-button {

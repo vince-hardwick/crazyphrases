@@ -33,6 +33,7 @@ import {
 import { createSignedInGameSession } from "./signed-in-game-session.js?v=__ASSET_VERSION__";
 import {
   createLocalTestPrivateFavouritesRepository,
+  createBatchFavouriteSnapshot,
   createPhraseFavouriteSnapshot,
   createSupabasePrivateFavouritesRepository,
 } from "./private-favourites.js?v=__ASSET_VERSION__";
@@ -61,6 +62,7 @@ const nextButton = document.querySelector("[data-next-button]");
 const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 const revealDetails = document.querySelector("[data-reveal-details]");
+const saveBatchButton = document.querySelector("[data-save-batch-button]");
 const copyStatus = document.querySelector("[data-copy-status]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
@@ -104,6 +106,7 @@ const localTestPrivateFavouritesRepository =
 let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
 let phraseFavourites = [];
+let batchFavourites = [];
 
 loadWordBank();
 renderAccountShell(accountShell);
@@ -169,6 +172,7 @@ startNewCurrentGameButton.addEventListener("click", () => {
   game = createCurrentModeSoloGame({ rowCount: 20 });
   hidePersistenceRecovery();
   renderGame();
+  renderFavourites();
 });
 
 helpToggle.addEventListener("click", () => {
@@ -270,6 +274,11 @@ entryForm.addEventListener("submit", (event) => {
 });
 
 revealPanel.addEventListener("click", (event) => {
+  if (event.target.closest("[data-save-batch-button]")) {
+    void saveBatchFavourite();
+    return;
+  }
+
   const phraseSaveButton = event.target.closest("[data-save-phrase-index]");
 
   if (phraseSaveButton) {
@@ -305,6 +314,7 @@ function renderGame() {
   if (!game.started) {
     entryForm.hidden = true;
     revealPanel.hidden = true;
+    saveBatchButton.hidden = true;
     progress.textContent = `${game.rowCount} phrases selected`;
     return;
   }
@@ -312,6 +322,10 @@ function renderGame() {
   if (game.revealed) {
     entryForm.hidden = true;
     revealPanel.hidden = false;
+    saveBatchButton.hidden =
+      accountShell.persistenceAuthority.type !== "account";
+    saveBatchButton.disabled = isBatchFavouriteSaved();
+    saveBatchButton.textContent = saveBatchButton.disabled ? "Saved" : "Save batch";
     progress.textContent = `${game.rowCount} phrases complete`;
     copyStatus.textContent = "";
     phraseList.replaceChildren(
@@ -324,6 +338,7 @@ function renderGame() {
   const activeSection = getActiveSection(game);
   entryForm.hidden = false;
   revealPanel.hidden = true;
+  saveBatchButton.hidden = true;
   progress.textContent = `${game.rowCount} phrases`;
   sectionProgress.textContent = `Section ${game.activeSectionIndex + 1} of ${game.sectionOrder.length}`;
   sectionTitle.textContent = activeSection.label;
@@ -449,16 +464,44 @@ function renderFavourites() {
     return;
   }
 
-  favouritesStatus.textContent =
-    phraseFavourites.length === 0 ? "No phrase favourites yet." : "";
-  phraseFavouritesList.replaceChildren(
+  const favouriteItems = [
+    ...batchFavourites.map(renderBatchFavourite),
     ...phraseFavourites.map(renderPhraseFavourite),
-  );
+  ];
+
+  favouritesStatus.textContent =
+    favouriteItems.length === 0 ? "No favourites yet." : "";
+  phraseFavouritesList.replaceChildren(...favouriteItems);
 }
 
 function renderPhraseFavourite(record) {
   const item = document.createElement("li");
   item.textContent = record.favourite.phraseText;
+  return item;
+}
+
+function renderBatchFavourite(record) {
+  const item = document.createElement("li");
+
+  const title = document.createElement("h3");
+  title.className = "batch-favourite-title";
+  title.textContent = "Batch Favourite";
+
+  const detail = document.createElement("p");
+  detail.className = "batch-favourite-detail";
+  detail.textContent = `${record.favourite.rowCount} phrases`;
+
+  const list = document.createElement("ol");
+  list.className = "batch-favourite-phrases";
+  list.replaceChildren(
+    ...record.favourite.phrases.map((phrase) => {
+      const phraseItem = document.createElement("li");
+      phraseItem.textContent = phrase;
+      return phraseItem;
+    }),
+  );
+
+  item.append(title, detail, list);
   return item;
 }
 
@@ -557,6 +600,7 @@ async function startAgain() {
   game = createCurrentModeSoloGame({ rowCount });
   void persistGame();
   renderGame();
+  renderFavourites();
 }
 
 function createCurrentModeSoloGame({ rowCount }) {
@@ -615,6 +659,28 @@ async function savePhraseFavourite(rowIndex) {
   }
 }
 
+async function saveBatchFavourite() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  try {
+    const favourite = createBatchFavouriteSnapshot(game, {
+      wordBank,
+    });
+    const savedFavourite = await privateFavouritesRepository.saveBatchFavourite({
+      accountId: accountShell.accountId,
+      favourite,
+    });
+    batchFavourites = upsertFavouriteRecord(batchFavourites, savedFavourite);
+    renderGame();
+    renderFavourites();
+    copyStatus.textContent = "Batch favourite saved.";
+  } catch {
+    copyStatus.textContent = "Batch favourite could not be saved. Try again.";
+  }
+}
+
 function upsertFavouriteRecord(records, record) {
   const existingIndex = records.findIndex((candidate) => candidate.id === record.id);
 
@@ -639,6 +705,21 @@ function isPhraseFavouriteSaved(phraseIndex) {
   const fingerprint = JSON.stringify(favourite);
 
   return phraseFavourites.some(
+    (record) => JSON.stringify(record.favourite) === fingerprint,
+  );
+}
+
+function isBatchFavouriteSaved() {
+  if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
+    return false;
+  }
+
+  const favourite = createBatchFavouriteSnapshot(game, {
+    wordBank,
+  });
+  const fingerprint = JSON.stringify(favourite);
+
+  return batchFavourites.some(
     (record) => JSON.stringify(record.favourite) === fingerprint,
   );
 }
@@ -706,12 +787,14 @@ async function applyAccountShell(shell) {
   if (accountShell.persistenceAuthority.type === "account") {
     await loadSignedInCurrentGame();
     await loadPhraseFavourites();
+    await loadBatchFavourites();
   } else {
     signedInGameSession.reset();
     game =
       loadCurrentAnonymousSoloGame(window.localStorage) ??
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
+    batchFavourites = [];
     hidePersistenceRecovery();
   }
 
@@ -744,6 +827,7 @@ function applySignedOutShell() {
     loadCurrentAnonymousSoloGame(window.localStorage) ??
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
+  batchFavourites = [];
   hidePersistenceRecovery();
   renderAccountShell(accountShell);
   renderGame();
@@ -763,6 +847,25 @@ async function loadPhraseFavourites() {
     });
   } catch {
     phraseFavourites = [];
+    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+  }
+
+  renderFavourites();
+}
+
+async function loadBatchFavourites() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    batchFavourites = [];
+    renderFavourites();
+    return;
+  }
+
+  try {
+    batchFavourites = await privateFavouritesRepository.listBatchFavourites({
+      accountId: accountShell.accountId,
+    });
+  } catch {
+    batchFavourites = [];
     authMessage.textContent = "Private favourites could not be loaded. Try again.";
   }
 

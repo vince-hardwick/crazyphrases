@@ -4,13 +4,18 @@ const DEFAULT_TEMPLATE_ID = "default-adjective-noun-noun";
 const LOCAL_TEST_PRIVATE_PHRASE_FAVOURITES_SCHEMA = 1;
 const LOCAL_TEST_PRIVATE_PHRASE_FAVOURITES_KEY_PREFIX =
   "crazyphrases.localTest.privatePhraseFavourites.v1.";
+const LOCAL_TEST_PRIVATE_BATCH_FAVOURITES_SCHEMA = 1;
+const LOCAL_TEST_PRIVATE_BATCH_FAVOURITES_KEY_PREFIX =
+  "crazyphrases.localTest.privateBatchFavourites.v1.";
 const PRIVATE_PHRASE_FAVOURITES_TABLE = "private_phrase_favourites";
+const PRIVATE_BATCH_FAVOURITES_TABLE = "private_batch_favourites";
 
 export function createMemoryPrivateFavouritesRepository({
   createId = defaultCreateId,
   now = () => new Date().toISOString(),
 } = {}) {
   const phraseFavouritesByAccount = new Map();
+  const batchFavouritesByAccount = new Map();
 
   return {
     async savePhraseFavourite({ accountId, favourite }) {
@@ -48,6 +53,45 @@ export function createMemoryPrivateFavouritesRepository({
       assertAccountId(accountId);
 
       return getAccountFavourites(phraseFavouritesByAccount, accountId).map(
+        ({ record }) => cloneFavouriteRecord(record),
+      );
+    },
+
+    async saveBatchFavourite({ accountId, favourite }) {
+      assertAccountId(accountId);
+      assertBatchFavouriteSnapshot(favourite);
+
+      const accountFavourites = getAccountFavourites(
+        batchFavouritesByAccount,
+        accountId,
+      );
+      const fingerprint = createFavouriteFingerprint(favourite);
+      const existing = accountFavourites.find(
+        (record) => record.fingerprint === fingerprint,
+      );
+
+      if (existing) {
+        return cloneFavouriteRecord(existing.record);
+      }
+
+      const record = {
+        id: createId(),
+        accountId,
+        favourite: cloneFavourite(favourite),
+        createdAt: now(),
+      };
+      accountFavourites.push({
+        fingerprint,
+        record,
+      });
+
+      return cloneFavouriteRecord(record);
+    },
+
+    async listBatchFavourites({ accountId }) {
+      assertAccountId(accountId);
+
+      return getAccountFavourites(batchFavouritesByAccount, accountId).map(
         ({ record }) => cloneFavouriteRecord(record),
       );
     },
@@ -101,6 +145,46 @@ export function createLocalTestPrivateFavouritesRepository(
         ({ record }) => cloneFavouriteRecord(record),
       );
     },
+
+    async saveBatchFavourite({ accountId, favourite }) {
+      assertAccountId(accountId);
+      assertBatchFavouriteSnapshot(favourite);
+
+      const storedFavourites = loadStoredBatchFavourites(storage, { accountId });
+      const fingerprint = createFavouriteFingerprint(favourite);
+      const existing = storedFavourites.find(
+        (record) => record.fingerprint === fingerprint,
+      );
+
+      if (existing) {
+        return cloneFavouriteRecord(existing.record);
+      }
+
+      const record = {
+        id: createId(),
+        accountId,
+        favourite: cloneFavourite(favourite),
+        createdAt: now(),
+      };
+      storedFavourites.push({
+        fingerprint,
+        record,
+      });
+      saveStoredBatchFavourites(storage, {
+        accountId,
+        favourites: storedFavourites,
+      });
+
+      return cloneFavouriteRecord(record);
+    },
+
+    async listBatchFavourites({ accountId }) {
+      assertAccountId(accountId);
+
+      return loadStoredBatchFavourites(storage, { accountId }).map(
+        ({ record }) => cloneFavouriteRecord(record),
+      );
+    },
   };
 }
 
@@ -151,6 +235,48 @@ export function createSupabasePrivateFavouritesRepository({ supabase }) {
         recoverSupabasePhraseFavouriteRecord(row, { accountId }),
       );
     },
+
+    async saveBatchFavourite({ accountId, favourite }) {
+      assertAccountId(accountId);
+      assertBatchFavouriteSnapshot(favourite);
+
+      const sourceFingerprint = createFavouriteFingerprint(favourite);
+      const response = await supabase
+        .from(PRIVATE_BATCH_FAVOURITES_TABLE)
+        .insert({
+          account_id: accountId,
+          favourite: cloneFavourite(favourite),
+          source_fingerprint: sourceFingerprint,
+        })
+        .select("id, account_id, favourite, created_at")
+        .maybeSingle();
+
+      if (isUniqueConstraintError(response?.error)) {
+        return loadSupabaseBatchFavouriteByFingerprint({
+          supabase,
+          accountId,
+          sourceFingerprint,
+        });
+      }
+
+      assertNoSupabaseError(response, "Could not save private Batch Favourite");
+      return recoverSupabaseBatchFavouriteRecord(response.data, { accountId });
+    },
+
+    async listBatchFavourites({ accountId }) {
+      assertAccountId(accountId);
+
+      const response = await supabase
+        .from(PRIVATE_BATCH_FAVOURITES_TABLE)
+        .select("id, account_id, favourite, created_at")
+        .eq("account_id", accountId)
+        .order("created_at", { ascending: false });
+
+      assertNoSupabaseError(response, "Could not load private Batch Favourites");
+      return (response.data ?? []).map((row) =>
+        recoverSupabaseBatchFavouriteRecord(row, { accountId }),
+      );
+    },
   };
 }
 
@@ -182,6 +308,36 @@ export function createPhraseFavouriteSnapshot(game, { rowIndex, wordBank } = {})
   };
 }
 
+export function createBatchFavouriteSnapshot(game, { wordBank } = {}) {
+  assertRevealedSignedInSoloGame(game);
+
+  const phrases = renderPhrases(game, { wordBank });
+
+  return {
+    type: "batch",
+    sourceMode: game.mode,
+    templateId: DEFAULT_TEMPLATE_ID,
+    rowCount: game.rowCount,
+    phrases,
+    rows: phrases.map((phraseText, rowIndex) => ({
+      rowIndex,
+      phraseText,
+      entries: game.sections.map((section) => {
+        const value = section.rows[rowIndex].value;
+
+        return {
+          entryKind: section.kind,
+          value,
+          displayValue: normalizeEntryForDisplay(value, {
+            entryKind: section.kind,
+            wordBank,
+          }),
+        };
+      }),
+    })),
+  };
+}
+
 function assertAccountId(accountId) {
   if (typeof accountId !== "string" || accountId.trim() === "") {
     throw new Error("A signed-in Account id is required.");
@@ -200,6 +356,12 @@ function assertPhraseFavouriteSnapshot(favourite) {
   }
 }
 
+function assertBatchFavouriteSnapshot(favourite) {
+  if (!isBatchFavouriteSnapshot(favourite)) {
+    throw new Error("A valid Batch Favourite snapshot is required.");
+  }
+}
+
 function isPhraseFavouriteSnapshot(favourite) {
   return (
     favourite?.type === "phrase" &&
@@ -209,6 +371,22 @@ function isPhraseFavouriteSnapshot(favourite) {
     typeof favourite.phraseText === "string" &&
     favourite.phraseText.trim() !== "" &&
     Array.isArray(favourite.entries)
+  );
+}
+
+function isBatchFavouriteSnapshot(favourite) {
+  return (
+    favourite?.type === "batch" &&
+    favourite.sourceMode === "signed-in-solo" &&
+    favourite.templateId === DEFAULT_TEMPLATE_ID &&
+    Number.isInteger(favourite.rowCount) &&
+    Array.isArray(favourite.phrases) &&
+    favourite.phrases.length === favourite.rowCount &&
+    favourite.phrases.every(
+      (phrase) => typeof phrase === "string" && phrase.trim() !== "",
+    ) &&
+    Array.isArray(favourite.rows) &&
+    favourite.rows.length === favourite.rowCount
   );
 }
 
@@ -249,6 +427,35 @@ function loadStoredPhraseFavourites(storage, { accountId }) {
   }
 }
 
+function loadStoredBatchFavourites(storage, { accountId }) {
+  try {
+    const serialized = storage.getItem(getLocalTestBatchFavouritesKey(accountId));
+
+    if (typeof serialized !== "string" || serialized.trim() === "") {
+      return [];
+    }
+
+    const payload = JSON.parse(serialized);
+
+    if (
+      payload?.schemaVersion !== LOCAL_TEST_PRIVATE_BATCH_FAVOURITES_SCHEMA ||
+      payload.accountId !== accountId ||
+      !Array.isArray(payload.favourites)
+    ) {
+      return [];
+    }
+
+    return payload.favourites
+      .filter(isStoredFavouriteRecord)
+      .map(({ fingerprint, record }) => ({
+        fingerprint,
+        record: cloneFavouriteRecord(record),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 function saveStoredPhraseFavourites(storage, { accountId, favourites }) {
   storage.setItem(
     getLocalTestPhraseFavouritesKey(accountId),
@@ -260,8 +467,25 @@ function saveStoredPhraseFavourites(storage, { accountId, favourites }) {
   );
 }
 
+function saveStoredBatchFavourites(storage, { accountId, favourites }) {
+  storage.setItem(
+    getLocalTestBatchFavouritesKey(accountId),
+    JSON.stringify({
+      schemaVersion: LOCAL_TEST_PRIVATE_BATCH_FAVOURITES_SCHEMA,
+      accountId,
+      favourites,
+    }),
+  );
+}
+
 function getLocalTestPhraseFavouritesKey(accountId) {
   return `${LOCAL_TEST_PRIVATE_PHRASE_FAVOURITES_KEY_PREFIX}${encodeURIComponent(
+    accountId,
+  )}`;
+}
+
+function getLocalTestBatchFavouritesKey(accountId) {
+  return `${LOCAL_TEST_PRIVATE_BATCH_FAVOURITES_KEY_PREFIX}${encodeURIComponent(
     accountId,
   )}`;
 }
@@ -301,7 +525,8 @@ function isFavouriteRecord(record) {
     record.accountId.trim() !== "" &&
     typeof record.createdAt === "string" &&
     record.createdAt.trim() !== "" &&
-    isPhraseFavouriteSnapshot(record.favourite)
+    (isPhraseFavouriteSnapshot(record.favourite) ||
+      isBatchFavouriteSnapshot(record.favourite))
   );
 }
 
@@ -326,6 +551,27 @@ async function loadSupabasePhraseFavouriteByFingerprint({
   return recoverSupabasePhraseFavouriteRecord(response.data, { accountId });
 }
 
+async function loadSupabaseBatchFavouriteByFingerprint({
+  supabase,
+  accountId,
+  sourceFingerprint,
+}) {
+  const response = await supabase
+    .from(PRIVATE_BATCH_FAVOURITES_TABLE)
+    .select("id, account_id, favourite, created_at")
+    .eq("account_id", accountId)
+    .eq("source_fingerprint", sourceFingerprint)
+    .maybeSingle();
+
+  assertNoSupabaseError(response, "Could not load private Batch Favourite");
+
+  if (!response.data) {
+    throw new Error("Private Batch Favourite could not be found after duplicate save.");
+  }
+
+  return recoverSupabaseBatchFavouriteRecord(response.data, { accountId });
+}
+
 function recoverSupabasePhraseFavouriteRecord(row, { accountId }) {
   const record = {
     id: row?.id,
@@ -336,6 +582,25 @@ function recoverSupabasePhraseFavouriteRecord(row, { accountId }) {
 
   if (record.accountId !== accountId || !isFavouriteRecord(record)) {
     throw new Error("A valid private Phrase Favourite row is required.");
+  }
+
+  return cloneFavouriteRecord(record);
+}
+
+function recoverSupabaseBatchFavouriteRecord(row, { accountId }) {
+  const record = {
+    id: row?.id,
+    accountId: row?.account_id,
+    favourite: row?.favourite,
+    createdAt: row?.created_at,
+  };
+
+  if (
+    record.accountId !== accountId ||
+    !isFavouriteRecord(record) ||
+    !isBatchFavouriteSnapshot(record.favourite)
+  ) {
+    throw new Error("A valid private Batch Favourite row is required.");
   }
 
   return cloneFavouriteRecord(record);

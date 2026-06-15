@@ -50,6 +50,18 @@ HTTP 401: Requires authentication
 The token in default is invalid.
 ```
 
+Another known symptom is an unauthenticated GitHub API rate-limit response from
+commands that should normally use the user's `gh` login:
+
+```text
+HTTP 403: API rate limit exceeded ...
+Authenticated requests get a higher rate limit.
+```
+
+For this repository, treat that 403 as evidence that the sandboxed `gh` process
+did not read the Windows keyring token before assuming GitHub itself is blocking
+the logged-in user.
+
 This does not necessarily mean GitHub CLI is missing or the user is logged out. It can mean the sandbox cannot access the Windows keyring.
 
 ## Best Practice for Future Codex Sessions

@@ -104,6 +104,24 @@ Supabase CLI is installed. On 2026-06-12 the CLI was not available on this
 Codex workspace `PATH`, so the first migration file was created manually using
 the normal timestamped filename convention.
 
+As of 2026-06-15, the desktop user's PowerShell can run the Supabase CLI through
+`npx supabase`, with verified version `2.106.0`. This was installed into the
+user/npm cache by `npx`, not committed to the repository. Future Codex sessions
+should prefer:
+
+```powershell
+npx supabase --help
+npx supabase <group> --help
+npx supabase migration new <name>
+```
+
+If sandboxed Codex commands cannot find Node/npm or cannot access the user npm
+cache, rerun the needed `npx supabase ...` command with sandbox escalation
+rather than installing project-local CLI packages or committing generated
+dependency files. Do not use Supabase CLI commands that mutate hosted projects
+unless the action has explicit owner approval under the Mutation Authority
+section above.
+
 ## Browser Runtime Config
 
 The source-controlled runtime config module is:

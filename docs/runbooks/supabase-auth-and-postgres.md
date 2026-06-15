@@ -266,6 +266,14 @@ configuration is automated later, use a task-specific approved Management API
 run with a short-lived Supabase access token supplied outside the repository and
 outside chat transcripts.
 
+As of 2026-06-15, the project owner configured and enabled the Google provider
+in the hosted Supabase project. A `dev` browser smoke reached Google Accounts
+from `https://dev.crazyphrases.com/` with the configured Google OAuth client id,
+the Supabase callback URL, and the `redirect_to` value set back to the dev app.
+End-to-end sign-in, Account shell hydration, and signed-in current-game writes
+remain pending until the project owner completes the Google account sign-in and
+consent step in the visible browser.
+
 For email sign-in, the current hosted app sends Supabase email magic links. It
 does not yet implement an in-app six-digit OTP entry flow.
 

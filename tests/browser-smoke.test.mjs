@@ -15,7 +15,7 @@ const mimeTypes = new Map([
   [".json", "application/json; charset=utf-8"],
 ]);
 
-describe("anonymous solo browser smoke", () => {
+describe("solo browser smoke", () => {
   let staticServer;
   let browser;
 
@@ -179,7 +179,7 @@ describe("anonymous solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("persists signed-in reveal until confirmed Start again replaces it", async () => {
+  it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -193,6 +193,7 @@ describe("anonymous solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
+    await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "15" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
@@ -200,8 +201,10 @@ describe("anonymous solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
+    await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
+    await assertNoHorizontalOverflow(page);
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -210,6 +213,7 @@ describe("anonymous solo browser smoke", () => {
 
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
 
     const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
     const copiedPhrase = await copiedPhraseItem.locator("span").innerText();
@@ -223,6 +227,17 @@ describe("anonymous solo browser smoke", () => {
     assert.equal(batchCopy.split("\n")[0], "Crazy Phrases");
     assert.equal(batchCopy.split("\n").length, 11);
 
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await assertNoHorizontalOverflow(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
     await page.reload();
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "15 phrases");
@@ -230,6 +245,7 @@ describe("anonymous solo browser smoke", () => {
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Start again" }).click();
     await assertTextVisible(
@@ -238,6 +254,7 @@ describe("anonymous solo browser smoke", () => {
     );
     await page.getByRole("button", { name: "Start new batch" }).click();
     await assertTextVisible(page, "10 phrases selected");
+    await assertNoHorizontalOverflow(page);
 
     await page.reload();
     await assertTextVisible(page, "Anonymous solo");

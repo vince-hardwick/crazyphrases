@@ -74,7 +74,7 @@ The committed automated confidence check is:
 npm test
 ```
 
-That command runs the unit tests and the headless Playwright browser smoke in `tests/browser-smoke.test.mjs`. It is appropriate for local and CI confidence before pushing, and it documents the full anonymous solo smoke path expected by issue implementation work. It is not a replacement for the visible Codex in-app browser path when a task requires user-observed local, `dev`, `test`, or production verification.
+That command runs the unit tests and the headless Playwright browser smoke in `tests/browser-smoke.test.mjs`. It is appropriate for local and CI confidence before pushing, and it documents the full anonymous and signed-in solo smoke paths expected by issue implementation work. It is not a replacement for the visible Codex in-app browser path when a task requires user-observed local, `dev`, `test`, or production verification.
 
 Do not start with a shell-launched `python -m http.server` or an arbitrary free port for smoke verification. A shell server can exit between shell turns and can make the in-app browser failure look like a Browser plugin problem. Start the server from the same persistent JavaScript runtime used to control the Browser plugin. This keeps the static server alive while Playwright interactions run.
 
@@ -212,6 +212,23 @@ For the anonymous solo MVP, a deployment smoke should check:
 Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Fill these adjectives`, and noun words only when the page says `Fill these nouns`. Do not assume the first visible entry section is the adjective slot.
 
 When checking clipboard output from the visible browser on Windows, normalize `\r\n` to `\n` before comparing expected copy text. The assertion must still prove that per-phrase copy contains only the phrase text and that copy-all contains the short title followed by unnumbered phrase lines.
+
+## Expected Smoke Shape For Signed-In Solo
+
+For the signed-in foundation, local and deployment smoke should check:
+
+- The page offers the supported sign-in path for the environment: `Test sign in` on localhost, or configured hosted auth in `dev`/`test`.
+- After sign-in, the Account shell shows `Account-backed mode` and a game-facing handle.
+- Existing anonymous local play is not imported into the signed-in current game automatically.
+- A signed-in Solo Game can be started, filled, refreshed or revisited, and resumed from account-backed state.
+- A revealed signed-in batch remains the current signed-in game until the participant confirms `Start again`.
+- Per-phrase copy and `Copy all` still work after signed-in reveal.
+- Signing out does not delete the current signed-in game; signing back in restores it.
+- Signed-out anonymous solo remains playable and does not require signed-in persistence.
+- The mobile viewport has no horizontal overflow or blocking layout overlap in the signed-in setup, entry, reveal, and recovery states.
+- Save failure, load failure, and stale-write conflict states show explicit recovery or warning copy instead of silently treating account-backed progress as safe.
+
+Local committed smoke uses the localhost-only test sign-in fixture so it can run without Supabase, Google OAuth, or live data mutation. Hosted `dev`/`test` smoke may use real Supabase Auth after the relevant deployment approval, but any smoke that starts, replaces, or deletes a hosted signed-in current game writes account-owned Supabase data and needs explicit user approval for that mutation. Deployment approval alone authorizes deploying files; it does not authorize extra live data mutation beyond the verified deployment path.
 
 ## Static Asset Cache Check
 

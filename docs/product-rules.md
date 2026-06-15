@@ -34,7 +34,9 @@ The first anonymous solo slice does not include third-party analytics, tracking 
 
 ### Test coverage
 
-The anonymous solo MVP includes focused tests from the first implementation slice: unit tests for game state, phrase rendering, word selection, concealment, local-storage recovery, reveal, and copy formatting, plus one browser smoke test for the full anonymous solo flow.
+The anonymous solo MVP includes focused tests from the first implementation slice: unit tests for game state, phrase rendering, word selection, concealment, local-storage recovery, reveal, and copy formatting, plus browser smoke coverage for the full anonymous solo flow.
+
+The signed-in foundation adds browser smoke coverage for local/test sign-in, Account shell display, signed-in Solo Game start/resume, in-progress entry persistence, reveal, copy actions, sign-out/sign-back-in restore, anonymous solo regression, persistence failure warnings, stale-write conflict warnings, and mobile overflow checks.
 
 ### Frontend implementation
 

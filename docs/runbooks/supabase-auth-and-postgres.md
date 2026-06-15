@@ -243,6 +243,29 @@ For Google sign-in:
    Dashboard Google provider settings. Do not paste the secret into chat, git,
    scripts, issue text, or project-local config files.
 
+Manual dashboard route:
+
+1. In Supabase, open the `crazyphrases` project.
+2. Go to **Authentication > URL Configuration**.
+3. Set the Site URL and Additional Redirect URLs listed above, then save.
+4. Go to **Authentication > Providers > Google**.
+5. Copy the provider callback URL shown by Supabase. For this project it should
+   be:
+   `https://egnudphshvqdhrotxrfs.supabase.co/auth/v1/callback`
+6. In Google Cloud, create or open a Web application OAuth client.
+7. Add the authorised JavaScript origins listed above.
+8. Add the Supabase callback URL as the authorised redirect URI.
+9. Copy the Google Client ID and Client Secret from Google Cloud into the
+   Supabase Google provider settings, enable Google, then save.
+
+As of 2026-06-15, the Codex Supabase plugin available in this workspace can
+read project metadata, docs, tables, advisors, publishable keys, Edge Functions,
+and extensions, but it does not expose an Auth configuration writer. Do not ask
+the user to paste OAuth client secrets into chat to work around this. If Auth
+configuration is automated later, use a task-specific approved Management API
+run with a short-lived Supabase access token supplied outside the repository and
+outside chat transcripts.
+
 For email sign-in, the current hosted app sends Supabase email magic links. It
 does not yet implement an in-app six-digit OTP entry flow.
 

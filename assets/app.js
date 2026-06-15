@@ -65,6 +65,17 @@ const emailSignInForm = document.querySelector("[data-email-sign-in-form]");
 const emailSignInInput = document.querySelector("[data-email-sign-in-input]");
 const authMessage = document.querySelector("[data-auth-message]");
 const signOutButton = document.querySelector("[data-sign-out-button]");
+const persistenceRecovery = document.querySelector("[data-persistence-recovery]");
+const persistenceRecoveryMessage = document.querySelector(
+  "[data-persistence-recovery-message]",
+);
+const retryCurrentGameButton = document.querySelector("[data-retry-current-game]");
+const startNewCurrentGameButton = document.querySelector(
+  "[data-start-new-current-game]",
+);
+
+const loadFailureMessage =
+  "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.";
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
@@ -74,7 +85,9 @@ let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
 let hostedAuthAvailable = false;
 const localTestSignedInGameSession = createSignedInGameSession({
-  repository: createLocalTestSignedInSoloGameRepository(window.localStorage),
+  repository: createLocalTestSignedInSoloGameRepository(window.localStorage, {
+    failureMode: getLocalTestPersistenceFailureMode(),
+  }),
 });
 let signedInGameSession = localTestSignedInGameSession;
 
@@ -130,6 +143,17 @@ signOutButton.addEventListener("click", async () => {
   }
 
   applySignedOutShell();
+});
+
+retryCurrentGameButton.addEventListener("click", () => {
+  void loadSignedInCurrentGame();
+});
+
+startNewCurrentGameButton.addEventListener("click", () => {
+  signedInGameSession.reset();
+  game = createCurrentModeSoloGame({ rowCount: 20 });
+  hidePersistenceRecovery();
+  renderGame();
 });
 
 helpToggle.addEventListener("click", () => {
@@ -308,6 +332,22 @@ function isLocalTestAuthAvailable() {
   return ["127.0.0.1", "localhost"].includes(window.location.hostname);
 }
 
+function getLocalTestPersistenceFailureMode() {
+  if (!isLocalTestAuthAvailable()) {
+    return null;
+  }
+
+  const failureMode = new URLSearchParams(window.location.search).get(
+    "testSignedInPersistence",
+  );
+
+  if (["save-fails", "load-fails", "conflict-save"].includes(failureMode)) {
+    return failureMode;
+  }
+
+  return null;
+}
+
 function renderEntryRow(row, rowIndex, entryKind) {
   const rowElement = document.createElement("div");
   rowElement.className = "entry-row";
@@ -423,8 +463,8 @@ async function persistGame() {
         game,
       });
       authMessage.textContent = "";
-    } catch {
-      authMessage.textContent = "Could not save account-backed progress.";
+    } catch (error) {
+      authMessage.textContent = getSaveFailureMessage(error);
     }
     return;
   }
@@ -469,6 +509,17 @@ async function copyText(text, successMessage) {
   }
 
   copyStatus.textContent = "Copy unavailable.";
+}
+
+function getSaveFailureMessage(error) {
+  if (
+    error instanceof Error &&
+    /changed before it could be saved/i.test(error.message)
+  ) {
+    return "Account-backed progress changed in another tab. Reload to see the latest saved game before continuing.";
+  }
+
+  return "Account-backed progress could not be saved. Keep this tab open and try again.";
 }
 
 async function loadWordBank() {
@@ -517,15 +568,30 @@ async function applyAccountShell(shell) {
   accountShell = shell;
 
   if (accountShell.persistenceAuthority.type === "account") {
-    game =
-      (await signedInGameSession.loadCurrentGame({
-        accountId: accountShell.accountId,
-      })) ?? createCurrentModeSoloGame({ rowCount: 20 });
+    await loadSignedInCurrentGame();
   } else {
     signedInGameSession.reset();
     game =
       loadCurrentAnonymousSoloGame(window.localStorage) ??
       createAnonymousSoloGame({ rowCount: 20 });
+    hidePersistenceRecovery();
+  }
+
+  renderAccountShell(accountShell);
+  renderGame();
+}
+
+async function loadSignedInCurrentGame() {
+  try {
+    game =
+      (await signedInGameSession.loadCurrentGame({
+        accountId: accountShell.accountId,
+      })) ?? createCurrentModeSoloGame({ rowCount: 20 });
+    hidePersistenceRecovery();
+  } catch {
+    signedInGameSession.reset();
+    game = createCurrentModeSoloGame({ rowCount: 20 });
+    showPersistenceRecovery(loadFailureMessage);
   }
 
   renderAccountShell(accountShell);
@@ -538,6 +604,17 @@ function applySignedOutShell() {
   game =
     loadCurrentAnonymousSoloGame(window.localStorage) ??
     createAnonymousSoloGame({ rowCount: 20 });
+  hidePersistenceRecovery();
   renderAccountShell(accountShell);
   renderGame();
+}
+
+function showPersistenceRecovery(message) {
+  persistenceRecoveryMessage.textContent = message;
+  persistenceRecovery.hidden = false;
+}
+
+function hidePersistenceRecovery() {
+  persistenceRecovery.hidden = true;
+  persistenceRecoveryMessage.textContent = "";
 }

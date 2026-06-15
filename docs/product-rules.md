@@ -222,6 +222,13 @@ The first signed-in solo persistence slice stores the current signed-in Solo Gam
 
 Signed-in solo save/resume should prevent stale clients from silently overwriting newer account-backed progress, using a revision, version, or equivalent concurrency rule.
 
+If signed-in solo current-game loading fails, the participant remains signed in,
+the app shows a retry path, and any start-new path must not silently delete or
+overwrite remote account-backed state. If account-backed saving fails, the app
+must visibly warn that progress may not be saved. If a stale browser or session
+attempts to save over newer account-backed progress, the app must report the
+conflict rather than silently overwriting the newer state.
+
 MVP anonymous solo is a client-only experience using manual entry and the tiny bundled seed word bank. It does not require account state, backend persistence, invite state, or server-side word-bank access.
 
 The first implementation is static-first for anonymous solo, with a clear backend boundary for signed-in features. Accounts, signed-in persistence, multiplayer, invites, consent, and private favourites require backend-backed state rather than static hosting alone.

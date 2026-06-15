@@ -178,6 +178,18 @@ not signed-in production authority. It must remain separate from anonymous solo
 local recovery and must not upload, merge, or import anonymous local games when
 the participant clicks `Test sign in`.
 
+Local browser smoke tests may add the localhost-only query parameter
+`testSignedInPersistence` with one of these values:
+
+- `save-fails`
+- `load-fails`
+- `conflict-save`
+
+These values force the local signed-in persistence fixture to simulate a failed
+save, failed load, or stale-write conflict. The app must ignore these fixture
+values outside `localhost` and `127.0.0.1`; they are not Supabase Auth state, do
+not call hosted Supabase, and do not authorise live mutation.
+
 ## Hosted Browser Auth Wiring
 
 The hosted static app creates a Supabase browser client only when deployment

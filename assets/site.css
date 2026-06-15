@@ -114,6 +114,24 @@ body {
   font-weight: 700;
 }
 
+.persistence-recovery {
+  margin-top: 6px;
+}
+
+.persistence-recovery p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.persistence-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .text-button {
   min-height: 28px;
   border: 0;

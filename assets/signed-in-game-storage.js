@@ -25,10 +25,17 @@ export function createMemorySignedInSoloGameRepository() {
   };
 }
 
-export function createLocalTestSignedInSoloGameRepository(storage) {
+export function createLocalTestSignedInSoloGameRepository(
+  storage,
+  { failureMode = null } = {},
+) {
   return {
     async loadCurrentGame({ accountId }) {
       assertAccountId(accountId);
+
+      if (failureMode === "load-fails") {
+        throw new Error("Local test signed-in game load failed.");
+      }
 
       try {
         return recoverStoredSignedInSoloGame(
@@ -43,6 +50,16 @@ export function createLocalTestSignedInSoloGameRepository(storage) {
     async saveCurrentGame({ accountId, game }) {
       assertAccountId(accountId);
       assertSignedInGameForAccount({ accountId, game });
+
+      if (failureMode === "conflict-save") {
+        throw new Error(
+          "Current signed-in Solo Game changed before it could be saved.",
+        );
+      }
+
+      if (failureMode === "save-fails") {
+        throw new Error("Local test signed-in game save failed.");
+      }
 
       const savedGame = cloneGame(game);
       storage.setItem(

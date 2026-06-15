@@ -178,6 +178,90 @@ describe("anonymous solo browser smoke", () => {
 
     assertNoConsoleErrors();
   });
+
+  it("warns signed-in players when account-backed saves fail", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=save-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be saved. Keep this tab open and try again.",
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("offers safe recovery when account-backed progress cannot be loaded", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=load-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
+    );
+    assert.equal(await page.getByRole("button", { name: "Retry" }).isVisible(), true);
+
+    await page.getByRole("button", { name: "Retry" }).click();
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
+    );
+
+    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "20 phrases selected");
+    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+    assert.equal(await page.getByText("could not be loaded").isVisible(), false);
+
+    assertNoConsoleErrors();
+  });
+
+  it("warns signed-in players when account-backed progress changed elsewhere", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=conflict-save`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    await assertTextVisible(
+      page,
+      "Account-backed progress changed in another tab. Reload to see the latest saved game before continuing.",
+    );
+
+    assertNoConsoleErrors();
+  });
 });
 
 async function startStaticServer() {

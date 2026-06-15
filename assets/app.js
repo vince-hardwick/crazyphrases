@@ -361,7 +361,7 @@ function renderGame() {
   entryForm.hidden = false;
   revealPanel.hidden = true;
   saveBatchButton.hidden = true;
-  progress.textContent = `${game.rowCount} phrases`;
+  progress.textContent = "";
   sectionProgress.textContent = `Section ${game.activeSectionIndex + 1} of ${game.sectionOrder.length}`;
   sectionTitle.textContent = activeSection.label;
   entryList.replaceChildren(

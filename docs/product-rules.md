@@ -14,7 +14,7 @@ For the default template's two noun slots, use neutral user-facing labels only w
 
 The app header should not duplicate the browser's domain display when the main title already identifies the app. In the MVP game flow, do not render `crazyphrases.com` as a separate header label above the Crazy Phrases title.
 
-MVP setup and reveal controls should avoid repeating selected row-count text when the row-count selector already communicates the selected option. The setup action area should not add status copy such as "10 phrases selected", and the revealed-batch action area should not repeat the completed batch size next to "Start again".
+MVP setup, entry, and reveal controls should avoid repeating selected row-count text when the row-count selector already communicates the selected option. The setup action area should not add status copy such as "10 phrases selected"; the entry action area should not echo copy such as "10 phrases" next to "Start again"; and the revealed-batch action area should not repeat the completed batch size next to "Start again".
 
 ### Responsive design
 

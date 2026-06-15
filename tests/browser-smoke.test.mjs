@@ -65,6 +65,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
+    await assertProgressEmpty(page);
     assert.equal(await page.getByRole("button", { name: "15" }).isDisabled(), true);
     await assertNoHorizontalOverflow(page);
 
@@ -610,6 +611,10 @@ async function assertRowCountSelected(page, rowCount) {
     await page.locator(`[data-row-count="${rowCount}"]`).getAttribute("aria-pressed"),
     "true",
   );
+}
+
+async function assertProgressEmpty(page) {
+  assert.equal(await page.locator("[data-progress]").innerText(), "");
 }
 
 async function assertFavouriteVisible(page, phrase) {

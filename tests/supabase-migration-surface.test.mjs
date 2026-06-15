@@ -16,6 +16,13 @@ const tightenCurrentGameGrantsMigration = readFileSync(
   ),
   "utf8",
 );
+const maintainCurrentGameUpdatedAtMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260615132432_maintain_signed_in_solo_current_games_updated_at.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -48,5 +55,28 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(tightenCurrentGameGrantsMigration, /truncate/i);
     assert.doesNotMatch(tightenCurrentGameGrantsMigration, /trigger/i);
     assert.doesNotMatch(tightenCurrentGameGrantsMigration, /references/i);
+  });
+
+  it("maintains updated_at for signed-in current game updates", () => {
+    assert.match(maintainCurrentGameUpdatedAtMigration, /create schema if not exists private/);
+    assert.match(
+      maintainCurrentGameUpdatedAtMigration,
+      /create or replace function private\.set_signed_in_solo_current_games_updated_at\(\)/,
+    );
+    assert.match(maintainCurrentGameUpdatedAtMigration, /returns trigger/);
+    assert.match(maintainCurrentGameUpdatedAtMigration, /set search_path = ''/);
+    assert.match(
+      maintainCurrentGameUpdatedAtMigration,
+      /new\.updated_at = pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.match(
+      maintainCurrentGameUpdatedAtMigration,
+      /before update on public\.signed_in_solo_current_games/,
+    );
+    assert.match(
+      maintainCurrentGameUpdatedAtMigration,
+      /execute function private\.set_signed_in_solo_current_games_updated_at\(\)/,
+    );
+    assert.doesNotMatch(maintainCurrentGameUpdatedAtMigration, /security definer/i);
   });
 });

@@ -91,6 +91,7 @@
 - **Deferred**: Private Phrase Favourites and Batch Favourites from the signed-in foundation and solo save/resume PRD.
 - **Why deferred**: The first signed-in slice should prove Account identity and current-game persistence before adding saved-output collections.
 - **Revisit when**: Signed-in solo current-game save/resume is working in dev/test and the persistence model can distinguish current game state from saved favourites.
+- **Status**: Revisit trigger satisfied on 2026-06-15 after the signed-in foundation shipped through production. This is now a candidate follow-up PRD or issue slice, not part of the completed current-game persistence PRD.
 - **Remaining risk**: Favourite storage still needs to decide whether a favourite stores rendered text, entry provenance, a game reference, or a combination of those fields.
 
 ### Phrase reactions
@@ -189,6 +190,7 @@
 - **Deferred**: The first signed-in 2-player asynchronous Game slice, including handle invites, Pending Game lifecycle, multi-participant Slot Allocation, Slot Order, Turn completion, Reveal, Share Consent, Nudges, and In-App Notifications.
 - **Why deferred**: The product needs a working Account, identity, and backend-backed persistence boundary before collaborative game state is designed.
 - **Revisit when**: Signed-in solo current-game save/resume has passed automated and browser smoke verification.
+- **Status**: Revisit trigger satisfied on 2026-06-15 after automated tests, hosted Supabase lifecycle smoke, `test` smoke, and production smoke passed for the signed-in foundation. This is a candidate next product phase rather than an active implementation commitment.
 - **Remaining risk**: Account and solo persistence models must leave room for collaborative history, participant snapshots, consent records, cancellation, and account deletion anonymisation.
 
 ### Manual pokes
@@ -266,6 +268,7 @@
 - **Deferred**: Automatically or manually importing a current anonymous solo local game into signed-in account persistence.
 - **Why deferred**: Silent upload would blur the boundary between local anonymous recovery and Account-backed persistence; manual import needs explicit user consent and conflict handling.
 - **Revisit when**: Signed-in save/resume is working and the product introduces sign-in prompts around active anonymous games or revealed anonymous batches.
+- **Status**: Signed-in save/resume is working as of 2026-06-15. The remaining trigger is a product decision to introduce sign-in prompts or explicit import surfaces around active anonymous games.
 - **Remaining risk**: Visitors may expect a current local game to follow them after sign-in, so UI copy must avoid implying migration until an import flow exists.
 
 ### Email OTP code entry
@@ -280,6 +283,7 @@
 - **Deferred**: Replacing the generic `<project-ref>.supabase.co` Google OAuth consent/sign-in destination with a branded Crazy Phrases domain such as `auth.crazyphrases.com` or a Google-presented app name/domain that clearly reads as Crazy Phrases.
 - **Why deferred**: The first hosted sign-in slice can validate Supabase Auth and signed-in persistence using the default Supabase callback domain, while a branded Auth domain may require Supabase custom-domain setup, DNS changes, certificate validation, and possibly plan/cost checks.
 - **Revisit when**: Hosted Google sign-in works end-to-end in dev/test, before production sign-in is promoted for general users, or sooner if the generic Supabase domain materially reduces trust during testing.
+- **Status**: Hosted Google sign-in has worked end-to-end in `dev`, and the signed-in foundation has been promoted through `test` and `production` as of 2026-06-15. Review this before broader public user onboarding, because the generic Supabase domain is still visible during Google sign-in.
 - **Remaining risk**: Users may be confused or mistrust the Google prompt saying "continue to `<project-ref>.supabase.co`" even though the request was initiated from `crazyphrases.com`.
 
 ### Expanded word-bank source selection

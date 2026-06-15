@@ -13,6 +13,7 @@ output/
 .env
 .env.*
 !.env.example
+supabase/.temp/
 
 # Logs
 *.log

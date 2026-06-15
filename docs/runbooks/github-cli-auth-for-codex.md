@@ -80,6 +80,35 @@ Examples of operations that may need escalation because they read the keyring to
 
 Do not copy tokens into the repository, commit credentials, or create project-local token files. Do not work around keyring access by setting a persistent project-level `GH_TOKEN`.
 
+## Private GitHub Actions Logs
+
+Codex should inspect private GitHub Actions run logs directly with `gh` rather
+than asking the owner to paste log snippets into chat.
+
+Prerequisites for the desktop user account:
+
+```powershell
+gh auth status -h github.com
+gh auth refresh -h github.com -s repo,workflow
+```
+
+Use the existing user-level token in the Windows keyring. Do not create a
+project-local token file, checked-in script, or long-lived `GH_TOKEN` workaround.
+
+Useful commands:
+
+```powershell
+gh run list --repo vince-hardwick/crazyphrases --limit 10
+gh run view <run-id> --repo vince-hardwick/crazyphrases
+gh run view <run-id> --repo vince-hardwick/crazyphrases --log
+gh run view <run-id> --repo vince-hardwick/crazyphrases --job <job-id> --log
+```
+
+If these commands report `401`, an unauthenticated `403`, or a rate-limit error
+inside Codex, rerun the same command with sandbox escalation so `gh` can read the
+desktop user's keyring token. If escalation still fails, ask the owner to refresh
+the `repo` and `workflow` scopes from normal PowerShell.
+
 ## Plain Git Commands in Codex
 
 Plain `git` commands have two separate Codex constraints in this Windows workspace:

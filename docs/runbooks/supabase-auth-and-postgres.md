@@ -492,6 +492,26 @@ page had no horizontal overflow, the browser error/warning log was empty, and a
 read-only SQL check confirmed one hosted `public.private_batch_favourites` row
 with latest `created_at` `2026-06-15 16:56:27.748878+00`.
 
+On 2026-06-15, branch `codex/private-favourites-remove-polish` commit
+`1c33c89ad168d9a568cc1fa57d7b9d38f2d7ed02` was deployed to `dev` after fixing
+hosted saved-state matching for Supabase `jsonb` snapshots whose object keys are
+returned in a different order from the browser-created Favourite snapshot. The
+visible signed-in smoke used marker `codexsmokebgmrnhbd` in the existing
+Google-authenticated Account shell, started a 10-phrase batch, filled sections
+according to the visible section titles, revealed all 10 marked phrases, saved a
+Phrase Favourite, confirmed the phrase save button changed to its saved/disabled
+state, removed and re-saved that Phrase Favourite, saved a Batch Favourite,
+confirmed the batch save button changed to its saved/disabled state, removed and
+re-saved that Batch Favourite, reloaded the page, confirmed the revealed current
+game and both marker favourites persisted, cleared the current game through
+"Start again", and removed the marker favourites through the UI. The page had no
+horizontal overflow, browser warnings/errors were empty, and a read-only SQL
+cleanup check confirmed zero marker rows remained in
+`public.private_phrase_favourites`, `public.private_batch_favourites`, and
+`public.signed_in_solo_current_games`. After cleanup the hosted totals were zero
+Phrase Favourite rows, one retained earlier Batch Favourite row, and zero
+current-game rows.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

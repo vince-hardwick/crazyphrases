@@ -227,6 +227,11 @@ describe("solo browser smoke", () => {
     assert.equal(batchCopy.split("\n")[0], "Crazy Phrases");
     assert.equal(batchCopy.split("\n").length, 11);
 
+    await page.getByRole("button", { name: "Save phrase 2" }).click();
+    await assertTextVisible(page, "Phrase favourite saved.");
+    await assertTextVisible(page, "Saved favourites");
+    await assertFavouriteVisible(page, copiedPhrase);
+
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "15 phrases");
@@ -254,6 +259,8 @@ describe("solo browser smoke", () => {
     );
     await page.getByRole("button", { name: "Start new batch" }).click();
     await assertTextVisible(page, "10 phrases selected");
+    await assertTextVisible(page, "Saved favourites");
+    await assertFavouriteVisible(page, copiedPhrase);
     await assertNoHorizontalOverflow(page);
 
     await page.reload();
@@ -513,6 +520,13 @@ async function assertNoHorizontalOverflow(page) {
 
 async function assertTextVisible(page, text) {
   assert.equal(await page.getByText(text).first().isVisible(), true);
+}
+
+async function assertFavouriteVisible(page, phrase) {
+  assert.equal(
+    await page.locator("[data-phrase-favourites-list]").getByText(phrase).isVisible(),
+    true,
+  );
 }
 
 function assertDefaultTemplatePhrase(phrase) {

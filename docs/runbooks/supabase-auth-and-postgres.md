@@ -392,6 +392,22 @@ The hosted schema was verified through read-only SQL after application:
   `2026-01-01 00:00:00+00` to `2026-06-15 13:50:03.231681+00`; a follow-up SQL
   check confirmed `public.signed_in_solo_current_games` was empty again.
 
+The first private Phrase Favourite migration is:
+
+```text
+supabase/migrations/20260615153000_create_private_phrase_favourites.sql
+```
+
+It creates `public.private_phrase_favourites` for account-owned immutable
+saved-output snapshots, with Row Level Security, no `anon` table grants, an
+Account foreign key with `on delete cascade`, and an account-scoped unique
+source fingerprint so repeated saves of the same revealed Phrase do not create
+confusing duplicate rows. As of this note, the migration is source-controlled
+and covered by migration-surface tests, but it has not been applied to the
+hosted Supabase project. Applying it to hosted Supabase remains live schema
+mutation and needs explicit owner approval under this runbook's Mutation
+Authority section.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

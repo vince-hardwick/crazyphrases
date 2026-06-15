@@ -23,6 +23,13 @@ const maintainCurrentGameUpdatedAtMigration = readFileSync(
   ),
   "utf8",
 );
+const createPrivatePhraseFavouritesMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260615153000_create_private_phrase_favourites.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -78,5 +85,48 @@ describe("Supabase migration surface", () => {
       /execute function private\.set_signed_in_solo_current_games_updated_at\(\)/,
     );
     assert.doesNotMatch(maintainCurrentGameUpdatedAtMigration, /security definer/i);
+  });
+
+  it("creates private Phrase Favourites with account-owned RLS and immutable snapshots", () => {
+    assert.match(
+      createPrivatePhraseFavouritesMigration,
+      /create table if not exists public\.private_phrase_favourites/,
+    );
+    assert.match(
+      createPrivatePhraseFavouritesMigration,
+      /account_id uuid not null references auth\.users \(id\) on delete cascade/,
+    );
+    assert.match(createPrivatePhraseFavouritesMigration, /favourite jsonb not null/);
+    assert.match(
+      createPrivatePhraseFavouritesMigration,
+      /source_fingerprint text not null/,
+    );
+    assert.match(
+      createPrivatePhraseFavouritesMigration,
+      /unique \(account_id, source_fingerprint\)/,
+    );
+    assert.match(
+      createPrivatePhraseFavouritesMigration,
+      /favourite ->> 'type' = 'phrase'/,
+    );
+    assert.match(createPrivatePhraseFavouritesMigration, /enable row level security/);
+
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      assert.match(
+        createPrivatePhraseFavouritesMigration,
+        new RegExp(`revoke all on table public\\.private_phrase_favourites from ${role}`),
+      );
+    }
+
+    assert.match(createPrivatePhraseFavouritesMigration, /grant select, insert, delete/);
+    assert.doesNotMatch(createPrivatePhraseFavouritesMigration, /grant all/i);
+    assert.doesNotMatch(createPrivatePhraseFavouritesMigration, /update/i);
+
+    for (const operation of ["view", "create", "delete"]) {
+      assert.match(
+        createPrivatePhraseFavouritesMigration,
+        new RegExp(`Account holders can ${operation} their private Phrase Favourites`),
+      );
+    }
   });
 });

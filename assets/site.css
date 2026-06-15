@@ -191,7 +191,8 @@ h1 {
 }
 
 .help-panel,
-.game-panel {
+.game-panel,
+.favourites-panel {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -218,6 +219,11 @@ h1 {
   position: relative;
   overflow: hidden;
   padding: clamp(18px, 4vw, 34px);
+}
+
+.favourites-panel {
+  margin-top: 18px;
+  padding: clamp(18px, 4vw, 28px);
 }
 
 .game-panel::before {
@@ -495,6 +501,13 @@ h1 {
   font-weight: 700;
 }
 
+.phrase-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .reveal-actions {
   display: flex;
   align-items: center;
@@ -509,6 +522,31 @@ h1 {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.favourites-status {
+  min-height: 1.3em;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.favourites-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.favourites-list li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: rgba(238, 246, 243, 0.72);
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .phrase-copy-button {
@@ -654,6 +692,10 @@ h1 {
 
   .phrase-list li {
     grid-template-columns: 1fr;
+  }
+
+  .phrase-actions {
+    justify-content: stretch;
   }
 
   .phrase-copy-button {

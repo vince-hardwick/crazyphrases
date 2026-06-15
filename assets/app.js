@@ -31,6 +31,11 @@ import {
   createSupabaseSignedInSoloGameRepository,
 } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
 import { createSignedInGameSession } from "./signed-in-game-session.js?v=__ASSET_VERSION__";
+import {
+  createLocalTestPrivateFavouritesRepository,
+  createPhraseFavouriteSnapshot,
+  createSupabasePrivateFavouritesRepository,
+} from "./private-favourites.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
@@ -73,6 +78,11 @@ const retryCurrentGameButton = document.querySelector("[data-retry-current-game]
 const startNewCurrentGameButton = document.querySelector(
   "[data-start-new-current-game]",
 );
+const favouritesPanel = document.querySelector("[data-favourites-panel]");
+const favouritesStatus = document.querySelector("[data-favourites-status]");
+const phraseFavouritesList = document.querySelector(
+  "[data-phrase-favourites-list]",
+);
 
 const loadFailureMessage =
   "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.";
@@ -89,7 +99,11 @@ const localTestSignedInGameSession = createSignedInGameSession({
     failureMode: getLocalTestPersistenceFailureMode(),
   }),
 });
+const localTestPrivateFavouritesRepository =
+  createLocalTestPrivateFavouritesRepository(window.localStorage);
 let signedInGameSession = localTestSignedInGameSession;
+let privateFavouritesRepository = localTestPrivateFavouritesRepository;
+let phraseFavourites = [];
 
 loadWordBank();
 renderAccountShell(accountShell);
@@ -97,6 +111,7 @@ void initialiseHostedAuth();
 
 testSignInButton.addEventListener("click", async () => {
   signedInGameSession = localTestSignedInGameSession;
+  privateFavouritesRepository = localTestPrivateFavouritesRepository;
   await applyAccountShell(
     createAccountShell({
       account: { id: "test-account" },
@@ -255,6 +270,13 @@ entryForm.addEventListener("submit", (event) => {
 });
 
 revealPanel.addEventListener("click", (event) => {
+  const phraseSaveButton = event.target.closest("[data-save-phrase-index]");
+
+  if (phraseSaveButton) {
+    void savePhraseFavourite(Number(phraseSaveButton.dataset.savePhraseIndex));
+    return;
+  }
+
   const phraseCopyButton = event.target.closest("[data-copy-phrase-index]");
 
   if (phraseCopyButton) {
@@ -273,6 +295,7 @@ revealPanel.addEventListener("click", (event) => {
 });
 
 renderGame();
+renderFavourites();
 
 function renderGame() {
   hideStartAgainConfirmation();
@@ -386,6 +409,9 @@ function renderPhraseItem(phrase, phraseIndex) {
   const phraseText = document.createElement("span");
   phraseText.textContent = phrase;
 
+  const actions = document.createElement("div");
+  actions.className = "phrase-actions";
+
   const copyButton = document.createElement("button");
   copyButton.type = "button";
   copyButton.className = "secondary-button phrase-copy-button";
@@ -393,7 +419,46 @@ function renderPhraseItem(phrase, phraseIndex) {
   copyButton.textContent = "Copy";
   copyButton.ariaLabel = `Copy phrase ${phraseIndex + 1}`;
 
-  item.append(phraseText, copyButton);
+  actions.append(copyButton);
+
+  if (accountShell.persistenceAuthority.type === "account") {
+    const isSaved = isPhraseFavouriteSaved(phraseIndex);
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "secondary-button phrase-copy-button";
+    saveButton.dataset.savePhraseIndex = String(phraseIndex);
+    saveButton.textContent = isSaved ? "Saved" : "Save";
+    saveButton.disabled = isSaved;
+    saveButton.ariaLabel = isSaved
+      ? `Phrase ${phraseIndex + 1} saved`
+      : `Save phrase ${phraseIndex + 1}`;
+    actions.append(saveButton);
+  }
+
+  item.append(phraseText, actions);
+  return item;
+}
+
+function renderFavourites() {
+  const isSignedIn = accountShell.persistenceAuthority.type === "account";
+  favouritesPanel.hidden = !isSignedIn;
+
+  if (!isSignedIn) {
+    favouritesStatus.textContent = "";
+    phraseFavouritesList.replaceChildren();
+    return;
+  }
+
+  favouritesStatus.textContent =
+    phraseFavourites.length === 0 ? "No phrase favourites yet." : "";
+  phraseFavouritesList.replaceChildren(
+    ...phraseFavourites.map(renderPhraseFavourite),
+  );
+}
+
+function renderPhraseFavourite(record) {
+  const item = document.createElement("li");
+  item.textContent = record.favourite.phraseText;
   return item;
 }
 
@@ -527,6 +592,57 @@ async function copyText(text, successMessage) {
   copyStatus.textContent = "Copy unavailable.";
 }
 
+async function savePhraseFavourite(rowIndex) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  try {
+    const favourite = createPhraseFavouriteSnapshot(game, {
+      rowIndex,
+      wordBank,
+    });
+    const savedFavourite = await privateFavouritesRepository.savePhraseFavourite({
+      accountId: accountShell.accountId,
+      favourite,
+    });
+    phraseFavourites = upsertFavouriteRecord(phraseFavourites, savedFavourite);
+    renderGame();
+    renderFavourites();
+    copyStatus.textContent = "Phrase favourite saved.";
+  } catch {
+    copyStatus.textContent = "Phrase favourite could not be saved. Try again.";
+  }
+}
+
+function upsertFavouriteRecord(records, record) {
+  const existingIndex = records.findIndex((candidate) => candidate.id === record.id);
+
+  if (existingIndex === -1) {
+    return [record, ...records];
+  }
+
+  return records.map((candidate, index) =>
+    index === existingIndex ? record : candidate,
+  );
+}
+
+function isPhraseFavouriteSaved(phraseIndex) {
+  if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
+    return false;
+  }
+
+  const favourite = createPhraseFavouriteSnapshot(game, {
+    rowIndex: phraseIndex,
+    wordBank,
+  });
+  const fingerprint = JSON.stringify(favourite);
+
+  return phraseFavourites.some(
+    (record) => JSON.stringify(record.favourite) === fingerprint,
+  );
+}
+
 function getSaveFailureMessage(error) {
   if (
     error instanceof Error &&
@@ -569,12 +685,16 @@ async function initialiseHostedAuth() {
     signedInGameSession = createSignedInGameSession({
       repository: createSupabaseSignedInSoloGameRepository({ supabase }),
     });
+    privateFavouritesRepository = createSupabasePrivateFavouritesRepository({
+      supabase,
+    });
 
     await applyAccountShell(await hostedAuthSession.loadAccountShell());
   } catch {
     hostedAuthSession = null;
     hostedAuthAvailable = false;
     signedInGameSession = localTestSignedInGameSession;
+    privateFavouritesRepository = localTestPrivateFavouritesRepository;
     authMessage.textContent = "Sign in unavailable.";
     renderAccountShell(accountShell);
   }
@@ -585,16 +705,19 @@ async function applyAccountShell(shell) {
 
   if (accountShell.persistenceAuthority.type === "account") {
     await loadSignedInCurrentGame();
+    await loadPhraseFavourites();
   } else {
     signedInGameSession.reset();
     game =
       loadCurrentAnonymousSoloGame(window.localStorage) ??
       createAnonymousSoloGame({ rowCount: 20 });
+    phraseFavourites = [];
     hidePersistenceRecovery();
   }
 
   renderAccountShell(accountShell);
   renderGame();
+  renderFavourites();
 }
 
 async function loadSignedInCurrentGame() {
@@ -620,9 +743,30 @@ function applySignedOutShell() {
   game =
     loadCurrentAnonymousSoloGame(window.localStorage) ??
     createAnonymousSoloGame({ rowCount: 20 });
+  phraseFavourites = [];
   hidePersistenceRecovery();
   renderAccountShell(accountShell);
   renderGame();
+  renderFavourites();
+}
+
+async function loadPhraseFavourites() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    phraseFavourites = [];
+    renderFavourites();
+    return;
+  }
+
+  try {
+    phraseFavourites = await privateFavouritesRepository.listPhraseFavourites({
+      accountId: accountShell.accountId,
+    });
+  } catch {
+    phraseFavourites = [];
+    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+  }
+
+  renderFavourites();
 }
 
 function showPersistenceRecovery(message) {

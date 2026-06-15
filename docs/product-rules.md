@@ -186,6 +186,8 @@ Signed-in participants can remove private Phrase Favourites and Batch Favourites
 
 The minimal favourites surface uses the empty-state copy "No favourites yet." whenever the signed-in Account has no saved Phrase Favourites or Batch Favourites, including immediately after removing the final saved favourite. Removal success copy such as "Phrase favourite removed." or "Batch favourite removed." is useful only while another favourite remains visible.
 
+Private favourites UI is mounted only while an Account-backed signed-in mode is active. Anonymous mode must not keep the favourites panel, Phrase Favourite save controls, Batch Favourite save controls, or stale private-favourite status copy in the DOM as hidden account-only affordances. Signing out removes those account-only nodes and clears private favourite state from the visible and hidden DOM; Supabase Auth and Row Level Security remain the authoritative backend security boundary.
+
 External sharing and plaintext copying are available only after reveal, for completed phrases or completed batches.
 
 Anonymous solo MVP provides per-phrase copy and copy-all actions after reveal. Both copy plaintext only.

@@ -115,6 +115,9 @@ npx supabase <group> --help
 npx supabase migration new <name>
 ```
 
+The Supabase CLI may create `supabase/.temp/` cache metadata; this path is
+local-only and ignored by git.
+
 If sandboxed Codex commands cannot find Node/npm or cannot access the user npm
 cache, rerun the needed `npx supabase ...` command with sandbox escalation
 rather than installing project-local CLI packages or committing generated
@@ -338,6 +341,24 @@ and `service_role`, then grants back only `select`, `insert`, `update`, and
 Supabase public-schema table can inherit broader default table privileges than
 the app needs.
 
+The `updated_at` maintenance migration is:
+
+```text
+supabase/migrations/20260615132432_maintain_signed_in_solo_current_games_updated_at.sql
+```
+
+It creates a private-schema Postgres trigger function and a `before update`
+trigger on `public.signed_in_solo_current_games` so future row updates stamp
+`updated_at` with the current UTC timestamp. This is not the app's concurrency
+authority; the browser repository still uses `revision` for stale-write
+protection. The timestamp exists for future debugging, support, cleanup, or
+admin surfaces that need a reliable "last changed" field.
+
+As of 2026-06-15, this migration is source-controlled and covered by a
+migration-surface test, but has not yet been applied to the hosted Supabase
+project. Applying it is live DDL and requires explicit owner approval under the
+Mutation Authority section above.
+
 As of 2026-06-14, both migrations have been applied to the hosted Supabase
 project after explicit owner approval. Supabase MCP recorded them in hosted
 migration history as:
@@ -361,7 +382,12 @@ The hosted schema was verified through read-only SQL after application:
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
-browser reload, and a read-only hosted SQL check.
+browser reload, and a read-only hosted SQL check. On 2026-06-15 the full
+signed-in current-game lifecycle was also validated against hosted Supabase in
+`dev`: start, save, reload, reveal, copy, sign out, sign back in, restore the
+revealed current game, and clear it through "Start again". The signed-in
+foundation was then promoted through `test` and `production` by the documented
+GitHub Environment gates.
 
 ## Current Game Repository Adapter
 
@@ -419,5 +445,6 @@ Before implementing hosted signed-in flows:
    behaviour against the Supabase project.
 
 As of 2026-06-15, items 1, 2, 3, 4, 5, and 7 are implemented and validated for
-the browser app in `dev`. Item 6 remains deferred because this static
-JavaScript slice does not yet consume generated TypeScript database types.
+the browser app in `dev`, then promoted through `test` and `production`. Item 6
+remains deferred because this static JavaScript slice does not yet consume
+generated TypeScript database types.

@@ -94,6 +94,13 @@
 - **Status**: Revisit trigger satisfied on 2026-06-15 after the signed-in foundation shipped through production. PRD #33 is published, with implementation tracked by issues #34, #35, #36, and #37. Issues #34, #35, and #36 now have source-controlled local implementation and tests for Phrase and Batch Favourites, including saved-state polish and Account-scoped removal. The private Batch Favourite migration and signed-in `dev` write smoke were completed against hosted Supabase on 2026-06-15 after explicit approval. A follow-up `dev` deployment of the removal-polish branch fixed Supabase `jsonb` snapshot key-order saved-state matching and passed the authorised signed-in hosted smoke for Phrase Favourite and Batch Favourite save, remove, re-save, reload, current-game clear, and cleanup.
 - **Remaining risk**: The accepted MVP contract stores immutable saved-output snapshots rather than live current-game references. The remaining private-favourites follow-up is test/production promotion for the completed favourites slices (#37) behind explicit approval gates.
 
+### Auth-gated favourites DOM loading
+
+- **Deferred**: Avoid rendering or wiring private favourites UI, favourite action controls, and related client capability until a participant has successfully signed in; remove those DOM nodes and event paths again on sign-out.
+- **Why deferred**: The current MVP hides favourites UI when the session is anonymous, but hidden DOM can still be revealed with browser developer tools. The security boundary should remain Supabase Auth and Row Level Security, but the client should not expose account-only affordances in anonymous mode or create any ambiguity about whether favourites work without sign-in.
+- **Revisit when**: Private favourites receive another UI/security hardening pass, a dedicated favourites page is introduced, or before broader public onboarding where anonymous users may inspect or manipulate hidden controls.
+- **Remaining risk**: If hidden controls remain mounted, users can reveal misleading account-only UI. If anonymous-mode event handlers or repository paths are accidentally callable, implementation bugs could weaken the incentive to sign in or rely too heavily on backend rejection rather than clear client capability boundaries.
+
 ### Icon-first favourite and copy actions
 
 - **Deferred**: Replacing text-heavy favourite and copy buttons with conventional icon-first controls, such as an empty star for adding a Phrase Favourite, a filled star for removing one, a list-aware favourite icon for Batch Favourites, and a copy icon for plaintext copy actions.

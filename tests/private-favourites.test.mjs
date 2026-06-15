@@ -85,6 +85,30 @@ describe("private favourites", () => {
     });
   });
 
+  it("matches Favourite snapshots after Supabase jsonb key reordering", () => {
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+    const reorderedFavourite = {
+      entries: favourite.entries.map((entry) => ({
+        displayValue: entry.displayValue,
+        entryKind: entry.entryKind,
+        value: entry.value,
+      })),
+      phraseText: favourite.phraseText,
+      rowIndex: favourite.rowIndex,
+      sourceMode: favourite.sourceMode,
+      templateId: favourite.templateId,
+      type: favourite.type,
+    };
+
+    assert.notEqual(JSON.stringify(reorderedFavourite), JSON.stringify(favourite));
+    assert.equal(
+      privateFavourites.areFavouriteSnapshotsEqual(reorderedFavourite, favourite),
+      true,
+    );
+  });
+
   it("saves and lists Phrase Favourites only for their Account", async () => {
     const repository = createMemoryPrivateFavouritesRepository({
       createId: () => "phrase-favourite-1",
@@ -114,6 +138,47 @@ describe("private favourites", () => {
       saved,
     ]);
     assert.deepEqual(await repository.listPhraseFavourites({ accountId: "other-account" }), []);
+  });
+
+  it("removes Phrase Favourites only for their Account", async () => {
+    let nextId = 1;
+    const repository = createMemoryPrivateFavouritesRepository({
+      createId: () => `phrase-favourite-${nextId++}`,
+      now: () => "2026-06-15T15:00:00.000Z",
+    });
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+
+    const saved = await repository.savePhraseFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.savePhraseFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removePhraseFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "account-123" }), [
+      saved,
+    ]);
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "other-account" }), [
+      otherSaved,
+    ]);
+
+    await repository.removePhraseFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "account-123" }), []);
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "other-account" }), [
+      otherSaved,
+    ]);
   });
 
   it("saves and lists Batch Favourites only for their Account", async () => {
@@ -150,6 +215,44 @@ describe("private favourites", () => {
     assert.deepEqual(await repository.listBatchFavourites({ accountId: "other-account" }), []);
   });
 
+  it("removes Batch Favourites only for their Account", async () => {
+    let nextId = 1;
+    const repository = createMemoryPrivateFavouritesRepository({
+      createId: () => `batch-favourite-${nextId++}`,
+      now: () => "2026-06-15T16:30:00.000Z",
+    });
+    const favourite = privateFavourites.createBatchFavouriteSnapshot(
+      completeTwoRowSignedInSoloGame(),
+    );
+
+    const saved = await repository.saveBatchFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.saveBatchFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removeBatchFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "account-123" }), [
+      saved,
+    ]);
+
+    await repository.removeBatchFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "account-123" }), []);
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "other-account" }), [
+      otherSaved,
+    ]);
+  });
+
   it("recovers local test Phrase Favourites from account-scoped storage", async () => {
     const storage = new MemoryStorage();
     const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
@@ -181,6 +284,47 @@ describe("private favourites", () => {
     assert.deepEqual(
       await restoredRepository.listPhraseFavourites({ accountId: "other-account" }),
       [],
+    );
+  });
+
+  it("removes local test Phrase Favourites from account-scoped storage", async () => {
+    let nextId = 1;
+    const storage = new MemoryStorage();
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+    const repository = createLocalTestPrivateFavouritesRepository(storage, {
+      createId: () => `phrase-favourite-${nextId++}`,
+      now: () => "2026-06-15T15:00:00.000Z",
+    });
+
+    const saved = await repository.savePhraseFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.savePhraseFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removePhraseFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    await repository.removePhraseFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    const restoredRepository = createLocalTestPrivateFavouritesRepository(storage);
+
+    assert.deepEqual(
+      await restoredRepository.listPhraseFavourites({ accountId: "account-123" }),
+      [],
+    );
+    assert.deepEqual(
+      await restoredRepository.listPhraseFavourites({ accountId: "other-account" }),
+      [otherSaved],
     );
   });
 
@@ -220,6 +364,47 @@ describe("private favourites", () => {
     );
   });
 
+  it("removes local test Batch Favourites from account-scoped storage", async () => {
+    let nextId = 1;
+    const storage = new MemoryStorage();
+    const favourite = privateFavourites.createBatchFavouriteSnapshot(
+      completeTwoRowSignedInSoloGame(),
+    );
+    const repository = createLocalTestPrivateFavouritesRepository(storage, {
+      createId: () => `batch-favourite-${nextId++}`,
+      now: () => "2026-06-15T16:30:00.000Z",
+    });
+
+    const saved = await repository.saveBatchFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.saveBatchFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removeBatchFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    await repository.removeBatchFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    const restoredRepository = createLocalTestPrivateFavouritesRepository(storage);
+
+    assert.deepEqual(
+      await restoredRepository.listBatchFavourites({ accountId: "account-123" }),
+      [],
+    );
+    assert.deepEqual(
+      await restoredRepository.listBatchFavourites({ accountId: "other-account" }),
+      [otherSaved],
+    );
+  });
+
   it("saves and lists Phrase Favourites through Supabase rows", async () => {
     const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
       rowIndex: 0,
@@ -247,6 +432,66 @@ describe("private favourites", () => {
       saved,
     ]);
     assert.deepEqual(await repository.listPhraseFavourites({ accountId: "other-account" }), []);
+  });
+
+  it("removes Phrase Favourites through account-scoped Supabase rows", async () => {
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+    const supabase = createFakePrivateFavouritesSupabase();
+    const repository = createSupabasePrivateFavouritesRepository({ supabase });
+
+    const saved = await repository.savePhraseFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.savePhraseFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removePhraseFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "account-123" }), [
+      saved,
+    ]);
+
+    await repository.removePhraseFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "account-123" }), []);
+    assert.deepEqual(await repository.listPhraseFavourites({ accountId: "other-account" }), [
+      otherSaved,
+    ]);
+  });
+
+  it("reports Supabase Phrase Favourite remove failures", async () => {
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+    const supabase = createFakePrivateFavouritesSupabase({
+      deleteErrorByTable: {
+        private_phrase_favourites: { message: "delete denied" },
+      },
+    });
+    const repository = createSupabasePrivateFavouritesRepository({ supabase });
+    const saved = await repository.savePhraseFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+
+    await assert.rejects(
+      () =>
+        repository.removePhraseFavourite({
+          accountId: "account-123",
+          favouriteId: saved.id,
+        }),
+      /Could not remove private Phrase Favourite: delete denied/,
+    );
   });
 
   it("saves and lists Batch Favourites through Supabase rows", async () => {
@@ -278,6 +523,66 @@ describe("private favourites", () => {
       saved,
     ]);
     assert.deepEqual(await repository.listBatchFavourites({ accountId: "other-account" }), []);
+  });
+
+  it("removes Batch Favourites through account-scoped Supabase rows", async () => {
+    const favourite = privateFavourites.createBatchFavouriteSnapshot(
+      completeTwoRowSignedInSoloGame(),
+    );
+    const supabase = createFakePrivateFavouritesSupabase();
+    const repository = createSupabasePrivateFavouritesRepository({ supabase });
+
+    const saved = await repository.saveBatchFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+    const otherSaved = await repository.saveBatchFavourite({
+      accountId: "other-account",
+      favourite,
+    });
+
+    await repository.removeBatchFavourite({
+      accountId: "other-account",
+      favouriteId: saved.id,
+    });
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "account-123" }), [
+      saved,
+    ]);
+
+    await repository.removeBatchFavourite({
+      accountId: "account-123",
+      favouriteId: saved.id,
+    });
+
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "account-123" }), []);
+    assert.deepEqual(await repository.listBatchFavourites({ accountId: "other-account" }), [
+      otherSaved,
+    ]);
+  });
+
+  it("reports Supabase Batch Favourite remove failures", async () => {
+    const favourite = privateFavourites.createBatchFavouriteSnapshot(
+      completeTwoRowSignedInSoloGame(),
+    );
+    const supabase = createFakePrivateFavouritesSupabase({
+      deleteErrorByTable: {
+        private_batch_favourites: { message: "delete denied" },
+      },
+    });
+    const repository = createSupabasePrivateFavouritesRepository({ supabase });
+    const saved = await repository.saveBatchFavourite({
+      accountId: "account-123",
+      favourite,
+    });
+
+    await assert.rejects(
+      () =>
+        repository.removeBatchFavourite({
+          accountId: "account-123",
+          favouriteId: saved.id,
+        }),
+      /Could not remove private Batch Favourite: delete denied/,
+    );
   });
 
   it("reports Supabase Batch Favourite save failures", async () => {
@@ -379,6 +684,7 @@ class MemoryStorage {
 }
 
 function createFakePrivateFavouritesSupabase({
+  deleteErrorByTable = {},
   insertErrorByTable = {},
   rowsByTable: initialRowsByTable = {},
 } = {}) {
@@ -398,6 +704,7 @@ function createFakePrivateFavouritesSupabase({
     from(tableName) {
       assert.ok(rowsByTable.has(tableName), `Unexpected table ${tableName}`);
       return new FakePrivateFavouritesQuery(rowsByTable.get(tableName), {
+        deleteError: deleteErrorByTable[tableName] ?? null,
         insertError: insertErrorByTable[tableName] ?? null,
         tableName,
       });
@@ -406,8 +713,9 @@ function createFakePrivateFavouritesSupabase({
 }
 
 class FakePrivateFavouritesQuery {
-  constructor(rows, { insertError, tableName }) {
+  constructor(rows, { deleteError, insertError, tableName }) {
     this.rows = rows;
+    this.deleteError = deleteError;
     this.insertError = insertError;
     this.tableName = tableName;
     this.filters = {};
@@ -418,6 +726,11 @@ class FakePrivateFavouritesQuery {
   insert(row) {
     this.operation = "insert";
     this.insertedRow = row;
+    return this;
+  }
+
+  delete() {
+    this.operation = "delete";
     return this;
   }
 
@@ -475,6 +788,21 @@ class FakePrivateFavouritesQuery {
   }
 
   then(resolve, reject) {
+    if (this.operation === "delete") {
+      if (this.deleteError) {
+        return Promise.resolve({ data: null, error: this.deleteError }).then(
+          resolve,
+          reject,
+        );
+      }
+
+      const matchingRows = this.#matchingRows();
+      for (const row of matchingRows) {
+        this.rows.splice(this.rows.indexOf(row), 1);
+      }
+      return Promise.resolve({ data: null, error: null }).then(resolve, reject);
+    }
+
     return Promise.resolve({ data: this.#matchingRows(), error: null }).then(
       resolve,
       reject,

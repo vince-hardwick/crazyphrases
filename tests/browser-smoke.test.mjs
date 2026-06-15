@@ -233,6 +233,24 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Phrase favourite saved.");
     await assertTextVisible(page, "Saved favourites");
     await assertFavouriteVisible(page, copiedPhrase);
+    assert.equal(await page.getByRole("button", { name: "Phrase 2 saved" }).isDisabled(), true);
+
+    await page.getByRole("button", { name: /Remove phrase favourite/ }).click();
+    await assertTextVisible(page, "Phrase favourite removed.");
+    assert.equal(await page.getByRole("button", { name: "Save phrase 2" }).isEnabled(), true);
+
+    await page.getByRole("button", { name: "Save phrase 2" }).click();
+    await assertTextVisible(page, "Phrase favourite saved.");
+    await assertFavouriteVisible(page, copiedPhrase);
+
+    await page.getByRole("button", { name: "Save batch" }).click();
+    await assertTextVisible(page, "Batch favourite saved.");
+    await assertBatchFavouriteVisible(page, batchCopy);
+    assert.equal(await page.locator("[data-save-batch-button]").isDisabled(), true);
+
+    await page.getByRole("button", { name: /Remove batch favourite/ }).click();
+    await assertTextVisible(page, "Batch favourite removed.");
+    assert.equal(await page.getByRole("button", { name: "Save batch" }).isEnabled(), true);
 
     await page.getByRole("button", { name: "Save batch" }).click();
     await assertTextVisible(page, "Batch favourite saved.");
@@ -365,6 +383,45 @@ describe("solo browser smoke", () => {
       page,
       "Account-backed progress changed in another tab. Reload to see the latest saved game before continuing.",
     );
+
+    assertNoConsoleErrors();
+  });
+
+  it("warns signed-in players when private favourite removal fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=remove-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
+    const copiedPhrase = await copiedPhraseItem.locator("span").innerText();
+    await page.getByRole("button", { name: "Save phrase 2" }).click();
+    await assertTextVisible(page, "Phrase favourite saved.");
+    await assertFavouriteVisible(page, copiedPhrase);
+
+    await page.getByRole("button", { name: /Remove phrase favourite/ }).click();
+    await assertTextVisible(
+      page,
+      "Phrase favourite could not be removed. Try again.",
+    );
+    await assertFavouriteVisible(page, copiedPhrase);
+    assert.equal(await page.getByRole("button", { name: "Phrase 2 saved" }).isDisabled(), true);
 
     assertNoConsoleErrors();
   });
@@ -535,8 +592,8 @@ async function assertFavouriteVisible(page, phrase) {
       (items, expectedPhrase) =>
         items.some(
           (item) =>
-            item.childElementCount === 0 &&
-            item.textContent?.trim() === expectedPhrase,
+            item.querySelector("[data-favourite-phrase-text]")?.textContent?.trim() ===
+            expectedPhrase,
         ),
       phrase,
     ),

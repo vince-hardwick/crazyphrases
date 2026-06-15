@@ -32,6 +32,7 @@ import {
 } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
 import { createSignedInGameSession } from "./signed-in-game-session.js?v=__ASSET_VERSION__";
 import {
+  areFavouriteSnapshotsEqual,
   createLocalTestPrivateFavouritesRepository,
   createBatchFavouriteSnapshot,
   createPhraseFavouriteSnapshot,
@@ -102,7 +103,9 @@ const localTestSignedInGameSession = createSignedInGameSession({
   }),
 });
 const localTestPrivateFavouritesRepository =
-  createLocalTestPrivateFavouritesRepository(window.localStorage);
+  createLocalTestPrivateFavouritesRepository(window.localStorage, {
+    failureMode: getLocalTestPrivateFavouritesFailureMode(),
+  });
 let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
 let phraseFavourites = [];
@@ -303,6 +306,25 @@ revealPanel.addEventListener("click", (event) => {
   }
 });
 
+favouritesPanel.addEventListener("click", (event) => {
+  const phraseRemoveButton = event.target.closest(
+    "[data-remove-phrase-favourite-id]",
+  );
+
+  if (phraseRemoveButton) {
+    void removePhraseFavourite(phraseRemoveButton.dataset.removePhraseFavouriteId);
+    return;
+  }
+
+  const batchRemoveButton = event.target.closest(
+    "[data-remove-batch-favourite-id]",
+  );
+
+  if (batchRemoveButton) {
+    void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
+  }
+});
+
 renderGame();
 renderFavourites();
 
@@ -380,6 +402,22 @@ function getLocalTestPersistenceFailureMode() {
   );
 
   if (["save-fails", "load-fails", "conflict-save"].includes(failureMode)) {
+    return failureMode;
+  }
+
+  return null;
+}
+
+function getLocalTestPrivateFavouritesFailureMode() {
+  if (!isLocalTestAuthAvailable()) {
+    return null;
+  }
+
+  const failureMode = new URLSearchParams(window.location.search).get(
+    "testPrivateFavourites",
+  );
+
+  if (failureMode === "remove-fails") {
     return failureMode;
   }
 
@@ -476,12 +514,29 @@ function renderFavourites() {
 
 function renderPhraseFavourite(record) {
   const item = document.createElement("li");
-  item.textContent = record.favourite.phraseText;
+
+  const phraseText = document.createElement("span");
+  phraseText.dataset.favouritePhraseText = "";
+  phraseText.textContent = record.favourite.phraseText;
+
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions";
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "secondary-button favourite-remove-button";
+  removeButton.dataset.removePhraseFavouriteId = record.id;
+  removeButton.textContent = "Remove";
+  removeButton.ariaLabel = `Remove phrase favourite: ${record.favourite.phraseText}`;
+
+  actions.append(removeButton);
+  item.append(phraseText, actions);
   return item;
 }
 
 function renderBatchFavourite(record) {
   const item = document.createElement("li");
+  const content = document.createElement("div");
 
   const title = document.createElement("h3");
   title.className = "batch-favourite-title";
@@ -501,7 +556,19 @@ function renderBatchFavourite(record) {
     }),
   );
 
-  item.append(title, detail, list);
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions";
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "secondary-button favourite-remove-button";
+  removeButton.dataset.removeBatchFavouriteId = record.id;
+  removeButton.textContent = "Remove";
+  removeButton.ariaLabel = "Remove batch favourite";
+
+  content.append(title, detail, list);
+  actions.append(removeButton);
+  item.append(content, actions);
   return item;
 }
 
@@ -681,6 +748,48 @@ async function saveBatchFavourite() {
   }
 }
 
+async function removePhraseFavourite(favouriteId) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  try {
+    await privateFavouritesRepository.removePhraseFavourite({
+      accountId: accountShell.accountId,
+      favouriteId,
+    });
+    phraseFavourites = phraseFavourites.filter(
+      (record) => record.id !== favouriteId,
+    );
+    renderGame();
+    renderFavourites();
+    favouritesStatus.textContent = "Phrase favourite removed.";
+  } catch {
+    favouritesStatus.textContent =
+      "Phrase favourite could not be removed. Try again.";
+  }
+}
+
+async function removeBatchFavourite(favouriteId) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  try {
+    await privateFavouritesRepository.removeBatchFavourite({
+      accountId: accountShell.accountId,
+      favouriteId,
+    });
+    batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
+    renderGame();
+    renderFavourites();
+    favouritesStatus.textContent = "Batch favourite removed.";
+  } catch {
+    favouritesStatus.textContent =
+      "Batch favourite could not be removed. Try again.";
+  }
+}
+
 function upsertFavouriteRecord(records, record) {
   const existingIndex = records.findIndex((candidate) => candidate.id === record.id);
 
@@ -702,10 +811,9 @@ function isPhraseFavouriteSaved(phraseIndex) {
     rowIndex: phraseIndex,
     wordBank,
   });
-  const fingerprint = JSON.stringify(favourite);
 
-  return phraseFavourites.some(
-    (record) => JSON.stringify(record.favourite) === fingerprint,
+  return phraseFavourites.some((record) =>
+    areFavouriteSnapshotsEqual(record.favourite, favourite),
   );
 }
 
@@ -717,10 +825,9 @@ function isBatchFavouriteSaved() {
   const favourite = createBatchFavouriteSnapshot(game, {
     wordBank,
   });
-  const fingerprint = JSON.stringify(favourite);
 
-  return batchFavourites.some(
-    (record) => JSON.stringify(record.favourite) === fingerprint,
+  return batchFavourites.some((record) =>
+    areFavouriteSnapshotsEqual(record.favourite, favourite),
   );
 }
 

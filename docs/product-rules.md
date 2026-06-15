@@ -178,6 +178,8 @@ Private favourites store immutable saved-output snapshots rather than live refer
 
 Private favourites are private to the Account and do not publish content to public discovery, create public share links, grant Share Consent, or replace plaintext copy/external sharing actions. Duplicate save attempts for the same revealed target should not create confusing duplicate entries.
 
+Signed-in participants can remove private Phrase Favourites and Batch Favourites from the minimal favourites surface. Removing a private favourite affects only the Account's saved-output collection and must not mutate the current signed-in Solo Game, anonymous local play, public discovery state, or future collaborative game history. Remove failures must be visible in the UI and must not falsely claim success.
+
 External sharing and plaintext copying are available only after reveal, for completed phrases or completed batches.
 
 Anonymous solo MVP provides per-phrase copy and copy-all actions after reveal. Both copy plaintext only.

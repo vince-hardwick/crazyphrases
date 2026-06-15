@@ -541,12 +541,26 @@ h1 {
 }
 
 .favourites-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
   background: rgba(238, 246, 243, 0.72);
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.favourite-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.favourite-remove-button {
+  min-height: 38px;
+  padding: 0 12px;
 }
 
 .batch-favourite-title {

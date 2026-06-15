@@ -362,9 +362,9 @@ As of 2026-06-15, this migration is source-controlled, covered by a
 migration-surface test, and applied to the hosted Supabase project after
 explicit owner approval.
 
-As of 2026-06-15, all three migrations have been applied to the hosted Supabase
-project after explicit owner approval. Supabase MCP recorded them in hosted
-migration history as:
+As of 2026-06-15, all three signed-in current-game migrations have been applied
+to the hosted Supabase project after explicit owner approval. Supabase MCP
+recorded them in hosted migration history as:
 
 | Hosted version | Name |
 | --- | --- |
@@ -391,6 +391,98 @@ The hosted schema was verified through read-only SQL after application:
   and deleted on 2026-06-15. The update advanced `updated_at` from
   `2026-01-01 00:00:00+00` to `2026-06-15 13:50:03.231681+00`; a follow-up SQL
   check confirmed `public.signed_in_solo_current_games` was empty again.
+
+The first private Phrase Favourite migration is:
+
+```text
+supabase/migrations/20260615153000_create_private_phrase_favourites.sql
+```
+
+It creates `public.private_phrase_favourites` for account-owned immutable
+saved-output snapshots, with Row Level Security, no `anon` table grants, an
+Account foreign key with `on delete cascade`, and an account-scoped unique
+source fingerprint so repeated saves of the same revealed Phrase do not create
+confusing duplicate rows.
+
+As of 2026-06-15, this migration is source-controlled, covered by
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615160720` | `create_private_phrase_favourites` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.private_phrase_favourites` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `delete` table grants.
+- Account-owned `select`, `insert`, and `delete` policies exist for the
+  `authenticated` role.
+- Constraints enforce the primary key, Account foreign key with
+  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
+  private Phrase Favourite snapshots.
+- The table had zero rows immediately after migration application.
+- Supabase advisors reported no performance warnings and no
+  `private_phrase_favourites` security warning. The only security advisor was
+  the existing project-level Auth leaked-password-protection warning.
+- A hosted rollback smoke simulated the `authenticated` role for an existing
+  hosted Auth account. It inserted one private Phrase Favourite, confirmed a
+  duplicate source fingerprint inserted zero rows, selected the inserted row
+  through RLS, deleted it through RLS, and rolled the transaction back.
+
+The first private Batch Favourite migration is:
+
+```text
+supabase/migrations/20260615172000_create_private_batch_favourites.sql
+```
+
+It creates `public.private_batch_favourites` for account-owned immutable
+saved-output snapshots of revealed batches, with Row Level Security, no `anon`
+table grants, an Account foreign key with `on delete cascade`, an
+account-scoped unique source fingerprint, and JSON checks for the Batch
+Favourite snapshot shape, row count, rendered phrase list, and row context.
+
+As of 2026-06-15, this migration is source-controlled, covered by
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615164651` | `create_private_batch_favourites` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.private_batch_favourites` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `delete` table grants.
+- Account-owned `select`, `insert`, and `delete` policies exist for the
+  `authenticated` role.
+- Constraints enforce the primary key, Account foreign key with
+  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
+  private Batch Favourite snapshots.
+- The table had zero rows immediately after migration application.
+- Supabase advisors reported no performance warnings and no
+  `private_batch_favourites` security warning. The only security advisor was
+  the existing project-level Auth leaked-password-protection warning.
+
+After the migration was applied, branch `codex/private-favourites` commit
+`962d17302fe2831ea14c3d23e6e6db7fb4adeee4` was deployed to `dev` through the
+approved GitHub Environment workflow. The hosted assets were stamped with that
+commit in `assets/app.js` and `assets/site.css`. A visible signed-in browser
+smoke on `https://dev.crazyphrases.com/` used the existing Google-authenticated
+Account shell, started a 10-phrase batch, revealed it, saved a Batch Favourite,
+confirmed all 10 rendered phrases appeared under `Batch Favourite`, clicked
+"Start again", and confirmed the saved Batch Favourite remained visible. The
+page had no horizontal overflow, the browser error/warning log was empty, and a
+read-only SQL check confirmed one hosted `public.private_batch_favourites` row
+with latest `created_at` `2026-06-15 16:56:27.748878+00`.
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,

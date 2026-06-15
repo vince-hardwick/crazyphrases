@@ -172,6 +172,12 @@ External sharing is distinct from public discovery. Phrase and batch surfaces ma
 
 MVP includes plaintext external sharing and private phrase or batch favourites for signed-in users. Template favourites are deferred until custom templates exist. Public feed and leaderboards are deferred.
 
+Private Phrase Favourites and Batch Favourites are signed-in, account-backed saved-output collections. They are created only through explicit participant action after Reveal; the app must not automatically favourite a Phrase or Batch.
+
+Private favourites store immutable saved-output snapshots rather than live references to the current signed-in Solo Game. A Phrase Favourite preserves the rendered phrase text plus enough default-template row context to remain understandable after the current game is cleared. A Batch Favourite preserves the rendered phrase list in original row order plus batch-level snapshot context. Clearing or replacing the current signed-in Solo Game must not mutate saved favourites.
+
+Private favourites are private to the Account and do not publish content to public discovery, create public share links, grant Share Consent, or replace plaintext copy/external sharing actions. Duplicate save attempts for the same revealed target should not create confusing duplicate entries.
+
 External sharing and plaintext copying are available only after reveal, for completed phrases or completed batches.
 
 Anonymous solo MVP provides per-phrase copy and copy-all actions after reveal. Both copy plaintext only.
@@ -252,6 +258,8 @@ Anonymous solo MVP should replace the homepage in dev and test environments duri
 Account deletion deactivates or anonymizes the account identity while preserving completed game history, shared phrases, consent records, leaderboard integrity, and template lineage where needed. Personal/private data such as personal word lists should be deleted.
 
 Signed-in solo current-game state is personal/private working state rather than completed collaborative history. It should be deleted when the Account is deleted, and it may also be cleared by the participant's signed-in solo "Start again" flow. Future collaborative game history remains governed by the preservation and anonymization rules in this section.
+
+Private Phrase Favourites and Batch Favourites are personal/private saved-output collections. They should be deleted when the Account is deleted. This does not change future collaborative game-history preservation, participant snapshot, or consent-record rules.
 
 Public attribution for a deleted account shows "Deleted user" and removes the old gamer name and handle from public surfaces. Collaborative records may still indicate that a deleted participant or creator existed.
 

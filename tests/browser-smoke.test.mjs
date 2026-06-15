@@ -15,7 +15,7 @@ const mimeTypes = new Map([
   [".json", "application/json; charset=utf-8"],
 ]);
 
-describe("anonymous solo browser smoke", () => {
+describe("solo browser smoke", () => {
   let staticServer;
   let browser;
 
@@ -41,6 +41,16 @@ describe("anonymous solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
     await assertTextVisible(page, "Crazy Phrases");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "Local play in this browser");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "@player-test-account");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "Local play in this browser");
 
     await page.getByRole("button", { name: "How to play" }).click();
     assert.equal(await page.locator("#help-panel").isVisible(), true);
@@ -123,6 +133,223 @@ describe("anonymous solo browser smoke", () => {
     assert.equal(
       await page.evaluate(() => document.activeElement?.dataset?.rowIndex),
       "0",
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("resumes local test signed-in setup without importing anonymous local play", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "15" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "20 phrases selected");
+    assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    const signedInSectionTitle = await page.locator("[data-section-title]").innerText();
+    assert.equal(await page.locator("[data-row-index]").count(), 10);
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(await page.locator("[data-section-title]").innerText(), signedInSectionTitle);
+    assert.equal(await page.locator("[data-row-index]").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin: staticServer.origin,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertNoHorizontalOverflow(page);
+    await page.getByRole("button", { name: "15" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    await assertTextVisible(page, "15 phrases");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertNoHorizontalOverflow(page);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await assertNoHorizontalOverflow(page);
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
+    const copiedPhrase = await copiedPhraseItem.locator("span").innerText();
+    assertDefaultTemplatePhrase(copiedPhrase);
+
+    await page.getByRole("button", { name: "Copy phrase 2" }).click();
+    assert.equal(await readClipboard(page), copiedPhrase);
+
+    await page.getByRole("button", { name: "Copy all" }).click();
+    const batchCopy = normalizeLineEndings(await readClipboard(page));
+    assert.equal(batchCopy.split("\n")[0], "Crazy Phrases");
+    assert.equal(batchCopy.split("\n").length, 11);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await assertNoHorizontalOverflow(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    await page.getByRole("button", { name: "Start again" }).click();
+    await assertTextVisible(
+      page,
+      "Start a new batch? Your revealed phrases will be cleared from this browser.",
+    );
+    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "10 phrases selected");
+    await assertNoHorizontalOverflow(page);
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
+    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "15 phrases");
+
+    assertNoConsoleErrors();
+  });
+
+  it("warns signed-in players when account-backed saves fail", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=save-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be saved. Keep this tab open and try again.",
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("offers safe recovery when account-backed progress cannot be loaded", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=load-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    await assertTextVisible(page, "Account-backed mode");
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
+    );
+    assert.equal(await page.getByRole("button", { name: "Retry" }).isVisible(), true);
+
+    await page.getByRole("button", { name: "Retry" }).click();
+    await assertTextVisible(
+      page,
+      "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
+    );
+
+    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "20 phrases selected");
+    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+    assert.equal(await page.getByText("could not be loaded").isVisible(), false);
+
+    assertNoConsoleErrors();
+  });
+
+  it("warns signed-in players when account-backed progress changed elsewhere", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testSignedInPersistence=conflict-save`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    await assertTextVisible(
+      page,
+      "Account-backed progress changed in another tab. Reload to see the latest saved game before continuing.",
     );
 
     assertNoConsoleErrors();

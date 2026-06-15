@@ -12,8 +12,10 @@ Upload these repository paths to the live web root for `crazyphrases.com`:
 - `index.html`
 - `assets/site.css`
 - `assets/app.js`
+- `assets/account-shell.js`
 - `assets/game-state.js`
 - `assets/local-game-storage.js`
+- `assets/signed-in-game-storage.js`
 - `assets/word-bank-seed.json`
 
 The live web root is the hosting account directory that currently displays `Index of /` and contains `cgi-bin/`. On many shared hosts this is named `public_html`, `www`, `htdocs`, or the domain-specific document root shown in the hosting panel.
@@ -48,6 +50,8 @@ Use FTPS credentials from the hosting provider. The `FTP_SERVER_DIR` value shoul
 The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflare-proxied hostname. If using `ftp.crazyphrases.com`, keep that DNS record DNS only in Cloudflare.
 
 The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
+
+The static hosting payload is intentionally limited to runtime web files. Source-only repository paths such as `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json` must stay out of FTPS uploads for `dev`, `test`, and `production`.
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 

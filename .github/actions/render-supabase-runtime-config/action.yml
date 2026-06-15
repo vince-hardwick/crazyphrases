@@ -1,0 +1,72 @@
+name: Render Supabase runtime config
+description: Render browser-safe Supabase configuration into the static asset tree.
+
+inputs:
+  url:
+    description: Supabase project URL.
+    required: true
+  publishable-key:
+    description: Supabase publishable API key.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Render config module
+      shell: bash
+      env:
+        SUPABASE_URL: ${{ inputs.url }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ inputs.publishable-key }}
+      run: |
+        python3 - <<'PY'
+        import json
+        import os
+        import pathlib
+        import re
+        import sys
+        from urllib.parse import urlparse
+
+        url = os.environ.get("SUPABASE_URL", "").strip()
+        publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+
+        parsed_url = urlparse(url)
+        if parsed_url.scheme != "https" or not parsed_url.netloc:
+          print("::error::SUPABASE_URL must be an HTTPS URL.", file=sys.stderr)
+          sys.exit(1)
+
+        if not publishable_key.startswith("sb_publishable_"):
+          print("::error::SUPABASE_PUBLISHABLE_KEY must be a modern publishable key.", file=sys.stderr)
+          sys.exit(1)
+
+        config = {
+          "publishableKey": publishable_key,
+          "url": url,
+        }
+        config_source = (
+          "export const SUPABASE_RUNTIME_CONFIG = Object.freeze("
+          + json.dumps(config, indent=2)
+          + ");\n"
+        )
+
+        config_path = pathlib.Path("assets/supabase-config.js")
+        module_source = config_path.read_text(encoding="utf-8")
+        if "export function getSupabaseRuntimeConfig" not in module_source:
+          print("::error::Supabase config module must export getSupabaseRuntimeConfig.", file=sys.stderr)
+          sys.exit(1)
+
+        module_source = re.sub(
+          r"export const SUPABASE_RUNTIME_CONFIG = Object\.freeze\(\{.*?\}\);\s*",
+          config_source,
+          module_source,
+          count=1,
+          flags=re.DOTALL,
+        )
+        if config_source not in module_source:
+          print("::error::Could not render Supabase runtime config.", file=sys.stderr)
+          sys.exit(1)
+
+        config_path.write_text(
+          module_source,
+          encoding="utf-8",
+        )
+        PY

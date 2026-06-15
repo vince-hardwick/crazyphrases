@@ -34,7 +34,9 @@ The first anonymous solo slice does not include third-party analytics, tracking 
 
 ### Test coverage
 
-The anonymous solo MVP includes focused tests from the first implementation slice: unit tests for game state, phrase rendering, word selection, concealment, local-storage recovery, reveal, and copy formatting, plus one browser smoke test for the full anonymous solo flow.
+The anonymous solo MVP includes focused tests from the first implementation slice: unit tests for game state, phrase rendering, word selection, concealment, local-storage recovery, reveal, and copy formatting, plus browser smoke coverage for the full anonymous solo flow.
+
+The signed-in foundation adds browser smoke coverage for local/test sign-in, Account shell display, signed-in Solo Game start/resume, in-progress entry persistence, reveal, copy actions, sign-out/sign-back-in restore, anonymous solo regression, persistence failure warnings, stale-write conflict warnings, and mobile overflow checks.
 
 ### Frontend implementation
 
@@ -214,6 +216,23 @@ MVP authentication may use simple provider-backed sign-in, including social logi
 
 Signed-in solo games can be saved and resumed. Anonymous solo games are local and ephemeral. Multiplayer in-progress state is persisted because multiplayer requires accounts, invites, and turns.
 
+Signed-in solo persistence stores the current signed-in Solo Game as backend-backed state by Account. Browser local storage is not the authority for signed-in game state.
+
+Anonymous solo local recovery and signed-in account persistence are separate lifecycle paths. Signing in must not silently upload or import a current anonymous local game. Explicit import from anonymous solo to signed-in state is a later product decision.
+
+The first signed-in solo persistence slice stores the current signed-in Solo Game rather than a full signed-in game-history browser. A revealed signed-in solo batch remains resumable as the current game until the participant starts again. Private Phrase Favourites and Batch Favourites are separate saved-output features.
+
+Only started signed-in Solo Games are persisted as account-backed current-game state. In signed-in solo, confirmed "Start again" clears the account-backed current-game record and returns the participant to phrase-count selection for a fresh local setup. The next account-backed current-game record is created when the participant starts the next batch. Reloading after confirmed "Start again" but before starting the next batch must not restore the old revealed signed-in batch.
+
+Signed-in solo save/resume should prevent stale clients from silently overwriting newer account-backed progress, using a revision, version, or equivalent concurrency rule.
+
+If signed-in solo current-game loading fails, the participant remains signed in,
+the app shows a retry path, and any start-new path must not silently delete or
+overwrite remote account-backed state. If account-backed saving fails, the app
+must visibly warn that progress may not be saved. If a stale browser or session
+attempts to save over newer account-backed progress, the app must report the
+conflict rather than silently overwriting the newer state.
+
 MVP anonymous solo is a client-only experience using manual entry and the tiny bundled seed word bank. It does not require account state, backend persistence, invite state, or server-side word-bank access.
 
 The first implementation is static-first for anonymous solo, with a clear backend boundary for signed-in features. Accounts, signed-in persistence, multiplayer, invites, consent, and private favourites require backend-backed state rather than static hosting alone.
@@ -231,6 +250,8 @@ Anonymous solo MVP should replace the homepage in dev and test environments duri
 ### Account deletion
 
 Account deletion deactivates or anonymizes the account identity while preserving completed game history, shared phrases, consent records, leaderboard integrity, and template lineage where needed. Personal/private data such as personal word lists should be deleted.
+
+Signed-in solo current-game state is personal/private working state rather than completed collaborative history. It should be deleted when the Account is deleted, and it may also be cleared by the participant's signed-in solo "Start again" flow. Future collaborative game history remains governed by the preservation and anonymization rules in this section.
 
 Public attribution for a deleted account shows "Deleted user" and removes the old gamer name and handle from public surfaces. Collaborative records may still indicate that a deleted participant or creator existed.
 

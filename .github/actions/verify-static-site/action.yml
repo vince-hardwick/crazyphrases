@@ -11,7 +11,13 @@ runs:
         test -f .htaccess
         test -f assets/site.css
         test -f assets/app.js
+        test -f assets/account-shell.js
         test -f assets/local-game-storage.js
+        test -f assets/signed-in-game-storage.js
+        test -f assets/signed-in-game-session.js
+        test -f assets/supabase-auth-session.js
+        test -f assets/supabase-browser-client.js
+        test -f assets/supabase-config.js
         test -f assets/word-bank-seed.json
 
     - name: Verify static asset cache-busting placeholders
@@ -19,10 +25,18 @@ runs:
       run: |
         grep -q "assets/site.css?v=__ASSET_VERSION__" index.html
         grep -q "assets/app.js?v=__ASSET_VERSION__" index.html
+        grep -q "./account-shell.js?v=__ASSET_VERSION__" assets/app.js
         grep -q "./game-state.js?v=__ASSET_VERSION__" assets/app.js
         grep -q "./local-game-storage.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "./signed-in-game-storage.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "./signed-in-game-session.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "./supabase-auth-session.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "./supabase-browser-client.js?v=__ASSET_VERSION__" assets/app.js
+        grep -q "./supabase-config.js?v=__ASSET_VERSION__" assets/app.js
         grep -q "./game-state.js?v=__ASSET_VERSION__" assets/local-game-storage.js
+        grep -q "./supabase-config.js?v=__ASSET_VERSION__" assets/supabase-browser-client.js
         grep -q "assets/word-bank-seed.json?v=__ASSET_VERSION__" assets/app.js
+        grep -q "SUPABASE_RUNTIME_CONFIG" assets/supabase-config.js
         grep -q "no-store" .htaccess
 
     - name: Verify seed Word Bank shape
@@ -34,6 +48,8 @@ runs:
       shell: bash
       run: |
         ! grep -R "http://" index.html assets
+        ! grep -R "sb_secret_" index.html assets
+        ! grep -R "service_role" index.html assets
 
     - name: Install npm dependencies when present
       shell: bash

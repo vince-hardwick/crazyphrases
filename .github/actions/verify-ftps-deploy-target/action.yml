@@ -1,0 +1,67 @@
+name: Verify FTPS deploy target
+description: Verify that an environment FTPS target accepts strict TLS and exposes the configured server directory.
+
+inputs:
+  server:
+    description: FTPS server hostname.
+    required: true
+  username:
+    description: FTPS username.
+    required: true
+  password:
+    description: FTPS password.
+    required: true
+  server-dir:
+    description: Environment-specific server directory.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Check strict FTPS connectivity
+      shell: bash
+      env:
+        FTP_SERVER: ${{ inputs.server }}
+        FTP_USERNAME: ${{ inputs.username }}
+        FTP_PASSWORD: ${{ inputs.password }}
+        FTP_SERVER_DIR: ${{ inputs.server-dir }}
+      run: |
+        set -euo pipefail
+
+        : "${FTP_SERVER:?Missing FTP_SERVER}"
+        : "${FTP_USERNAME:?Missing FTP_USERNAME}"
+        : "${FTP_PASSWORD:?Missing FTP_PASSWORD}"
+        : "${FTP_SERVER_DIR:?Missing FTP_SERVER_DIR}"
+
+        server_dir="${FTP_SERVER_DIR//\\//}"
+        if [[ -z "${server_dir}" || "${server_dir}" == "/" || "${server_dir}" == "." || "${server_dir}" == ".." ]]; then
+          echo "::error::Refusing unsafe FTP_SERVER_DIR."
+          exit 1
+        fi
+        if [[ "${server_dir}" != */ ]]; then
+          echo "::error::FTP_SERVER_DIR must end with '/'."
+          exit 1
+        fi
+        if [[ "${server_dir}" == *"*"* || "${server_dir}" == *"?"* ]]; then
+          echo "::error::Refusing wildcard characters in FTP_SERVER_DIR."
+          exit 1
+        fi
+
+        curl \
+          --silent \
+          --show-error \
+          --ssl-reqd \
+          --ipv4 \
+          --ftp-pasv \
+          --ftp-skip-pasv-ip \
+          --connect-timeout 20 \
+          --max-time 90 \
+          --retry 3 \
+          --retry-all-errors \
+          --retry-connrefused \
+          --retry-delay 5 \
+          --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+          --url "ftp://${FTP_SERVER}/" \
+          --quote "CWD ${server_dir}" \
+          --list-only \
+          --output /dev/null

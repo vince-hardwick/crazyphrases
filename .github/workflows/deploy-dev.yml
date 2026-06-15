@@ -15,6 +15,12 @@ on:
       - "package-lock.json"
       - "tests/**"
   workflow_dispatch:
+    inputs:
+      ftps_preflight_only:
+        description: Run strict FTPS preflight against dev without deploying.
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -22,6 +28,7 @@ permissions:
 jobs:
   verify:
     name: Verify static site
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ftps_preflight_only != true }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -37,6 +44,7 @@ jobs:
 
   deploy-dev:
     name: Deploy branch to dev
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ftps_preflight_only != true }}
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
@@ -48,6 +56,20 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Verify strict FTPS deploy target
+        uses: ./.github/actions/verify-ftps-deploy-target
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+
+      - name: Render Supabase runtime config
+        uses: ./.github/actions/render-supabase-runtime-config
+        with:
+          url: ${{ vars.SUPABASE_URL }}
+          publishable-key: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Stamp static asset version
         shell: bash
@@ -76,4 +98,27 @@ jobs:
             output/**
             package.json
             package-lock.json
+            supabase/**
             tests/**
+
+  preflight-dev:
+    name: Verify dev FTPS target
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.ftps_preflight_only == true }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    environment:
+      name: dev
+      url: https://dev.crazyphrases.com/
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Verify strict FTPS deploy target
+        uses: ./.github/actions/verify-ftps-deploy-target
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}

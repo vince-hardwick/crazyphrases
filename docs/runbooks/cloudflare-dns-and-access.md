@@ -103,10 +103,19 @@ GitHub Actions must connect to the cPanel FTP/FTPS endpoint directly. Do not poi
 Preferred `FTP_SERVER` values:
 
 - The hosting provider's raw FTP hostname.
-- A DNS-only hostname such as `ftp.crazyphrases.com` when it resolves directly to the cPanel server IP.
+- A DNS-only hostname such as `ftp.crazyphrases.com` only when the FTP
+  service certificate covers that hostname.
 - The cPanel server IP address if the host permits it.
 
 Do not use a proxied Cloudflare hostname for FTP/FTPS. Cloudflare's orange-cloud proxy is for HTTP(S) traffic and will not proxy normal FTP/FTPS control connections.
+
+For this host, `FTP_SERVER` is expected to use the cPanel server hostname
+`cloud528.thundercloud.uk` in the `dev`, `test`, and `production` GitHub
+Environments. The `ftp.crazyphrases.com` DNS record resolves to the same cPanel
+origin, but the FTPS service presents a certificate for
+`cloud528.thundercloud.uk`. cPanel's FTP client guidance notes that FTP does not
+support Server Name Indication, so SSL FTP clients must use the server hostname
+rather than the account domain when verifying certificates.
 
 Before rerunning a failed deployment, verify:
 
@@ -120,6 +129,18 @@ Expected:
 - `Resolve-DnsName` returns the cPanel origin IP, not Cloudflare edge IPs.
 - `Test-NetConnection` reports `TcpTestSucceeded: True`.
 - The `ftp` DNS record in Cloudflare is DNS only.
+
+Current FTPS deployments use `SamKirkland/FTP-Deploy-Action@v4.4.0` without a
+`security` override. Each deployment job first runs
+`.github/actions/verify-ftps-deploy-target`, which uses strict
+`curl --ssl-reqd` verification against the selected GitHub Environment's
+`FTP_SERVER` and `FTP_SERVER_DIR` before any upload. This catches hostname,
+certificate, credential, and target-directory problems before mutation.
+
+If a maintenance step uses `curl` against the same FTPS endpoint, use the same
+certificate-matching `FTP_SERVER` hostname and strict TLS settings. Use
+`--insecure` only as an explicitly approved one-off recovery path behind the
+GitHub Environment approval gate.
 
 ## GitHub Actions Deployment
 
@@ -149,7 +170,7 @@ The anonymous solo MVP may replace the homepage in `dev` and `test` during revie
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
 
-Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml` in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
 
 ### Branch Lifecycle
 
@@ -187,10 +208,26 @@ Manually request or re-request a feature-branch `dev` deployment:
 gh workflow run deploy-dev.yml --ref <feature-branch-name>
 ```
 
+Run a read-only strict FTPS preflight against the `dev` GitHub Environment
+secrets without deploying:
+
+```powershell
+gh workflow run deploy-dev.yml --ref <feature-branch-name> -f ftps_preflight_only=true
+```
+
 Manually re-run the `main` promotion workflow:
 
 ```powershell
 gh workflow run promote.yml --ref main -f promote_production=false
+```
+
+Run read-only strict FTPS preflights against the `test` and `production` GitHub
+Environment secrets without deploying:
+
+```powershell
+gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=test
+gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=production
+gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=all
 ```
 
 Manually request production promotion from `main` after test acceptance:

@@ -526,10 +526,38 @@ Browser-facing handle lookup should select only invite-safe profile columns such
 as `profile_id`, `handle`, `gamer_name`, and `avatar_key`; it must not expose
 email addresses or raw Supabase Auth user ids.
 
-As of this source change, the migration is source-controlled and covered by
-local migration-surface tests, but it has not been applied to the hosted
-Supabase project. Applying it to hosted Supabase is a live backend mutation and
-requires explicit owner approval under this runbook's Mutation Authority rules.
+As of 2026-06-16, this migration is source-controlled, covered by local
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615235714` | `create_account_profiles` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.account_profiles` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `update` table grants.
+- Signed-in profile lookup, owner-only create, and owner-only update policies
+  exist for the `authenticated` role.
+- Constraints enforce the Account foreign key with `on delete cascade`, primary
+  key, unique directory `profile_id`, unique `handle`, lower-case Handle format
+  and length, Gamer Name length, and allowed Avatar keys.
+- The table had zero rows immediately after migration application.
+- Supabase generated TypeScript types after the schema change. The current app
+  is plain JavaScript and the repository has no generated database-types owner
+  file, so no generated type file was committed.
+- Supabase advisors reported no performance warnings and no
+  `account_profiles` security warning. The only security advisor was the
+  existing project-level Auth leaked-password-protection warning.
+- The 2026-04-28 Supabase Data API exposure breaking-change guidance was
+  reviewed before application. The migration includes explicit grants for the
+  roles that should reach the table through the Data API and keeps `anon`
+  revoked.
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,

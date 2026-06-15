@@ -44,5 +44,6 @@ rules rather than depending on the live Account Profile row.
   values.
 - Current profiles can change over time, while future completed collaborative
   games must preserve the participant display context that applied at play time.
-- Applying the migration to hosted Supabase remains a live backend mutation and
-  requires explicit owner approval or an accepted task-specific plan.
+- The first hosted migration was applied on 2026-06-16 after explicit owner
+  approval. Future hosted schema mutations remain live backend mutations and
+  require explicit owner approval or an accepted task-specific plan.

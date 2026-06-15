@@ -43,6 +43,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Crazy Phrases");
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "Local play in this browser");
+    assert.equal(await page.locator(".site-domain").count(), 0);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
@@ -58,7 +59,8 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("#help-panel").isHidden(), true);
 
     await page.getByRole("button", { name: "10" }).click();
-    await assertTextVisible(page, "10 phrases selected");
+    await assertRowCountSelected(page, "10");
+    await assertTextHidden(page, "10 phrases selected");
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
 
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -100,7 +102,8 @@ describe("solo browser smoke", () => {
       "Start a new batch? Your revealed phrases will be cleared from this browser.",
     );
     await page.getByRole("button", { name: "Start new batch" }).click();
-    await assertTextVisible(page, "10 phrases selected");
+    await assertRowCountSelected(page, "10");
+    await assertTextHidden(page, "10 phrases selected");
     assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
 
     assertNoConsoleErrors();
@@ -153,11 +156,12 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "15" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
-    await assertTextVisible(page, "20 phrases selected");
+    await assertRowCountSelected(page, "20");
+    await assertTextHidden(page, "20 phrases selected");
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
 
     await page.getByRole("button", { name: "10" }).click();
@@ -168,7 +172,7 @@ describe("solo browser smoke", () => {
 
     await page.reload();
     await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await waitForDice(page);
@@ -198,7 +202,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "15" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
@@ -236,7 +240,8 @@ describe("solo browser smoke", () => {
     assert.equal(await page.getByRole("button", { name: "Phrase 2 saved" }).isDisabled(), true);
 
     await page.getByRole("button", { name: /Remove phrase favourite/ }).click();
-    await assertTextVisible(page, "Phrase favourite removed.");
+    await assertTextVisible(page, "No favourites yet.");
+    await assertTextHidden(page, "Phrase favourite removed.");
     assert.equal(await page.getByRole("button", { name: "Save phrase 2" }).isEnabled(), true);
 
     await page.getByRole("button", { name: "Save phrase 2" }).click();
@@ -258,7 +263,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
     await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
@@ -269,7 +274,7 @@ describe("solo browser smoke", () => {
 
     await page.reload();
     await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Your crazy phrases");
@@ -282,15 +287,24 @@ describe("solo browser smoke", () => {
       "Start a new batch? Your revealed phrases will be cleared from this browser.",
     );
     await page.getByRole("button", { name: "Start new batch" }).click();
-    await assertTextVisible(page, "10 phrases selected");
+    await assertRowCountSelected(page, "10");
+    await assertTextHidden(page, "10 phrases selected");
     await assertTextVisible(page, "Saved favourites");
     await assertFavouriteVisible(page, copiedPhrase);
     await assertBatchFavouriteVisible(page, batchCopy);
     await assertNoHorizontalOverflow(page);
 
+    await page.getByRole("button", { name: /Remove phrase favourite/ }).click();
+    await assertTextVisible(page, "Phrase favourite removed.");
+    await assertBatchFavouriteVisible(page, batchCopy);
+
+    await page.getByRole("button", { name: /Remove batch favourite/ }).click();
+    await assertTextVisible(page, "No favourites yet.");
+    await assertTextHidden(page, "Batch favourite removed.");
+
     await page.reload();
     await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
@@ -298,7 +312,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "15 phrases");
+    await assertRowCountSelected(page, "15");
 
     assertNoConsoleErrors();
   });
@@ -355,7 +369,8 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Start new batch" }).click();
-    await assertTextVisible(page, "20 phrases selected");
+    await assertRowCountSelected(page, "20");
+    await assertTextHidden(page, "20 phrases selected");
     assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
     assert.equal(await page.getByText("could not be loaded").isVisible(), false);
 
@@ -584,6 +599,17 @@ async function assertNoHorizontalOverflow(page) {
 
 async function assertTextVisible(page, text) {
   assert.equal(await page.getByText(text).first().isVisible(), true);
+}
+
+async function assertTextHidden(page, text) {
+  assert.equal(await page.getByText(text).first().isVisible(), false);
+}
+
+async function assertRowCountSelected(page, rowCount) {
+  assert.equal(
+    await page.locator(`[data-row-count="${rowCount}"]`).getAttribute("aria-pressed"),
+    "true",
+  );
 }
 
 async function assertFavouriteVisible(page, phrase) {

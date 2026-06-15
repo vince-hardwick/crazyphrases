@@ -12,6 +12,10 @@ Do not expose the domain term "slot" in user-facing copy for MVP. Use natural ta
 
 For the default template's two noun slots, use neutral user-facing labels only when needed. During play, the active section can say "Fill these nouns"; progress context can use phrasing like "Section 2 of 3" without revealing the remaining resolved order.
 
+The app header should not duplicate the browser's domain display when the main title already identifies the app. In the MVP game flow, do not render `crazyphrases.com` as a separate header label above the Crazy Phrases title.
+
+MVP setup and reveal controls should avoid repeating selected row-count text when the row-count selector already communicates the selected option. The setup action area should not add status copy such as "10 phrases selected", and the revealed-batch action area should not repeat the completed batch size next to "Start again".
+
 ### Responsive design
 
 MVP UI is responsive from the start, with mobile as the primary constraint. The same flow should work well on phones and desktop rather than splitting into separate experiences.
@@ -179,6 +183,8 @@ Private favourites store immutable saved-output snapshots rather than live refer
 Private favourites are private to the Account and do not publish content to public discovery, create public share links, grant Share Consent, or replace plaintext copy/external sharing actions. Duplicate save attempts for the same revealed target should not create confusing duplicate entries.
 
 Signed-in participants can remove private Phrase Favourites and Batch Favourites from the minimal favourites surface. Removing a private favourite affects only the Account's saved-output collection and must not mutate the current signed-in Solo Game, anonymous local play, public discovery state, or future collaborative game history. Remove failures must be visible in the UI and must not falsely claim success.
+
+The minimal favourites surface uses the empty-state copy "No favourites yet." whenever the signed-in Account has no saved Phrase Favourites or Batch Favourites, including immediately after removing the final saved favourite. Removal success copy such as "Phrase favourite removed." or "Batch favourite removed." is useful only while another favourite remains visible.
 
 External sharing and plaintext copying are available only after reveal, for completed phrases or completed batches.
 

@@ -337,7 +337,7 @@ function renderGame() {
     entryForm.hidden = true;
     revealPanel.hidden = true;
     saveBatchButton.hidden = true;
-    progress.textContent = `${game.rowCount} phrases selected`;
+    progress.textContent = "";
     return;
   }
 
@@ -348,7 +348,7 @@ function renderGame() {
       accountShell.persistenceAuthority.type !== "account";
     saveBatchButton.disabled = isBatchFavouriteSaved();
     saveBatchButton.textContent = saveBatchButton.disabled ? "Saved" : "Save batch";
-    progress.textContent = `${game.rowCount} phrases complete`;
+    progress.textContent = "";
     copyStatus.textContent = "";
     phraseList.replaceChildren(
       ...renderPhrases(game, { wordBank }).map(renderPhraseItem),
@@ -763,7 +763,9 @@ async function removePhraseFavourite(favouriteId) {
     );
     renderGame();
     renderFavourites();
-    favouritesStatus.textContent = "Phrase favourite removed.";
+    if (hasSavedFavourites()) {
+      favouritesStatus.textContent = "Phrase favourite removed.";
+    }
   } catch {
     favouritesStatus.textContent =
       "Phrase favourite could not be removed. Try again.";
@@ -783,11 +785,17 @@ async function removeBatchFavourite(favouriteId) {
     batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
     renderGame();
     renderFavourites();
-    favouritesStatus.textContent = "Batch favourite removed.";
+    if (hasSavedFavourites()) {
+      favouritesStatus.textContent = "Batch favourite removed.";
+    }
   } catch {
     favouritesStatus.textContent =
       "Batch favourite could not be removed. Try again.";
   }
+}
+
+function hasSavedFavourites() {
+  return phraseFavourites.length + batchFavourites.length > 0;
 }
 
 function upsertFavouriteRecord(records, record) {

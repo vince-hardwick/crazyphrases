@@ -270,9 +270,14 @@ As of 2026-06-15, the project owner configured and enabled the Google provider
 in the hosted Supabase project. A `dev` browser smoke reached Google Accounts
 from `https://dev.crazyphrases.com/` with the configured Google OAuth client id,
 the Supabase callback URL, and the `redirect_to` value set back to the dev app.
-End-to-end sign-in, Account shell hydration, and signed-in current-game writes
-remain pending until the project owner completes the Google account sign-in and
-consent step in the visible browser.
+After the project owner completed Google account sign-in and consent in the
+visible browser, `dev` redirected back to `https://dev.crazyphrases.com/#`,
+hydrated the Account shell as `Account-backed mode`, hid hosted sign-in
+controls, and exposed sign-out. A signed-in 10-phrase batch was started, the
+first entry was filled with `teapot`, the page was reloaded, and the entered
+value resumed in Account-backed mode. A read-only hosted SQL check confirmed one
+`public.signed_in_solo_current_games` row at revision `2` containing the test
+entry.
 
 For email sign-in, the current hosted app sends Supabase email magic links. It
 does not yet implement an in-app six-digit OTP entry flow.
@@ -321,8 +326,9 @@ The hosted schema was verified through read-only SQL after application:
 - Constraints enforce the Account foreign key, primary key, `revision >= 1`,
   `signed-in-solo` mode, matching `accountId`, and started-game payload.
 
-Hosted Supabase signed-in persistence is still not fully validated until the
-browser app uses Supabase Auth and the Supabase-backed current-game repository.
+Hosted Supabase signed-in persistence has been validated in `dev` through
+Google Auth, Account shell hydration, a Supabase-backed current-game save,
+browser reload, and a read-only hosted SQL check.
 
 ## Current Game Repository Adapter
 
@@ -374,6 +380,6 @@ Before implementing hosted signed-in flows:
 7. Run local tests before validating hosted auth redirects and browser SDK
    behaviour against the Supabase project.
 
-As of 2026-06-15, items 3, 4, 5, and 7 are implemented for the browser app.
-Items 1 and 2 still require live Supabase Auth provider and redirect
-configuration before a real hosted sign-in smoke can pass in `dev`.
+As of 2026-06-15, items 1, 2, 3, 4, 5, and 7 are implemented and validated for
+the browser app in `dev`. Item 6 remains deferred because this static
+JavaScript slice does not yet consume generated TypeScript database types.

@@ -275,6 +275,13 @@
 - **Revisit when**: Magic-link usability is poor, template customisation is available and approved, or production sign-in needs an in-app code-entry fallback.
 - **Remaining risk**: Some users prefer typing a code instead of clicking a link, so the Auth adapter should keep email sign-in isolated from game persistence to allow an OTP path later.
 
+### Branded Supabase Auth domain
+
+- **Deferred**: Replacing the generic `<project-ref>.supabase.co` Google OAuth consent/sign-in destination with a branded Crazy Phrases domain such as `auth.crazyphrases.com` or a Google-presented app name/domain that clearly reads as Crazy Phrases.
+- **Why deferred**: The first hosted sign-in slice can validate Supabase Auth and signed-in persistence using the default Supabase callback domain, while a branded Auth domain may require Supabase custom-domain setup, DNS changes, certificate validation, and possibly plan/cost checks.
+- **Revisit when**: Hosted Google sign-in works end-to-end in dev/test, before production sign-in is promoted for general users, or sooner if the generic Supabase domain materially reduces trust during testing.
+- **Remaining risk**: Users may be confused or mistrust the Google prompt saying "continue to `<project-ref>.supabase.co`" even though the request was initiated from `crazyphrases.com`.
+
 ### Expanded word-bank source selection
 
 - **Deferred**: Selecting and integrating a comprehensive open-source lexical dataset for the default word bank.

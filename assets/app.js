@@ -26,6 +26,7 @@ import {
 import { createBrowserSupabaseClient } from "./supabase-browser-client.js?v=__ASSET_VERSION__";
 import { SUPABASE_RUNTIME_CONFIG } from "./supabase-config.js?v=__ASSET_VERSION__";
 import { createSupabaseAuthSession } from "./supabase-auth-session.js?v=__ASSET_VERSION__";
+import { createSupabaseAccountProfileRepository } from "./account-profile.js?v=__ASSET_VERSION__";
 import {
   createLocalTestSignedInSoloGameRepository,
   createSupabaseSignedInSoloGameRepository,
@@ -946,7 +947,10 @@ async function initialiseHostedAuth() {
       return;
     }
 
-    hostedAuthSession = createSupabaseAuthSession({ supabase });
+    hostedAuthSession = createSupabaseAuthSession({
+      profileRepository: createSupabaseAccountProfileRepository({ supabase }),
+      supabase,
+    });
     hostedAuthAvailable = true;
     signedInGameSession = createSignedInGameSession({
       repository: createSupabaseSignedInSoloGameRepository({ supabase }),

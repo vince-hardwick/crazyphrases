@@ -512,6 +512,25 @@ cleanup check confirmed zero marker rows remained in
 Phrase Favourite rows, one retained earlier Batch Favourite row, and zero
 current-game rows.
 
+The first Account Profile / Handle Directory migration is:
+
+```text
+supabase/migrations/20260615234349_create_account_profiles.sql
+```
+
+It creates `public.account_profiles` for one active durable profile per
+Account, with a separate directory `profile_id`, globally unique `handle`,
+`gamer_name`, generated/default `avatar_key`, Row Level Security, no `anon`
+table grants, signed-in profile lookup, and owner-only create/update policies.
+Browser-facing handle lookup should select only invite-safe profile columns such
+as `profile_id`, `handle`, `gamer_name`, and `avatar_key`; it must not expose
+email addresses or raw Supabase Auth user ids.
+
+As of this source change, the migration is source-controlled and covered by
+local migration-surface tests, but it has not been applied to the hosted
+Supabase project. Applying it to hosted Supabase is a live backend mutation and
+requires explicit owner approval under this runbook's Mutation Authority rules.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

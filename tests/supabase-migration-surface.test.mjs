@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const createCurrentGameMigration = readFileSync(
   new URL(
@@ -33,6 +33,9 @@ const createPrivatePhraseFavouritesMigration = readFileSync(
 const createPrivateBatchFavouritesMigrationUrl = new URL(
   "../supabase/migrations/20260615172000_create_private_batch_favourites.sql",
   import.meta.url,
+);
+const createAccountProfilesMigrationUrl = findMigrationUrl(
+  "create_account_profiles",
 );
 
 describe("Supabase migration surface", () => {
@@ -187,4 +190,70 @@ describe("Supabase migration surface", () => {
       );
     }
   });
+
+  it("creates Account Profiles with signed-in lookup and owner-only mutation", () => {
+    assert.equal(existsSync(createAccountProfilesMigrationUrl), true);
+
+    const createAccountProfilesMigration = readFileSync(
+      createAccountProfilesMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      createAccountProfilesMigration,
+      /create table if not exists public\.account_profiles/,
+    );
+    assert.match(
+      createAccountProfilesMigration,
+      /account_id uuid not null references auth\.users \(id\) on delete cascade/,
+    );
+    assert.match(
+      createAccountProfilesMigration,
+      /profile_id uuid not null default gen_random_uuid\(\)/,
+    );
+    assert.match(createAccountProfilesMigration, /handle text not null/);
+    assert.match(createAccountProfilesMigration, /gamer_name text not null/);
+    assert.match(createAccountProfilesMigration, /avatar_key text not null/);
+    assert.match(createAccountProfilesMigration, /primary key \(account_id\)/);
+    assert.match(createAccountProfilesMigration, /unique \(profile_id\)/);
+    assert.match(createAccountProfilesMigration, /unique \(handle\)/);
+    assert.match(createAccountProfilesMigration, /char_length\(handle\) between 3 and 30/);
+    assert.match(createAccountProfilesMigration, /handle ~ '\^\[a-z0-9\]\+\(-\[a-z0-9\]\+\)\*\$'/);
+    assert.match(createAccountProfilesMigration, /char_length\(btrim\(gamer_name\)\) between 1 and 40/);
+    assert.match(createAccountProfilesMigration, /avatar_key in \('spark', 'paper', 'moon', 'star', 'comet', 'kite'\)/);
+    assert.match(createAccountProfilesMigration, /enable row level security/);
+
+    for (const role of ["anon", "authenticated", "service_role"]) {
+      assert.match(
+        createAccountProfilesMigration,
+        new RegExp(`revoke all on table public\\.account_profiles from ${role}`),
+      );
+    }
+
+    assert.doesNotMatch(createAccountProfilesMigration, /grant .* to anon/i);
+    assert.match(createAccountProfilesMigration, /grant select, insert, update/);
+    assert.doesNotMatch(createAccountProfilesMigration, /grant .*delete/i);
+
+    assert.match(
+      createAccountProfilesMigration,
+      /Signed-in accounts can view Account Profiles/,
+    );
+    for (const operation of ["create", "update"]) {
+      assert.match(
+        createAccountProfilesMigration,
+        new RegExp(`Account holders can ${operation} their own Account Profile`),
+      );
+    }
+    assert.match(createAccountProfilesMigration, /\(select auth\.uid\(\)\) = account_id/);
+  });
 });
+
+function findMigrationUrl(name) {
+  const migrationsDir = new URL("../supabase/migrations/", import.meta.url);
+  const fileName =
+    readdirSync(migrationsDir).find((candidate) =>
+      candidate.endsWith(`_${name}.sql`),
+    ) ?? `00000000000000_${name}.sql`;
+
+  return new URL(fileName, migrationsDir);
+}

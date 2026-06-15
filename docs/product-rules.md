@@ -285,6 +285,8 @@ MVP profiles use gamer name, handle, and a generated/default avatar or a modest 
 
 MVP accounts have one active gamer profile. Multiple personas or profiles per account are deferred.
 
+The Account Profile / Handle Directory is a signed-in discovery surface. Handle lookup must not be available to anonymous visitors, and it must not expose email addresses, provider identities, or raw authentication user ids. Browser-facing lookup returns invite-safe profile data such as directory profile id, handle, gamer name, and avatar.
+
 Completed games snapshot the participant gamer name and avatar display used at the time of play. Current profiles and new games use the latest gamer name and avatar. Handles remain the stable disambiguator while the account exists.
 
 ### Friends

@@ -362,9 +362,9 @@ As of 2026-06-15, this migration is source-controlled, covered by a
 migration-surface test, and applied to the hosted Supabase project after
 explicit owner approval.
 
-As of 2026-06-15, all three migrations have been applied to the hosted Supabase
-project after explicit owner approval. Supabase MCP recorded them in hosted
-migration history as:
+As of 2026-06-15, all three signed-in current-game migrations have been applied
+to the hosted Supabase project after explicit owner approval. Supabase MCP
+recorded them in hosted migration history as:
 
 | Hosted version | Name |
 | --- | --- |
@@ -402,11 +402,37 @@ It creates `public.private_phrase_favourites` for account-owned immutable
 saved-output snapshots, with Row Level Security, no `anon` table grants, an
 Account foreign key with `on delete cascade`, and an account-scoped unique
 source fingerprint so repeated saves of the same revealed Phrase do not create
-confusing duplicate rows. As of this note, the migration is source-controlled
-and covered by migration-surface tests, but it has not been applied to the
-hosted Supabase project. Applying it to hosted Supabase remains live schema
-mutation and needs explicit owner approval under this runbook's Mutation
-Authority section.
+confusing duplicate rows.
+
+As of 2026-06-15, this migration is source-controlled, covered by
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615160720` | `create_private_phrase_favourites` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.private_phrase_favourites` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `delete` table grants.
+- Account-owned `select`, `insert`, and `delete` policies exist for the
+  `authenticated` role.
+- Constraints enforce the primary key, Account foreign key with
+  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
+  private Phrase Favourite snapshots.
+- The table had zero rows immediately after migration application.
+- Supabase advisors reported no performance warnings and no
+  `private_phrase_favourites` security warning. The only security advisor was
+  the existing project-level Auth leaked-password-protection warning.
+- A hosted rollback smoke simulated the `authenticated` role for an existing
+  hosted Auth account. It inserted one private Phrase Favourite, confirmed a
+  duplicate source fingerprint inserted zero rows, selected the inserted row
+  through RLS, deleted it through RLS, and rolled the transaction back.
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,

@@ -118,6 +118,10 @@ npx supabase migration new <name>
 The Supabase CLI may create `supabase/.temp/` cache metadata; this path is
 local-only and ignored by git.
 
+For Supabase documentation checks, use the Supabase plugin and Context7 MCP
+tooling before falling back to shell-based web fetches. This keeps doc lookups
+inside the same supported agent tooling used for hosted Supabase operations.
+
 If sandboxed Codex commands cannot find Node/npm or cannot access the user npm
 cache, rerun the needed `npx supabase ...` command with sandbox escalation
 rather than installing project-local CLI packages or committing generated
@@ -354,12 +358,11 @@ authority; the browser repository still uses `revision` for stale-write
 protection. The timestamp exists for future debugging, support, cleanup, or
 admin surfaces that need a reliable "last changed" field.
 
-As of 2026-06-15, this migration is source-controlled and covered by a
-migration-surface test, but has not yet been applied to the hosted Supabase
-project. Applying it is live DDL and requires explicit owner approval under the
-Mutation Authority section above.
+As of 2026-06-15, this migration is source-controlled, covered by a
+migration-surface test, and applied to the hosted Supabase project after
+explicit owner approval.
 
-As of 2026-06-14, both migrations have been applied to the hosted Supabase
+As of 2026-06-15, all three migrations have been applied to the hosted Supabase
 project after explicit owner approval. Supabase MCP recorded them in hosted
 migration history as:
 
@@ -367,6 +370,7 @@ migration history as:
 | --- | --- |
 | `20260614222419` | `create_signed_in_solo_current_games` |
 | `20260614222554` | `tighten_signed_in_solo_current_games_grants` |
+| `20260615134730` | `maintain_signed_in_solo_current_games_updated_at` |
 
 The hosted schema was verified through read-only SQL after application:
 
@@ -379,6 +383,14 @@ The hosted schema was verified through read-only SQL after application:
   the `authenticated` role.
 - Constraints enforce the Account foreign key, primary key, `revision >= 1`,
   `signed-in-solo` mode, matching `accountId`, and started-game payload.
+- The `set_signed_in_solo_current_games_updated_at` trigger exists on
+  `public.signed_in_solo_current_games`, calls the private-schema
+  `set_signed_in_solo_current_games_updated_at` function, uses security invoker,
+  and sets an empty function `search_path`.
+- A hosted verification row was inserted for the existing test account, updated,
+  and deleted on 2026-06-15. The update advanced `updated_at` from
+  `2026-01-01 00:00:00+00` to `2026-06-15 13:50:03.231681+00`; a follow-up SQL
+  check confirmed `public.signed_in_solo_current_games` was empty again.
 
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,

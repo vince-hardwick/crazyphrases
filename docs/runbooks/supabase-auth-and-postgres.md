@@ -197,6 +197,14 @@ save, failed load, or stale-write conflict. The app must ignore these fixture
 values outside `localhost` and `127.0.0.1`; they are not Supabase Auth state, do
 not call hosted Supabase, and do not authorise live mutation.
 
+Local browser smoke tests may also add the localhost-only query parameter
+`testPrivateFavourites=remove-fails`. This forces the local private-favourites
+fixture to simulate a failed saved-output removal so the UI can verify that
+remove failures are visible and do not falsely claim success. The app must
+ignore this fixture value outside `localhost` and `127.0.0.1`; it is not hosted
+Supabase state, does not call hosted Supabase, and does not authorise live
+mutation.
+
 ## Hosted Browser Auth Wiring
 
 The hosted static app creates a Supabase browser client only when deployment

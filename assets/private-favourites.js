@@ -57,6 +57,16 @@ export function createMemoryPrivateFavouritesRepository({
       );
     },
 
+    async removePhraseFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      removeFavouriteRecord(
+        getAccountFavourites(phraseFavouritesByAccount, accountId),
+        favouriteId,
+      );
+    },
+
     async saveBatchFavourite({ accountId, favourite }) {
       assertAccountId(accountId);
       assertBatchFavouriteSnapshot(favourite);
@@ -95,6 +105,16 @@ export function createMemoryPrivateFavouritesRepository({
         ({ record }) => cloneFavouriteRecord(record),
       );
     },
+
+    async removeBatchFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      removeFavouriteRecord(
+        getAccountFavourites(batchFavouritesByAccount, accountId),
+        favouriteId,
+      );
+    },
   };
 }
 
@@ -102,6 +122,7 @@ export function createLocalTestPrivateFavouritesRepository(
   storage,
   {
     createId = defaultCreateId,
+    failureMode = null,
     now = () => new Date().toISOString(),
   } = {},
 ) {
@@ -146,6 +167,22 @@ export function createLocalTestPrivateFavouritesRepository(
       );
     },
 
+    async removePhraseFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      if (failureMode === "remove-fails") {
+        throw new Error("Local test private favourite remove failed.");
+      }
+
+      const storedFavourites = loadStoredPhraseFavourites(storage, { accountId });
+      removeFavouriteRecord(storedFavourites, favouriteId);
+      saveStoredPhraseFavourites(storage, {
+        accountId,
+        favourites: storedFavourites,
+      });
+    },
+
     async saveBatchFavourite({ accountId, favourite }) {
       assertAccountId(accountId);
       assertBatchFavouriteSnapshot(favourite);
@@ -184,6 +221,22 @@ export function createLocalTestPrivateFavouritesRepository(
       return loadStoredBatchFavourites(storage, { accountId }).map(
         ({ record }) => cloneFavouriteRecord(record),
       );
+    },
+
+    async removeBatchFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      if (failureMode === "remove-fails") {
+        throw new Error("Local test private favourite remove failed.");
+      }
+
+      const storedFavourites = loadStoredBatchFavourites(storage, { accountId });
+      removeFavouriteRecord(storedFavourites, favouriteId);
+      saveStoredBatchFavourites(storage, {
+        accountId,
+        favourites: storedFavourites,
+      });
     },
   };
 }
@@ -236,6 +289,19 @@ export function createSupabasePrivateFavouritesRepository({ supabase }) {
       );
     },
 
+    async removePhraseFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      const response = await supabase
+        .from(PRIVATE_PHRASE_FAVOURITES_TABLE)
+        .delete()
+        .eq("account_id", accountId)
+        .eq("id", favouriteId);
+
+      assertNoSupabaseError(response, "Could not remove private Phrase Favourite");
+    },
+
     async saveBatchFavourite({ accountId, favourite }) {
       assertAccountId(accountId);
       assertBatchFavouriteSnapshot(favourite);
@@ -276,6 +342,19 @@ export function createSupabasePrivateFavouritesRepository({ supabase }) {
       return (response.data ?? []).map((row) =>
         recoverSupabaseBatchFavouriteRecord(row, { accountId }),
       );
+    },
+
+    async removeBatchFavourite({ accountId, favouriteId }) {
+      assertAccountId(accountId);
+      assertFavouriteId(favouriteId);
+
+      const response = await supabase
+        .from(PRIVATE_BATCH_FAVOURITES_TABLE)
+        .delete()
+        .eq("account_id", accountId)
+        .eq("id", favouriteId);
+
+      assertNoSupabaseError(response, "Could not remove private Batch Favourite");
     },
   };
 }
@@ -344,6 +423,12 @@ function assertAccountId(accountId) {
   }
 }
 
+function assertFavouriteId(favouriteId) {
+  if (typeof favouriteId !== "string" || favouriteId.trim() === "") {
+    throw new Error("A private Favourite id is required.");
+  }
+}
+
 function assertRevealedSignedInSoloGame(game) {
   if (game?.mode !== "signed-in-solo" || game.revealed !== true) {
     throw new Error("A revealed signed-in Solo Game is required.");
@@ -396,6 +481,16 @@ function getAccountFavourites(favouritesByAccount, accountId) {
   }
 
   return favouritesByAccount.get(accountId);
+}
+
+function removeFavouriteRecord(accountFavourites, favouriteId) {
+  const existingIndex = accountFavourites.findIndex(
+    ({ record }) => record.id === favouriteId,
+  );
+
+  if (existingIndex !== -1) {
+    accountFavourites.splice(existingIndex, 1);
+  }
 }
 
 function loadStoredPhraseFavourites(storage, { accountId }) {

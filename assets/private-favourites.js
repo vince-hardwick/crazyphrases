@@ -417,6 +417,17 @@ export function createBatchFavouriteSnapshot(game, { wordBank } = {}) {
   };
 }
 
+export function areFavouriteSnapshotsEqual(left, right) {
+  if (
+    !(isPhraseFavouriteSnapshot(left) || isBatchFavouriteSnapshot(left)) ||
+    !(isPhraseFavouriteSnapshot(right) || isBatchFavouriteSnapshot(right))
+  ) {
+    return false;
+  }
+
+  return createCanonicalJson(left) === createCanonicalJson(right);
+}
+
 function assertAccountId(accountId) {
   if (typeof accountId !== "string" || accountId.trim() === "") {
     throw new Error("A signed-in Account id is required.");
@@ -599,6 +610,21 @@ function isStoredFavouriteRecord(candidate) {
 
 function createFavouriteFingerprint(favourite) {
   return JSON.stringify(favourite);
+}
+
+function createCanonicalJson(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(createCanonicalJson).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${createCanonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
 }
 
 function cloneFavourite(favourite) {

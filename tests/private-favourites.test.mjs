@@ -85,6 +85,30 @@ describe("private favourites", () => {
     });
   });
 
+  it("matches Favourite snapshots after Supabase jsonb key reordering", () => {
+    const favourite = createPhraseFavouriteSnapshot(completeSignedInSoloGame(), {
+      rowIndex: 0,
+    });
+    const reorderedFavourite = {
+      entries: favourite.entries.map((entry) => ({
+        displayValue: entry.displayValue,
+        entryKind: entry.entryKind,
+        value: entry.value,
+      })),
+      phraseText: favourite.phraseText,
+      rowIndex: favourite.rowIndex,
+      sourceMode: favourite.sourceMode,
+      templateId: favourite.templateId,
+      type: favourite.type,
+    };
+
+    assert.notEqual(JSON.stringify(reorderedFavourite), JSON.stringify(favourite));
+    assert.equal(
+      privateFavourites.areFavouriteSnapshotsEqual(reorderedFavourite, favourite),
+      true,
+    );
+  });
+
   it("saves and lists Phrase Favourites only for their Account", async () => {
     const repository = createMemoryPrivateFavouritesRepository({
       createId: () => "phrase-favourite-1",

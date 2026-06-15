@@ -32,6 +32,7 @@ import {
 } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
 import { createSignedInGameSession } from "./signed-in-game-session.js?v=__ASSET_VERSION__";
 import {
+  areFavouriteSnapshotsEqual,
   createLocalTestPrivateFavouritesRepository,
   createBatchFavouriteSnapshot,
   createPhraseFavouriteSnapshot,
@@ -810,10 +811,9 @@ function isPhraseFavouriteSaved(phraseIndex) {
     rowIndex: phraseIndex,
     wordBank,
   });
-  const fingerprint = JSON.stringify(favourite);
 
-  return phraseFavourites.some(
-    (record) => JSON.stringify(record.favourite) === fingerprint,
+  return phraseFavourites.some((record) =>
+    areFavouriteSnapshotsEqual(record.favourite, favourite),
   );
 }
 
@@ -825,10 +825,9 @@ function isBatchFavouriteSaved() {
   const favourite = createBatchFavouriteSnapshot(game, {
     wordBank,
   });
-  const fingerprint = JSON.stringify(favourite);
 
-  return batchFavourites.some(
-    (record) => JSON.stringify(record.favourite) === fingerprint,
+  return batchFavourites.some((record) =>
+    areFavouriteSnapshotsEqual(record.favourite, favourite),
   );
 }
 

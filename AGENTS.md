@@ -99,8 +99,9 @@ Before ending or switching away from design, planning, runbook, or operational-m
 1. Check whether any accepted term, lifecycle rule, validation rule, path convention, environment boundary, or deferral was created or changed.
 2. Update the owning document, ADR, runbook, backlog, or plan.
 3. If implementation work was done, run the relevant verification.
-4. Stage, commit, and push documentation changes with related code changes unless the user explicitly instructs otherwise.
-5. Report changed files, validation performed, commit hash when applicable, and remaining risks.
+4. After a feature branch has been merged and all required deployment, verification, and documentation closeout work is complete, delete the merged feature branch locally and remotely unless the user explicitly asks to preserve it.
+5. Stage, commit, and push documentation changes with related code changes unless the user explicitly instructs otherwise.
+6. Report changed files, validation performed, commit hash when applicable, branch cleanup performed, and remaining risks.
 
 ## Style
 

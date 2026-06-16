@@ -14,6 +14,23 @@ Start with `AGENTS.md` and `docs/planning/agent-context-map.md` for agent workin
 
 The local `main` branch tracks `origin/main`.
 
+## Repository Hygiene
+
+Track shared project control files such as `.gitignore`, `.htaccess`,
+`AGENTS.md`, `CONTEXT.md`, `package.json`, and `package-lock.json`.
+
+- `.gitignore` is the shared ignore policy. Personal-only ignores belong in
+  `.git/info/exclude`.
+- `.htaccess` is runtime static-hosting configuration and is deployed with the
+  site.
+- `package.json` and `package-lock.json` define the deterministic local and CI
+  test toolchain.
+- `AGENTS.md` and `CONTEXT.md` are public project/agent source-of-truth files.
+
+Do not commit credentials or local generated state. Deployment workflows must
+keep source-only paths such as docs, tests, package files, and agent guidance
+out of FTPS uploads as documented in the hosting runbooks.
+
 ## Deployment
 
 The current public site is a static Crazy Phrases app. See `docs/runbooks/live-static-hosting.md` for the required upload path, runtime file set, HTTPS redirect, directory-listing, certificate checks, cache-busting rules, and GitHub Actions deployment setup.

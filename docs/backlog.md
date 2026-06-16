@@ -220,7 +220,8 @@
 - **Deferred**: The first signed-in 2-player asynchronous Game slice, including handle invites, Pending Game lifecycle, multi-participant Slot Allocation, Slot Order, Turn completion, Reveal, Share Consent, Nudges, and In-App Notifications.
 - **Why deferred**: The product needs a working Account, identity, and backend-backed persistence boundary before collaborative game state is designed.
 - **Revisit when**: Signed-in solo current-game save/resume has passed automated and browser smoke verification.
-- **Status**: Revisit trigger satisfied on 2026-06-15 after automated tests, hosted Supabase lifecycle smoke, `test` smoke, and production smoke passed for the signed-in foundation. This is a candidate next product phase rather than an active implementation commitment.
+- **Status**: Revisit trigger satisfied on 2026-06-15 after automated tests, hosted Supabase lifecycle smoke, `test` smoke, and production smoke passed for the signed-in foundation. On 2026-06-16, the durable Account Profile / Handle Directory prerequisite and the invite-safe directory authority-boundary correction also reached production through PR #45 and PR #48. The remaining profile-management UI work is intentionally deferred under GitHub issue #47 and the `Signed-in Account Profile management surface` backlog item; it is not a blocker for planning the first handle-invite/Pending Game slice unless the owner explicitly brings it forward.
+- **Next action**: Create the first signed-in 2-player asynchronous Game PRD or issue set, starting with handle-invite Pending Game creation and keeping public sharing, Share Consent, friends, nudges, public discovery, and broader social profile work out of the initial slice unless the owner expands scope.
 - **Remaining risk**: Account and solo persistence models must leave room for collaborative history, participant snapshots, consent records, cancellation, and account deletion anonymisation.
 
 ### Manual pokes

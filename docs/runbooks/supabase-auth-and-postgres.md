@@ -585,6 +585,31 @@ no Handle match against the raw Auth id prefix. No signed-in current-game or
 Favourite mutation smoke was performed as part of this Account Profile
 validation.
 
+PR #45 merged this Account Profile slice to `main` as merge commit
+`2ad7993ee6b6cd5fa3d0975f15fd683606c9ca8a`. Promotion run
+`27585762335` deployed that commit through `test` and `production` after the
+owner approved the required GitHub Environment gates. The `test` signed-out
+smoke loaded `Crazy Phrases`, showed hosted sign-in controls, had no browser
+warning/error logs, had no horizontal overflow, and loaded static assets stamped
+with the merge commit SHA. After the owner signed into `test` and signed out
+again, a read-only hosted SQL cleanup check found one expected `auth.users` row,
+one expected durable `account_profiles` row, zero
+`signed_in_solo_current_games` rows, zero `private_phrase_favourites` rows, and
+zero `private_batch_favourites` rows. No Supabase cleanup was required because
+the retained Account Profile is durable account/profile data, not transient
+smoke-test data.
+
+The `production` deployment in the same promotion run completed strict FTPS
+target verification, Supabase runtime config rendering, static asset stamping,
+and FTPS upload successfully. A visible browser smoke on
+`https://www.crazyphrases.com/` loaded `Crazy Phrases`, showed hosted sign-in
+controls, had no browser warning/error logs, had no horizontal overflow, and
+loaded `site.css` and `app.js` stamped with
+`2ad7993ee6b6cd5fa3d0975f15fd683606c9ca8a`. The browser restored an existing
+anonymous local reveal state from local storage; that was browser-local
+anonymous recovery, not hosted Supabase data. No production signed-in
+data-mutation smoke was performed.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

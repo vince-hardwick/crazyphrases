@@ -172,6 +172,15 @@ The anonymous solo MVP may replace the homepage in `dev` and `test` during revie
 
 Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
 
+`promote.yml` currently runs on every push to `main`, including documentation-only
+commits. Documentation paths are excluded from the FTPS payload, so a docs-only
+runbook closeout does not upload the changed documentation to hosted web roots.
+If a docs-only `main` push is made only to record durable operational evidence,
+cancel the triggered `promote.yml` run before approving any GitHub Environment
+deployment. If such a run is allowed to deploy, it re-stamps and re-uploads the
+static runtime files for the docs commit SHA even though the source runtime did
+not change.
+
 ### Branch Lifecycle
 
 Feature branches are short-lived scaffolding for one implementation slice, documentation slice, or operational change. The durable history is the issue, pull request, merge commit, deployment run, and environment deployment record, not the branch name itself.
@@ -200,6 +209,14 @@ gh run list --workflow deploy-dev.yml --limit 5
 gh run list --workflow promote.yml --limit 5
 gh run view <run-id>
 gh run watch <run-id> --exit-status
+```
+
+Cancel a docs-only `main` promotion run that should not deploy:
+
+```powershell
+gh run list --workflow promote.yml --branch main --limit 5
+gh run cancel <run-id>
+gh run view <run-id>
 ```
 
 Manually request or re-request a feature-branch `dev` deployment:

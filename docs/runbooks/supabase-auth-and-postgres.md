@@ -679,6 +679,27 @@ The hosted schema was verified through read-only SQL after application:
 - Supabase performance advisors reported only expected `unused_index` info for
   the brand-new Pending Game indexes before live query traffic exists.
 
+PR #49 merged the source-controlled Pending Game backend foundation to `main`
+as merge commit `497c84f39e6c19ba1c7f2c58a88b76a3967c8f6e`. Promotion run
+`27623268625` deployed that commit through `test` and `production` after the
+owner approved both GitHub Environment gates. The `test` smoke loaded
+`Crazy Phrases`, showed hosted sign-in controls and `Start batch`, loaded local
+assets stamped with the merge commit SHA, had no browser warning/error logs,
+and had no horizontal overflow. The `production` smoke loaded the signed-in
+Account-backed shell in the existing browser session, showed the game-facing
+Handle, `Sign out`, `Start batch`, and favourites UI, loaded local assets and
+transitive modules stamped with the merge commit SHA, had no browser
+warning/error logs, and had no horizontal overflow. No hosted Supabase
+data-mutation smoke beyond the explicitly approved schema migration was
+performed for this slice.
+
+PR #50 recorded the hosted Pending Game migration evidence in documentation and
+merged to `main` as merge commit
+`e2920bd650b46f5d807081aa9c827030a3317a75`. Because the change was docs-only,
+the owner requested cancellation of the triggered promotion workflow. Promote
+run `27625010945` was cancelled, and the `test` and `production` deployment jobs
+were cancelled before deployment steps ran.
+
 PR #48 merged the Account Profile directory access correction to `main` as
 merge commit `46bea304b11d0e2472bff22aae2c67d73330f891`. Promotion run
 `27612185923` deployed that commit through `test` and `production` after the

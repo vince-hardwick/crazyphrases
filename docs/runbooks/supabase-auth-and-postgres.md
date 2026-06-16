@@ -645,6 +645,40 @@ behind explicit owner approval. The first source-controlled slice does not add
 UI, invite acceptance, turn storage, Reveal, Share Consent, nudges, friends, or
 public discovery.
 
+As of 2026-06-16, this migration is source-controlled, covered by local
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260616141452` | `create_pending_games` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.pending_games` and `public.pending_game_participants` exist.
+- Row Level Security is enabled on both tables.
+- Both tables have no `anon` grants.
+- `authenticated` has only `select` and `insert` on `pending_games`.
+- `authenticated` has only `select` on `pending_game_participants`.
+- The creator-owned Pending Game `select` and `insert` policies exist, and the
+  participant-row `select` policy scopes rows to Pending Games created by the
+  signed-in Account.
+- The private trigger function exists only as
+  `private.create_pending_game_participants()`, is `security definer`, returns
+  `trigger`, and is not executable by `public`, `anon`, or `authenticated`.
+- The `create_pending_game_participants` trigger runs after inserts on
+  `public.pending_games`.
+- All planned foreign-key indexes and check constraints exist.
+- Both new tables had zero rows immediately after migration application.
+- Supabase generated TypeScript types after the schema change. The current app
+  is plain JavaScript and the repository has no generated database-types owner
+  file, so no generated type file was committed.
+- Supabase security advisors reported only the existing project-level Auth
+  leaked-password-protection warning.
+- Supabase performance advisors reported only expected `unused_index` info for
+  the brand-new Pending Game indexes before live query traffic exists.
+
 PR #48 merged the Account Profile directory access correction to `main` as
 merge commit `46bea304b11d0e2472bff22aae2c67d73330f891`. Promotion run
 `27612185923` deployed that commit through `test` and `production` after the

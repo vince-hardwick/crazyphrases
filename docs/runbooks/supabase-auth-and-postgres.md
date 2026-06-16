@@ -572,6 +572,19 @@ modules including `account-profile.js`, and `word-bank-seed.json` stamped with
 the deployed commit SHA. No hosted signed-in data-mutation smoke was performed
 as part of this deployment verification.
 
+After owner approval for hosted signed-in validation, the visible `dev` browser
+completed Google sign-in and returned to `https://dev.crazyphrases.com/#`.
+`dev` hydrated the Account shell as `Account-backed mode`, displayed a
+game-facing Handle, hid hosted sign-in controls, exposed sign-out, and retained
+the same Account Profile after a browser reload once async auth hydration
+settled. The page had no horizontal overflow and no browser warning/error logs.
+A read-only hosted SQL check found exactly one matching `account_profiles` row,
+with a directory `profile_id` separate from the raw Auth user id, default Gamer
+Name and Avatar data, a Handle derived from the directory profile id prefix, and
+no Handle match against the raw Auth id prefix. No signed-in current-game or
+Favourite mutation smoke was performed as part of this Account Profile
+validation.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

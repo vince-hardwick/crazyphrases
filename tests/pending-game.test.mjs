@@ -1,7 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
+  createLocalTestPendingGameRepository,
   createSupabasePendingGameRepository,
   createTestPendingGameRepository,
 } from "../assets/pending-game.js";
@@ -154,6 +156,26 @@ describe("Pending Game repository", () => {
       "pending_game_participants",
     ]);
     assert.equal(JSON.stringify(pendingGame).includes(inviteeProfile.accountId), false);
+  });
+
+  it("wires app Pending Game creation behind local test and hosted repositories", async () => {
+    const repository = createLocalTestPendingGameRepository({
+      createPendingGameId: () => "local-pending-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+    const pendingGame = await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 20,
+    });
+    const appSource = readFileSync(new URL("../assets/app.js", import.meta.url), "utf8");
+
+    assert.equal(pendingGame.id, "local-pending-game-1");
+    assert.match(appSource, /createLocalTestPendingGameRepository/);
+    assert.match(
+      appSource,
+      /pendingGameRepository = createSupabasePendingGameRepository\(\{ supabase \}\)/,
+    );
   });
 });
 

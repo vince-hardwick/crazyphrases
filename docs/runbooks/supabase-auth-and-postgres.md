@@ -210,6 +210,15 @@ ignore this fixture value outside `localhost` and `127.0.0.1`; it is not hosted
 Supabase state, does not call hosted Supabase, and does not authorise live
 mutation.
 
+Local browser tests may expose a signed-in Pending Game creation fixture after
+`Test sign in`. The app uses `createLocalTestPendingGameRepository()` with
+fixed localhost-only test profiles so the Account shell can exercise Handle
+invite creation without calling hosted Supabase. This fixture remains
+signed-in-only, does not create hosted rows, does not configure invites or
+notifications, and does not authorise live mutation. Hosted Pending Game
+creation must use the Supabase repository and any hosted write/cleanup smoke
+requires explicit owner approval.
+
 ## Hosted Browser Auth Wiring
 
 The hosted static app creates a Supabase browser client only when deployment
@@ -473,6 +482,32 @@ public discovery.
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
 persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
+
+## Pending Game Browser Wiring
+
+The source-controlled browser repository adapter lives in:
+
+```text
+assets/pending-game.js
+```
+
+`createSupabasePendingGameRepository({ supabase })` accepts an already created
+Supabase browser client and creates a Pending Game from a creator Account id,
+invitee Handle, and row count. It resolves the creator through
+`public.account_profiles`, resolves the invitee through
+`public.account_profile_directory`, inserts one `public.pending_games` row, and
+loads trigger-created `public.pending_game_participants` rows for the
+browser-safe DTO.
+
+`assets/app.js` selects this Supabase repository only after hosted runtime
+config creates a Supabase client. Local localhost smoke uses
+`createLocalTestPendingGameRepository()` after `Test sign in`, and signed-out
+anonymous play cannot reach Pending Game creation.
+
+The first browser UI creates the Pending Game only. It does not accept or
+decline invites, expose an invite inbox, configure expiry, cancel games, resolve
+Slot Allocation or Slot Order, store turns, reveal a batch, request Share
+Consent, manage friends, send nudges, or publish to discovery surfaces.
 
 ## Current Game Repository Adapter
 

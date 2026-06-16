@@ -39,6 +39,10 @@ import {
   createPhraseFavouriteSnapshot,
   createSupabasePrivateFavouritesRepository,
 } from "./private-favourites.js?v=__ASSET_VERSION__";
+import {
+  createLocalTestPendingGameRepository,
+  createSupabasePendingGameRepository,
+} from "./pending-game.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
@@ -103,9 +107,35 @@ const localTestPrivateFavouritesRepository =
   });
 let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
+const localTestPendingGameRepository = createLocalTestPendingGameRepository({
+  createPendingGameId: createLocalTestPendingGameId,
+  profiles: [
+    {
+      accountId: "test-account",
+      profileId: "test-profile",
+      handle: "player-test-account",
+      gamerName: "Player",
+      avatarKey: "spark",
+    },
+    {
+      accountId: "invitee-auth-account",
+      profileId: "invitee-profile",
+      handle: "invitee-two",
+      gamerName: "Invitee Two",
+      avatarKey: "paper",
+    },
+  ],
+});
+let pendingGameRepository = localTestPendingGameRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
 let saveBatchButton = null;
+let pendingGamePanel = null;
+let pendingGameHandleInput = null;
+let pendingGameRowCountSelect = null;
+let pendingGameStatus = null;
+let pendingGameSummary = null;
+let currentPendingGame = null;
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
@@ -117,6 +147,7 @@ void initialiseHostedAuth();
 testSignInButton.addEventListener("click", async () => {
   signedInGameSession = localTestSignedInGameSession;
   privateFavouritesRepository = localTestPrivateFavouritesRepository;
+  pendingGameRepository = localTestPendingGameRepository;
   await applyAccountShell(
     createAccountShell({
       account: { id: "test-account" },
@@ -306,6 +337,7 @@ revealPanel.addEventListener("click", (event) => {
 });
 
 renderGame();
+renderPendingGamePanel();
 renderFavourites();
 
 function renderGame() {
@@ -497,6 +529,21 @@ function renderFavourites() {
   phraseFavouritesList.replaceChildren(...favouriteItems);
 }
 
+function renderPendingGamePanel() {
+  const isSignedIn = accountShell.persistenceAuthority.type === "account";
+
+  if (!isSignedIn) {
+    removePendingGamePanel();
+    return;
+  }
+
+  ensurePendingGamePanel();
+
+  if (currentPendingGame) {
+    renderPendingGameSummary(currentPendingGame);
+  }
+}
+
 function ensureSaveBatchButton() {
   if (saveBatchButton) {
     return saveBatchButton;
@@ -520,6 +567,150 @@ function clearRevealSurface() {
   phraseList.replaceChildren();
   revealDetails.replaceChildren();
   copyStatus.textContent = "";
+}
+
+function ensurePendingGamePanel() {
+  if (pendingGamePanel) {
+    return pendingGamePanel;
+  }
+
+  pendingGamePanel = document.createElement("section");
+  pendingGamePanel.className = "pending-game-panel";
+  pendingGamePanel.dataset.pendingGamePanel = "";
+
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const kicker = document.createElement("p");
+  kicker.className = "section-kicker";
+  kicker.textContent = "Multiplayer";
+
+  const title = document.createElement("h2");
+  title.textContent = "Invite by Handle";
+
+  const form = document.createElement("form");
+  form.className = "pending-game-form";
+  form.dataset.pendingGameForm = "";
+  form.addEventListener("submit", createPendingGameInvite);
+
+  const handleLabel = document.createElement("label");
+  handleLabel.className = "pending-game-field";
+  handleLabel.textContent = "Handle";
+
+  pendingGameHandleInput = document.createElement("input");
+  pendingGameHandleInput.type = "text";
+  pendingGameHandleInput.autocomplete = "off";
+  pendingGameHandleInput.placeholder = "invitee-two";
+  pendingGameHandleInput.dataset.pendingGameHandleInput = "";
+  pendingGameHandleInput.required = true;
+
+  const rowCountLabel = document.createElement("label");
+  rowCountLabel.className = "pending-game-field";
+  rowCountLabel.textContent = "Phrases";
+
+  pendingGameRowCountSelect = document.createElement("select");
+  pendingGameRowCountSelect.dataset.pendingGameRowCount = "";
+  for (const rowCount of [10, 15, 20, 25, 30]) {
+    const option = document.createElement("option");
+    option.value = String(rowCount);
+    option.textContent = String(rowCount);
+    option.selected = rowCount === 20;
+    pendingGameRowCountSelect.append(option);
+  }
+
+  const submitButton = document.createElement("button");
+  submitButton.className = "primary-button pending-game-submit";
+  submitButton.type = "submit";
+  submitButton.textContent = "Create invite";
+
+  pendingGameStatus = document.createElement("p");
+  pendingGameStatus.className = "pending-game-status";
+  pendingGameStatus.dataset.pendingGameStatus = "";
+  pendingGameStatus.setAttribute("aria-live", "polite");
+
+  pendingGameSummary = document.createElement("div");
+  pendingGameSummary.className = "pending-game-summary";
+  pendingGameSummary.dataset.pendingGameSummary = "";
+  pendingGameSummary.hidden = true;
+
+  heading.append(kicker, title);
+  handleLabel.append(pendingGameHandleInput);
+  rowCountLabel.append(pendingGameRowCountSelect);
+  form.append(handleLabel, rowCountLabel, submitButton);
+  pendingGamePanel.append(heading, form, pendingGameStatus, pendingGameSummary);
+  gamePanel.after(pendingGamePanel);
+  return pendingGamePanel;
+}
+
+function removePendingGamePanel() {
+  pendingGamePanel?.remove();
+  pendingGamePanel = null;
+  pendingGameHandleInput = null;
+  pendingGameRowCountSelect = null;
+  pendingGameStatus = null;
+  pendingGameSummary = null;
+  currentPendingGame = null;
+}
+
+async function createPendingGameInvite(event) {
+  event.preventDefault();
+
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  pendingGameStatus.textContent = "";
+
+  try {
+    const pendingGame = await pendingGameRepository.createPendingGameFromHandle({
+      creatorAccountId: accountShell.accountId,
+      inviteeHandle: pendingGameHandleInput.value,
+      rowCount: Number(pendingGameRowCountSelect.value),
+    });
+    const invitee = pendingGame.participants.find(
+      (participant) => participant.role === "invitee",
+    );
+
+    currentPendingGame = pendingGame;
+    pendingGameHandleInput.value = "";
+    renderPendingGameSummary(pendingGame);
+    pendingGameStatus.textContent =
+      `Game invite created. Waiting for @${invitee.handle} to accept.`;
+  } catch (error) {
+    currentPendingGame = null;
+    pendingGameSummary.hidden = true;
+    pendingGameSummary.replaceChildren();
+    pendingGameStatus.textContent = getPendingGameFailureMessage(error);
+  }
+}
+
+function renderPendingGameSummary(pendingGame) {
+  const rowCount = document.createElement("p");
+  rowCount.className = "pending-game-row-count";
+  rowCount.textContent = `${pendingGame.rowCount} phrases`;
+
+  const participantList = document.createElement("ul");
+  participantList.className = "pending-game-participants";
+  participantList.replaceChildren(
+    ...pendingGame.participants.map(renderPendingGameParticipant),
+  );
+
+  pendingGameSummary.hidden = false;
+  pendingGameSummary.replaceChildren(rowCount, participantList);
+}
+
+function renderPendingGameParticipant(participant) {
+  const item = document.createElement("li");
+
+  const handle = document.createElement("span");
+  handle.textContent = `@${participant.handle}`;
+
+  const status = document.createElement("strong");
+  status.textContent =
+    participant.inviteStatus === "accepted" ? "Accepted" : "Invited";
+
+  item.append(handle, status);
+  return item;
 }
 
 function ensureFavouritesPanel() {
@@ -553,7 +744,7 @@ function ensureFavouritesPanel() {
 
   heading.append(kicker, title);
   favouritesPanel.append(heading, favouritesStatus, phraseFavouritesList);
-  gamePanel.after(favouritesPanel);
+  (pendingGamePanel ?? gamePanel).after(favouritesPanel);
   return favouritesPanel;
 }
 
@@ -958,6 +1149,7 @@ async function initialiseHostedAuth() {
     privateFavouritesRepository = createSupabasePrivateFavouritesRepository({
       supabase,
     });
+    pendingGameRepository = createSupabasePendingGameRepository({ supabase });
 
     await applyAccountShell(await hostedAuthSession.loadAccountShell());
   } catch {
@@ -965,6 +1157,7 @@ async function initialiseHostedAuth() {
     hostedAuthAvailable = false;
     signedInGameSession = localTestSignedInGameSession;
     privateFavouritesRepository = localTestPrivateFavouritesRepository;
+    pendingGameRepository = localTestPendingGameRepository;
     authMessage.textContent = "Sign in unavailable.";
     renderAccountShell(accountShell);
   }
@@ -989,6 +1182,7 @@ async function applyAccountShell(shell) {
 
   renderAccountShell(accountShell);
   renderGame();
+  renderPendingGamePanel();
   renderFavourites();
 }
 
@@ -1020,6 +1214,7 @@ function applySignedOutShell() {
   hidePersistenceRecovery();
   renderAccountShell(accountShell);
   renderGame();
+  renderPendingGamePanel();
   renderFavourites();
 }
 
@@ -1069,4 +1264,20 @@ function showPersistenceRecovery(message) {
 function hidePersistenceRecovery() {
   persistenceRecovery.hidden = true;
   persistenceRecoveryMessage.textContent = "";
+}
+
+function getPendingGameFailureMessage(error) {
+  if (error instanceof Error && /own handle/i.test(error.message)) {
+    return "Choose another Handle; this one belongs to you.";
+  }
+
+  if (error instanceof Error && /handle/i.test(error.message)) {
+    return "Handle not found. Check the Handle and try again.";
+  }
+
+  return "Game invite could not be created. Try again.";
+}
+
+function createLocalTestPendingGameId() {
+  return `local-pending-game-${Date.now()}`;
 }

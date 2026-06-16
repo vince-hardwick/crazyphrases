@@ -1185,7 +1185,7 @@ git commit -m "Document pending game foundation migration"
 **Files:**
 - Verify all changed files from Tasks 1-5.
 
-- [ ] **Step 1: Run full automated tests**
+- [x] **Step 1: Run full automated tests**
 
 Run:
 
@@ -1195,7 +1195,7 @@ npm test
 
 Expected: all Node tests pass. If sandboxed Node/npm is blocked, follow `docs/runbooks/node-npm-for-codex.md` and rerun with sandbox escalation rather than changing dependencies or local tool paths.
 
-- [ ] **Step 2: Inspect final diff and status**
+- [x] **Step 2: Inspect final diff and status**
 
 Run:
 
@@ -1206,7 +1206,7 @@ git log --oneline -5
 
 Expected: branch is ahead of `origin/codex/pending-game-foundation` by implementation commits, with no unrelated files changed.
 
-- [ ] **Step 3: Push the branch**
+- [x] **Step 3: Push the branch**
 
 Run:
 

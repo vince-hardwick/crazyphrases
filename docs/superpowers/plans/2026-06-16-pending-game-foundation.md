@@ -25,7 +25,7 @@
 - Create: `tests/pending-game.test.mjs`
 - Create: `assets/pending-game.js`
 
-- [ ] **Step 1: Write the failing repository behaviour test**
+- [x] **Step 1: Write the failing repository behaviour test**
 
 Create `tests/pending-game.test.mjs`:
 
@@ -93,7 +93,7 @@ describe("Pending Game repository", () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -103,7 +103,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: FAIL because `assets/pending-game.js` does not exist or does not export `createTestPendingGameRepository`.
 
-- [ ] **Step 3: Implement the smallest test repository**
+- [x] **Step 3: Implement the smallest test repository**
 
 Create `assets/pending-game.js`:
 
@@ -216,7 +216,7 @@ function defaultCreatePendingGameId() {
 }
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -226,7 +226,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: PASS for the new tracer bullet test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 

@@ -116,6 +116,14 @@
 - **Revisit when**: Signed-in navigation or profile/account surfaces are introduced, or when the inline game surface becomes crowded after private favourites are promoted.
 - **Remaining risk**: Keeping saved favourites inline with the game flow may make the setup and reveal screens feel busier as account-backed features expand.
 
+### Signed-in Account Profile management surface
+
+- **Deferred**: A signed-in profile/account UI for viewing and editing the current Gamer Name, Handle, and preset Avatar, including any account dropdown, profile route, or signed-in navigation surface that owns those controls.
+- **Why deferred**: The shipped Account shell creates and loads a durable Account Profile and shows the game-facing Handle, while the broader profile/account surface design depends on signed-in navigation choices that are not needed to prove the current Account Profile, Handle Directory, signed-in solo, or private-favourites foundations.
+- **Revisit when**: Signed-in navigation or profile/account surfaces are introduced, handle invites or social surfaces need clearer self-service identity management, or user testing shows generated default Gamer Name, Handle, or Avatar values block play, trust, or recognition.
+- **Status**: Deferred on 2026-06-16 after PR #48 production promotion. Implementation remains tracked by GitHub issue #47. Parent PRD issue #43 remains open until #47 is implemented or the remaining profile-management scope is explicitly rescoped or closed as `wontfix`.
+- **Remaining risk**: Signed-in users cannot yet correct or personalise their generated Gamer Name, Handle, or preset Avatar from the UI. Later invite, friend, profile, or onboarding flows may need this surface before wider public use.
+
 ### Phrase reactions
 
 - **Deferred**: Laugh and like reactions for shared phrases.

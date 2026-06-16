@@ -1,5 +1,7 @@
 # PRD: Signed-In Foundation and Solo Save/Resume
 
+> **Status:** Published historical PRD. Accepted durable behaviour lives in `docs/product-rules.md`; backend/source-of-truth authority lives in ADR 0010 and `docs/runbooks/supabase-auth-and-postgres.md`; published PRD state lives in GitHub issue #22.
+
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/22
 
 ## Child Issues

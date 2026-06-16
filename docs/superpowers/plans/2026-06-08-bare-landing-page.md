@@ -1,5 +1,7 @@
 # Bare Landing Page Implementation Plan
 
+> **Status:** Historical. Do not execute this plan as active work. The holding-page slice has been superseded by the current static Crazy Phrases app; see `docs/superpowers/README.md` and `docs/runbooks/live-static-hosting.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a minimal static landing page and deployment guidance for `crazyphrases.com`.
@@ -41,4 +43,3 @@
 - [ ] Check git status.
 - [ ] Commit the page and documentation.
 - [ ] Push `main` to `origin/main`.
-

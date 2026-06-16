@@ -1,5 +1,7 @@
 # PRD: Anonymous Solo Game MVP
 
+> **Status:** Published historical PRD. Accepted durable behaviour lives in `docs/product-rules.md`; architecture boundaries live in ADRs 0004 and 0008; published PRD state lives in GitHub issue #1.
+
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/1
 
 ## Problem Statement

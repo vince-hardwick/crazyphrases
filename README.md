@@ -33,7 +33,7 @@ out of FTPS uploads as documented in the hosting runbooks.
 
 ## Deployment
 
-The current public site is a static Crazy Phrases app. See `docs/runbooks/live-static-hosting.md` for the required upload path, runtime file set, HTTPS redirect, directory-listing, certificate checks, cache-busting rules, and GitHub Actions deployment setup.
+The current public site is a static Crazy Phrases app. See `docs/runbooks/live-static-hosting.md` for the required upload path, runtime payload contract, HTTPS redirect, directory-listing, certificate checks, cache-busting rules, and GitHub Actions deployment setup.
 
 DNS, Cloudflare Access, and non-production environment access controls are documented in `docs/runbooks/cloudflare-dns-and-access.md`.
 

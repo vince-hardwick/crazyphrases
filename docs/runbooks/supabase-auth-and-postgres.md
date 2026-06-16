@@ -623,6 +623,20 @@ The hosted schema was verified through read-only SQL after application:
   remaining security advisor was the existing project-level Auth
   leaked-password-protection warning.
 
+PR #48 merged the Account Profile directory access correction to `main` as
+merge commit `46bea304b11d0e2472bff22aae2c67d73330f891`. Promotion run
+`27612185923` deployed that commit through `test` and `production` after the
+owner approved the required GitHub Environment gates. The `test` signed-out
+smoke loaded `Crazy Phrases`, showed hosted sign-in controls, had no browser
+warning/error logs, had no horizontal overflow, and loaded local assets,
+including `account-profile.js`, stamped with the merge commit SHA. The
+`production` smoke loaded `Crazy Phrases` in the existing browser signed-in
+session, showed `Account-backed mode`, a game-facing Handle, and setup controls,
+had no browser warning/error logs, had no horizontal overflow, and loaded all
+local scripts/modules, including `account-profile.js`, stamped with the merge
+commit SHA. No hosted Supabase data-mutation smoke was performed during this
+promotion verification.
+
 After the migration was applied, branch
 `codex/durable-account-profile-handle-directory` commit
 `364fe3e320f469b0107ef419aad276b6a3758ac6` was deployed to `dev` through the

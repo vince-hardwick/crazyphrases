@@ -17,7 +17,8 @@ discovery, or profile editing.
 
 This slice adds a source-controlled backend foundation only:
 
-- a Pending Game repository contract with memory and Supabase adapters;
+- a Pending Game repository contract with a test-only fixture and Supabase
+  adapter;
 - a Supabase migration for relational Pending Game storage;
 - tests for repository behaviour and migration security surface;
 - project documentation updates for the new source-controlled boundary.
@@ -138,9 +139,9 @@ Reveal.
 
 Use TDD with vertical slices:
 
-1. Add one failing memory repository test for handle-invite Pending Game
+1. Add one failing test-fixture repository test for handle-invite Pending Game
    creation.
-2. Implement the smallest memory repository behaviour.
+2. Implement the smallest test-fixture repository behaviour.
 3. Add one failing Supabase adapter test against a fake Supabase client.
 4. Implement the smallest Supabase adapter behaviour.
 5. Add migration-surface tests for tables, grants, RLS, constraints, and

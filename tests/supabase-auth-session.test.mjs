@@ -26,6 +26,48 @@ describe("Supabase Auth session", () => {
     assert.equal(JSON.stringify(shell).includes("private@example.com"), false);
   });
 
+  it("hydrates the account shell from a durable Account Profile repository", async () => {
+    const calls = [];
+    const session = createSupabaseAuthSession({
+      profileRepository: {
+        async ensureOwnProfile({ accountId }) {
+          calls.push({
+            method: "ensureOwnProfile",
+            accountId,
+          });
+          return {
+            profileId: "profile-directory-1",
+            handle: "captain-spoon",
+            gamerName: "Captain Spoon",
+            avatarKey: "moon",
+          };
+        },
+      },
+      supabase: createFakeSupabaseAuthClient({
+        user: {
+          id: "auth-user-456",
+          email: "private@example.com",
+        },
+      }),
+    });
+
+    const shell = await session.loadAccountShell();
+
+    assert.deepEqual(calls, [
+      {
+        method: "ensureOwnProfile",
+        accountId: "auth-user-456",
+      },
+    ]);
+    assert.equal(shell.accountId, "auth-user-456");
+    assert.deepEqual(shell.profile, {
+      handle: "captain-spoon",
+      gamerName: "Captain Spoon",
+      avatarKey: "moon",
+    });
+    assert.equal(JSON.stringify(shell).includes("private@example.com"), false);
+  });
+
   it("starts Google and email sign-in with the app root redirect URL", async () => {
     const calls = [];
     const session = createSupabaseAuthSession({

@@ -5,6 +5,7 @@ import {
 
 export function createSupabaseAuthSession({
   location = globalThis.location,
+  profileRepository = null,
   supabase,
 } = {}) {
   if (!supabase?.auth || typeof supabase.auth.getUser !== "function") {
@@ -27,11 +28,18 @@ export function createSupabaseAuthSession({
         return createSignedOutShell();
       }
 
+      const account = {
+        id: user.id,
+      };
+      const profile = profileRepository
+        ? await profileRepository.ensureOwnProfile({
+            accountId: account.id,
+          })
+        : null;
+
       return createAccountShell({
-        account: {
-          id: user.id,
-        },
-        profile: null,
+        account,
+        profile,
       });
     },
 

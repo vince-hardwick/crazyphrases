@@ -512,6 +512,79 @@ cleanup check confirmed zero marker rows remained in
 Phrase Favourite rows, one retained earlier Batch Favourite row, and zero
 current-game rows.
 
+The first Account Profile / Handle Directory migration is:
+
+```text
+supabase/migrations/20260615234349_create_account_profiles.sql
+```
+
+It creates `public.account_profiles` for one active durable profile per
+Account, with a separate directory `profile_id`, globally unique `handle`,
+`gamer_name`, generated/default `avatar_key`, Row Level Security, no `anon`
+table grants, signed-in profile lookup, and owner-only create/update policies.
+Browser-facing handle lookup should select only invite-safe profile columns such
+as `profile_id`, `handle`, `gamer_name`, and `avatar_key`; it must not expose
+email addresses or raw Supabase Auth user ids.
+
+As of 2026-06-16, this migration is source-controlled, covered by local
+migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded it in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260615235714` | `create_account_profiles` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.account_profiles` exists.
+- Row Level Security is enabled.
+- The table has no `anon` grants.
+- `authenticated` and `service_role` have only `select`, `insert`, and
+  `update` table grants.
+- Signed-in profile lookup, owner-only create, and owner-only update policies
+  exist for the `authenticated` role.
+- Constraints enforce the Account foreign key with `on delete cascade`, primary
+  key, unique directory `profile_id`, unique `handle`, lower-case Handle format
+  and length, Gamer Name length, and allowed Avatar keys.
+- The table had zero rows immediately after migration application.
+- Supabase generated TypeScript types after the schema change. The current app
+  is plain JavaScript and the repository has no generated database-types owner
+  file, so no generated type file was committed.
+- Supabase advisors reported no performance warnings and no
+  `account_profiles` security warning. The only security advisor was the
+  existing project-level Auth leaked-password-protection warning.
+- The 2026-04-28 Supabase Data API exposure breaking-change guidance was
+  reviewed before application. The migration includes explicit grants for the
+  roles that should reach the table through the Data API and keeps `anon`
+  revoked.
+
+After the migration was applied, branch
+`codex/durable-account-profile-handle-directory` commit
+`364fe3e320f469b0107ef419aad276b6a3758ac6` was deployed to `dev` through the
+approved GitHub Environment workflow. The deployment run verified the strict
+FTPS target, rendered Supabase runtime config, stamped static asset versions,
+and deployed over FTPS successfully. A visible signed-out browser smoke on
+`https://dev.crazyphrases.com/` loaded `Crazy Phrases`, showed the configured
+hosted sign-in controls, had no browser warning/error logs, had no horizontal
+overflow at the default viewport, and showed `site.css`, `app.js`, local browser
+modules including `account-profile.js`, and `word-bank-seed.json` stamped with
+the deployed commit SHA. No hosted signed-in data-mutation smoke was performed
+as part of this deployment verification.
+
+After owner approval for hosted signed-in validation, the visible `dev` browser
+completed Google sign-in and returned to `https://dev.crazyphrases.com/#`.
+`dev` hydrated the Account shell as `Account-backed mode`, displayed a
+game-facing Handle, hid hosted sign-in controls, exposed sign-out, and retained
+the same Account Profile after a browser reload once async auth hydration
+settled. The page had no horizontal overflow and no browser warning/error logs.
+A read-only hosted SQL check found exactly one matching `account_profiles` row,
+with a directory `profile_id` separate from the raw Auth user id, default Gamer
+Name and Avatar data, a Handle derived from the directory profile id prefix, and
+no Handle match against the raw Auth id prefix. No signed-in current-game or
+Favourite mutation smoke was performed as part of this Account Profile
+validation.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

@@ -38,6 +38,7 @@ Load the smallest authoritative set that can answer the task:
 | --- | --- |
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
 | Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
+| Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
 | Supabase project operations | `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase schema migrations | `supabase/migrations/`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Domain language for game concepts | `CONTEXT.md` |

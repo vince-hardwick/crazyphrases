@@ -1,10 +1,14 @@
-# Superpowers Plans and Specs
+# Superpowers Plan and Spec Status Ledger
 
 ## Purpose
 
-This directory contains planning provenance. Use it to understand why a slice was
-designed or implemented, not as the first source of current product, architecture,
-or operational authority.
+This file is the plan/spec status ledger for `docs/superpowers/`. Use it to
+decide whether a plan or spec is active, completed, abandoned, superseded, or
+only historical provenance before opening the full document.
+
+The directory contains planning provenance. Use it to understand why a slice was
+designed or implemented, not as the first source of current product,
+architecture, or operational authority.
 
 Current authority lives in:
 
@@ -23,6 +27,17 @@ mark as active.
 
 Completed and historical plans/specs must not override product rules, ADRs,
 runbooks, backlog entries, or GitHub issue state.
+
+## Status Rules
+
+- **Active**: The plan/spec is still executable. The row must name the owning
+  task, issue, or backlog item and the next expected action.
+- **Historical/completed**: The work is complete or no longer executable. The
+  row must name the current authority for future changes.
+- **Superseded**: A newer plan, ADR, product rule, runbook, backlog item, or
+  issue replaced this document. The row must name the replacement authority.
+- **Abandoned**: The work was intentionally stopped. The row must name the
+  deferral, `wontfix`, or follow-up route that explains why.
 
 ## Status Index
 
@@ -45,7 +60,10 @@ When adding a new plan or spec:
 
 1. Add a clear status near the top of the file.
 2. Add a row to this index.
-3. When the work completes, update the row and the file header to historical or
-   completed.
+3. When the work completes, is abandoned, or is superseded, update both this
+   index row and the file header in the same change.
 4. Promote durable rules to the owning product rule, ADR, runbook, or backlog
    document before closing the task.
+5. Do not leave checkbox state inside a plan/spec as the only signal of current
+   status. Completed, abandoned, and superseded documents must route readers to
+   the current authority or follow-up location.

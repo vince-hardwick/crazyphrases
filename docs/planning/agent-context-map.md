@@ -29,12 +29,13 @@ For large documents, search for the relevant heading first and then read that se
 | ADR index and creation guidance | `docs/decisions/README.md` | Keep the decision list and ADR policy discoverable. |
 | Operational commands, deployment procedures, auth setup, and approval-gated flows | `docs/runbooks/*.md` | Runbooks own exact command shapes and operational sequencing. |
 | Deferred product or operational work | `docs/backlog.md` | Deferrals include what is deferred, why, revisit trigger, and remaining risk. |
+| Hosted Supabase migration, deployment, smoke, and state evidence | `docs/planning/supabase-state-ledger.md` | Evidence/provenance only. The Supabase runbook owns procedures and mutation authority. |
 | Candidate sources and research notes | `docs/research/*.md` | Research is not accepted architecture until promoted to rules or ADRs. |
 | Superpowers plan/spec status and provenance routing | `docs/superpowers/README.md` | Check before executing or resuming older plans/specs. |
 | Active implementation plans and checklist state | `docs/superpowers/plans/*.md` | Active only when the plan status says so. Completed or historical plans are provenance and must not override higher-authority docs. |
 | Design-session specs and raw planning input | `docs/superpowers/specs/*.md` | Promote durable content to product rules, ADRs, runbooks, or backlog. Published PRDs defer current execution status to GitHub Issues and backlog entries. |
 | Agent skill configuration | `docs/agents/*.md` | Issue tracker, triage label, and domain-doc consumption rules for skills. |
-| Documentation governance audit reports | `docs/planning/documentation-governance-health-check-*.md` | Historical audit evidence and recommendations, not product or operational authority. |
+| Documentation governance audit and follow-up reports | `docs/planning/documentation-governance-*.md` | Historical audit evidence and recommendations, not product or operational authority. |
 
 ## Common Routes
 
@@ -45,6 +46,7 @@ For large documents, search for the relevant heading first and then read that se
 | Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
 | Pending Game foundation and next handle-invite slice | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, `docs/decisions/0011-account-profile-handle-directory.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase project operations | `docs/runbooks/supabase-auth-and-postgres.md` |
+| Supabase hosted migration, deployment, or smoke evidence | `docs/planning/supabase-state-ledger.md` |
 | Supabase schema migrations | `supabase/migrations/`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Domain language for game concepts | `CONTEXT.md` |
 | Deferred future features | `docs/backlog.md` |

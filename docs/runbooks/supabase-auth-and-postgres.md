@@ -7,6 +7,11 @@ This runbook owns operational details for the Supabase project selected by ADR
 generating types, deploying Edge Functions, or validating hosted signed-in
 behaviour.
 
+Hosted migration application records, schema verification evidence, deployment
+smoke notes, and historical hosted-state observations live in
+`docs/planning/supabase-state-ledger.md`. Use that ledger for provenance before
+loading this full runbook for operational commands.
+
 ## Project
 
 | Field | Value |
@@ -314,18 +319,9 @@ configuration is automated later, use a task-specific approved Management API
 run with a short-lived Supabase access token supplied outside the repository and
 outside chat transcripts.
 
-As of 2026-06-15, the project owner configured and enabled the Google provider
-in the hosted Supabase project. A `dev` browser smoke reached Google Accounts
-from `https://dev.crazyphrases.com/` with the configured Google OAuth client id,
-the Supabase callback URL, and the `redirect_to` value set back to the dev app.
-After the project owner completed Google account sign-in and consent in the
-visible browser, `dev` redirected back to `https://dev.crazyphrases.com/#`,
-hydrated the Account shell as `Account-backed mode`, hid hosted sign-in
-controls, and exposed sign-out. A signed-in 10-phrase batch was started, the
-first entry was filled with `teapot`, the page was reloaded, and the entered
-value resumed in Account-backed mode. A read-only hosted SQL check confirmed one
-`public.signed_in_solo_current_games` row at revision `2` containing the test
-entry.
+The hosted Google provider is configured and has been validated in `dev`; see
+`docs/planning/supabase-state-ledger.md` for the dated provider and smoke
+evidence.
 
 For email sign-in, the current hosted app sends Supabase email magic links. It
 does not yet implement an in-app six-digit OTP entry flow.
@@ -366,39 +362,8 @@ authority; the browser repository still uses `revision` for stale-write
 protection. The timestamp exists for future debugging, support, cleanup, or
 admin surfaces that need a reliable "last changed" field.
 
-As of 2026-06-15, this migration is source-controlled, covered by a
-migration-surface test, and applied to the hosted Supabase project after
-explicit owner approval.
-
-As of 2026-06-15, all three signed-in current-game migrations have been applied
-to the hosted Supabase project after explicit owner approval. Supabase MCP
-recorded them in hosted migration history as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260614222419` | `create_signed_in_solo_current_games` |
-| `20260614222554` | `tighten_signed_in_solo_current_games_grants` |
-| `20260615134730` | `maintain_signed_in_solo_current_games_updated_at` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.signed_in_solo_current_games` exists.
-- Row Level Security is enabled.
-- The table has no `anon` grants.
-- `authenticated` and `service_role` have only `select`, `insert`, `update`,
-  and `delete` table grants.
-- Account-owned `select`, `insert`, `update`, and `delete` policies exist for
-  the `authenticated` role.
-- Constraints enforce the Account foreign key, primary key, `revision >= 1`,
-  `signed-in-solo` mode, matching `accountId`, and started-game payload.
-- The `set_signed_in_solo_current_games_updated_at` trigger exists on
-  `public.signed_in_solo_current_games`, calls the private-schema
-  `set_signed_in_solo_current_games_updated_at` function, uses security invoker,
-  and sets an empty function `search_path`.
-- A hosted verification row was inserted for the existing test account, updated,
-  and deleted on 2026-06-15. The update advanced `updated_at` from
-  `2026-01-01 00:00:00+00` to `2026-06-15 13:50:03.231681+00`; a follow-up SQL
-  check confirmed `public.signed_in_solo_current_games` was empty again.
+Hosted application and verification evidence for these migrations is recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 The first private Phrase Favourite migration is:
 
@@ -412,35 +377,8 @@ Account foreign key with `on delete cascade`, and an account-scoped unique
 source fingerprint so repeated saves of the same revealed Phrase do not create
 confusing duplicate rows.
 
-As of 2026-06-15, this migration is source-controlled, covered by
-migration-surface tests, and applied to the hosted Supabase project after
-explicit owner approval. Supabase MCP recorded it in hosted migration history
-as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260615160720` | `create_private_phrase_favourites` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.private_phrase_favourites` exists.
-- Row Level Security is enabled.
-- The table has no `anon` grants.
-- `authenticated` and `service_role` have only `select`, `insert`, and
-  `delete` table grants.
-- Account-owned `select`, `insert`, and `delete` policies exist for the
-  `authenticated` role.
-- Constraints enforce the primary key, Account foreign key with
-  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
-  private Phrase Favourite snapshots.
-- The table had zero rows immediately after migration application.
-- Supabase advisors reported no performance warnings and no
-  `private_phrase_favourites` security warning. The only security advisor was
-  the existing project-level Auth leaked-password-protection warning.
-- A hosted rollback smoke simulated the `authenticated` role for an existing
-  hosted Auth account. It inserted one private Phrase Favourite, confirmed a
-  duplicate source fingerprint inserted zero rows, selected the inserted row
-  through RLS, deleted it through RLS, and rolled the transaction back.
+Hosted application and verification evidence for this migration is recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 The first private Batch Favourite migration is:
 
@@ -454,63 +392,9 @@ table grants, an Account foreign key with `on delete cascade`, an
 account-scoped unique source fingerprint, and JSON checks for the Batch
 Favourite snapshot shape, row count, rendered phrase list, and row context.
 
-As of 2026-06-15, this migration is source-controlled, covered by
-migration-surface tests, and applied to the hosted Supabase project after
-explicit owner approval. Supabase MCP recorded it in hosted migration history
-as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260615164651` | `create_private_batch_favourites` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.private_batch_favourites` exists.
-- Row Level Security is enabled.
-- The table has no `anon` grants.
-- `authenticated` and `service_role` have only `select`, `insert`, and
-  `delete` table grants.
-- Account-owned `select`, `insert`, and `delete` policies exist for the
-  `authenticated` role.
-- Constraints enforce the primary key, Account foreign key with
-  `on delete cascade`, account-scoped unique `source_fingerprint`, and valid
-  private Batch Favourite snapshots.
-- The table had zero rows immediately after migration application.
-- Supabase advisors reported no performance warnings and no
-  `private_batch_favourites` security warning. The only security advisor was
-  the existing project-level Auth leaked-password-protection warning.
-
-After the migration was applied, branch `codex/private-favourites` commit
-`962d17302fe2831ea14c3d23e6e6db7fb4adeee4` was deployed to `dev` through the
-approved GitHub Environment workflow. The hosted assets were stamped with that
-commit in `assets/app.js` and `assets/site.css`. A visible signed-in browser
-smoke on `https://dev.crazyphrases.com/` used the existing Google-authenticated
-Account shell, started a 10-phrase batch, revealed it, saved a Batch Favourite,
-confirmed all 10 rendered phrases appeared under `Batch Favourite`, clicked
-"Start again", and confirmed the saved Batch Favourite remained visible. The
-page had no horizontal overflow, the browser error/warning log was empty, and a
-read-only SQL check confirmed one hosted `public.private_batch_favourites` row
-with latest `created_at` `2026-06-15 16:56:27.748878+00`.
-
-On 2026-06-15, branch `codex/private-favourites-remove-polish` commit
-`1c33c89ad168d9a568cc1fa57d7b9d38f2d7ed02` was deployed to `dev` after fixing
-hosted saved-state matching for Supabase `jsonb` snapshots whose object keys are
-returned in a different order from the browser-created Favourite snapshot. The
-visible signed-in smoke used marker `codexsmokebgmrnhbd` in the existing
-Google-authenticated Account shell, started a 10-phrase batch, filled sections
-according to the visible section titles, revealed all 10 marked phrases, saved a
-Phrase Favourite, confirmed the phrase save button changed to its saved/disabled
-state, removed and re-saved that Phrase Favourite, saved a Batch Favourite,
-confirmed the batch save button changed to its saved/disabled state, removed and
-re-saved that Batch Favourite, reloaded the page, confirmed the revealed current
-game and both marker favourites persisted, cleared the current game through
-"Start again", and removed the marker favourites through the UI. The page had no
-horizontal overflow, browser warnings/errors were empty, and a read-only SQL
-cleanup check confirmed zero marker rows remained in
-`public.private_phrase_favourites`, `public.private_batch_favourites`, and
-`public.signed_in_solo_current_games`. After cleanup the hosted totals were zero
-Phrase Favourite rows, one retained earlier Batch Favourite row, and zero
-current-game rows.
+Hosted application, verification, deployment smoke, and cleanup evidence for
+private favourites is recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 The first Account Profile / Handle Directory migration is:
 
@@ -526,38 +410,8 @@ Browser-facing handle lookup should select only invite-safe profile columns such
 as `profile_id`, `handle`, `gamer_name`, and `avatar_key`; it must not expose
 email addresses or raw Supabase Auth user ids.
 
-As of 2026-06-16, this migration is source-controlled, covered by local
-migration-surface tests, and applied to the hosted Supabase project after
-explicit owner approval. Supabase MCP recorded it in hosted migration history
-as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260615235714` | `create_account_profiles` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.account_profiles` exists.
-- Row Level Security is enabled.
-- The table has no `anon` grants.
-- `authenticated` and `service_role` have only `select`, `insert`, and
-  `update` table grants.
-- Signed-in profile lookup, owner-only create, and owner-only update policies
-  exist for the `authenticated` role.
-- Constraints enforce the Account foreign key with `on delete cascade`, primary
-  key, unique directory `profile_id`, unique `handle`, lower-case Handle format
-  and length, Gamer Name length, and allowed Avatar keys.
-- The table had zero rows immediately after migration application.
-- Supabase generated TypeScript types after the schema change. The current app
-  is plain JavaScript and the repository has no generated database-types owner
-  file, so no generated type file was committed.
-- Supabase advisors reported no performance warnings and no
-  `account_profiles` security warning. The only security advisor was the
-  existing project-level Auth leaked-password-protection warning.
-- The 2026-04-28 Supabase Data API exposure breaking-change guidance was
-  reviewed before application. The migration includes explicit grants for the
-  roles that should reach the table through the Data API and keeps `anon`
-  revoked.
+Hosted application and verification evidence for this migration is recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 The corrective Account Profile directory grant migration is:
 
@@ -591,37 +445,8 @@ table synchronised from `public.account_profiles`. The trigger function uses an
 empty `search_path`, is not in the exposed `public` schema, and has public
 execute revoked.
 
-As of 2026-06-16, both corrective migrations are source-controlled, covered by
-local migration-surface tests, and applied to the hosted Supabase project after
-explicit owner approval. Supabase MCP recorded them in hosted migration history
-as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260616092324` | `tighten_account_profile_directory_grants` |
-| `20260616093056` | `replace_account_profile_directory_view` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.account_profile_directory` is a base table, not a view.
-- The directory table exposes only `profile_id`, `handle`, `gamer_name`, and
-  `avatar_key`.
-- The directory table has no `anon` grants; `authenticated` and `service_role`
-  have only `select`.
-- The directory table has a signed-in `select` Row Level Security policy.
-- The raw `public.account_profiles` table keeps owner-only `select`, `insert`,
-  and `update` policies.
-- The raw table has no table-level `authenticated` grant; browser access uses
-  column-level grants for owner-profile load/create/update and does not grant
-  `update` on `profile_id`, `created_at`, or `updated_at`.
-- Simulating the existing hosted authenticated Account
-  `f222c9a8-e424-4156-a378-c34eabc71bbf` showed one owner-visible raw profile
-  row, one signed-in-visible directory row, matching Handle data between the two
-  tables, and no raw `account_id` column on the directory surface.
-- Supabase performance advisors reported no lints. Supabase security advisors
-  no longer reported the Account Profile directory view issue; the only
-  remaining security advisor was the existing project-level Auth
-  leaked-password-protection warning.
+Hosted application and verification evidence for these migrations is recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 The first Pending Game foundation migration is:
 
@@ -645,134 +470,9 @@ behind explicit owner approval. The first source-controlled slice does not add
 UI, invite acceptance, turn storage, Reveal, Share Consent, nudges, friends, or
 public discovery.
 
-As of 2026-06-16, this migration is source-controlled, covered by local
-migration-surface tests, and applied to the hosted Supabase project after
-explicit owner approval. Supabase MCP recorded it in hosted migration history
-as:
-
-| Hosted version | Name |
-| --- | --- |
-| `20260616141452` | `create_pending_games` |
-
-The hosted schema was verified through read-only SQL after application:
-
-- `public.pending_games` and `public.pending_game_participants` exist.
-- Row Level Security is enabled on both tables.
-- Both tables have no `anon` grants.
-- `authenticated` has only `select` and `insert` on `pending_games`.
-- `authenticated` has only `select` on `pending_game_participants`.
-- The creator-owned Pending Game `select` and `insert` policies exist, and the
-  participant-row `select` policy scopes rows to Pending Games created by the
-  signed-in Account.
-- The private trigger function exists only as
-  `private.create_pending_game_participants()`, is `security definer`, returns
-  `trigger`, and is not executable by `public`, `anon`, or `authenticated`.
-- The `create_pending_game_participants` trigger runs after inserts on
-  `public.pending_games`.
-- All planned foreign-key indexes and check constraints exist.
-- Both new tables had zero rows immediately after migration application.
-- Supabase generated TypeScript types after the schema change. The current app
-  is plain JavaScript and the repository has no generated database-types owner
-  file, so no generated type file was committed.
-- Supabase security advisors reported only the existing project-level Auth
-  leaked-password-protection warning.
-- Supabase performance advisors reported only expected `unused_index` info for
-  the brand-new Pending Game indexes before live query traffic exists.
-
-PR #49 merged the source-controlled Pending Game backend foundation to `main`
-as merge commit `497c84f39e6c19ba1c7f2c58a88b76a3967c8f6e`. Promotion run
-`27623268625` deployed that commit through `test` and `production` after the
-owner approved both GitHub Environment gates. The `test` smoke loaded
-`Crazy Phrases`, showed hosted sign-in controls and `Start batch`, loaded local
-assets stamped with the merge commit SHA, had no browser warning/error logs,
-and had no horizontal overflow. The `production` smoke loaded the signed-in
-Account-backed shell in the existing browser session, showed the game-facing
-Handle, `Sign out`, `Start batch`, and favourites UI, loaded local assets and
-transitive modules stamped with the merge commit SHA, had no browser
-warning/error logs, and had no horizontal overflow. No hosted Supabase
-data-mutation smoke beyond the explicitly approved schema migration was
-performed for this slice.
-
-PR #50 recorded the hosted Pending Game migration evidence in documentation and
-merged to `main` as merge commit
-`e2920bd650b46f5d807081aa9c827030a3317a75`. Because the change was docs-only,
-the owner requested cancellation of the triggered promotion workflow. Promote
-run `27625010945` was cancelled, and the `test` and `production` deployment jobs
-were cancelled before deployment steps ran.
-
-PR #48 merged the Account Profile directory access correction to `main` as
-merge commit `46bea304b11d0e2472bff22aae2c67d73330f891`. Promotion run
-`27612185923` deployed that commit through `test` and `production` after the
-owner approved the required GitHub Environment gates. The `test` signed-out
-smoke loaded `Crazy Phrases`, showed hosted sign-in controls, had no browser
-warning/error logs, had no horizontal overflow, and loaded local assets,
-including `account-profile.js`, stamped with the merge commit SHA. The
-`production` smoke loaded `Crazy Phrases` in the existing browser signed-in
-session, showed `Account-backed mode`, a game-facing Handle, and setup controls,
-had no browser warning/error logs, had no horizontal overflow, and loaded all
-local scripts/modules, including `account-profile.js`, stamped with the merge
-commit SHA. No hosted Supabase data-mutation smoke was performed during this
-promotion verification.
-
-After the migration was applied, branch
-`codex/durable-account-profile-handle-directory` commit
-`364fe3e320f469b0107ef419aad276b6a3758ac6` was deployed to `dev` through the
-approved GitHub Environment workflow. The deployment run verified the strict
-FTPS target, rendered Supabase runtime config, stamped static asset versions,
-and deployed over FTPS successfully. A visible signed-out browser smoke on
-`https://dev.crazyphrases.com/` loaded `Crazy Phrases`, showed the configured
-hosted sign-in controls, had no browser warning/error logs, had no horizontal
-overflow at the default viewport, and showed `site.css`, `app.js`, local browser
-modules including `account-profile.js`, and `word-bank-seed.json` stamped with
-the deployed commit SHA. No hosted signed-in data-mutation smoke was performed
-as part of this deployment verification.
-
-After owner approval for hosted signed-in validation, the visible `dev` browser
-completed Google sign-in and returned to `https://dev.crazyphrases.com/#`.
-`dev` hydrated the Account shell as `Account-backed mode`, displayed a
-game-facing Handle, hid hosted sign-in controls, exposed sign-out, and retained
-the same Account Profile after a browser reload once async auth hydration
-settled. The page had no horizontal overflow and no browser warning/error logs.
-A read-only hosted SQL check found exactly one matching `account_profiles` row,
-with a directory `profile_id` separate from the raw Auth user id, default Gamer
-Name and Avatar data, a Handle derived from the directory profile id prefix, and
-no Handle match against the raw Auth id prefix. No signed-in current-game or
-Favourite mutation smoke was performed as part of this Account Profile
-validation.
-
-PR #45 merged this Account Profile slice to `main` as merge commit
-`2ad7993ee6b6cd5fa3d0975f15fd683606c9ca8a`. Promotion run
-`27585762335` deployed that commit through `test` and `production` after the
-owner approved the required GitHub Environment gates. The `test` signed-out
-smoke loaded `Crazy Phrases`, showed hosted sign-in controls, had no browser
-warning/error logs, had no horizontal overflow, and loaded static assets stamped
-with the merge commit SHA. After the owner signed into `test` and signed out
-again, a read-only hosted SQL cleanup check found one expected `auth.users` row,
-one expected durable `account_profiles` row, zero
-`signed_in_solo_current_games` rows, zero `private_phrase_favourites` rows, and
-zero `private_batch_favourites` rows. No Supabase cleanup was required because
-the retained Account Profile is durable account/profile data, not transient
-smoke-test data.
-
-The `production` deployment in the same promotion run completed strict FTPS
-target verification, Supabase runtime config rendering, static asset stamping,
-and FTPS upload successfully. A visible browser smoke on
-`https://www.crazyphrases.com/` loaded `Crazy Phrases`, showed hosted sign-in
-controls, had no browser warning/error logs, had no horizontal overflow, and
-loaded `site.css` and `app.js` stamped with
-`2ad7993ee6b6cd5fa3d0975f15fd683606c9ca8a`. The browser restored an existing
-anonymous local reveal state from local storage; that was browser-local
-anonymous recovery, not hosted Supabase data. No production signed-in
-data-mutation smoke was performed.
-
-Hosted Supabase signed-in persistence has been validated in `dev` through
-Google Auth, Account shell hydration, a Supabase-backed current-game save,
-browser reload, and a read-only hosted SQL check. On 2026-06-15 the full
-signed-in current-game lifecycle was also validated against hosted Supabase in
-`dev`: start, save, reload, reveal, copy, sign out, sign back in, restore the
-revealed current game, and clear it through "Start again". The signed-in
-foundation was then promoted through `test` and `production` by the documented
-GitHub Environment gates.
+Hosted application, schema verification, deployment smoke, and promotion
+evidence for Pending Game, Account Profile, private favourites, and signed-in
+persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
 
 ## Current Game Repository Adapter
 
@@ -808,10 +508,8 @@ API:
   policy authorize only the account-owned row.
 
 Automated repository tests use a fake Supabase client and do not mutate the
-hosted project. As of 2026-06-15, a read-only metadata check confirmed the
-hosted `public.signed_in_solo_current_games` table still has Row Level Security
-enabled, `account_id` as primary key, `game` as JSONB, and `revision` as an
-integer with `revision >= 1`.
+hosted project. Hosted schema metadata checks are recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 ## First Integration Checklist
 
@@ -829,7 +527,7 @@ Before implementing hosted signed-in flows:
 7. Run local tests before validating hosted auth redirects and browser SDK
    behaviour against the Supabase project.
 
-As of 2026-06-15, items 1, 2, 3, 4, 5, and 7 are implemented and validated for
-the browser app in `dev`, then promoted through `test` and `production`. Item 6
-remains deferred because this static JavaScript slice does not yet consume
-generated TypeScript database types.
+Current implementation and validation status for this checklist is recorded in
+`docs/planning/supabase-state-ledger.md`. Item 6 remains deferred because this
+static JavaScript slice does not yet consume generated TypeScript database
+types.

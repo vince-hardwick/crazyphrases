@@ -94,14 +94,17 @@ Do not report success for production, deployment, or runtime work unless the rel
 
 ## Session Closeout Rules
 
-Before ending or switching away from design, planning, runbook, or operational-methodology work:
+Before ending or switching away from any task, and especially from design,
+planning, runbook, implementation, deployment, or operational-methodology work:
 
 1. Check whether any accepted term, lifecycle rule, validation rule, path convention, environment boundary, or deferral was created or changed.
 2. Update the owning document, ADR, runbook, backlog, or plan.
 3. If implementation work was done, run the relevant verification.
-4. After a feature branch has been merged and all required deployment, verification, and documentation closeout work is complete, delete the merged feature branch locally and remotely unless the user explicitly asks to preserve it.
-5. Stage, commit, and push documentation changes with related code changes unless the user explicitly instructs otherwise.
-6. Report changed files, validation performed, commit hash when applicable, branch cleanup performed, and remaining risks.
+4. Reconcile GitHub issue hygiene: close completed implementation tickets, update or comment on parent PRD issues, record any unresolved child or follow-up issues, and do not close a parent PRD while accepted scope remains open unless the remaining scope is explicitly rescoped or marked `wontfix`.
+5. After a feature branch has been merged and all required deployment, verification, and documentation closeout work is complete, delete the merged feature branch locally and remotely unless the user explicitly asks to preserve it.
+6. Stage, commit, and push documentation changes with related code changes unless the user explicitly instructs otherwise.
+7. Report changed files, validation performed, commit hash when applicable, branch cleanup performed, issue updates made, and remaining risks.
+8. End every final response with the most appropriate next course of action based on the current project docs, ADRs, runbooks, issue tracker state, and validation evidence.
 
 ## Style
 

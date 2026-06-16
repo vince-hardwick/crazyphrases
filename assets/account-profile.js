@@ -4,6 +4,7 @@ import {
 } from "./account-shell.js?v=__ASSET_VERSION__";
 
 const ACCOUNT_PROFILES_TABLE = "account_profiles";
+const ACCOUNT_PROFILE_DIRECTORY_TABLE = "account_profile_directory";
 
 export function createMemoryAccountProfileRepository({
   createProfileId = defaultCreateProfileId,
@@ -183,7 +184,7 @@ export function createSupabaseAccountProfileRepository({
 
     async lookupProfileByHandle({ handle }) {
       const response = await supabase
-        .from(ACCOUNT_PROFILES_TABLE)
+        .from(ACCOUNT_PROFILE_DIRECTORY_TABLE)
         .select("profile_id, handle, gamer_name, avatar_key")
         .eq("handle", normaliseHandle(handle))
         .maybeSingle();

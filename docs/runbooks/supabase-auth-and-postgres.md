@@ -559,6 +559,70 @@ The hosted schema was verified through read-only SQL after application:
   roles that should reach the table through the Data API and keeps `anon`
   revoked.
 
+The corrective Account Profile directory grant migration is:
+
+```text
+supabase/migrations/20260616092030_tighten_account_profile_directory_grants.sql
+```
+
+It moves signed-in Handle lookup to the invite-safe
+`public.account_profile_directory` projection and tightens direct
+`public.account_profiles` browser grants. The raw table keeps owner-only
+profile load/create/update access under Row Level Security, while the directory
+projection exposes only `profile_id`, `handle`, `gamer_name`, and `avatar_key`
+to signed-in clients. Anonymous clients still have no grant path. This
+corrects the PR #45 review finding that the original table-level `SELECT` grant
+allowed signed-in browser clients to select raw `account_id` values for other
+profiles through the Data API.
+
+The follow-up Account Profile directory table migration is:
+
+```text
+supabase/migrations/20260616092722_replace_account_profile_directory_view.sql
+```
+
+The first corrective migration used a public view for the invite-safe
+projection. Supabase's hosted security advisor reported that view as a
+`security_definer_view`, so the final accepted shape is a real
+`public.account_profile_directory` table with only `profile_id`, `handle`,
+`gamer_name`, and `avatar_key`. A private-schema
+`private.sync_account_profile_directory()` trigger function keeps the directory
+table synchronised from `public.account_profiles`. The trigger function uses an
+empty `search_path`, is not in the exposed `public` schema, and has public
+execute revoked.
+
+As of 2026-06-16, both corrective migrations are source-controlled, covered by
+local migration-surface tests, and applied to the hosted Supabase project after
+explicit owner approval. Supabase MCP recorded them in hosted migration history
+as:
+
+| Hosted version | Name |
+| --- | --- |
+| `20260616092324` | `tighten_account_profile_directory_grants` |
+| `20260616093056` | `replace_account_profile_directory_view` |
+
+The hosted schema was verified through read-only SQL after application:
+
+- `public.account_profile_directory` is a base table, not a view.
+- The directory table exposes only `profile_id`, `handle`, `gamer_name`, and
+  `avatar_key`.
+- The directory table has no `anon` grants; `authenticated` and `service_role`
+  have only `select`.
+- The directory table has a signed-in `select` Row Level Security policy.
+- The raw `public.account_profiles` table keeps owner-only `select`, `insert`,
+  and `update` policies.
+- The raw table has no table-level `authenticated` grant; browser access uses
+  column-level grants for owner-profile load/create/update and does not grant
+  `update` on `profile_id`, `created_at`, or `updated_at`.
+- Simulating the existing hosted authenticated Account
+  `f222c9a8-e424-4156-a378-c34eabc71bbf` showed one owner-visible raw profile
+  row, one signed-in-visible directory row, matching Handle data between the two
+  tables, and no raw `account_id` column on the directory surface.
+- Supabase performance advisors reported no lints. Supabase security advisors
+  no longer reported the Account Profile directory view issue; the only
+  remaining security advisor was the existing project-level Auth
+  leaked-password-protection warning.
+
 After the migration was applied, branch
 `codex/durable-account-profile-handle-directory` commit
 `364fe3e320f469b0107ef419aad276b6a3758ac6` was deployed to `dev` through the

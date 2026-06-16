@@ -37,6 +37,12 @@ const createPrivateBatchFavouritesMigrationUrl = new URL(
 const createAccountProfilesMigrationUrl = findMigrationUrl(
   "create_account_profiles",
 );
+const tightenAccountProfileDirectoryGrantsMigrationUrl = findMigrationUrl(
+  "tighten_account_profile_directory_grants",
+);
+const replaceAccountProfileDirectoryViewMigrationUrl = findMigrationUrl(
+  "replace_account_profile_directory_view",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -245,6 +251,133 @@ describe("Supabase migration surface", () => {
       );
     }
     assert.match(createAccountProfilesMigration, /\(select auth\.uid\(\)\) = account_id/);
+  });
+
+  it("tightens Account Profile grants behind an invite-safe directory surface", () => {
+    assert.equal(existsSync(tightenAccountProfileDirectoryGrantsMigrationUrl), true);
+
+    const tightenAccountProfileDirectoryGrantsMigration = readFileSync(
+      tightenAccountProfileDirectoryGrantsMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /create or replace view public\.account_profile_directory/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /select\s+profile_id,\s+handle,\s+gamer_name,\s+avatar_key\s+from public\.account_profiles/is,
+    );
+    assert.doesNotMatch(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /select\s+account_id[\s\S]*from public\.account_profiles/i,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /revoke all on table public\.account_profile_directory from anon/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /grant select on table public\.account_profile_directory to authenticated/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /drop policy if exists "Signed-in accounts can view Account Profiles"/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /Account holders can view their own Account Profile/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /using \(\(select auth\.uid\(\)\) = account_id\)/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /revoke select, insert, update on table public\.account_profiles from authenticated/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /grant select \(account_id, profile_id, handle, gamer_name, avatar_key\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /grant insert \(account_id, profile_id, handle, gamer_name, avatar_key\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /grant update \(handle, gamer_name, avatar_key\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.doesNotMatch(
+      tightenAccountProfileDirectoryGrantsMigration,
+      /grant update .*profile_id/i,
+    );
+  });
+
+  it("replaces the Account Profile directory view with a synced invite-safe table", () => {
+    assert.equal(existsSync(replaceAccountProfileDirectoryViewMigrationUrl), true);
+
+    const replaceAccountProfileDirectoryViewMigration = readFileSync(
+      replaceAccountProfileDirectoryViewMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /drop view if exists public\.account_profile_directory/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /create table if not exists public\.account_profile_directory/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /profile_id uuid primary key\s+references public\.account_profiles \(profile_id\)/,
+    );
+    for (const column of ["handle text not null unique", "gamer_name text not null", "avatar_key text not null"]) {
+      assert.match(replaceAccountProfileDirectoryViewMigration, new RegExp(column));
+    }
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /insert into public\.account_profile_directory/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /alter table public\.account_profile_directory enable row level security/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /grant select on table public\.account_profile_directory to authenticated, service_role/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /Signed-in accounts can view Account Profile Directory/,
+    );
+    assert.match(replaceAccountProfileDirectoryViewMigration, /using \(true\)/);
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /create or replace function private\.sync_account_profile_directory\(\)/,
+    );
+    assert.match(replaceAccountProfileDirectoryViewMigration, /security definer/);
+    assert.match(replaceAccountProfileDirectoryViewMigration, /set search_path = ''/);
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /revoke all on function private\.sync_account_profile_directory\(\) from public/,
+    );
+    assert.match(
+      replaceAccountProfileDirectoryViewMigration,
+      /create trigger sync_account_profile_directory\s+after insert or update or delete on public\.account_profiles/,
+    );
+    assert.doesNotMatch(replaceAccountProfileDirectoryViewMigration, /account_id/);
+    assert.doesNotMatch(
+      replaceAccountProfileDirectoryViewMigration,
+      /create or replace view public\.account_profile_directory/,
+    );
+    assert.doesNotMatch(
+      replaceAccountProfileDirectoryViewMigration,
+      /create or replace function public\.sync_account_profile_directory/i,
+    );
   });
 });
 

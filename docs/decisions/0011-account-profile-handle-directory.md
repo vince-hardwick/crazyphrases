@@ -30,6 +30,15 @@ table grant or Row Level Security path for profile lookup. Signed-in Accounts
 may create and update only their own profile. Postgres enforces global Handle
 uniqueness.
 
+The raw `public.account_profiles` table is not the public directory lookup
+surface. It contains the Supabase Auth `account_id` needed for ownership and
+cascade deletion, so browser-facing signed-in directory lookup goes through an
+invite-safe directory table that exposes only `profile_id`, Handle, Gamer Name,
+and Avatar. A private-schema trigger keeps that directory table in sync with
+the raw owner table. Direct browser access to the raw table is limited to
+own-profile loading, creation, and mutable profile updates under Row Level
+Security and column-level grants.
+
 Account Profile rows are active personal/profile data. Account deletion may
 remove them through the Auth foreign-key cascade. Future collaborative game
 history must snapshot participant display data and use separate preservation
@@ -44,6 +53,6 @@ rules rather than depending on the live Account Profile row.
   values.
 - Current profiles can change over time, while future completed collaborative
   games must preserve the participant display context that applied at play time.
-- The first hosted migration was applied on 2026-06-16 after explicit owner
-  approval. Future hosted schema mutations remain live backend mutations and
-  require explicit owner approval or an accepted task-specific plan.
+- Hosted Account Profile migrations were applied on 2026-06-16 after explicit
+  owner approval. Future hosted schema mutations remain live backend mutations
+  and require explicit owner approval or an accepted task-specific plan.

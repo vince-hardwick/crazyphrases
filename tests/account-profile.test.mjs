@@ -62,6 +62,31 @@ describe("Account Profile repository", () => {
     assert.equal(JSON.stringify(lookup).includes("auth-account-2"), false);
   });
 
+  it("looks up Supabase profiles through an invite-safe directory surface", async () => {
+    const supabase = createFakeAccountProfilesSupabase({
+      rejectRawHandleLookup: true,
+    });
+    const repository = createSupabaseAccountProfileRepository({
+      createProfileId: () => "profile-directory-3",
+      supabase,
+    });
+
+    const profile = await repository.ensureOwnProfile({
+      accountId: "auth-account-3",
+    });
+    const lookup = await repository.lookupProfileByHandle({
+      handle: profile.handle,
+    });
+
+    assert.deepEqual(lookup, {
+      profileId: "profile-directory-3",
+      handle: profile.handle,
+      gamerName: "Player",
+      avatarKey: profile.avatarKey,
+    });
+    assert.deepEqual(supabase.tableCalls.slice(-1), ["account_profile_directory"]);
+  });
+
   for (const [repositoryName, createRepository] of [
     [
       "memory",
@@ -143,23 +168,34 @@ function createProfileIdSequence(prefix) {
   return () => `${prefix}-${nextId++}`;
 }
 
-function createFakeAccountProfilesSupabase() {
+function createFakeAccountProfilesSupabase({
+  rejectRawHandleLookup = false,
+} = {}) {
   const rows = [];
 
   return {
+    tableCalls: [],
     from(tableName) {
-      assert.equal(tableName, "account_profiles");
-      return new FakeAccountProfilesQuery(rows);
+      assert.ok(
+        ["account_profiles", "account_profile_directory"].includes(tableName),
+      );
+      this.tableCalls.push(tableName);
+      return new FakeAccountProfilesQuery(rows, {
+        rejectRawHandleLookup,
+        tableName,
+      });
     },
   };
 }
 
 class FakeAccountProfilesQuery {
-  constructor(rows) {
+  constructor(rows, { rejectRawHandleLookup, tableName }) {
     this.rows = rows;
     this.filters = {};
     this.operation = "select";
     this.insertedRow = null;
+    this.rejectRawHandleLookup = rejectRawHandleLookup;
+    this.tableName = tableName;
   }
 
   insert(row) {
@@ -184,6 +220,20 @@ class FakeAccountProfilesQuery {
   }
 
   async maybeSingle() {
+    if (
+      this.rejectRawHandleLookup &&
+      this.tableName === "account_profiles" &&
+      this.operation === "select" &&
+      Object.hasOwn(this.filters, "handle")
+    ) {
+      return {
+        data: null,
+        error: {
+          message: "raw Account Profile table is not a directory lookup surface",
+        },
+      };
+    }
+
     if (this.operation === "insert") {
       if (
         this.rows.some(

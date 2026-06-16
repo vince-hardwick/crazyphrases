@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft for owner review.
+Approved by owner on 2026-06-16; implementation tracked by this branch.
 
 ## Problem
 
@@ -30,7 +30,7 @@ unless later code changes touch the browser flow.
 
 Add `assets/pending-game.js` with:
 
-- `createMemoryPendingGameRepository()`;
+- `createTestPendingGameRepository()`;
 - `createSupabasePendingGameRepository({ supabase })`;
 - `createPendingGameFromHandle({ creatorAccountId, inviteeHandle, rowCount })`.
 
@@ -38,6 +38,12 @@ The repository returns a browser-safe Pending Game DTO. The DTO includes the
 Pending Game id, status, row count, participant snapshots, and invited handle
 metadata. It must not expose raw Supabase Auth user ids for invited
 participants.
+
+`createTestPendingGameRepository()` is a provider-independent test fixture for
+automated repository tests. It must not be wired into anonymous play,
+production browser code, local browser smoke routes, or any runtime path that
+would allow anonymous users to create invites without signed-in Supabase-backed
+state.
 
 Errors are explicit:
 
@@ -54,6 +60,8 @@ Use relational tables rather than one JSONB game blob.
 
 - `id`;
 - `creator_account_id`;
+- `creator_profile_id`;
+- `invitee_profile_id`;
 - `template_id`, initially the default template;
 - `row_count`;
 - `status`, initially `pending`;
@@ -79,6 +87,14 @@ The creator row may use `auth.uid()` authority. The invited participant is
 created from `public.account_profile_directory.profile_id` plus display
 snapshot data. The first slice must not require the invitee's raw Auth user id
 to be exposed to the browser.
+
+The Supabase adapter creates a Pending Game with one insert into
+`public.pending_games`. A private-schema Postgres trigger then creates the
+creator and invitee participant rows from the creator and invitee profile ids.
+This keeps the relational model without adding a browser-managed multi-table
+transaction, RPC-only creation path, or Edge Function deployment in the first
+slice. The trigger function must live outside the exposed `public` schema and
+use an empty `search_path`.
 
 Random Slot Allocation and Slot Order are deliberately not resolved during
 Pending Game creation. Product rules say they resolve when all invited human

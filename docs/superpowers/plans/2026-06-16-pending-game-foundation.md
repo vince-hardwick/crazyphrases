@@ -1118,8 +1118,9 @@ git commit -m "Add pending game Supabase migration"
 - Modify: `docs/runbooks/supabase-auth-and-postgres.md`
 - Modify: `docs/backlog.md`
 - Modify: `docs/superpowers/specs/2026-06-16-pending-game-foundation-design.md`
+- Modify: `docs/superpowers/plans/2026-06-16-pending-game-foundation.md`
 
-- [ ] **Step 1: Update the Supabase runbook**
+- [x] **Step 1: Update the Supabase runbook**
 
 Add a new section after the Account Profile directory migration section in `docs/runbooks/supabase-auth-and-postgres.md`:
 
@@ -1147,11 +1148,11 @@ UI, invite acceptance, turn storage, Reveal, Share Consent, nudges, friends, or
 public discovery.
 ````
 
-- [ ] **Step 2: Update the backlog status**
+- [x] **Step 2: Update the backlog status**
 
 In `docs/backlog.md`, update the `Signed-in 2-player asynchronous game` status to say the source-controlled Pending Game foundation is implemented locally with tests and not yet applied to hosted Supabase unless explicit approval has been granted.
 
-- [ ] **Step 3: Verify the design spec status**
+- [x] **Step 3: Verify the design spec status**
 
 Confirm the status line in `docs/superpowers/specs/2026-06-16-pending-game-foundation-design.md` remains:
 
@@ -1159,7 +1160,7 @@ Confirm the status line in `docs/superpowers/specs/2026-06-16-pending-game-found
 Approved by owner on 2026-06-16; implementation tracked by this branch.
 ```
 
-- [ ] **Step 4: Inspect documentation diff**
+- [x] **Step 4: Inspect documentation diff**
 
 Run:
 
@@ -1170,12 +1171,12 @@ git diff --stat
 
 Expected: no whitespace errors; only Pending Game documentation files changed in this task.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
 ```powershell
-git add docs/runbooks/supabase-auth-and-postgres.md docs/backlog.md docs/superpowers/specs/2026-06-16-pending-game-foundation-design.md
+git add docs/runbooks/supabase-auth-and-postgres.md docs/backlog.md docs/superpowers/specs/2026-06-16-pending-game-foundation-design.md docs/superpowers/plans/2026-06-16-pending-game-foundation.md
 git commit -m "Document pending game foundation migration"
 ```
 

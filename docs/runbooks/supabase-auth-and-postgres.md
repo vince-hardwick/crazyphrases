@@ -559,6 +559,19 @@ The hosted schema was verified through read-only SQL after application:
   roles that should reach the table through the Data API and keeps `anon`
   revoked.
 
+After the migration was applied, branch
+`codex/durable-account-profile-handle-directory` commit
+`364fe3e320f469b0107ef419aad276b6a3758ac6` was deployed to `dev` through the
+approved GitHub Environment workflow. The deployment run verified the strict
+FTPS target, rendered Supabase runtime config, stamped static asset versions,
+and deployed over FTPS successfully. A visible signed-out browser smoke on
+`https://dev.crazyphrases.com/` loaded `Crazy Phrases`, showed the configured
+hosted sign-in controls, had no browser warning/error logs, had no horizontal
+overflow at the default viewport, and showed `site.css`, `app.js`, local browser
+modules including `account-profile.js`, and `word-bank-seed.json` stamped with
+the deployed commit SHA. No hosted signed-in data-mutation smoke was performed
+as part of this deployment verification.
+
 Hosted Supabase signed-in persistence has been validated in `dev` through
 Google Auth, Account shell hydration, a Supabase-backed current-game save,
 browser reload, and a read-only hosted SQL check. On 2026-06-15 the full

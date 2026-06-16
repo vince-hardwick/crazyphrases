@@ -15,7 +15,7 @@
 - Create `assets/pending-game.js`: Pending Game repository contract, test fixture repository, Supabase adapter, DTO recovery, validation, and Handle normalisation.
 - Create `tests/pending-game.test.mjs`: TDD repository behaviour tests for handle-invite Pending Game creation, validation, and Supabase adapter query behaviour.
 - Modify `tests/supabase-migration-surface.test.mjs`: migration-surface checks for Pending Game tables, grants, RLS, indexes, constraints, and private trigger function.
-- Create `supabase/migrations/20260616143000_create_pending_games.sql`: Pending Game and participant tables, RLS, grants, indexes, and private trigger.
+- Create `supabase/migrations/20260616131908_create_pending_games.sql`: Pending Game and participant tables, RLS, grants, indexes, and private trigger.
 - Modify `docs/runbooks/supabase-auth-and-postgres.md`: record the source-controlled Pending Game migration and the hosted-mutation approval boundary.
 - Modify `docs/backlog.md`: record the source-controlled foundation state and remaining deferred multiplayer lifecycle work.
 
@@ -729,9 +729,9 @@ git commit -m "Add Supabase pending game adapter"
 
 **Files:**
 - Modify: `tests/supabase-migration-surface.test.mjs`
-- Create: `supabase/migrations/20260616143000_create_pending_games.sql`
+- Create: `supabase/migrations/20260616131908_create_pending_games.sql`
 
-- [ ] **Step 1: Write the failing migration-surface test**
+- [x] **Step 1: Write the failing migration-surface test**
 
 Add this constant near the other migration URL constants:
 
@@ -826,6 +826,7 @@ Append this test inside `describe("Supabase migration surface", () => { ... })`:
       "pending_games_invitee_profile_id_idx",
       "pending_game_participants_pending_game_id_idx",
       "pending_game_participants_profile_id_idx",
+      "pending_game_participants_account_id_idx",
     ]) {
       assert.match(createPendingGamesMigration, new RegExp(`create index if not exists ${indexName}`));
     }
@@ -851,7 +852,7 @@ Append this test inside `describe("Supabase migration surface", () => { ... })`:
   });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -861,7 +862,7 @@ npm test -- tests/supabase-migration-surface.test.mjs
 
 Expected: FAIL because `create_pending_games` migration does not exist.
 
-- [ ] **Step 3: Create the migration file**
+- [x] **Step 3: Create the migration file**
 
 First try the documented Supabase CLI route:
 
@@ -869,7 +870,7 @@ First try the documented Supabase CLI route:
 npx supabase migration new create_pending_games
 ```
 
-If sandboxed `npx` is blocked, rerun the same command with sandbox escalation as documented in `docs/runbooks/node-npm-for-codex.md` and `docs/runbooks/supabase-auth-and-postgres.md`. Use the generated migration file path. If the CLI is unavailable after escalation, create `supabase/migrations/20260616143000_create_pending_games.sql` manually.
+If sandboxed `npx` is blocked, rerun the same command with sandbox escalation as documented in `docs/runbooks/node-npm-for-codex.md` and `docs/runbooks/supabase-auth-and-postgres.md`. Use the generated migration file path. If the CLI is unavailable after escalation, create `supabase/migrations/20260616131908_create_pending_games.sql` manually.
 
 Fill the migration with:
 
@@ -963,6 +964,8 @@ create index if not exists pending_game_participants_pending_game_id_idx
   on public.pending_game_participants (pending_game_id);
 create index if not exists pending_game_participants_profile_id_idx
   on public.pending_game_participants (profile_id);
+create index if not exists pending_game_participants_account_id_idx
+  on public.pending_game_participants (account_id);
 
 alter table public.pending_games enable row level security;
 alter table public.pending_game_participants enable row level security;
@@ -1090,7 +1093,7 @@ create trigger create_pending_game_participants
   execute function private.create_pending_game_participants();
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -1100,7 +1103,7 @@ npm test -- tests/supabase-migration-surface.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -1124,7 +1127,7 @@ Add a new section after the Account Profile directory migration section in `docs
 The first Pending Game foundation migration is:
 
 ```text
-supabase/migrations/20260616143000_create_pending_games.sql
+supabase/migrations/20260616131908_create_pending_games.sql
 ```
 
 It creates source-controlled relational storage for handle-invite Pending Game

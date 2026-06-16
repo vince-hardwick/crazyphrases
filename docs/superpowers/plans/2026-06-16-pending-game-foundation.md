@@ -349,7 +349,7 @@ git commit -m "Validate pending game handle invites"
 - Modify: `tests/pending-game.test.mjs`
 - Modify: `assets/pending-game.js`
 
-- [ ] **Step 1: Write the failing Supabase adapter test**
+- [x] **Step 1: Write the failing Supabase adapter test**
 
 Add this import at the top of `tests/pending-game.test.mjs`:
 
@@ -568,7 +568,7 @@ function toParticipantRow(profile, { inviteStatus, pendingGameId, role }) {
 }
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -578,7 +578,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: FAIL because `createSupabasePendingGameRepository` is not exported.
 
-- [ ] **Step 3: Implement the Supabase adapter**
+- [x] **Step 3: Implement the Supabase adapter**
 
 Add this export to `assets/pending-game.js`:
 
@@ -706,7 +706,7 @@ function assertNoSupabaseError(response, message) {
 }
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -716,7 +716,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 

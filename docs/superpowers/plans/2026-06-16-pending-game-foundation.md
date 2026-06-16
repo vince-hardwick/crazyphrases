@@ -241,7 +241,7 @@ git commit -m "Add pending game repository contract"
 - Modify: `tests/pending-game.test.mjs`
 - Modify: `assets/pending-game.js`
 
-- [ ] **Step 1: Write failing validation tests**
+- [x] **Step 1: Write failing validation tests**
 
 Append these tests inside the existing `describe("Pending Game repository", () => { ... })` block:
 
@@ -295,7 +295,7 @@ Append these tests inside the existing `describe("Pending Game repository", () =
   });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -305,7 +305,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: FAIL because the tracer implementation does not yet reject unsupported row counts, self-invites, or unknown Handles with the required repository errors.
 
-- [ ] **Step 3: Implement missing validation**
+- [x] **Step 3: Implement missing validation**
 
 If the tests failed, update `assets/pending-game.js` so:
 
@@ -324,7 +324,7 @@ if (creatorProfile.profileId === inviteeProfile.profileId) {
 }
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -334,7 +334,7 @@ npm test -- tests/pending-game.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 

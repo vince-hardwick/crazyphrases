@@ -58,4 +58,52 @@ describe("Pending Game repository", () => {
     });
     assert.equal(JSON.stringify(pendingGame).includes("auth-account"), false);
   });
+
+  it("rejects an unknown invitee Handle", async () => {
+    const repository = createTestPendingGameRepository({
+      profiles: [creatorProfile],
+    });
+
+    await assert.rejects(
+      () =>
+        repository.createPendingGameFromHandle({
+          creatorAccountId: creatorProfile.accountId,
+          inviteeHandle: "missing-handle",
+          rowCount: 10,
+        }),
+      /handle/i,
+    );
+  });
+
+  it("rejects inviting the creator's own Handle", async () => {
+    const repository = createTestPendingGameRepository({
+      profiles: [creatorProfile],
+    });
+
+    await assert.rejects(
+      () =>
+        repository.createPendingGameFromHandle({
+          creatorAccountId: creatorProfile.accountId,
+          inviteeHandle: creatorProfile.handle,
+          rowCount: 10,
+        }),
+      /own handle/i,
+    );
+  });
+
+  it("rejects row counts outside the default-template options", async () => {
+    const repository = createTestPendingGameRepository({
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await assert.rejects(
+      () =>
+        repository.createPendingGameFromHandle({
+          creatorAccountId: creatorProfile.accountId,
+          inviteeHandle: inviteeProfile.handle,
+          rowCount: 12,
+        }),
+      /row count/i,
+    );
+  });
 });

@@ -22,8 +22,21 @@ export function createTestPendingGameRepository({
       rowCount = 20,
     }) {
       assertAccountId(creatorAccountId);
+      assertRowCount(rowCount);
+
       const creatorProfile = profilesByAccountId.get(creatorAccountId);
+      if (!creatorProfile) {
+        throw new Error("Creator Account Profile is required.");
+      }
+
       const inviteeProfile = profilesByHandle.get(normaliseHandle(inviteeHandle));
+      if (!inviteeProfile) {
+        throw new Error("Invitee Handle was not found.");
+      }
+
+      if (creatorProfile.profileId === inviteeProfile.profileId) {
+        throw new Error("A creator cannot invite their own Handle.");
+      }
 
       return createPendingGameDto({
         id: createPendingGameId(),

@@ -1,6 +1,6 @@
 # PRD: Private Phrase and Batch Favourites
 
-> **Status:** Published PRD provenance. Accepted durable behaviour lives in `docs/product-rules.md`; hosted schema and deployment evidence live in `docs/runbooks/supabase-auth-and-postgres.md`; current child-ticket status belongs to GitHub issue #33 and its child issues.
+> **Status:** Published PRD provenance. Accepted durable behaviour lives in `docs/product-rules.md`; hosted schema and deployment evidence live in `docs/planning/supabase-state-ledger.md`; current child-ticket status belongs to GitHub issue #33 and its child issues.
 
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/33
 

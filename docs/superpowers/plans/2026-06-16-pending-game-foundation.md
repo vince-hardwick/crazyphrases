@@ -1,5 +1,7 @@
 # Pending Game Foundation Implementation Plan
 
+> **Status:** Historical/completed. Do not execute this plan as active work. The next handle-invite Pending Game work is routed through `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, and `docs/runbooks/supabase-auth-and-postgres.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a source-controlled handle-invite Pending Game backend foundation without UI, hosted Supabase mutation, invite acceptance, turns, or Reveal.
@@ -1150,15 +1152,16 @@ public discovery.
 
 - [x] **Step 2: Update the backlog status**
 
-In `docs/backlog.md`, update the `Signed-in 2-player asynchronous game` status to say the source-controlled Pending Game foundation is implemented locally with tests and not yet applied to hosted Supabase unless explicit approval has been granted.
+During original execution, `docs/backlog.md` was updated to describe the
+source-controlled Pending Game foundation state. The backlog has since been
+updated again to record that the hosted migration was applied after explicit
+owner approval.
 
 - [x] **Step 3: Verify the design spec status**
 
-Confirm the status line in `docs/superpowers/specs/2026-06-16-pending-game-foundation-design.md` remains:
-
-```markdown
-Approved by owner on 2026-06-16; implementation tracked by this branch.
-```
+During original execution, the design spec status still described the work as
+approved and branch-tracked. That status has since been updated to
+historical/completed in the spec header.
 
 - [x] **Step 4: Inspect documentation diff**
 

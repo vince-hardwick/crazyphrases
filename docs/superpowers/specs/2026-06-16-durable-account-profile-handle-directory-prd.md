@@ -1,5 +1,7 @@
 # PRD: Durable Account Profile and Handle Directory
 
+> **Status:** Published PRD provenance. Accepted durable authority lives in ADR 0011, `docs/product-rules.md`, and `docs/runbooks/supabase-auth-and-postgres.md`; remaining profile-management UI scope is tracked in `docs/backlog.md` and GitHub issue #47.
+
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/43
 
 ## Child Issues

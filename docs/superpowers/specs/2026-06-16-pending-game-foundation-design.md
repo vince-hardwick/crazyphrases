@@ -2,7 +2,11 @@
 
 ## Status
 
-Approved by owner on 2026-06-16; implementation tracked by this branch.
+Historical/completed. The backend foundation landed on `main`, was promoted, and
+the hosted migration was applied after explicit owner approval. Current next
+work is routed through `docs/backlog.md` section `Signed-in 2-player
+asynchronous game`, `docs/product-rules.md`, and
+`docs/runbooks/supabase-auth-and-postgres.md`.
 
 ## Problem
 

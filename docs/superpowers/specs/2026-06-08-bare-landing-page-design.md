@@ -2,7 +2,9 @@
 
 ## Status
 
-Approved for implementation
+Historical/completed. The holding-page design is provenance only; the current
+public site and deployment payload are documented in `README.md` and
+`docs/runbooks/live-static-hosting.md`.
 
 ## Goal
 
@@ -26,4 +28,3 @@ The page is a single holding screen with the project name, a short "coming soon"
 - Directory listing should be disabled at the server or hosting-panel level.
 - The TLS certificate should cover both `crazyphrases.com` and `www.crazyphrases.com`.
 - Environment detection, such as host or protocol detection, must not grant authority to mutate live systems.
-

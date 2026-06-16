@@ -4,19 +4,43 @@
 
 This runbook describes how to publish the static `crazyphrases.com` site without exposing the server directory index or creating mixed-content browser warnings. The current production site is the static anonymous solo Crazy Phrases app.
 
-## Files To Upload
+## Deployment Payload
 
-Upload these repository paths to the live web root for `crazyphrases.com`:
+GitHub Actions is the authoritative deployment path. The deployment workflows
+upload from the repository root and exclude source-only paths. This means new
+runtime files are included automatically when they are not under an excluded
+source-only path.
+
+Runtime payload includes:
 
 - `.htaccess`
 - `index.html`
-- `assets/site.css`
-- `assets/app.js`
-- `assets/account-shell.js`
-- `assets/game-state.js`
-- `assets/local-game-storage.js`
-- `assets/signed-in-game-storage.js`
-- `assets/word-bank-seed.json`
+- browser runtime files under `assets/`, including JavaScript modules, CSS,
+  runtime JSON data, and rendered browser-safe Supabase config
+
+Source-only paths must stay out of FTPS uploads:
+
+- `.github/`
+- `AGENTS.md`
+- `CONTEXT.md`
+- `README.md`
+- `docs/`
+- `output/`
+- `package.json`
+- `package-lock.json`
+- `supabase/`
+- `tests/`
+
+The payload contract is protected by `.github/workflows/deploy-dev.yml`,
+`.github/workflows/promote.yml`, and
+`tests/workflow-deployment-surface.test.mjs`. If the app moves to a build output
+directory or a framework-specific source tree, update both workflows and the
+deployment-surface regression test in the same change.
+
+For an explicitly approved emergency manual upload, mirror the same contract:
+upload `.htaccess`, `index.html`, and every required runtime file under
+`assets/`; do not upload source-only paths listed above. Prefer the documented
+workflow path unless the owner has approved a manual recovery action.
 
 The live web root is the hosting account directory that currently displays `Index of /` and contains `cgi-bin/`. On many shared hosts this is named `public_html`, `www`, `htdocs`, or the domain-specific document root shown in the hosting panel.
 

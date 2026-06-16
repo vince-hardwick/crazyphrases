@@ -19,9 +19,12 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 ## Status Values
 
 - `Proposed` - drafted for review, not yet the working rule.
-- `Accepted` - current working decision.
+- `Accepted` - current working decision; this is the active ADR status.
 - `Superseded` - replaced by a later ADR; keep a link to the replacement.
 - `Deprecated` - no longer recommended, but not replaced by one clear decision.
+- `Obsolete` - no longer applicable and not safe to follow; keep only for historical context.
+
+Use `Proposed` for draft ADRs. Do not leave draft or obsolete decisions looking accepted.
 
 ## When To Create A New ADR
 

@@ -25,6 +25,7 @@ This repository is the source-controlled working copy for the `crazyphrases.com`
 8. The relevant backlog, research, plan, or source file for the task.
 
 Do not read every planning, backlog, output, or generated file by default. Load the smallest authoritative set that can answer the task.
+Before executing or resuming any document under `docs/superpowers/plans/` or `docs/superpowers/specs/`, check the file header and `docs/superpowers/README.md` for status. Completed or historical plans and specs are provenance only and must not override product rules, ADRs, runbooks, backlog state, or GitHub Issues.
 
 ## Agent Skills
 
@@ -51,6 +52,7 @@ This is a single-context repo with root `CONTEXT.md` and repo-wide decisions und
 - Use `docs/runbooks/` for operational procedures, deployment flows, authentication setup, and command contracts.
 - Use `docs/research/` for candidate sources and evaluation notes that are not yet accepted decisions.
 - Use `docs/superpowers/plans/` for implementation plans and staged execution checklists.
+- Use `docs/superpowers/README.md` for plan/spec status before treating an older plan or PRD as active work.
 
 When accepted design knowledge creates or changes a durable boundary, lifecycle rule, execution profile, path convention, validation rule, deferral, or deployment assumption, update the owning document before moving on.
 

@@ -14,6 +14,8 @@ Load the smallest authoritative set that can answer the task:
 4. `CONTEXT.md`
 5. only the routed product rule, ADR, runbook, backlog item, plan, research note, or source file needed for the task
 
+For large documents, search for the relevant heading first and then read that section. Do not load all backlog, runbook, plan, spec, or research documents unless the task is a documentation-governance audit or explicitly asks for repository-wide context.
+
 ## Authority Matrix
 
 | Information Type | Owning Document Class | Notes |
@@ -28,9 +30,11 @@ Load the smallest authoritative set that can answer the task:
 | Operational commands, deployment procedures, auth setup, and approval-gated flows | `docs/runbooks/*.md` | Runbooks own exact command shapes and operational sequencing. |
 | Deferred product or operational work | `docs/backlog.md` | Deferrals include what is deferred, why, revisit trigger, and remaining risk. |
 | Candidate sources and research notes | `docs/research/*.md` | Research is not accepted architecture until promoted to rules or ADRs. |
-| Active implementation plans and checklist state | `docs/superpowers/plans/*.md` | Completed plans are historical provenance, not first-hop context. |
-| Design-session specs and raw planning input | `docs/superpowers/specs/*.md` | Promote durable content to product rules, ADRs, runbooks, or backlog. |
+| Superpowers plan/spec status and provenance routing | `docs/superpowers/README.md` | Check before executing or resuming older plans/specs. |
+| Active implementation plans and checklist state | `docs/superpowers/plans/*.md` | Active only when the plan status says so. Completed or historical plans are provenance and must not override higher-authority docs. |
+| Design-session specs and raw planning input | `docs/superpowers/specs/*.md` | Promote durable content to product rules, ADRs, runbooks, or backlog. Published PRDs defer current execution status to GitHub Issues and backlog entries. |
 | Agent skill configuration | `docs/agents/*.md` | Issue tracker, triage label, and domain-doc consumption rules for skills. |
+| Documentation governance audit reports | `docs/planning/documentation-governance-health-check-*.md` | Historical audit evidence and recommendations, not product or operational authority. |
 
 ## Common Routes
 
@@ -39,6 +43,7 @@ Load the smallest authoritative set that can answer the task:
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
 | Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
 | Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
+| Pending Game foundation and next handle-invite slice | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, `docs/decisions/0011-account-profile-handle-directory.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase project operations | `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase schema migrations | `supabase/migrations/`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Domain language for game concepts | `CONTEXT.md` |
@@ -56,7 +61,8 @@ Load the smallest authoritative set that can answer the task:
 | Node, npm, npx, and package installs from Codex | `docs/runbooks/node-npm-for-codex.md` |
 | Static-first anonymous solo architecture | `docs/decisions/0008-static-first-anonymous-solo.md` |
 | Cached word-bank architecture | `docs/decisions/0004-cached-word-bank-for-entry-candidates.md` |
+| Historical plan or PRD status | `docs/superpowers/README.md` |
 
 ## Historical Context
 
-Open older plans, specs, generated output, and screenshots only when investigating provenance, debugging a regression, or resuming an explicitly routed unfinished task.
+Open older plans, specs, generated output, and screenshots only when investigating provenance, debugging a regression, or resuming an explicitly routed unfinished task. Completed plans and historical PRDs are not authority for current implementation status; use the issue tracker, backlog, product rules, ADRs, and runbooks first.

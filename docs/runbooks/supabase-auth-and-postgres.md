@@ -623,6 +623,28 @@ The hosted schema was verified through read-only SQL after application:
   remaining security advisor was the existing project-level Auth
   leaked-password-protection warning.
 
+The first Pending Game foundation migration is:
+
+```text
+supabase/migrations/20260616131908_create_pending_games.sql
+```
+
+It creates source-controlled relational storage for handle-invite Pending Game
+creation. `public.pending_games` stores creator-owned pending setup with
+creator and invitee directory profile ids. A private-schema
+`private.create_pending_game_participants()` trigger creates the creator and
+invitee rows in `public.pending_game_participants` from the Account Profile
+Directory so browser code does not manage a multi-table transaction and does
+not supply participant display snapshots directly.
+
+The migration enables Row Level Security on both public tables, grants no
+`anon` access, grants authenticated browser clients `select` and `insert` on
+`pending_games`, grants authenticated browser clients only `select` on
+`pending_game_participants`, and keeps hosted application of the migration
+behind explicit owner approval. The first source-controlled slice does not add
+UI, invite acceptance, turn storage, Reveal, Share Consent, nudges, friends, or
+public discovery.
+
 PR #48 merged the Account Profile directory access correction to `main` as
 merge commit `46bea304b11d0e2472bff22aae2c67d73330f891`. Promotion run
 `27612185923` deployed that commit through `test` and `production` after the

@@ -43,6 +43,7 @@ const tightenAccountProfileDirectoryGrantsMigrationUrl = findMigrationUrl(
 const replaceAccountProfileDirectoryViewMigrationUrl = findMigrationUrl(
   "replace_account_profile_directory_view",
 );
+const createPendingGamesMigrationUrl = findMigrationUrl("create_pending_games");
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -377,6 +378,138 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       replaceAccountProfileDirectoryViewMigration,
       /create or replace function public\.sync_account_profile_directory/i,
+    );
+  });
+
+  it("creates Pending Games with creator-owned creation and trigger-managed participants", () => {
+    assert.equal(existsSync(createPendingGamesMigrationUrl), true);
+
+    const createPendingGamesMigration = readFileSync(
+      createPendingGamesMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      createPendingGamesMigration,
+      /create table if not exists public\.pending_games/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /creator_account_id uuid not null references auth\.users \(id\) on delete cascade/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /creator_profile_id uuid not null\s+references public\.account_profile_directory \(profile_id\)/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /invitee_profile_id uuid not null\s+references public\.account_profile_directory \(profile_id\)/,
+    );
+    assert.match(createPendingGamesMigration, /row_count integer not null/);
+    assert.match(
+      createPendingGamesMigration,
+      /row_count in \(10, 15, 20, 25, 30\)/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /status text not null default 'pending'/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /creator_profile_id <> invitee_profile_id/,
+    );
+
+    assert.match(
+      createPendingGamesMigration,
+      /create table if not exists public\.pending_game_participants/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /pending_game_id uuid not null\s+references public\.pending_games \(id\)\s+on delete cascade/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /participant_role in \('creator', 'invitee'\)/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /invite_status in \('accepted', 'pending'\)/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /unique \(pending_game_id, profile_id\)/,
+    );
+
+    for (const tableName of ["pending_games", "pending_game_participants"]) {
+      assert.match(
+        createPendingGamesMigration,
+        new RegExp(
+          `alter table public\\.${tableName} enable row level security`,
+        ),
+      );
+      assert.match(
+        createPendingGamesMigration,
+        new RegExp(`revoke all on table public\\.${tableName} from anon`),
+      );
+    }
+
+    assert.match(
+      createPendingGamesMigration,
+      /grant select, insert on table public\.pending_games to authenticated/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /grant select on table public\.pending_game_participants to authenticated/,
+    );
+    assert.doesNotMatch(
+      createPendingGamesMigration,
+      /grant insert on table public\.pending_game_participants to authenticated/i,
+    );
+
+    assert.match(
+      createPendingGamesMigration,
+      /Account holders can create their Pending Games/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /\(select auth\.uid\(\)\) = creator_account_id/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /Account holders can view participant rows for their created Pending Games/,
+    );
+
+    for (const indexName of [
+      "pending_games_creator_account_id_idx",
+      "pending_games_creator_profile_id_idx",
+      "pending_games_invitee_profile_id_idx",
+      "pending_game_participants_pending_game_id_idx",
+      "pending_game_participants_profile_id_idx",
+      "pending_game_participants_account_id_idx",
+    ]) {
+      assert.match(
+        createPendingGamesMigration,
+        new RegExp(`create index if not exists ${indexName}`),
+      );
+    }
+
+    assert.match(
+      createPendingGamesMigration,
+      /create or replace function private\.create_pending_game_participants\(\)/,
+    );
+    assert.match(createPendingGamesMigration, /security definer/);
+    assert.match(createPendingGamesMigration, /set search_path = ''/);
+    assert.match(
+      createPendingGamesMigration,
+      /revoke all on function private\.create_pending_game_participants\(\) from public/,
+    );
+    assert.match(
+      createPendingGamesMigration,
+      /create trigger create_pending_game_participants\s+after insert on public\.pending_games/,
+    );
+    assert.doesNotMatch(
+      createPendingGamesMigration,
+      /create or replace function public\.create_pending_game_participants/i,
     );
   });
 });

@@ -299,6 +299,13 @@ Multiplayer games can invite friends or accounts found by handle. Friend invites
 
 MVP multiplayer invites use handles. Friend relationships and friend-based invite shortcuts are deferred.
 
+The first handle-invite creation UI is signed-in only. It lets the Game Creator
+select the batch row count, enter another account's Handle, create a Game
+Invite, and see that the creator is accepted while the invited participant is
+waiting to accept. It does not add invite inboxes, acceptance, decline, expiry,
+cancellation UI, turn storage, Slot Allocation or Slot Order resolution, Reveal,
+Share Consent, friends, nudges, or public discovery.
+
 ### Nudges
 
 A nudge is an automatic reminder based on a game's configured inactivity timeout. Manual participant-triggered pokes are not part of the first notification model.

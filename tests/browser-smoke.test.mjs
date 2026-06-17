@@ -190,6 +190,46 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("creates a signed-in Pending Game invite by Handle in local test mode", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertNoPendingGameDom(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await assertPendingGameSurfaceMounted(page);
+    await assertNoHorizontalOverflow(page);
+
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "Accepted");
+    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invited");
+    await assertTextVisible(page, "15 phrases");
+    await assertNoHorizontalOverflow(page);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoPendingGameDom(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -624,6 +664,19 @@ async function assertFavouriteSurfaceMounted(page) {
   assert.equal(await page.locator("[data-favourites-panel]").count(), 1);
   assert.equal(await page.locator("[data-favourites-status]").count(), 1);
   assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 1);
+}
+
+async function assertNoPendingGameDom(page) {
+  assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
+  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 0);
+  assert.equal(await page.locator("[data-pending-game-summary]").count(), 0);
+}
+
+async function assertPendingGameSurfaceMounted(page) {
+  assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-row-count]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);
 }
 
 async function assertRowCountSelected(page, rowCount) {

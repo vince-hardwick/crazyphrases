@@ -58,6 +58,10 @@ export function createTestPendingGameRepository({
   };
 }
 
+export function createLocalTestPendingGameRepository(options = {}) {
+  return createTestPendingGameRepository(options);
+}
+
 export function createSupabasePendingGameRepository({ supabase } = {}) {
   if (!supabase || typeof supabase.from !== "function") {
     throw new Error("A Supabase client is required.");

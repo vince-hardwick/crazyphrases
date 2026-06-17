@@ -183,6 +183,7 @@ h1 {
 
 .help-panel,
 .game-panel,
+.pending-game-panel,
 .favourites-panel {
   border-radius: 8px;
   background: var(--surface);
@@ -213,6 +214,11 @@ h1 {
 }
 
 .favourites-panel {
+  margin-top: 18px;
+  padding: clamp(18px, 4vw, 28px);
+}
+
+.pending-game-panel {
   margin-top: 18px;
   padding: clamp(18px, 4vw, 28px);
 }
@@ -523,6 +529,89 @@ h1 {
   font-weight: 700;
 }
 
+.pending-game-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.pending-game-field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pending-game-field input,
+.pending-game-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 700;
+}
+
+.pending-game-field input:focus-visible,
+.pending-game-field select:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.pending-game-submit {
+  width: auto;
+  min-width: 132px;
+  margin-top: 0;
+}
+
+.pending-game-status {
+  min-height: 1.3em;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pending-game-summary {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: rgba(238, 246, 243, 0.72);
+}
+
+.pending-game-row-count {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.pending-game-participants {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pending-game-participants li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.pending-game-participants strong {
+  color: var(--accent-strong);
+}
+
 .favourites-list {
   display: grid;
   gap: 10px;
@@ -712,6 +801,20 @@ h1 {
   .setup-button {
     width: 100%;
     max-width: 342px;
+  }
+
+  .pending-game-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pending-game-submit {
+    width: 100%;
+    max-width: 342px;
+  }
+
+  .pending-game-participants li {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .phrase-list li {

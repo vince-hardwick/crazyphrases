@@ -3,6 +3,7 @@ const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
 
 export function createTestPendingGameRepository({
   createPendingGameId = defaultCreatePendingGameId,
+  createStartedGameId = defaultCreateStartedGameId,
   profiles = [],
 } = {}) {
   const profilesByAccountId = new Map(
@@ -155,6 +156,49 @@ export function createTestPendingGameRepository({
       });
       pendingGames[pendingGameIndex] = updatedPendingGame;
       return updatedPendingGame;
+    },
+
+    async startPendingGame({ creatorAccountId, pendingGameId }) {
+      assertAccountId(creatorAccountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const creatorProfile = profilesByAccountId.get(creatorAccountId);
+      const pendingGameIndex = pendingGames.findIndex(
+        (pendingGame) =>
+          pendingGame.id === pendingGameId &&
+          pendingGame.status === "pending" &&
+          pendingGame.participants.some(
+            (participant) =>
+              participant.role === "creator" &&
+              participant.profileId === creatorProfile?.profileId,
+          ),
+      );
+
+      if (pendingGameIndex < 0) {
+        throw new Error("Pending Game is not ready to start.");
+      }
+
+      const pendingGame = pendingGames[pendingGameIndex];
+      if (
+        pendingGame.participants.some(
+          (participant) => participant.inviteStatus !== "accepted",
+        )
+      ) {
+        throw new Error("Pending Game is not ready to start.");
+      }
+
+      pendingGames[pendingGameIndex] = createPendingGameDto({
+        id: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        status: "started",
+        templateId: pendingGame.templateId,
+        participants: pendingGame.participants,
+      });
+
+      return createStartedGameDto({
+        id: createStartedGameId(),
+        pendingGame,
+      });
     },
   };
 }
@@ -445,6 +489,36 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
         pendingGameRow: pendingGameResponse.data,
       });
     },
+
+    async startPendingGame({ creatorAccountId, pendingGameId }) {
+      assertAccountId(creatorAccountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const startedGameResponse = await supabase
+        .from("games")
+        .insert({
+          pending_game_id: pendingGameId,
+        })
+        .select("id, pending_game_id, template_id, row_count, status")
+        .single();
+      assertNoSupabaseError(startedGameResponse, "Could not start Pending Game");
+
+      const participantResponse = await supabase
+        .from("game_participants")
+        .select(
+          "profile_id, handle, gamer_name, avatar_key, participant_role",
+        )
+        .eq("game_id", startedGameResponse.data.id);
+      assertNoSupabaseError(
+        participantResponse,
+        "Could not load Started Game participants",
+      );
+
+      return recoverStartedGame({
+        participantRows: participantResponse.data,
+        startedGameRow: startedGameResponse.data,
+      });
+    },
   };
 }
 
@@ -466,6 +540,31 @@ function createParticipantDto(profile, { inviteStatus, role }) {
     handle: profile.handle,
     gamerName: profile.gamerName,
     avatarKey: profile.avatarKey,
+  };
+}
+
+function createStartedGameDto({ id, pendingGame }) {
+  return {
+    id,
+    pendingGameId: pendingGame.id,
+    status: "started",
+    templateId: pendingGame.templateId,
+    rowCount: pendingGame.rowCount,
+    participants: pendingGame.participants.map(createStartedParticipantDto),
+    setup: {
+      slotAllocation: "resolved",
+      slotOrder: "resolved",
+    },
+  };
+}
+
+function createStartedParticipantDto(participant) {
+  return {
+    role: participant.role,
+    profileId: participant.profileId,
+    handle: participant.handle,
+    gamerName: participant.gamerName,
+    avatarKey: participant.avatarKey,
   };
 }
 
@@ -530,6 +629,10 @@ function defaultCreatePendingGameId() {
   return globalThis.crypto?.randomUUID?.() ?? `pending-game-${Date.now()}`;
 }
 
+function defaultCreateStartedGameId() {
+  return globalThis.crypto?.randomUUID?.() ?? `started-game-${Date.now()}`;
+}
+
 function recoverProfile(row) {
   return {
     profileId: assertText(row?.profile_id, "A profile id is required."),
@@ -558,6 +661,34 @@ function recoverPendingGame({ participantRows, pendingGameRow }) {
     rowCount: pendingGameRow.row_count,
     participants,
   });
+}
+
+function recoverStartedGame({ participantRows, startedGameRow }) {
+  const participants = participantRows
+    .map((row) => ({
+      role: row.participant_role,
+      profileId: row.profile_id,
+      handle: row.handle,
+      gamerName: row.gamer_name,
+      avatarKey: row.avatar_key,
+    }))
+    .toSorted((left, right) => roleOrder(left.role) - roleOrder(right.role));
+
+  return {
+    id: assertText(startedGameRow?.id, "A Started Game id is required."),
+    pendingGameId: assertText(
+      startedGameRow?.pending_game_id,
+      "A Pending Game id is required.",
+    ),
+    status: startedGameRow.status,
+    templateId: startedGameRow.template_id,
+    rowCount: startedGameRow.row_count,
+    participants,
+    setup: {
+      slotAllocation: "resolved",
+      slotOrder: "resolved",
+    },
+  };
 }
 
 function roleOrder(role) {

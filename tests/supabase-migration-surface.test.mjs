@@ -47,6 +47,9 @@ const createPendingGamesMigrationUrl = findMigrationUrl("create_pending_games");
 const supportPendingGameInviteResponsesMigrationUrl = findMigrationUrl(
   "support_pending_game_invite_responses",
 );
+const startPendingGameFoundationMigrationUrl = findMigrationUrl(
+  "start_pending_game_foundation",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -574,6 +577,134 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       supportPendingGameInviteResponsesMigration,
       /create or replace function public\.cancel_pending_game_after_invite_decline/i,
+    );
+  });
+
+  it("creates Started Game storage with private Pending Game conversion authority", () => {
+    assert.equal(existsSync(startPendingGameFoundationMigrationUrl), true);
+
+    const startPendingGameFoundationMigration = readFileSync(
+      startPendingGameFoundationMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      startPendingGameFoundationMigration,
+      /status in \('pending', 'cancelled', 'started'\)/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /create table if not exists public\.games/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /pending_game_id uuid not null unique\s+references public\.pending_games \(id\)/,
+    );
+    assert.match(startPendingGameFoundationMigration, /slot_allocation jsonb not null/);
+    assert.match(startPendingGameFoundationMigration, /slot_order jsonb not null/);
+    assert.match(
+      startPendingGameFoundationMigration,
+      /create table if not exists public\.game_participants/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /game_id uuid not null\s+references public\.games \(id\)\s+on delete cascade/,
+    );
+    assert.match(startPendingGameFoundationMigration, /participant_kind text not null default 'human'/);
+    assert.match(startPendingGameFoundationMigration, /profile_id uuid not null/);
+    assert.match(startPendingGameFoundationMigration, /handle text not null/);
+    assert.match(startPendingGameFoundationMigration, /gamer_name text not null/);
+    assert.match(startPendingGameFoundationMigration, /avatar_key text not null/);
+
+    for (const tableName of ["games", "game_participants"]) {
+      assert.match(
+        startPendingGameFoundationMigration,
+        new RegExp(`alter table public\\.${tableName} enable row level security`),
+      );
+      assert.match(
+        startPendingGameFoundationMigration,
+        new RegExp(`revoke all on table public\\.${tableName} from anon`),
+      );
+    }
+
+    assert.match(
+      startPendingGameFoundationMigration,
+      /grant select on table public\.games to authenticated/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /grant insert \(pending_game_id\)\s+on table public\.games\s+to authenticated/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /grant select on table public\.game_participants to authenticated/,
+    );
+    assert.doesNotMatch(
+      startPendingGameFoundationMigration,
+      /grant update .* on table public\.pending_games to authenticated/i,
+    );
+
+    for (const policyName of [
+      "Game Creators can start accepted Pending Games",
+      "Participants can view their Started Games",
+      "Participants can view Started Game snapshots",
+    ]) {
+      assert.match(startPendingGameFoundationMigration, new RegExp(policyName));
+    }
+
+    assert.match(
+      startPendingGameFoundationMigration,
+      /create or replace function private\.is_started_game_participant\(/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /grant usage on schema private to authenticated/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /grant execute on function private\.is_started_game_participant\(uuid, uuid\)\s+to authenticated/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /private\.is_started_game_participant\(\s*public\.game_participants\.game_id,\s+\(select auth\.uid\(\)\)\s*\)/,
+    );
+    assert.doesNotMatch(
+      startPendingGameFoundationMigration,
+      /from public\.game_participants as viewer/i,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /if coalesce\(cardinality\(participant_profile_ids\), 0\) <> 2 then/,
+    );
+
+    for (const functionName of [
+      "prepare_started_game_from_pending",
+      "create_started_game_participants",
+    ]) {
+      assert.match(
+        startPendingGameFoundationMigration,
+        new RegExp(`create or replace function private\\.${functionName}\\(\\)`),
+      );
+      assert.match(startPendingGameFoundationMigration, /security definer/);
+      assert.match(startPendingGameFoundationMigration, /set search_path = ''/);
+      assert.match(
+        startPendingGameFoundationMigration,
+        new RegExp(
+          `revoke all on function private\\.${functionName}\\(\\)\\s+from public`,
+        ),
+      );
+      assert.doesNotMatch(
+        startPendingGameFoundationMigration,
+        new RegExp(`create or replace function public\\.${functionName}`, "i"),
+      );
+    }
+    assert.match(
+      startPendingGameFoundationMigration,
+      /create trigger prepare_started_game_from_pending\s+before insert on public\.games/,
+    );
+    assert.match(
+      startPendingGameFoundationMigration,
+      /create trigger create_started_game_participants\s+after insert on public\.games/,
     );
   });
 });

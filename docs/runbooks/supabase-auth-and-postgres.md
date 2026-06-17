@@ -479,6 +479,27 @@ behind explicit owner approval. The first source-controlled slice does not add
 UI, invite acceptance, turn storage, Reveal, Share Consent, nudges, friends, or
 public discovery.
 
+The Pending Game start-conversion foundation migration is:
+
+```text
+supabase/migrations/20260617151940_start_pending_game_foundation.sql
+```
+
+It creates durable `public.games` and `public.game_participants` storage for the
+Started Game shell. Authenticated browser clients may insert only
+`pending_game_id` into `public.games`; Row Level Security requires the signed-in
+Game Creator, a still-pending Pending Game, and all invited human participants
+accepted. Private-schema trigger functions copy participant snapshots, row
+count, and template id; resolve random default-template Slot Allocation and Slot
+Order; create Game participant snapshot rows; and mark the source Pending Game
+as `started`. Browser clients still do not receive update authority on
+`public.pending_games`. The migration grants `authenticated` `USAGE` on the
+private schema only so RLS policies can execute the specific
+`private.is_started_game_participant(uuid, uuid)` helper; private trigger
+functions remain non-executable by browser roles. Hosted application of this
+migration remains behind explicit owner approval or the documented deployment
+gate.
+
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
 persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
@@ -499,7 +520,8 @@ Supabase browser client. The browser-facing repository can:
 - list Pending Games created by the signed-in Account;
 - list incoming Pending Game invites for the signed-in Account Profile;
 - accept an incoming Pending Game invite;
-- decline an incoming Pending Game invite.
+- decline an incoming Pending Game invite;
+- start an accepted Pending Game as the Game Creator.
 
 Creation resolves the creator through `public.account_profiles`, resolves the
 invitee through `public.account_profile_directory`, inserts one
@@ -515,6 +537,12 @@ records `invite_status = 'declined'`, and the private
 Pending Game to `cancelled`. Browser clients do not receive update authority on
 `public.pending_games`.
 
+Game-start conversion inserts one `public.games` row with only
+`pending_game_id`. The database owns eligibility checks, Pending Game terminal
+status, participant snapshot creation, and resolved random setup storage. The
+repository returns a browser-safe Started Game shell that confirms setup is
+resolved without exposing hidden Slot Allocation or Slot Order details.
+
 `assets/app.js` selects this Supabase repository only after hosted runtime
 config creates a Supabase client. Local localhost smoke uses
 `createLocalTestPendingGameRepository()` after the local test sign-in controls,
@@ -522,10 +550,10 @@ and signed-out anonymous play cannot reach Pending Game creation or invite
 responses.
 
 The current browser UI creates Pending Games and exposes response visibility for
-created and incoming invites. It does not configure expiry, expose creator
-cancellation UI, resolve Slot Allocation or Slot Order, store turns, reveal a
-batch, request Share Consent, manage friends, send nudges, or publish to
-discovery surfaces.
+created and incoming invites. It lets the Game Creator start a fully accepted
+Pending Game and see that the Game shell has started. It does not configure
+expiry, expose creator cancellation UI, store turns, reveal a batch, request
+Share Consent, manage friends, send nudges, or publish to discovery surfaces.
 
 ## Current Game Repository Adapter
 

@@ -187,6 +187,16 @@ Read-only hosted SQL confirmed:
   `private.cancel_pending_game_after_invite_decline()` use an empty
   `search_path`, are not executable by `public`, `anon`, or `authenticated`,
   and are attached to the expected participant update triggers.
+- Source-controlled local verification for the Started Game foundation branch
+  asserts that `supabase/migrations/20260617151940_start_pending_game_foundation.sql`
+  adds `public.games` and `public.game_participants` with RLS, no `anon`
+  grants, narrow authenticated insert on `public.games(pending_game_id)`, no
+  browser update authority on `public.pending_games`, private trigger-owned
+  Pending Game conversion, a private RLS helper with narrow authenticated
+  execute permission, participant snapshots, and resolved random Slot
+  Allocation and Slot Order storage. Hosted migration application, hosted SQL
+  verification, Supabase advisors, and deployed browser smoke remain pending
+  explicit approval or the documented deployment gates.
 
 ## Deployment And Smoke Evidence
 

@@ -16,6 +16,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0010-supabase-auth-and-postgres-for-signed-in-state.md` - Supabase Auth and Postgres source-of-truth boundary for signed-in accounts and game state.
 - `0011-account-profile-handle-directory.md` - durable Account Profile and Handle Directory boundary.
 - `0012-pending-game-invite-response-authority.md` - Pending Game invitee response authority, visibility, and decline cancellation boundary.
+- `0013-pending-game-start-conversion-authority.md` - Pending Game to Started Game conversion authority and durable setup boundary.
 
 ## Status Values
 

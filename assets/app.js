@@ -721,6 +721,7 @@ function renderCreatedPendingGames() {
     container: pendingGameSummary,
     headingText: "Created invites",
     includeResponseActions: false,
+    includeStartActions: true,
     pendingGames: createdPendingGames,
   });
 }
@@ -730,6 +731,7 @@ function renderIncomingPendingGameInvites() {
     container: pendingGameIncomingList,
     headingText: "Incoming invites",
     includeResponseActions: true,
+    includeStartActions: false,
     pendingGames: incomingPendingGameInvites,
   });
 }
@@ -738,6 +740,7 @@ function renderPendingGameList({
   container,
   headingText,
   includeResponseActions,
+  includeStartActions,
   pendingGames,
 }) {
   if (!container) {
@@ -758,12 +761,18 @@ function renderPendingGameList({
   container.replaceChildren(
     heading,
     ...pendingGames.map((pendingGame) =>
-      renderPendingGameCard(pendingGame, { includeResponseActions }),
+      renderPendingGameCard(pendingGame, {
+        includeResponseActions,
+        includeStartActions,
+      }),
     ),
   );
 }
 
-function renderPendingGameCard(pendingGame, { includeResponseActions }) {
+function renderPendingGameCard(
+  pendingGame,
+  { includeResponseActions, includeStartActions },
+) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
 
@@ -771,13 +780,17 @@ function renderPendingGameCard(pendingGame, { includeResponseActions }) {
   rowCount.className = "pending-game-row-count";
   rowCount.textContent = `${pendingGame.rowCount} phrases`;
 
+  const state = document.createElement("p");
+  state.className = "pending-game-row-count";
+  state.textContent = getPendingGameStateLabel(pendingGame);
+
   const participantList = document.createElement("ul");
   participantList.className = "pending-game-participants";
   participantList.replaceChildren(
     ...pendingGame.participants.map(renderPendingGameParticipant),
   );
 
-  card.append(rowCount, participantList);
+  card.append(rowCount, state, participantList);
 
   const invitee = pendingGame.participants.find(
     (participant) => participant.role === "invitee",
@@ -785,8 +798,32 @@ function renderPendingGameCard(pendingGame, { includeResponseActions }) {
   if (includeResponseActions && invitee?.inviteStatus === "pending") {
     card.append(renderPendingGameResponseActions(pendingGame));
   }
+  if (includeStartActions && isPendingGameReadyToStart(pendingGame)) {
+    card.append(renderPendingGameStartActions(pendingGame));
+  }
 
   return card;
+}
+
+function isPendingGameReadyToStart(pendingGame) {
+  return (
+    pendingGame.status === "pending" &&
+    pendingGame.participants.every(
+      (participant) => participant.inviteStatus === "accepted",
+    )
+  );
+}
+
+function getPendingGameStateLabel(pendingGame) {
+  if (pendingGame.status === "started") {
+    return "Started";
+  }
+
+  if (pendingGame.status === "cancelled") {
+    return "Cancelled";
+  }
+
+  return "Waiting for responses";
 }
 
 function renderPendingGameResponseActions(pendingGame) {
@@ -821,6 +858,29 @@ function renderPendingGameResponseActions(pendingGame) {
   });
 
   actions.append(acceptButton, declineButton);
+  return actions;
+}
+
+function renderPendingGameStartActions(pendingGame) {
+  const invitee = pendingGame.participants.find(
+    (participant) => participant.role === "invitee",
+  );
+  const actions = document.createElement("div");
+  actions.className = "pending-game-actions";
+
+  const startButton = document.createElement("button");
+  startButton.type = "button";
+  startButton.className = "secondary-button";
+  startButton.textContent = "Start game";
+  startButton.setAttribute(
+    "aria-label",
+    `Start game with @${invitee.handle}`,
+  );
+  startButton.addEventListener("click", () => {
+    void startPendingGame(pendingGame.id);
+  });
+
+  actions.append(startButton);
   return actions;
 }
 
@@ -889,6 +949,43 @@ async function respondToPendingGameInvite(pendingGameId, response) {
   } catch {
     pendingGameStatus.textContent = "Game invite could not be updated. Try again.";
   }
+}
+
+async function startPendingGame(pendingGameId) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  pendingGameStatus.textContent = "";
+
+  try {
+    const startedGame = await pendingGameRepository.startPendingGame({
+      creatorAccountId: accountShell.accountId,
+      pendingGameId,
+    });
+    createdPendingGames = upsertPendingGame(
+      createdPendingGames,
+      createPendingGameFromStartedGame(startedGame),
+    );
+    renderPendingGamePanel();
+    pendingGameStatus.textContent =
+      "Game started. Turns are not available yet.";
+  } catch {
+    pendingGameStatus.textContent = "Game could not be started. Try again.";
+  }
+}
+
+function createPendingGameFromStartedGame(startedGame) {
+  return {
+    id: startedGame.pendingGameId,
+    status: startedGame.status,
+    templateId: startedGame.templateId,
+    rowCount: startedGame.rowCount,
+    participants: startedGame.participants.map((participant) => ({
+      ...participant,
+      inviteStatus: "accepted",
+    })),
+  };
 }
 
 async function loadPendingGameLists() {

@@ -44,6 +44,9 @@ const replaceAccountProfileDirectoryViewMigrationUrl = findMigrationUrl(
   "replace_account_profile_directory_view",
 );
 const createPendingGamesMigrationUrl = findMigrationUrl("create_pending_games");
+const supportPendingGameInviteResponsesMigrationUrl = findMigrationUrl(
+  "support_pending_game_invite_responses",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -510,6 +513,67 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       createPendingGamesMigration,
       /create or replace function public\.create_pending_game_participants/i,
+    );
+  });
+
+  it("supports Pending Game invite response visibility without broad browser update authority", () => {
+    assert.equal(
+      existsSync(supportPendingGameInviteResponsesMigrationUrl),
+      true,
+    );
+
+    const supportPendingGameInviteResponsesMigration = readFileSync(
+      supportPendingGameInviteResponsesMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /invite_status in \('accepted', 'pending', 'declined'\)/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /participant_role = 'invitee'\s+and invite_status = 'accepted'\s+and account_id is not null/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /participant_role = 'invitee'\s+and invite_status = 'declined'\s+and account_id is not null/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /Invitees can view their Pending Game invites/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /Invitees can view participant rows for their Pending Game invites/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /grant update \(account_id, invite_status\)\s+on table public\.pending_game_participants\s+to authenticated/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /Invitees can respond to their Pending Game invites/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /create or replace function private\.cancel_pending_game_after_invite_decline\(\)/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /after update of invite_status on public\.pending_game_participants/,
+    );
+    assert.match(
+      supportPendingGameInviteResponsesMigration,
+      /execute function private\.cancel_pending_game_after_invite_decline\(\)/,
+    );
+    assert.doesNotMatch(
+      supportPendingGameInviteResponsesMigration,
+      /grant update .* on table public\.pending_games to authenticated/i,
+    );
+    assert.doesNotMatch(
+      supportPendingGameInviteResponsesMigration,
+      /create or replace function public\.cancel_pending_game_after_invite_decline/i,
     );
   });
 });

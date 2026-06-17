@@ -492,22 +492,40 @@ assets/pending-game.js
 ```
 
 `createSupabasePendingGameRepository({ supabase })` accepts an already created
-Supabase browser client and creates a Pending Game from a creator Account id,
-invitee Handle, and row count. It resolves the creator through
-`public.account_profiles`, resolves the invitee through
-`public.account_profile_directory`, inserts one `public.pending_games` row, and
-loads trigger-created `public.pending_game_participants` rows for the
-browser-safe DTO.
+Supabase browser client. The browser-facing repository can:
+
+- create a Pending Game from a creator Account id, invitee Handle, and row
+  count;
+- list Pending Games created by the signed-in Account;
+- list incoming Pending Game invites for the signed-in Account Profile;
+- accept an incoming Pending Game invite;
+- decline an incoming Pending Game invite.
+
+Creation resolves the creator through `public.account_profiles`, resolves the
+invitee through `public.account_profile_directory`, inserts one
+`public.pending_games` row, and loads trigger-created
+`public.pending_game_participants` rows for the browser-safe DTO.
+
+Invitee response mutation updates only the invitee participant row's
+`account_id` and `invite_status` under Row Level Security and column-level
+grants. Accepting records `invite_status = 'accepted'` and leaves the Pending
+Game status as `pending`; game-start conversion is a later slice. Declining
+records `invite_status = 'declined'`, and the private
+`private.cancel_pending_game_after_invite_decline()` trigger changes the owning
+Pending Game to `cancelled`. Browser clients do not receive update authority on
+`public.pending_games`.
 
 `assets/app.js` selects this Supabase repository only after hosted runtime
 config creates a Supabase client. Local localhost smoke uses
-`createLocalTestPendingGameRepository()` after `Test sign in`, and signed-out
-anonymous play cannot reach Pending Game creation.
+`createLocalTestPendingGameRepository()` after the local test sign-in controls,
+and signed-out anonymous play cannot reach Pending Game creation or invite
+responses.
 
-The first browser UI creates the Pending Game only. It does not accept or
-decline invites, expose an invite inbox, configure expiry, cancel games, resolve
-Slot Allocation or Slot Order, store turns, reveal a batch, request Share
-Consent, manage friends, send nudges, or publish to discovery surfaces.
+The current browser UI creates Pending Games and exposes response visibility for
+created and incoming invites. It does not configure expiry, expose creator
+cancellation UI, resolve Slot Allocation or Slot Order, store turns, reveal a
+batch, request Share Consent, manage friends, send nudges, or publish to
+discovery surfaces.
 
 ## Current Game Repository Adapter
 

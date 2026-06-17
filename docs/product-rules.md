@@ -299,12 +299,15 @@ Multiplayer games can invite friends or accounts found by handle. Friend invites
 
 MVP multiplayer invites use handles. Friend relationships and friend-based invite shortcuts are deferred.
 
-The first handle-invite creation UI is signed-in only. It lets the Game Creator
-select the batch row count, enter another account's Handle, create a Game
-Invite, and see that the creator is accepted while the invited participant is
-waiting to accept. It does not add invite inboxes, acceptance, decline, expiry,
-cancellation UI, turn storage, Slot Allocation or Slot Order resolution, Reveal,
-Share Consent, friends, nudges, or public discovery.
+The handle-invite UI is signed-in only. It lets the Game Creator select the
+batch row count, enter another account's Handle, create a Game Invite, and see
+the invited participant's response state. Signed-in invitees can see incoming
+Pending Game invites for their Account Profile, accept an invite, or decline an
+invite. Acceptance records response state only; game-start conversion remains a
+later lifecycle slice. Decline cancels the Pending Game in the MVP. The current
+MVP invite UI still does not add invite expiry, creator cancellation UI, turn
+storage, Slot Allocation or Slot Order resolution, Reveal, Share Consent,
+friends, nudges, or public discovery.
 
 ### Nudges
 

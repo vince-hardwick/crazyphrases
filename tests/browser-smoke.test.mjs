@@ -230,6 +230,49 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("lets an invitee accept a Pending Game invite and shows the response to the creator", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.getByRole("button", { name: "Create invite" }).click();
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "15 phrases");
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+    await assertTextVisible(page, "Game invite accepted.");
+    await assertTextVisible(page, "Accepted");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Accepted");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

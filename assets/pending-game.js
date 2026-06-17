@@ -14,6 +14,7 @@ export function createTestPendingGameRepository({
       normaliseProfile(profile),
     ]),
   );
+  const pendingGames = [];
 
   return {
     async createPendingGameFromHandle({
@@ -38,7 +39,7 @@ export function createTestPendingGameRepository({
         throw new Error("A creator cannot invite their own Handle.");
       }
 
-      return createPendingGameDto({
+      const pendingGame = createPendingGameDto({
         id: createPendingGameId(),
         rowCount,
         status: "pending",
@@ -54,6 +55,106 @@ export function createTestPendingGameRepository({
           }),
         ],
       });
+      pendingGames.push(pendingGame);
+      return pendingGame;
+    },
+
+    async listIncomingPendingGameInvites({ accountId }) {
+      assertAccountId(accountId);
+
+      const inviteeProfile = profilesByAccountId.get(accountId);
+      if (!inviteeProfile) {
+        return [];
+      }
+
+      return pendingGames.filter(
+        (pendingGame) =>
+          pendingGame.status === "pending" &&
+          pendingGame.participants.some(
+            (participant) =>
+              participant.role === "invitee" &&
+              participant.profileId === inviteeProfile.profileId,
+          ),
+      );
+    },
+
+    async listCreatedPendingGames({ accountId }) {
+      assertAccountId(accountId);
+
+      const creatorProfile = profilesByAccountId.get(accountId);
+      if (!creatorProfile) {
+        return [];
+      }
+
+      return pendingGames.filter((pendingGame) =>
+        pendingGame.participants.some(
+          (participant) =>
+            participant.role === "creator" &&
+            participant.profileId === creatorProfile.profileId,
+        ),
+      );
+    },
+
+    async acceptPendingGameInvite({ accountId, pendingGameId }) {
+      assertAccountId(accountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const inviteeProfile = profilesByAccountId.get(accountId);
+      const pendingGameIndex = findIncomingPendingGameIndex({
+        inviteeProfile,
+        pendingGameId,
+        pendingGames,
+      });
+      if (pendingGameIndex < 0) {
+        throw new Error("Pending Game invite was not found.");
+      }
+
+      const pendingGame = pendingGames[pendingGameIndex];
+      const updatedPendingGame = createPendingGameDto({
+        id: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        status: pendingGame.status,
+        templateId: pendingGame.templateId,
+        participants: pendingGame.participants.map((participant) =>
+          participant.role === "invitee" &&
+          participant.profileId === inviteeProfile.profileId
+            ? { ...participant, inviteStatus: "accepted" }
+            : participant,
+        ),
+      });
+      pendingGames[pendingGameIndex] = updatedPendingGame;
+      return updatedPendingGame;
+    },
+
+    async declinePendingGameInvite({ accountId, pendingGameId }) {
+      assertAccountId(accountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const inviteeProfile = profilesByAccountId.get(accountId);
+      const pendingGameIndex = findIncomingPendingGameIndex({
+        inviteeProfile,
+        pendingGameId,
+        pendingGames,
+      });
+      if (pendingGameIndex < 0) {
+        throw new Error("Pending Game invite was not found.");
+      }
+
+      const pendingGame = pendingGames[pendingGameIndex];
+      const updatedPendingGame = createPendingGameDto({
+        id: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        status: "cancelled",
+        templateId: pendingGame.templateId,
+        participants: pendingGame.participants.map((participant) =>
+          participant.role === "invitee" &&
+          participant.profileId === inviteeProfile.profileId
+            ? { ...participant, inviteStatus: "declined" }
+            : participant,
+        ),
+      });
+      pendingGames[pendingGameIndex] = updatedPendingGame;
+      return updatedPendingGame;
     },
   };
 }
@@ -136,6 +237,214 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
         pendingGameRow: pendingGameResponse.data,
       });
     },
+
+    async listCreatedPendingGames({ accountId }) {
+      assertAccountId(accountId);
+
+      const pendingGameResponse = await supabase
+        .from("pending_games")
+        .select("id, template_id, row_count, status")
+        .eq("creator_account_id", accountId);
+      assertNoSupabaseError(
+        pendingGameResponse,
+        "Could not load created Pending Games",
+      );
+
+      return Promise.all(
+        pendingGameResponse.data.map(async (pendingGameRow) => {
+          const participantResponse = await supabase
+            .from("pending_game_participants")
+            .select(
+              "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+            )
+            .eq("pending_game_id", pendingGameRow.id);
+          assertNoSupabaseError(
+            participantResponse,
+            "Could not load Pending Game participants",
+          );
+
+          return recoverPendingGame({
+            participantRows: participantResponse.data,
+            pendingGameRow,
+          });
+        }),
+      );
+    },
+
+    async listIncomingPendingGameInvites({ accountId }) {
+      assertAccountId(accountId);
+
+      const inviteeResponse = await supabase
+        .from("account_profiles")
+        .select("profile_id, handle, gamer_name, avatar_key")
+        .eq("account_id", accountId)
+        .maybeSingle();
+      assertNoSupabaseError(
+        inviteeResponse,
+        "Could not load invitee Account Profile",
+      );
+
+      if (!inviteeResponse.data) {
+        return [];
+      }
+
+      const inviteeProfile = recoverProfile(inviteeResponse.data);
+      const pendingGameResponse = await supabase
+        .from("pending_games")
+        .select("id, template_id, row_count, status")
+        .eq("invitee_profile_id", inviteeProfile.profileId)
+        .eq("status", "pending");
+      assertNoSupabaseError(
+        pendingGameResponse,
+        "Could not load incoming Pending Game invites",
+      );
+
+      return Promise.all(
+        pendingGameResponse.data.map(async (pendingGameRow) => {
+          const participantResponse = await supabase
+            .from("pending_game_participants")
+            .select(
+              "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+            )
+            .eq("pending_game_id", pendingGameRow.id);
+          assertNoSupabaseError(
+            participantResponse,
+            "Could not load Pending Game participants",
+          );
+
+          return recoverPendingGame({
+            participantRows: participantResponse.data,
+            pendingGameRow,
+          });
+        }),
+      );
+    },
+
+    async acceptPendingGameInvite({ accountId, pendingGameId }) {
+      assertAccountId(accountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const inviteeResponse = await supabase
+        .from("account_profiles")
+        .select("profile_id, handle, gamer_name, avatar_key")
+        .eq("account_id", accountId)
+        .maybeSingle();
+      assertNoSupabaseError(
+        inviteeResponse,
+        "Could not load invitee Account Profile",
+      );
+
+      if (!inviteeResponse.data) {
+        throw new Error("Invitee Account Profile is required.");
+      }
+
+      const inviteeProfile = recoverProfile(inviteeResponse.data);
+      const acceptResponse = await supabase
+        .from("pending_game_participants")
+        .update({
+          account_id: accountId,
+          invite_status: "accepted",
+        })
+        .eq("pending_game_id", pendingGameId)
+        .eq("profile_id", inviteeProfile.profileId)
+        .eq("participant_role", "invitee")
+        .eq("invite_status", "pending")
+        .select("pending_game_id")
+        .single();
+      assertNoSupabaseError(
+        acceptResponse,
+        "Could not accept Pending Game invite",
+      );
+
+      const pendingGameResponse = await supabase
+        .from("pending_games")
+        .select("id, template_id, row_count, status")
+        .eq("id", pendingGameId)
+        .single();
+      assertNoSupabaseError(
+        pendingGameResponse,
+        "Could not load Pending Game",
+      );
+
+      const participantResponse = await supabase
+        .from("pending_game_participants")
+        .select(
+          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+        )
+        .eq("pending_game_id", pendingGameId);
+      assertNoSupabaseError(
+        participantResponse,
+        "Could not load Pending Game participants",
+      );
+
+      return recoverPendingGame({
+        participantRows: participantResponse.data,
+        pendingGameRow: pendingGameResponse.data,
+      });
+    },
+
+    async declinePendingGameInvite({ accountId, pendingGameId }) {
+      assertAccountId(accountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const inviteeResponse = await supabase
+        .from("account_profiles")
+        .select("profile_id, handle, gamer_name, avatar_key")
+        .eq("account_id", accountId)
+        .maybeSingle();
+      assertNoSupabaseError(
+        inviteeResponse,
+        "Could not load invitee Account Profile",
+      );
+
+      if (!inviteeResponse.data) {
+        throw new Error("Invitee Account Profile is required.");
+      }
+
+      const inviteeProfile = recoverProfile(inviteeResponse.data);
+      const declineResponse = await supabase
+        .from("pending_game_participants")
+        .update({
+          account_id: accountId,
+          invite_status: "declined",
+        })
+        .eq("pending_game_id", pendingGameId)
+        .eq("profile_id", inviteeProfile.profileId)
+        .eq("participant_role", "invitee")
+        .eq("invite_status", "pending")
+        .select("pending_game_id")
+        .single();
+      assertNoSupabaseError(
+        declineResponse,
+        "Could not decline Pending Game invite",
+      );
+
+      const pendingGameResponse = await supabase
+        .from("pending_games")
+        .select("id, template_id, row_count, status")
+        .eq("id", pendingGameId)
+        .single();
+      assertNoSupabaseError(
+        pendingGameResponse,
+        "Could not load Pending Game",
+      );
+
+      const participantResponse = await supabase
+        .from("pending_game_participants")
+        .select(
+          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+        )
+        .eq("pending_game_id", pendingGameId);
+      assertNoSupabaseError(
+        participantResponse,
+        "Could not load Pending Game participants",
+      );
+
+      return recoverPendingGame({
+        participantRows: participantResponse.data,
+        pendingGameRow: pendingGameResponse.data,
+      });
+    },
   };
 }
 
@@ -158,6 +467,27 @@ function createParticipantDto(profile, { inviteStatus, role }) {
     gamerName: profile.gamerName,
     avatarKey: profile.avatarKey,
   };
+}
+
+function findIncomingPendingGameIndex({
+  inviteeProfile,
+  pendingGameId,
+  pendingGames,
+}) {
+  if (!inviteeProfile) {
+    return -1;
+  }
+
+  return pendingGames.findIndex(
+    (pendingGame) =>
+      pendingGame.id === pendingGameId &&
+      pendingGame.status === "pending" &&
+      pendingGame.participants.some(
+        (participant) =>
+          participant.role === "invitee" &&
+          participant.profileId === inviteeProfile.profileId,
+      ),
+  );
 }
 
 function normaliseProfile(profile) {

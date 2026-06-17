@@ -591,6 +591,12 @@ h1 {
   font-weight: 800;
 }
 
+.pending-game-card + .pending-game-card {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 .pending-game-participants {
   display: grid;
   gap: 8px;
@@ -610,6 +616,13 @@ h1 {
 
 .pending-game-participants strong {
   color: var(--accent-strong);
+}
+
+.pending-game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .favourites-list {

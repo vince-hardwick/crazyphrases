@@ -15,6 +15,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0009-branch-based-dev-and-main-promotion.md` - feature-branch dev deployment and main-line test/production promotion.
 - `0010-supabase-auth-and-postgres-for-signed-in-state.md` - Supabase Auth and Postgres source-of-truth boundary for signed-in accounts and game state.
 - `0011-account-profile-handle-directory.md` - durable Account Profile and Handle Directory boundary.
+- `0012-pending-game-invite-response-authority.md` - Pending Game invitee response authority, visibility, and decline cancellation boundary.
 
 ## Status Values
 

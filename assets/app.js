@@ -72,6 +72,9 @@ const copyStatus = document.querySelector("[data-copy-status]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
 const testSignInButton = document.querySelector("[data-test-sign-in-button]");
+const testInviteeSignInButton = document.querySelector(
+  "[data-test-invitee-sign-in-button]",
+);
 const googleSignInButton = document.querySelector("[data-google-sign-in-button]");
 const emailSignInForm = document.querySelector("[data-email-sign-in-form]");
 const emailSignInInput = document.querySelector("[data-email-sign-in-input]");
@@ -107,24 +110,27 @@ const localTestPrivateFavouritesRepository =
   });
 let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
+const localTestProfiles = [
+  {
+    accountId: "test-account",
+    profileId: "test-profile",
+    handle: "player-test-account",
+    gamerName: "Player",
+    avatarKey: "spark",
+  },
+  {
+    accountId: "invitee-auth-account",
+    profileId: "invitee-profile",
+    handle: "invitee-two",
+    gamerName: "Invitee Two",
+    avatarKey: "paper",
+  },
+];
+const localTestCreatorProfile = localTestProfiles[0];
+const localTestInviteeProfile = localTestProfiles[1];
 const localTestPendingGameRepository = createLocalTestPendingGameRepository({
   createPendingGameId: createLocalTestPendingGameId,
-  profiles: [
-    {
-      accountId: "test-account",
-      profileId: "test-profile",
-      handle: "player-test-account",
-      gamerName: "Player",
-      avatarKey: "spark",
-    },
-    {
-      accountId: "invitee-auth-account",
-      profileId: "invitee-profile",
-      handle: "invitee-two",
-      gamerName: "Invitee Two",
-      avatarKey: "paper",
-    },
-  ],
+  profiles: localTestProfiles,
 });
 let pendingGameRepository = localTestPendingGameRepository;
 let phraseFavourites = [];
@@ -135,7 +141,10 @@ let pendingGameHandleInput = null;
 let pendingGameRowCountSelect = null;
 let pendingGameStatus = null;
 let pendingGameSummary = null;
+let pendingGameIncomingList = null;
 let currentPendingGame = null;
+let createdPendingGames = [];
+let incomingPendingGameInvites = [];
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
@@ -145,16 +154,24 @@ renderAccountShell(accountShell);
 void initialiseHostedAuth();
 
 testSignInButton.addEventListener("click", async () => {
+  await applyLocalTestAccountShell(localTestCreatorProfile);
+});
+
+testInviteeSignInButton.addEventListener("click", async () => {
+  await applyLocalTestAccountShell(localTestInviteeProfile);
+});
+
+async function applyLocalTestAccountShell(profile) {
   signedInGameSession = localTestSignedInGameSession;
   privateFavouritesRepository = localTestPrivateFavouritesRepository;
   pendingGameRepository = localTestPendingGameRepository;
   await applyAccountShell(
     createAccountShell({
-      account: { id: "test-account" },
-      profile: null,
+      account: { id: profile.accountId },
+      profile,
     }),
   );
-});
+}
 
 googleSignInButton.addEventListener("click", async () => {
   authMessage.textContent = "";
@@ -399,6 +416,10 @@ function renderAccountShell(shell) {
     shell.mode !== "anonymous-solo" ||
     hostedAuthAvailable ||
     !isLocalTestAuthAvailable();
+  testInviteeSignInButton.hidden =
+    shell.mode !== "anonymous-solo" ||
+    hostedAuthAvailable ||
+    !isLocalTestAuthAvailable();
   googleSignInButton.hidden =
     shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   emailSignInForm.hidden = shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
@@ -538,10 +559,8 @@ function renderPendingGamePanel() {
   }
 
   ensurePendingGamePanel();
-
-  if (currentPendingGame) {
-    renderPendingGameSummary(currentPendingGame);
-  }
+  renderCreatedPendingGames();
+  renderIncomingPendingGameInvites();
 }
 
 function ensureSaveBatchButton() {
@@ -633,11 +652,22 @@ function ensurePendingGamePanel() {
   pendingGameSummary.dataset.pendingGameSummary = "";
   pendingGameSummary.hidden = true;
 
+  pendingGameIncomingList = document.createElement("div");
+  pendingGameIncomingList.className = "pending-game-summary";
+  pendingGameIncomingList.dataset.pendingGameIncoming = "";
+  pendingGameIncomingList.hidden = true;
+
   heading.append(kicker, title);
   handleLabel.append(pendingGameHandleInput);
   rowCountLabel.append(pendingGameRowCountSelect);
   form.append(handleLabel, rowCountLabel, submitButton);
-  pendingGamePanel.append(heading, form, pendingGameStatus, pendingGameSummary);
+  pendingGamePanel.append(
+    heading,
+    form,
+    pendingGameStatus,
+    pendingGameSummary,
+    pendingGameIncomingList,
+  );
   gamePanel.after(pendingGamePanel);
   return pendingGamePanel;
 }
@@ -649,6 +679,7 @@ function removePendingGamePanel() {
   pendingGameRowCountSelect = null;
   pendingGameStatus = null;
   pendingGameSummary = null;
+  pendingGameIncomingList = null;
   currentPendingGame = null;
 }
 
@@ -672,8 +703,9 @@ async function createPendingGameInvite(event) {
     );
 
     currentPendingGame = pendingGame;
+    createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
     pendingGameHandleInput.value = "";
-    renderPendingGameSummary(pendingGame);
+    renderCreatedPendingGames();
     pendingGameStatus.textContent =
       `Game invite created. Waiting for @${invitee.handle} to accept.`;
   } catch (error) {
@@ -684,7 +716,57 @@ async function createPendingGameInvite(event) {
   }
 }
 
-function renderPendingGameSummary(pendingGame) {
+function renderCreatedPendingGames() {
+  renderPendingGameList({
+    container: pendingGameSummary,
+    headingText: "Created invites",
+    includeResponseActions: false,
+    pendingGames: createdPendingGames,
+  });
+}
+
+function renderIncomingPendingGameInvites() {
+  renderPendingGameList({
+    container: pendingGameIncomingList,
+    headingText: "Incoming invites",
+    includeResponseActions: true,
+    pendingGames: incomingPendingGameInvites,
+  });
+}
+
+function renderPendingGameList({
+  container,
+  headingText,
+  includeResponseActions,
+  pendingGames,
+}) {
+  if (!container) {
+    return;
+  }
+
+  if (pendingGames.length === 0) {
+    container.hidden = true;
+    container.replaceChildren();
+    return;
+  }
+
+  const heading = document.createElement("p");
+  heading.className = "pending-game-row-count";
+  heading.textContent = headingText;
+
+  container.hidden = false;
+  container.replaceChildren(
+    heading,
+    ...pendingGames.map((pendingGame) =>
+      renderPendingGameCard(pendingGame, { includeResponseActions }),
+    ),
+  );
+}
+
+function renderPendingGameCard(pendingGame, { includeResponseActions }) {
+  const card = document.createElement("div");
+  card.className = "pending-game-card";
+
   const rowCount = document.createElement("p");
   rowCount.className = "pending-game-row-count";
   rowCount.textContent = `${pendingGame.rowCount} phrases`;
@@ -695,8 +777,51 @@ function renderPendingGameSummary(pendingGame) {
     ...pendingGame.participants.map(renderPendingGameParticipant),
   );
 
-  pendingGameSummary.hidden = false;
-  pendingGameSummary.replaceChildren(rowCount, participantList);
+  card.append(rowCount, participantList);
+
+  const invitee = pendingGame.participants.find(
+    (participant) => participant.role === "invitee",
+  );
+  if (includeResponseActions && invitee?.inviteStatus === "pending") {
+    card.append(renderPendingGameResponseActions(pendingGame));
+  }
+
+  return card;
+}
+
+function renderPendingGameResponseActions(pendingGame) {
+  const creator = pendingGame.participants.find(
+    (participant) => participant.role === "creator",
+  );
+  const actions = document.createElement("div");
+  actions.className = "pending-game-actions";
+
+  const acceptButton = document.createElement("button");
+  acceptButton.type = "button";
+  acceptButton.className = "secondary-button";
+  acceptButton.textContent = "Accept";
+  acceptButton.setAttribute(
+    "aria-label",
+    `Accept invite from @${creator.handle}`,
+  );
+  acceptButton.addEventListener("click", () => {
+    void respondToPendingGameInvite(pendingGame.id, "accept");
+  });
+
+  const declineButton = document.createElement("button");
+  declineButton.type = "button";
+  declineButton.className = "danger-button";
+  declineButton.textContent = "Decline";
+  declineButton.setAttribute(
+    "aria-label",
+    `Decline invite from @${creator.handle}`,
+  );
+  declineButton.addEventListener("click", () => {
+    void respondToPendingGameInvite(pendingGame.id, "decline");
+  });
+
+  actions.append(acceptButton, declineButton);
+  return actions;
 }
 
 function renderPendingGameParticipant(participant) {
@@ -706,11 +831,109 @@ function renderPendingGameParticipant(participant) {
   handle.textContent = `@${participant.handle}`;
 
   const status = document.createElement("strong");
-  status.textContent =
-    participant.inviteStatus === "accepted" ? "Accepted" : "Invited";
+  status.textContent = getPendingGameParticipantStatusLabel(participant);
 
   item.append(handle, status);
   return item;
+}
+
+function getPendingGameParticipantStatusLabel(participant) {
+  if (participant.inviteStatus === "accepted") {
+    return "Accepted";
+  }
+
+  if (participant.inviteStatus === "declined") {
+    return "Declined";
+  }
+
+  return "Invited";
+}
+
+async function respondToPendingGameInvite(pendingGameId, response) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  pendingGameStatus.textContent = "";
+
+  try {
+    const pendingGame =
+      response === "accept"
+        ? await pendingGameRepository.acceptPendingGameInvite({
+            accountId: accountShell.accountId,
+            pendingGameId,
+          })
+        : await pendingGameRepository.declinePendingGameInvite({
+            accountId: accountShell.accountId,
+            pendingGameId,
+          });
+
+    if (
+      incomingPendingGameInvites.some((candidate) => candidate.id === pendingGame.id) ||
+      isCurrentAccountPendingGameParticipant(pendingGame, "invitee")
+    ) {
+      incomingPendingGameInvites = upsertPendingGame(
+        incomingPendingGameInvites,
+        pendingGame,
+      );
+    }
+    if (
+      createdPendingGames.some((candidate) => candidate.id === pendingGame.id) ||
+      isCurrentAccountPendingGameParticipant(pendingGame, "creator")
+    ) {
+      createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
+    }
+    renderPendingGamePanel();
+    pendingGameStatus.textContent =
+      response === "accept" ? "Game invite accepted." : "Game invite declined.";
+  } catch {
+    pendingGameStatus.textContent = "Game invite could not be updated. Try again.";
+  }
+}
+
+async function loadPendingGameLists() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    createdPendingGames = [];
+    incomingPendingGameInvites = [];
+    return;
+  }
+
+  try {
+    [createdPendingGames, incomingPendingGameInvites] = await Promise.all([
+      pendingGameRepository.listCreatedPendingGames({
+        accountId: accountShell.accountId,
+      }),
+      pendingGameRepository.listIncomingPendingGameInvites({
+        accountId: accountShell.accountId,
+      }),
+    ]);
+  } catch {
+    createdPendingGames = [];
+    incomingPendingGameInvites = [];
+    authMessage.textContent = "Game invites could not be loaded. Try again.";
+  }
+}
+
+function upsertPendingGame(pendingGames, pendingGame) {
+  const existingIndex = pendingGames.findIndex(
+    (candidate) => candidate.id === pendingGame.id,
+  );
+
+  if (existingIndex < 0) {
+    return [pendingGame, ...pendingGames];
+  }
+
+  return pendingGames.map((candidate, index) =>
+    index === existingIndex ? pendingGame : candidate,
+  );
+}
+
+function isCurrentAccountPendingGameParticipant(pendingGame, role) {
+  return pendingGame.participants.some(
+    (participant) =>
+      participant.role === role &&
+      participant.handle === accountShell.profile?.handle,
+  );
 }
 
 function ensureFavouritesPanel() {
@@ -1170,6 +1393,7 @@ async function applyAccountShell(shell) {
     await loadSignedInCurrentGame();
     await loadPhraseFavourites();
     await loadBatchFavourites();
+    await loadPendingGameLists();
   } else {
     signedInGameSession.reset();
     game =
@@ -1177,6 +1401,8 @@ async function applyAccountShell(shell) {
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
     batchFavourites = [];
+    createdPendingGames = [];
+    incomingPendingGameInvites = [];
     hidePersistenceRecovery();
   }
 
@@ -1211,6 +1437,8 @@ function applySignedOutShell() {
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
   batchFavourites = [];
+  createdPendingGames = [];
+  incomingPendingGameInvites = [];
   hidePersistenceRecovery();
   renderAccountShell(accountShell);
   renderGame();

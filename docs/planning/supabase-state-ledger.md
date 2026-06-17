@@ -44,6 +44,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260616092324` | `tighten_account_profile_directory_grants` | Applied after explicit owner approval; schema verified. |
 | `20260616093056` | `replace_account_profile_directory_view` | Applied after explicit owner approval; schema verified. |
 | `20260616141452` | `create_pending_games` | Applied after explicit owner approval; schema verified. |
+| `20260617135237` | `support_pending_game_invite_responses` | Applied after explicit owner approval; schema verified. |
 
 ## Schema Verification Summary
 
@@ -172,6 +173,20 @@ Read-only hosted SQL confirmed:
   leaked-password-protection warning.
 - Supabase performance advisors reported expected `unused_index` info for the
   brand-new Pending Game indexes before live query traffic exists.
+- The invite-response migration allows `accepted`, `pending`, and `declined`
+  participant invite statuses while keeping creator rows accepted and invitee
+  rows constrained to pending without an Account, accepted with an Account, or
+  declined with an Account.
+- Invitee-visible Pending Game `select`, invitee-visible participant-row
+  `select`, and invitee response `update` policies exist for the
+  `authenticated` role. Browser clients have update authority only on
+  `public.pending_game_participants.account_id` and
+  `public.pending_game_participants.invite_status`; they still do not have
+  update authority on `public.pending_games`.
+- `private.set_pending_game_participants_updated_at()` and
+  `private.cancel_pending_game_after_invite_decline()` use an empty
+  `search_path`, are not executable by `public`, `anon`, or `authenticated`,
+  and are attached to the expected participant update triggers.
 
 ## Deployment And Smoke Evidence
 
@@ -187,6 +202,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-17 | Pending Game creation UI promotion | PR #53 merge commit `d6b40550809f87b35bb2b84686ffd3fae6d62495`, promotion run `27684805862`, deployed through `test` and production after owner approvals. Dev, `test`, and production browser verification confirmed stamped runtime assets including `pending-game.js`, clean browser logs, and no horizontal overflow. Production verification was read-only because the visible browser was already signed in; the signed-in Pending Game panel mounted, but no hosted Pending Game create or cleanup smoke was performed. |
 | 2026-06-17 | Pending Game creation hosted write/cleanup smoke | After explicit owner approval, production browser smoke created a hosted Pending Game invite through the signed-in UI for temporary Handle `codex-smoke-7e72926` with 15 phrases. Hosted SQL verification confirmed one pending game, creator accepted, invitee pending, and trigger-created participant rows. Cleanup deleted the Pending Game and the temporary smoke Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, and participant rows remained, and both Pending Game tables were empty. |
 | 2026-06-17 | Pending Game invite response dev deployment | Branch `codex/pending-game-invite-response` commit `4d37d1d470c3b516e09e8e70048808760fd8add9`, deploy-dev run `27692609312`, deployed to `dev` after owner approval. Visible `dev` browser smoke confirmed stamped `assets/app.js` and `assets/site.css` with the deployed commit SHA, hidden localhost-only test sign-in controls remained hidden, the anonymous 10-phrase flow reached reveal, `Copy all` copied the title plus ten phrases, and the browser had no console errors. No hosted Supabase data mutation or signed-in invite-response smoke was performed; source migration `20260617131817_support_pending_game_invite_responses.sql` remains unapplied to hosted Supabase pending separate approval. |
+| 2026-06-17 | Pending Game invite response hosted smoke | After explicit owner approval, hosted migration `20260617135237 support_pending_game_invite_responses` was applied and schema-verified. Visible `dev` browser smoke signed in as the existing Account Profile `@player-00c9137f-e786-4e7d`, created invites to temporary Handle `@codex-smoke-ir-8d4`, simulated invitee accept and decline through the authenticated RLS path, verified the creator UI rendered `Accepted` and `Declined`, and saw no browser warnings or errors. Cleanup removed both smoke Pending Games and the temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, and participant rows remained, and both Pending Game tables were empty. |
 
 ## Signed-In Persistence Evidence
 

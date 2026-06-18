@@ -724,6 +724,76 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       });
     },
 
+    async listMultiplayerDashboard({ accountId }) {
+      assertAccountId(accountId);
+      const response = await supabase.rpc("list_multiplayer_dashboard");
+      assertNoSupabaseError(response, "Could not load Multiplayer dashboard");
+      return recoverMultiplayerDashboard(response.data);
+    },
+
+    async submitMultiplayerSection({ accountId, entries, sectionId }) {
+      assertAccountId(accountId);
+      assertText(sectionId, "A multiplayer section id is required.");
+      const response = await supabase.rpc("submit_multiplayer_section", {
+        submitted_entries: normaliseSubmittedEntries(entries, {
+          rowCount: entries?.length ?? 0,
+        }),
+        target_assignment_id: sectionId,
+      });
+      assertNoSupabaseError(response, "Could not submit Multiplayer section");
+      return recoverSubmittedMultiplayerSection(
+        recoverSingleSupabaseRow(
+          response.data,
+          "Could not submit Multiplayer section",
+        ),
+      );
+    },
+
+    async revealMultiplayerBatch({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+      const response = await supabase.rpc("reveal_multiplayer_batch", {
+        target_game_id: gameId,
+      });
+      assertNoSupabaseError(response, "Could not reveal Multiplayer batch");
+      return recoverRevealedMultiplayerBatch(
+        recoverSingleSupabaseRow(
+          response.data,
+          "Could not reveal Multiplayer batch",
+        ),
+      );
+    },
+
+    async listInAppNotifications({ accountId }) {
+      assertAccountId(accountId);
+      const response = await supabase
+        .from("in_app_notifications")
+        .select(
+          "id, notification_type, notification_status, message, target_game_id, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(20);
+      assertNoSupabaseError(response, "Could not load notifications");
+      return response.data.map(recoverInAppNotification);
+    },
+
+    async markInAppNotificationRead({ accountId, notificationId }) {
+      assertAccountId(accountId);
+      assertText(notificationId, "A notification id is required.");
+      const response = await supabase
+        .from("in_app_notifications")
+        .update({
+          notification_status: "read",
+        })
+        .eq("id", notificationId)
+        .select(
+          "id, notification_type, notification_status, message, target_game_id, created_at",
+        )
+        .single();
+      assertNoSupabaseError(response, "Could not mark notification read");
+      return recoverInAppNotification(response.data);
+    },
+
     async loadActiveStartedGameTurn({ accountId, gameId }) {
       assertAccountId(accountId);
       assertText(gameId, "A Started Game id is required.");
@@ -1494,6 +1564,128 @@ function recoverStartedGameTurn(turnRow) {
     entryKind: turnRow.entry_kind,
     rowCount: turnRow.row_count,
   });
+}
+
+function recoverSingleSupabaseRow(data, message) {
+  if (!Array.isArray(data)) {
+    throw new Error(`${message}: expected a returned row array.`);
+  }
+
+  if (data.length !== 1) {
+    throw new Error(`${message}: expected exactly one returned row.`);
+  }
+
+  if (!data[0] || typeof data[0] !== "object" || Array.isArray(data[0])) {
+    throw new Error(`${message}: expected one returned row object.`);
+  }
+
+  return data[0];
+}
+
+function recoverMultiplayerDashboard(dashboardRow) {
+  return {
+    awaitingYourEntries: (
+      dashboardRow?.awaitingYourEntries ??
+      dashboardRow?.awaiting_your_entries ??
+      []
+    ).map((batch) =>
+      recoverMultiplayerBatch(batch, { includeCurrentSection: true }),
+    ),
+    awaitingOtherPlayerEntries: (
+      dashboardRow?.awaitingOtherPlayerEntries ??
+      dashboardRow?.awaiting_other_player_entries ??
+      []
+    ).map((batch) => recoverMultiplayerBatch(batch)),
+    completedBatches: (
+      dashboardRow?.completedBatches ??
+      dashboardRow?.completed_batches ??
+      []
+    ).map((batch) =>
+      recoverMultiplayerBatch(batch, { includeRevealState: true }),
+    ),
+  };
+}
+
+function recoverMultiplayerBatch(
+  batchRow,
+  { includeCurrentSection = false, includeRevealState = false } = {},
+) {
+  return {
+    id: assertText(batchRow?.id, "A Started Game id is required."),
+    pendingGameId: assertText(
+      batchRow?.pendingGameId ?? batchRow?.pending_game_id,
+      "A Pending Game id is required.",
+    ),
+    rowCount: batchRow?.rowCount ?? batchRow?.row_count,
+    participants: (batchRow?.participants ?? []).map((participant) => ({
+      handle: normaliseHandle(
+        assertText(participant?.handle, "A participant Handle is required."),
+      ),
+    })),
+    ...(includeCurrentSection
+      ? {
+          currentSection: recoverCurrentMultiplayerSection(
+            batchRow?.currentSection ?? batchRow?.current_section,
+          ),
+        }
+      : {}),
+    ...(includeRevealState ? { revealed: batchRow?.revealed === true } : {}),
+  };
+}
+
+function recoverCurrentMultiplayerSection(sectionRow) {
+  return {
+    id: assertText(sectionRow?.id, "A multiplayer section id is required."),
+    entryKind: sectionRow?.entryKind ?? sectionRow?.entry_kind,
+    sectionIndex:
+      sectionRow?.sectionIndex ?? sectionRow?.participant_section_index,
+    sectionCount: sectionRow?.sectionCount ?? sectionRow?.section_count,
+    rows: (sectionRow?.rows ?? []).map((row) => ({
+      rowIndex: row?.rowIndex ?? row?.row_index,
+      value: typeof row?.value === "string" ? row.value : "",
+    })),
+  };
+}
+
+function recoverSubmittedMultiplayerSection(sectionRow) {
+  return {
+    id: assertText(
+      sectionRow?.id ?? sectionRow?.assignment_id,
+      "A multiplayer section id is required.",
+    ),
+    gameId: assertText(
+      sectionRow?.gameId ?? sectionRow?.game_id,
+      "A Started Game id is required.",
+    ),
+    status: sectionRow.status,
+  };
+}
+
+function recoverRevealedMultiplayerBatch(batchRow) {
+  return {
+    gameId: assertText(
+      batchRow?.gameId ?? batchRow?.game_id,
+      "A Started Game id is required.",
+    ),
+    phrases: Array.isArray(batchRow?.phrases) ? batchRow.phrases : [],
+    revealed: batchRow?.revealed === true,
+  };
+}
+
+function recoverInAppNotification(notificationRow) {
+  return {
+    id: assertText(notificationRow?.id, "A notification id is required."),
+    type: notificationRow?.type ?? notificationRow?.notification_type,
+    status: notificationRow?.status ?? notificationRow?.notification_status,
+    message: assertText(
+      notificationRow?.message,
+      "A notification message is required.",
+    ),
+    targetGameId: assertText(
+      notificationRow?.targetGameId ?? notificationRow?.target_game_id,
+      "A Started Game id is required.",
+    ),
+  };
 }
 
 function recoverSubmittedStartedGameTurn(turnRow) {

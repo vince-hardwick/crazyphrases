@@ -1409,6 +1409,193 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("loads participant-section dashboard through Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const dashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["list_multiplayer_dashboard"]);
+    assert.deepEqual(supabase.rpcParams, []);
+    assert.equal(dashboard.awaitingYourEntries.length, 1);
+    assert.equal(
+      dashboard.awaitingYourEntries[0].currentSection.entryKind,
+      "adjective",
+    );
+  });
+
+  it("submits participant sections through Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const result = await repository.submitMultiplayerSection({
+      accountId: creatorProfile.accountId,
+      sectionId: "supabase-section-1",
+      entries: [{ rowIndex: 0, value: "brisk" }],
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["submit_multiplayer_section"]);
+    assert.deepEqual(supabase.rpcParams, [
+      {
+        submitted_entries: [{ rowIndex: 0, value: "brisk" }],
+        target_assignment_id: "supabase-section-1",
+      },
+    ]);
+    assert.deepEqual(result, {
+      gameId: "supabase-started-game-1",
+      id: "supabase-section-1",
+      status: "submitted",
+    });
+  });
+
+  it("rejects empty submit participant-section RPC row arrays", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    supabase.rpc = async () => ({ data: [], error: null });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: creatorProfile.accountId,
+          sectionId: "supabase-section-1",
+          entries: [{ rowIndex: 0, value: "brisk" }],
+        }),
+      /Could not submit Multiplayer section: expected exactly one returned row\./,
+    );
+  });
+
+  it("reveals multiplayer batches through Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const revealed = await repository.revealMultiplayerBatch({
+      accountId: creatorProfile.accountId,
+      gameId: "supabase-started-game-1",
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["reveal_multiplayer_batch"]);
+    assert.deepEqual(supabase.rpcParams, [
+      {
+        target_game_id: "supabase-started-game-1",
+      },
+    ]);
+    assert.deepEqual(revealed.phrases, ["Brisk teapot cloud"]);
+  });
+
+  it("rejects empty reveal multiplayer batch RPC row arrays", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    supabase.rpc = async () => ({ data: [], error: null });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: creatorProfile.accountId,
+          gameId: "supabase-started-game-1",
+        }),
+      /Could not reveal Multiplayer batch: expected exactly one returned row\./,
+    );
+  });
+
+  it("lists and marks in-app notifications through Supabase rows", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const notifications = await repository.listInAppNotifications({
+      accountId: creatorProfile.accountId,
+    });
+    await repository.markInAppNotificationRead({
+      accountId: creatorProfile.accountId,
+      notificationId: notifications[0].id,
+    });
+
+    assert.deepEqual(notifications, [
+      {
+        id: "supabase-notification-1",
+        type: "entries_needed",
+        status: "unread",
+        message:
+          "You can submit entries to a batch with @creator-one and @invitee-two.",
+        targetGameId: "supabase-started-game-1",
+      },
+    ]);
+    assert.deepEqual(supabase.tableCalls, [
+      "in_app_notifications",
+      "in_app_notifications",
+    ]);
+    assert.deepEqual(supabase.queryCalls, [
+      {
+        method: "select",
+        projection:
+          "id, notification_type, notification_status, message, target_game_id, created_at",
+        tableName: "in_app_notifications",
+      },
+      {
+        column: "created_at",
+        method: "order",
+        options: { ascending: false },
+        tableName: "in_app_notifications",
+      },
+      {
+        count: 20,
+        method: "limit",
+        tableName: "in_app_notifications",
+      },
+      {
+        method: "update",
+        row: { notification_status: "read" },
+        tableName: "in_app_notifications",
+      },
+      {
+        column: "id",
+        method: "eq",
+        tableName: "in_app_notifications",
+        value: "supabase-notification-1",
+      },
+      {
+        method: "select",
+        projection:
+          "id, notification_type, notification_status, message, target_game_id, created_at",
+        tableName: "in_app_notifications",
+      },
+    ]);
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: creatorProfile.accountId,
+      }),
+      [
+        {
+          id: "supabase-notification-1",
+          type: "entries_needed",
+          status: "read",
+          message:
+            "You can submit entries to a batch with @creator-one and @invitee-two.",
+          targetGameId: "supabase-started-game-1",
+        },
+      ],
+    );
+  });
+
   it("wires app Pending Game creation behind local test and hosted repositories", async () => {
     const repository = createLocalTestPendingGameRepository({
       createPendingGameId: () => "local-pending-game-1",
@@ -1436,8 +1623,21 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
     inviteeProfile,
     gameParticipants: [],
     gameTurns: [],
+    inAppNotifications: [
+      {
+        id: "supabase-notification-1",
+        account_id: creatorProfile.accountId,
+        created_at: "2026-01-01T00:00:00.000Z",
+        message:
+          "You can submit entries to a batch with @creator-one and @invitee-two.",
+        notification_status: "unread",
+        notification_type: "entries_needed",
+        target_game_id: "supabase-started-game-1",
+      },
+    ],
     pendingGame: null,
     participants: [],
+    queryCalls: [],
     submittedEntries: [],
     startedGames: [],
   };
@@ -1449,7 +1649,11 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
     get startedGameRows() {
       return state.startedGames;
     },
+    get queryCalls() {
+      return state.queryCalls;
+    },
     rpcCalls: [],
+    rpcParams: [],
     tableCalls: [],
     from(tableName) {
       assert.ok(
@@ -1459,6 +1663,7 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
           "games",
           "game_turns",
           "game_participants",
+          "in_app_notifications",
           "pending_games",
           "pending_game_participants",
         ].includes(tableName),
@@ -1467,8 +1672,57 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
       return new FakePendingGameQuery(tableName, state);
     },
     async rpc(functionName, params) {
-      assert.equal(functionName, "submit_started_game_turn");
       this.rpcCalls.push(functionName);
+      if (params) {
+        this.rpcParams.push(params);
+      }
+
+      if (functionName === "list_multiplayer_dashboard") {
+        assert.equal(arguments.length, 1);
+        return {
+          data: createFakeMultiplayerDashboard({
+            creatorProfile,
+            inviteeProfile,
+          }),
+          error: null,
+        };
+      }
+
+      if (functionName === "submit_multiplayer_section") {
+        assert.deepEqual(Object.keys(params).sort(), [
+          "submitted_entries",
+          "target_assignment_id",
+        ]);
+        normaliseFakeSubmittedEntries(params.submitted_entries, {
+          rowCount: params.submitted_entries.length,
+        });
+        return {
+          data: [
+            {
+              assignment_id: params.target_assignment_id,
+              game_id: "supabase-started-game-1",
+              status: "submitted",
+            },
+          ],
+          error: null,
+        };
+      }
+
+      if (functionName === "reveal_multiplayer_batch") {
+        assert.deepEqual(Object.keys(params), ["target_game_id"]);
+        return {
+          data: [
+            {
+              game_id: params.target_game_id,
+              phrases: ["Brisk teapot cloud"],
+              revealed: true,
+            },
+          ],
+          error: null,
+        };
+      }
+
+      assert.equal(functionName, "submit_started_game_turn");
 
       const turn = state.gameTurns.find(
         (candidate) => candidate.id === params.target_turn_id,
@@ -1534,15 +1788,55 @@ class FakePendingGameQuery {
   }
 
   update(row) {
+    if (this.tableName === "in_app_notifications") {
+      assert.deepEqual(row, { notification_status: "read" });
+    }
+    this.state.queryCalls.push({
+      method: "update",
+      row,
+      tableName: this.tableName,
+    });
     this.updatedRow = row;
     return this;
   }
 
-  select() {
+  select(projection) {
+    this.state.queryCalls.push({
+      method: "select",
+      projection,
+      tableName: this.tableName,
+    });
+    return this;
+  }
+
+  order(column, options = {}) {
+    this.state.queryCalls.push({
+      column,
+      method: "order",
+      options,
+      tableName: this.tableName,
+    });
+    this.orderBy = { column, ascending: options.ascending !== false };
+    return this;
+  }
+
+  limit(count) {
+    this.state.queryCalls.push({
+      count,
+      method: "limit",
+      tableName: this.tableName,
+    });
+    this.limitCount = count;
     return this;
   }
 
   eq(column, value) {
+    this.state.queryCalls.push({
+      column,
+      method: "eq",
+      tableName: this.tableName,
+      value,
+    });
     this.filters[column] = value;
     return this;
   }
@@ -1562,6 +1856,12 @@ class FakePendingGameQuery {
 
   async #resolveSingle({ allowNull }) {
     const rows = await this.#resolveRows();
+    if (rows.length > 1) {
+      return {
+        data: null,
+        error: { message: "multiple rows returned" },
+      };
+    }
     const row = rows[0] ?? null;
     return {
       data: row,
@@ -1710,6 +2010,36 @@ class FakePendingGameQuery {
         });
     }
 
+    if (this.tableName === "in_app_notifications" && this.updatedRow) {
+      const updatedRows = this.state.inAppNotifications.filter((row) =>
+        matchesFilters(row, this.filters),
+      );
+      this.state.inAppNotifications = this.state.inAppNotifications.map((row) =>
+        matchesFilters(row, this.filters) ? { ...row, ...this.updatedRow } : row,
+      );
+      return updatedRows.map((row) => ({ ...row, ...this.updatedRow }));
+    }
+
+    if (this.tableName === "in_app_notifications") {
+      const rows = this.state.inAppNotifications.filter((row) =>
+        matchesFilters(row, this.filters),
+      );
+      if (this.orderBy) {
+        rows.sort((left, right) => {
+          const direction = this.orderBy.ascending ? 1 : -1;
+          if (left[this.orderBy.column] === right[this.orderBy.column]) {
+            return 0;
+          }
+          return left[this.orderBy.column] < right[this.orderBy.column]
+            ? -direction
+            : direction;
+        });
+      }
+      return typeof this.limitCount === "number"
+        ? rows.slice(0, this.limitCount)
+        : rows;
+    }
+
     if (this.tableName === "pending_game_participants") {
       return this.state.participants.filter(
         (row) => matchesFilters(row, this.filters),
@@ -1753,6 +2083,31 @@ function toStartedParticipantRow(participant, { gameId }) {
     gamer_name: participant.gamer_name,
     avatar_key: participant.avatar_key,
     participant_role: participant.participant_role,
+  };
+}
+
+function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
+  return {
+    awaitingYourEntries: [
+      {
+        id: "supabase-started-game-1",
+        pendingGameId: "supabase-pending-game-1",
+        rowCount: 1,
+        participants: [
+          { handle: creatorProfile.handle },
+          { handle: inviteeProfile.handle },
+        ],
+        currentSection: {
+          id: "supabase-section-1",
+          entryKind: "adjective",
+          sectionCount: 1,
+          sectionIndex: 0,
+          rows: [{ rowIndex: 0, value: "" }],
+        },
+      },
+    ],
+    awaitingOtherPlayerEntries: [],
+    completedBatches: [],
   };
 }
 

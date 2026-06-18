@@ -77,6 +77,26 @@
               </div>
             </div>
           </section>
+          <div class="notification-shell" data-notification-shell hidden>
+            <button
+              class="icon-button notification-button"
+              type="button"
+              aria-expanded="false"
+              aria-controls="notification-panel"
+              data-notification-toggle
+            >
+              <span aria-hidden="true">!</span>
+              <span class="sr-only">Notifications</span>
+            </button>
+            <div
+              class="notification-panel"
+              id="notification-panel"
+              role="region"
+              aria-label="Notifications"
+              data-notification-panel
+              hidden
+            ></div>
+          </div>
           <button
             class="icon-button"
             type="button"

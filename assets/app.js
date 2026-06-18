@@ -58,6 +58,9 @@ const confirmStartAgainButton = document.querySelector("[data-confirm-start-agai
 const cancelStartAgainButton = document.querySelector("[data-cancel-start-again]");
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
+const notificationShell = document.querySelector("[data-notification-shell]");
+const notificationToggle = document.querySelector("[data-notification-toggle]");
+const notificationPanel = document.querySelector("[data-notification-panel]");
 const gamePanel = document.querySelector("[data-game-panel]");
 const progress = document.querySelector("[data-progress]");
 const sectionProgress = document.querySelector("[data-section-progress]");
@@ -130,6 +133,7 @@ const localTestCreatorProfile = localTestProfiles[0];
 const localTestInviteeProfile = localTestProfiles[1];
 const localTestPendingGameRepository = createLocalTestPendingGameRepository({
   createPendingGameId: createLocalTestPendingGameId,
+  failureMode: getLocalTestPendingGameFailureMode(),
   profiles: localTestProfiles,
 });
 let pendingGameRepository = localTestPendingGameRepository;
@@ -142,10 +146,12 @@ let pendingGameRowCountSelect = null;
 let pendingGameStatus = null;
 let pendingGameSummary = null;
 let pendingGameIncomingList = null;
+let multiplayerDashboardMount = null;
 let currentPendingGame = null;
 let createdPendingGames = [];
 let incomingPendingGameInvites = [];
-let activeStartedGameTurns = new Map();
+let multiplayerDashboard = createEmptyMultiplayerDashboard();
+let inAppNotifications = [];
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
@@ -230,6 +236,17 @@ helpToggle.addEventListener("click", () => {
   const isExpanded = helpToggle.getAttribute("aria-expanded") === "true";
   helpToggle.setAttribute("aria-expanded", String(!isExpanded));
   helpPanel.hidden = isExpanded;
+});
+
+notificationToggle.addEventListener("click", () => {
+  const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
+  notificationToggle.setAttribute("aria-expanded", String(!isExpanded));
+  notificationPanel.hidden = isExpanded;
+
+  if (!isExpanded) {
+    renderNotificationDropdown();
+    void markUnreadNotificationsRead();
+  }
 });
 
 rowCountButtons.forEach((button) => {
@@ -425,6 +442,13 @@ function renderAccountShell(shell) {
     shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   emailSignInForm.hidden = shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   signOutButton.hidden = shell.mode !== "signed-in";
+  notificationShell.hidden = shell.mode !== "signed-in";
+  if (shell.mode !== "signed-in") {
+    notificationToggle.setAttribute("aria-expanded", "false");
+    notificationPanel.hidden = true;
+    notificationPanel.replaceChildren();
+  }
+  updateNotificationToggle();
 }
 
 function isLocalTestAuthAvailable() {
@@ -457,6 +481,22 @@ function getLocalTestPrivateFavouritesFailureMode() {
   );
 
   if (failureMode === "remove-fails") {
+    return failureMode;
+  }
+
+  return null;
+}
+
+function getLocalTestPendingGameFailureMode() {
+  if (!isLocalTestAuthAvailable()) {
+    return null;
+  }
+
+  const failureMode = new URLSearchParams(window.location.search).get(
+    "testPendingGame",
+  );
+
+  if (failureMode === "reveal-fails") {
     return failureMode;
   }
 
@@ -562,6 +602,8 @@ function renderPendingGamePanel() {
   ensurePendingGamePanel();
   renderCreatedPendingGames();
   renderIncomingPendingGameInvites();
+  renderMultiplayerDashboardMount();
+  renderNotificationDropdown();
 }
 
 function ensureSaveBatchButton() {
@@ -658,6 +700,9 @@ function ensurePendingGamePanel() {
   pendingGameIncomingList.dataset.pendingGameIncoming = "";
   pendingGameIncomingList.hidden = true;
 
+  multiplayerDashboardMount = document.createElement("div");
+  multiplayerDashboardMount.dataset.multiplayerDashboardMount = "";
+
   heading.append(kicker, title);
   handleLabel.append(pendingGameHandleInput);
   rowCountLabel.append(pendingGameRowCountSelect);
@@ -668,6 +713,7 @@ function ensurePendingGamePanel() {
     pendingGameStatus,
     pendingGameSummary,
     pendingGameIncomingList,
+    multiplayerDashboardMount,
   );
   gamePanel.after(pendingGamePanel);
   return pendingGamePanel;
@@ -681,8 +727,10 @@ function removePendingGamePanel() {
   pendingGameStatus = null;
   pendingGameSummary = null;
   pendingGameIncomingList = null;
+  multiplayerDashboardMount = null;
   currentPendingGame = null;
-  activeStartedGameTurns = new Map();
+  multiplayerDashboard = createEmptyMultiplayerDashboard();
+  inAppNotifications = [];
 }
 
 async function createPendingGameInvite(event) {
@@ -802,9 +850,6 @@ function renderPendingGameCard(
   }
   if (includeStartActions && isPendingGameReadyToStart(pendingGame)) {
     card.append(renderPendingGameStartActions(pendingGame));
-  }
-  if (pendingGame.startedGameId) {
-    card.append(renderStartedGameTurn(pendingGame));
   }
 
   return card;
@@ -968,18 +1013,14 @@ async function startPendingGame(pendingGameId) {
       creatorAccountId: accountShell.accountId,
       pendingGameId,
     });
-    const activeTurn = await pendingGameRepository.loadActiveStartedGameTurn({
-      accountId: accountShell.accountId,
-      gameId: startedGame.id,
-    });
-    activeStartedGameTurns.set(startedGame.id, activeTurn);
     createdPendingGames = upsertPendingGame(
       createdPendingGames,
       createPendingGameFromStartedGame(startedGame),
     );
+    await loadMultiplayerDashboard();
     renderPendingGamePanel();
     pendingGameStatus.textContent =
-      activeTurn
+      multiplayerDashboard.awaitingYourEntries.length > 0
         ? "Game started. Your turn is ready."
         : "Game started. Waiting for another participant.";
   } catch {
@@ -1001,24 +1042,114 @@ function createPendingGameFromStartedGame(startedGame) {
   };
 }
 
-function renderStartedGameTurn(pendingGame) {
-  const activeTurn = activeStartedGameTurns.get(pendingGame.startedGameId);
-  const container = document.createElement("div");
-  container.className = "started-game-turn";
+function renderMultiplayerDashboardMount() {
+  multiplayerDashboardMount.replaceChildren(renderMultiplayerDashboard());
+}
 
-  if (!activeTurn) {
-    const waiting = document.createElement("p");
-    waiting.className = "pending-game-row-count";
-    waiting.textContent = "Waiting for another participant.";
-    container.append(waiting);
-    return container;
+function renderMultiplayerDashboard() {
+  const dashboard = document.createElement("div");
+  dashboard.className = "multiplayer-dashboard";
+  dashboard.dataset.multiplayerDashboard = "";
+  dashboard.replaceChildren(
+    renderMultiplayerBucket({
+      headingText: "Awaiting your entries",
+      items: multiplayerDashboard.awaitingYourEntries,
+      renderItem: renderAwaitingYourEntries,
+    }),
+    renderMultiplayerBucket({
+      headingText: "Awaiting other player entries",
+      items: multiplayerDashboard.awaitingOtherPlayerEntries,
+      renderItem: renderAwaitingOtherPlayerEntries,
+    }),
+    renderMultiplayerBucket({
+      headingText: "Batches completed",
+      items: multiplayerDashboard.completedBatches,
+      renderItem: renderCompletedMultiplayerBatch,
+    }),
+  );
+  return dashboard;
+}
+
+function renderMultiplayerBucket({ headingText, items, renderItem }) {
+  const section = document.createElement("section");
+  section.className = "multiplayer-bucket";
+  const heading = document.createElement("h3");
+  heading.textContent = headingText;
+  section.append(heading);
+  if (items.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "pending-game-row-count";
+    empty.textContent = "Nothing here yet.";
+    section.append(empty);
+    return section;
   }
+  section.append(...items.map(renderItem));
+  return section;
+}
 
+function renderAwaitingYourEntries(gameSummary) {
+  const card = document.createElement("div");
+  card.className = "pending-game-card";
+  card.append(renderMultiplayerParticipantSummary(gameSummary));
+  card.append(renderMultiplayerSectionForm(gameSummary.currentSection));
+  return card;
+}
+
+function renderAwaitingOtherPlayerEntries(gameSummary) {
+  const card = document.createElement("div");
+  card.className = "pending-game-card";
+  card.append(renderMultiplayerParticipantSummary(gameSummary));
+  const waiting = document.createElement("p");
+  waiting.className = "pending-game-row-count";
+  waiting.textContent = "Awaiting other player entries.";
+  card.append(waiting);
+  return card;
+}
+
+function renderCompletedMultiplayerBatch(batchSummary) {
+  const card = document.createElement("div");
+  card.className = "pending-game-card";
+  card.append(renderMultiplayerParticipantSummary(batchSummary));
+  if (!batchSummary.revealed) {
+    const revealButton = document.createElement("button");
+    revealButton.className = "secondary-button";
+    revealButton.type = "button";
+    revealButton.textContent = "Reveal phrases";
+    revealButton.addEventListener("click", () => {
+      void revealMultiplayerBatch(batchSummary.id);
+    });
+    card.append(revealButton);
+    return card;
+  }
+  const heading = document.createElement("h3");
+  heading.textContent = "Your crazy phrases";
+  const list = document.createElement("ol");
+  list.className = "phrase-list";
+  list.replaceChildren(
+    ...batchSummary.phrases.map((phrase) => {
+      const item = document.createElement("li");
+      item.textContent = phrase;
+      return item;
+    }),
+  );
+  card.append(heading, list);
+  return card;
+}
+
+function renderMultiplayerParticipantSummary(batchSummary) {
+  const summary = document.createElement("p");
+  summary.className = "pending-game-row-count";
+  summary.textContent = `Batch with ${batchSummary.participants
+    .map((participant) => `@${participant.handle}`)
+    .join(" and ")}.`;
+  return summary;
+}
+
+function renderMultiplayerSectionForm(currentSection) {
   const form = document.createElement("form");
   form.className = "started-game-turn-form";
-  form.dataset.startedGameTurnForm = "";
   form.addEventListener("submit", (event) => {
-    void submitStartedGameTurn(event, activeTurn);
+    void submitMultiplayerSection(event, currentSection);
   });
 
   const heading = document.createElement("div");
@@ -1026,29 +1157,31 @@ function renderStartedGameTurn(pendingGame) {
 
   const kicker = document.createElement("p");
   kicker.className = "section-kicker";
-  kicker.textContent = `Turn ${activeTurn.turnIndex + 1} of 3`;
+  kicker.textContent =
+    `Section ${currentSection.sectionIndex + 1} of ${currentSection.sectionCount}`;
 
   const title = document.createElement("h3");
-  title.textContent = getStartedGameTurnTitle(activeTurn.entryKind);
+  title.textContent = getMultiplayerSectionTitle(currentSection.entryKind);
 
   const list = document.createElement("div");
   list.className = "started-game-turn-list";
   list.replaceChildren(
-    ...activeTurn.rows.map((row) => renderStartedGameTurnRow(row, activeTurn)),
+    ...currentSection.rows.map((row) =>
+      renderMultiplayerSectionRow(row, currentSection),
+    ),
   );
 
   const submitButton = document.createElement("button");
   submitButton.type = "submit";
   submitButton.className = "primary-button";
-  submitButton.textContent = "Submit turn";
+  submitButton.textContent = "Submit section";
 
   heading.append(kicker, title);
   form.append(heading, list, submitButton);
-  container.append(form);
-  return container;
+  return form;
 }
 
-function renderStartedGameTurnRow(row, activeTurn) {
+function renderMultiplayerSectionRow(row, currentSection) {
   const label = document.createElement("label");
   label.className = "started-game-turn-row";
 
@@ -1060,59 +1193,147 @@ function renderStartedGameTurnRow(row, activeTurn) {
   input.autocomplete = "off";
   input.required = true;
   input.value = row.value;
-  input.dataset.startedGameTurnInput = String(row.rowIndex);
+  input.dataset.multiplayerSectionInput = String(row.rowIndex);
   input.placeholder =
-    activeTurn.entryKind === "adjective" ? "brisk" : "teapot";
+    currentSection.entryKind === "adjective" ? "brisk" : "teapot";
 
   label.append(text, input);
   return label;
 }
 
-async function submitStartedGameTurn(event, activeTurn) {
+function renderNotificationDropdown() {
+  updateNotificationToggle();
+  notificationPanel.replaceChildren(
+    ...inAppNotifications.map((notification) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "notification-item";
+      item.textContent = `${getNotificationMessage(notification)} ${
+        notification.status === "unread" ? "Unread" : "Read"
+      }`;
+      item.addEventListener("click", () => {
+        void markNotificationRead(notification.id);
+      });
+      return item;
+    }),
+  );
+}
+
+function updateNotificationToggle() {
+  const unreadCount = inAppNotifications.filter(
+    (notification) => notification.status === "unread",
+  ).length;
+  const label =
+    unreadCount === 0
+      ? "Notifications"
+      : `Notifications, ${unreadCount} unread`;
+  notificationToggle.setAttribute("aria-label", label);
+  notificationToggle.dataset.unreadCount = String(unreadCount);
+}
+
+function getMultiplayerSectionTitle(entryKind) {
+  return entryKind === "adjective" ? "Fill these adjectives" : "Fill these nouns";
+}
+
+async function submitMultiplayerSection(event, currentSection) {
   event.preventDefault();
-
-  if (accountShell.persistenceAuthority.type !== "account") {
-    return;
-  }
-
   const form = event.currentTarget;
-  const entries = [...form.querySelectorAll("[data-started-game-turn-input]")]
+  const entries = [...form.querySelectorAll("[data-multiplayer-section-input]")]
     .map((input) => ({
-      rowIndex: Number(input.dataset.startedGameTurnInput),
+      rowIndex: Number(input.dataset.multiplayerSectionInput),
       value: input.value,
     }));
 
   pendingGameStatus.textContent = "";
 
   try {
-    await pendingGameRepository.submitStartedGameTurn({
+    await pendingGameRepository.submitMultiplayerSection({
       accountId: accountShell.accountId,
       entries,
-      turnId: activeTurn.id,
+      sectionId: currentSection.id,
     });
-    const nextActiveTurn = await pendingGameRepository.loadActiveStartedGameTurn({
-      accountId: accountShell.accountId,
-      gameId: activeTurn.gameId,
-    });
-    activeStartedGameTurns.set(activeTurn.gameId, nextActiveTurn);
-    renderPendingGamePanel();
-    pendingGameStatus.textContent = nextActiveTurn
-      ? "Turn submitted. Your next turn is ready."
-      : "Turn submitted. Waiting for another participant.";
+    await refreshMultiplayerSurfaces();
   } catch {
-    pendingGameStatus.textContent = "Turn could not be submitted. Try again.";
+    pendingGameStatus.textContent = "Section could not be submitted. Try again.";
   }
 }
 
-function getStartedGameTurnTitle(entryKind) {
-  return entryKind === "adjective" ? "Fill these adjectives" : "Fill these nouns";
+async function revealMultiplayerBatch(gameId) {
+  pendingGameStatus.textContent = "";
+
+  try {
+    const revealed = await pendingGameRepository.revealMultiplayerBatch({
+      accountId: accountShell.accountId,
+      gameId,
+    });
+    multiplayerDashboard.completedBatches = multiplayerDashboard.completedBatches.map(
+      (batch) => batch.id === gameId ? { ...batch, ...revealed } : batch,
+    );
+    renderPendingGamePanel();
+  } catch {
+    try {
+      await loadMultiplayerDashboard();
+      renderPendingGamePanel();
+    } catch {
+      // Keep the existing dashboard visible if recovery loading also fails.
+    }
+    pendingGameStatus.textContent = "Phrases could not be revealed. Try again.";
+  }
+}
+
+async function refreshMultiplayerSurfaces() {
+  await loadMultiplayerDashboard();
+  renderPendingGamePanel();
+}
+
+async function markUnreadNotificationsRead() {
+  await Promise.all(
+    inAppNotifications
+      .filter((notification) => notification.status === "unread")
+      .map((notification) => markNotificationRead(notification.id)),
+  );
+}
+
+async function markNotificationRead(notificationId) {
+  const notification = inAppNotifications.find(
+    (candidate) => candidate.id === notificationId,
+  );
+  if (!notification || notification.status === "read") {
+    return;
+  }
+
+  try {
+    const updatedNotification =
+      typeof pendingGameRepository.markInAppNotificationRead === "function"
+        ? await pendingGameRepository.markInAppNotificationRead({
+            accountId: accountShell.accountId,
+            notificationId,
+          })
+        : { ...notification, status: "read" };
+    inAppNotifications = inAppNotifications.map((candidate) =>
+      candidate.id === notificationId
+        ? { ...candidate, ...updatedNotification, status: "read" }
+        : candidate,
+    );
+    renderNotificationDropdown();
+  } catch {
+    pendingGameStatus.textContent = "Notification could not be updated. Try again.";
+  }
+}
+
+function getNotificationMessage(notification) {
+  return notification.message.replace(
+    /^A batch is complete with (.+)\.$/,
+    "Batch with $1 is now complete and available to reveal.",
+  );
 }
 
 async function loadPendingGameLists() {
   if (accountShell.persistenceAuthority.type !== "account") {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
-    activeStartedGameTurns = new Map();
+    multiplayerDashboard = createEmptyMultiplayerDashboard();
+    inAppNotifications = [];
     return;
   }
 
@@ -1125,33 +1346,39 @@ async function loadPendingGameLists() {
         accountId: accountShell.accountId,
       }),
     ]);
-    await loadActiveStartedGameTurns();
+    await loadMultiplayerDashboard();
   } catch {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
-    activeStartedGameTurns = new Map();
+    multiplayerDashboard = createEmptyMultiplayerDashboard();
+    inAppNotifications = [];
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
 }
 
-async function loadActiveStartedGameTurns() {
-  const startedGames = [
-    ...createdPendingGames,
-    ...incomingPendingGameInvites,
-  ].filter((pendingGame) => pendingGame.startedGameId);
-  const activeTurns = new Map();
+async function loadMultiplayerDashboard() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    multiplayerDashboard = createEmptyMultiplayerDashboard();
+    inAppNotifications = [];
+    return;
+  }
 
-  await Promise.all(
-    startedGames.map(async (pendingGame) => {
-      const activeTurn = await pendingGameRepository.loadActiveStartedGameTurn({
-        accountId: accountShell.accountId,
-        gameId: pendingGame.startedGameId,
-      });
-      activeTurns.set(pendingGame.startedGameId, activeTurn);
+  [multiplayerDashboard, inAppNotifications] = await Promise.all([
+    pendingGameRepository.listMultiplayerDashboard({
+      accountId: accountShell.accountId,
     }),
-  );
+    pendingGameRepository.listInAppNotifications({
+      accountId: accountShell.accountId,
+    }),
+  ]);
+}
 
-  activeStartedGameTurns = activeTurns;
+function createEmptyMultiplayerDashboard() {
+  return {
+    awaitingYourEntries: [],
+    awaitingOtherPlayerEntries: [],
+    completedBatches: [],
+  };
 }
 
 function upsertPendingGame(pendingGames, pendingGame) {
@@ -1643,7 +1870,8 @@ async function applyAccountShell(shell) {
     batchFavourites = [];
     createdPendingGames = [];
     incomingPendingGameInvites = [];
-    activeStartedGameTurns = new Map();
+    multiplayerDashboard = createEmptyMultiplayerDashboard();
+    inAppNotifications = [];
     hidePersistenceRecovery();
   }
 

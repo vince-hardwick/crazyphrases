@@ -921,6 +921,7 @@ describe("Supabase migration surface", () => {
       ["create_started_game_section_assignments", ""],
       ["current_game_section_assignment", "uuid, uuid"],
       ["multiplayer_batch_is_complete", "uuid"],
+      ["render_multiplayer_phrases", "uuid"],
     ]) {
       assert.match(
         migration,
@@ -956,6 +957,10 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /create or replace function public\.list_multiplayer_dashboard\(\)/,
+    );
+    assert.match(
+      migration,
+      /'phrases',\s*case\s+when exists \(\s*select 1\s+from public\.multiplayer_batch_reveals[\s\S]*?then private\.render_multiplayer_phrases\(game_row\.id\)/,
     );
     assert.match(
       migration,

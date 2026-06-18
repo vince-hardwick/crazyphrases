@@ -469,6 +469,67 @@ revoke all on function private.multiplayer_batch_is_complete(uuid)
 revoke all on function private.multiplayer_batch_is_complete(uuid)
   from authenticated;
 
+create or replace function private.render_multiplayer_phrases(
+  target_game_id uuid
+)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with submitted_sections as (
+    select
+      assignment.id,
+      assignment.slot_id,
+      assignment.row_count,
+      case assignment.slot_id
+        when 'adjective' then 0
+        when 'noun-1' then 1
+        when 'noun-2' then 2
+      end as slot_render_order
+    from public.game_section_assignments as assignment
+    where assignment.game_id = target_game_id
+      and assignment.status = 'submitted'
+  ),
+  rendered_rows as (
+    select
+      row_number.row_index,
+      pg_catalog.trim(
+        pg_catalog.regexp_replace(
+          string_agg(entry.value, ' ' order by section.slot_render_order),
+          '\s+',
+          ' ',
+          'g'
+        )
+      ) as phrase
+    from submitted_sections as section
+    cross join generate_series(
+      0,
+      section.row_count - 1
+    ) as row_number(row_index)
+    join public.game_section_entries as entry
+      on entry.assignment_id = section.id
+     and entry.row_index = row_number.row_index
+    group by row_number.row_index
+  )
+  select coalesce(
+    pg_catalog.jsonb_agg(
+      upper(substr(phrase, 1, 1)) || substr(phrase, 2)
+      order by row_index
+    ),
+    '[]'::jsonb
+  )
+  from rendered_rows;
+$$;
+
+revoke all on function private.render_multiplayer_phrases(uuid)
+  from public;
+revoke all on function private.render_multiplayer_phrases(uuid)
+  from anon;
+revoke all on function private.render_multiplayer_phrases(uuid)
+  from authenticated;
+
 create or replace function public.list_multiplayer_dashboard()
 returns jsonb
 language plpgsql
@@ -618,7 +679,18 @@ begin
           where reveal.game_id = game_row.id
             and reveal.participant_profile_id =
               account_participation.profile_id
-        )
+        ),
+        'phrases', case
+          when exists (
+            select 1
+            from public.multiplayer_batch_reveals as reveal
+            where reveal.game_id = game_row.id
+              and reveal.participant_profile_id =
+                account_participation.profile_id
+          )
+          then private.render_multiplayer_phrases(game_row.id)
+          else null
+        end
       ) as item,
       max(assignment.submitted_at) as completed_at
     from account_participation
@@ -900,7 +972,6 @@ set search_path = ''
 as $$
 declare
   caller_profile_id uuid;
-  rendered_phrases jsonb;
 begin
   select participant.profile_id
     into caller_profile_id
@@ -917,48 +988,6 @@ begin
     raise exception 'Multiplayer batch is not complete.';
   end if;
 
-  with submitted_sections as (
-    select
-      assignment.id,
-      assignment.slot_id,
-      assignment.row_count,
-      case assignment.slot_id
-        when 'adjective' then 0
-        when 'noun-1' then 1
-        when 'noun-2' then 2
-      end as slot_render_order
-    from public.game_section_assignments as assignment
-    where assignment.game_id = target_game_id
-      and assignment.status = 'submitted'
-  ),
-  rendered_rows as (
-    select
-      row_number.row_index,
-      pg_catalog.trim(
-        pg_catalog.regexp_replace(
-          string_agg(entry.value, ' ' order by section.slot_render_order),
-          '\s+',
-          ' ',
-          'g'
-        )
-      ) as phrase
-    from submitted_sections as section
-    cross join generate_series(
-      0,
-      section.row_count - 1
-    ) as row_number(row_index)
-    join public.game_section_entries as entry
-      on entry.assignment_id = section.id
-     and entry.row_index = row_number.row_index
-    group by row_number.row_index
-  )
-  select pg_catalog.jsonb_agg(
-      upper(substr(phrase, 1, 1)) || substr(phrase, 2)
-      order by row_index
-    )
-    into rendered_phrases
-  from rendered_rows;
-
   insert into public.multiplayer_batch_reveals (
     game_id,
     participant_profile_id
@@ -972,7 +1001,7 @@ begin
   return query
   select
     target_game_id,
-    coalesce(rendered_phrases, '[]'::jsonb),
+    private.render_multiplayer_phrases(target_game_id),
     true;
 end;
 $$;

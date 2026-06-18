@@ -528,6 +528,10 @@ describe("Pending Game repository", () => {
       accountId: creatorProfile.accountId,
     });
     assert.equal(afterInviteeReveal.completedBatches[0].revealed, true);
+    assert.deepEqual(afterInviteeReveal.completedBatches[0].phrases.slice(0, 2), [
+      "Brisk-0 noun-a-0 noun-b-0",
+      "Brisk-1 noun-a-1 noun-b-1",
+    ]);
     assert.equal(afterCreatorReveal.completedBatches[0].revealed, false);
   });
 
@@ -1427,6 +1431,9 @@ describe("Pending Game repository", () => {
       dashboard.awaitingYourEntries[0].currentSection.entryKind,
       "adjective",
     );
+    assert.deepEqual(dashboard.completedBatches[0].phrases, [
+      "Brisk teapot cloud",
+    ]);
   });
 
   it("submits participant sections through Supabase RPC", async () => {
@@ -2107,7 +2114,19 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
       },
     ],
     awaitingOtherPlayerEntries: [],
-    completedBatches: [],
+    completedBatches: [
+      {
+        id: "supabase-completed-game-1",
+        pendingGameId: "supabase-completed-pending-game-1",
+        rowCount: 1,
+        participants: [
+          { handle: creatorProfile.handle },
+          { handle: inviteeProfile.handle },
+        ],
+        phrases: ["Brisk teapot cloud"],
+        revealed: true,
+      },
+    ],
   };
 }
 

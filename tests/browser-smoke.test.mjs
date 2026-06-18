@@ -312,7 +312,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("lets the creator start an accepted Pending Game and submit the first active turn", async () => {
+  it("lets multiplayer participants submit sections and reveal independently", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -346,23 +346,97 @@ describe("solo browser smoke", () => {
 
     await assertTextVisible(page, "Game started. Your turn is ready.");
     await assertTextVisible(page, "Started");
-    await assertTextVisible(page, "Fill these adjectives");
-    for (let rowIndex = 0; rowIndex < 15; rowIndex += 1) {
-      await page
-        .locator(`[data-started-game-turn-input="${rowIndex}"]`)
-        .fill(`brisk-${rowIndex}`);
-    }
-    await page.getByRole("button", { name: "Submit turn" }).click();
-    await assertTextVisible(page, "Turn submitted. Waiting for another participant.");
+    await assertTextVisible(page, "Awaiting your entries");
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
-    await assertTextVisible(page, "Fill these nouns");
+    await assertTextVisible(page, "Awaiting your entries");
+    await submitMultiplayerSection(page, "teapot");
+    await assertTextVisible(page, "Awaiting your entries");
+    assert.equal(
+      await page
+        .getByText(
+          "Batch with @player-test-account and @invitee-two is now complete and available to reveal.",
+        )
+        .count(),
+      0,
+    );
+    await submitMultiplayerSection(page, "ladder");
+    await assertTextVisible(page, "Awaiting other player entries");
     await assertNoHorizontalOverflow(page);
     assert.equal(
       await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
       0,
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await submitMultiplayerSection(page, "brisk");
+    await assertTextVisible(page, "Batches completed");
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+    await assertTextVisible(page, "Your crazy phrases");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 2 unread" })
+        .isVisible(),
+      true,
+    );
+    await page.getByRole("button", { name: "Notifications" }).click();
+    await assertTextVisible(
+      page,
+      "Batch with @player-test-account and @invitee-two is now complete and available to reveal.",
+    );
+    await assertTextVisible(page, "Read");
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+    await assertTextVisible(page, "Your crazy phrases");
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows a recoverable error when multiplayer reveal fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("10");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await submitMultiplayerSection(page, "teapot");
+    await submitMultiplayerSection(page, "ladder");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await submitMultiplayerSection(page, "brisk");
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+
+    await assertTextVisible(page, "Phrases could not be revealed. Try again.");
+    assert.equal(
+      await page.getByRole("button", { name: "Reveal phrases" }).isVisible(),
+      true,
     );
     assertNoConsoleErrors();
   });
@@ -747,6 +821,21 @@ async function fillActiveSection(
   await page.getByRole("button", { name: /Next section|Reveal phrases/ }).click();
 }
 
+async function submitMultiplayerSection(page, word) {
+  await page.locator("[data-multiplayer-section-input='0']").waitFor({
+    state: "visible",
+  });
+
+  const inputCount = await page.locator("[data-multiplayer-section-input]").count();
+  for (let rowIndex = 0; rowIndex < inputCount; rowIndex += 1) {
+    await page
+      .locator(`[data-multiplayer-section-input="${rowIndex}"]`)
+      .fill(`${word}-${rowIndex}`);
+  }
+
+  await page.getByRole("button", { name: "Submit section" }).click();
+}
+
 async function waitForDice(page) {
   await page.locator("[data-dice-row-index='0']").waitFor({ state: "visible" });
   await page.waitForFunction(
@@ -782,7 +871,15 @@ async function assertNoHorizontalOverflow(page) {
 }
 
 async function assertTextVisible(page, text) {
-  assert.equal(await page.getByText(text).first().isVisible(), true);
+  const matches = page.getByText(text);
+  const count = await matches.count();
+  for (let index = 0; index < count; index += 1) {
+    if (await matches.nth(index).isVisible()) {
+      return;
+    }
+  }
+
+  assert.fail(`Expected visible text: ${text}`);
 }
 
 async function assertTextHidden(page, text) {

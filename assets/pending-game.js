@@ -5,6 +5,7 @@ export function createTestPendingGameRepository({
   createPendingGameId = defaultCreatePendingGameId,
   createStartedGameId = defaultCreateStartedGameId,
   createNotificationId = defaultCreateNotificationId,
+  failureMode = null,
   profiles = [],
 } = {}) {
   const normalisedProfiles = profiles.map(normaliseProfile);
@@ -315,6 +316,10 @@ export function createTestPendingGameRepository({
     async revealMultiplayerBatch({ accountId, gameId }) {
       assertAccountId(accountId);
       assertText(gameId, "A Started Game id is required.");
+
+      if (failureMode === "reveal-fails") {
+        throw new Error("Could not reveal Multiplayer batch.");
+      }
 
       const profile = profilesByAccountId.get(accountId);
       if (
@@ -1215,7 +1220,8 @@ function createCompletedBatches({
           participants: pendingGame.participants.map(
             toMultiplayerParticipantDto,
           ),
-          revealed: isBatchRevealed({
+          ...createCompletedBatchRevealSummary({
+            assignedSections,
             gameId: pendingGame.startedGameId,
             profileId: profile.profileId,
             revealedMultiplayerBatches,
@@ -1247,6 +1253,31 @@ function findCurrentAssignedSection({
 function toMultiplayerParticipantDto(participant) {
   return {
     handle: participant.handle,
+  };
+}
+
+function createCompletedBatchRevealSummary({
+  assignedSections,
+  gameId,
+  profileId,
+  revealedMultiplayerBatches,
+}) {
+  const revealed = isBatchRevealed({
+    gameId,
+    profileId,
+    revealedMultiplayerBatches,
+  });
+
+  return {
+    revealed,
+    ...(revealed
+      ? {
+          phrases: renderMultiplayerPhrases({
+            assignedSections,
+            gameId,
+          }),
+        }
+      : {}),
   };
 }
 
@@ -1629,7 +1660,18 @@ function recoverMultiplayerBatch(
           ),
         }
       : {}),
-    ...(includeRevealState ? { revealed: batchRow?.revealed === true } : {}),
+    ...(includeRevealState
+      ? {
+          revealed: batchRow?.revealed === true,
+          ...(batchRow?.revealed === true
+            ? {
+                phrases: Array.isArray(batchRow?.phrases)
+                  ? batchRow.phrases
+                  : [],
+              }
+            : {}),
+        }
+      : {}),
   };
 }
 

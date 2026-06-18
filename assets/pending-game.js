@@ -4,18 +4,22 @@ const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
 export function createTestPendingGameRepository({
   createPendingGameId = defaultCreatePendingGameId,
   createStartedGameId = defaultCreateStartedGameId,
+  createNotificationId = defaultCreateNotificationId,
   profiles = [],
 } = {}) {
+  const normalisedProfiles = profiles.map(normaliseProfile);
   const profilesByAccountId = new Map(
-    profiles.map((profile) => [profile.accountId, normaliseProfile(profile)]),
+    normalisedProfiles.map((profile) => [profile.accountId, profile]),
   );
   const profilesByHandle = new Map(
-    profiles.map((profile) => [
-      normaliseHandle(profile.handle),
-      normaliseProfile(profile),
-    ]),
+    normalisedProfiles.map((profile) => [profile.handle, profile]),
+  );
+  const accountIdsByProfileId = new Map(
+    normalisedProfiles.map((profile) => [profile.profileId, profile.accountId]),
   );
   const pendingGames = [];
+  const assignedSections = [];
+  const inAppNotifications = [];
   const startedTurns = [];
 
   return {
@@ -202,8 +206,42 @@ export function createTestPendingGameRepository({
       });
 
       startedTurns.push(...createStartedGameTurns({ pendingGame, startedGame }));
+      assignedSections.push(
+        ...createStartedGameAssignedSections({ pendingGame, startedGame }),
+      );
+      inAppNotifications.push(
+        ...createGameStartedNotifications({
+          accountIdsByProfileId,
+          createNotificationId,
+          participants: pendingGame.participants,
+          startedGame,
+        }),
+      );
 
       return startedGame;
+    },
+
+    async listMultiplayerDashboard({ accountId }) {
+      assertAccountId(accountId);
+
+      const profile = profilesByAccountId.get(accountId);
+      if (!profile) {
+        return createEmptyMultiplayerDashboard();
+      }
+
+      return createMultiplayerDashboard({
+        assignedSections,
+        pendingGames,
+        profile,
+      });
+    },
+
+    async listInAppNotifications({ accountId }) {
+      assertAccountId(accountId);
+
+      return inAppNotifications
+        .filter((notification) => notification.accountId === accountId)
+        .map(toNotificationDto);
     },
 
     async loadActiveStartedGameTurn({ accountId, gameId }) {
@@ -746,6 +784,67 @@ function createStartedGameTurns({ pendingGame, startedGame }) {
   ];
 }
 
+function createStartedGameAssignedSections({ pendingGame, startedGame }) {
+  const creator = pendingGame.participants.find(
+    (participant) => participant.role === "creator",
+  );
+  const invitee = pendingGame.participants.find(
+    (participant) => participant.role === "invitee",
+  );
+
+  return [
+    createAssignedSection({
+      id: `${startedGame.id}-section-creator-1`,
+      entryKind: "adjective",
+      gameId: startedGame.id,
+      participantProfileId: creator.profileId,
+      participantSectionIndex: 0,
+      rowCount: pendingGame.rowCount,
+      slotId: "adjective",
+    }),
+    createAssignedSection({
+      id: `${startedGame.id}-section-invitee-1`,
+      entryKind: "noun",
+      gameId: startedGame.id,
+      participantProfileId: invitee.profileId,
+      participantSectionIndex: 0,
+      rowCount: pendingGame.rowCount,
+      slotId: "noun-1",
+    }),
+    createAssignedSection({
+      id: `${startedGame.id}-section-invitee-2`,
+      entryKind: "noun",
+      gameId: startedGame.id,
+      participantProfileId: invitee.profileId,
+      participantSectionIndex: 1,
+      rowCount: pendingGame.rowCount,
+      slotId: "noun-2",
+    }),
+  ];
+}
+
+function createAssignedSection({
+  entryKind,
+  gameId,
+  id,
+  participantProfileId,
+  participantSectionIndex,
+  rowCount,
+  slotId,
+}) {
+  return {
+    id,
+    entryKind,
+    gameId,
+    participantProfileId,
+    participantSectionIndex,
+    rowCount,
+    slotId,
+    status: "active",
+    entries: [],
+  };
+}
+
 function createStartedGameTurnDto(turn) {
   return {
     id: turn.id,
@@ -758,6 +857,136 @@ function createStartedGameTurnDto(turn) {
       rowIndex,
       value: "",
     })),
+  };
+}
+
+function createGameStartedNotifications({
+  accountIdsByProfileId,
+  createNotificationId,
+  participants,
+  startedGame,
+}) {
+  const message = createParticipantNotificationMessage({
+    participants,
+    text: "You can submit entries to a batch with",
+  });
+
+  return participants.map((participant) => ({
+    id: createNotificationId(),
+    accountId: accountIdsByProfileId.get(participant.profileId),
+    createdAt: new Date(0).toISOString(),
+    message,
+    status: "unread",
+    targetGameId: startedGame.id,
+    type: "entries_needed",
+  }));
+}
+
+function createParticipantNotificationMessage({ participants, text }) {
+  const handles = participants.map((participant) => `@${participant.handle}`);
+
+  if (handles.length === 1) {
+    return `${text} ${handles[0]}.`;
+  }
+
+  return `${text} ${handles.slice(0, -1).join(", ")} and ${handles.at(-1)}.`;
+}
+
+function createEmptyMultiplayerDashboard() {
+  return {
+    awaitingYourEntries: [],
+    awaitingOtherPlayerEntries: [],
+    completedBatches: [],
+  };
+}
+
+function createMultiplayerDashboard({ assignedSections, pendingGames, profile }) {
+  return {
+    awaitingYourEntries: createCurrentSectionBatches({
+      assignedSections,
+      pendingGames,
+      profile,
+    }),
+    awaitingOtherPlayerEntries: [],
+    completedBatches: [],
+  };
+}
+
+function createCurrentSectionBatches({ assignedSections, pendingGames, profile }) {
+  const currentSectionsByGame = new Map();
+  const sectionsForProfile = assignedSections
+    .filter(
+      (section) =>
+        section.participantProfileId === profile.profileId &&
+        section.status === "active",
+    )
+    .toSorted(
+      (left, right) =>
+        left.participantSectionIndex - right.participantSectionIndex,
+    );
+
+  for (const section of sectionsForProfile) {
+    if (!currentSectionsByGame.has(section.gameId)) {
+      currentSectionsByGame.set(section.gameId, section);
+    }
+  }
+
+  return Array.from(currentSectionsByGame.values()).flatMap((section) => {
+    const pendingGame = pendingGames.find(
+      (candidate) => candidate.startedGameId === section.gameId,
+    );
+    if (!pendingGame) {
+      return [];
+    }
+
+    return [
+      {
+        id: section.gameId,
+        pendingGameId: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        participants: pendingGame.participants.map(toMultiplayerParticipantDto),
+        currentSection: createCurrentSectionDto(section, {
+          sectionCount: assignedSections.filter(
+            (candidate) =>
+              candidate.gameId === section.gameId &&
+              candidate.participantProfileId === section.participantProfileId,
+          ).length,
+        }),
+      },
+    ];
+  });
+}
+
+function toMultiplayerParticipantDto(participant) {
+  return {
+    handle: participant.handle,
+  };
+}
+
+function createCurrentSectionDto(section, { sectionCount }) {
+  const entriesByRowIndex = new Map(
+    section.entries.map((entry) => [entry.rowIndex, entry.value]),
+  );
+
+  return {
+    id: section.id,
+    entryKind: section.entryKind,
+    sectionIndex: section.participantSectionIndex,
+    sectionCount,
+    rows: Array.from({ length: section.rowCount }, (_, rowIndex) => ({
+      rowIndex,
+      value: entriesByRowIndex.get(rowIndex) ?? "",
+    })),
+  };
+}
+
+function toNotificationDto(notification) {
+  return {
+    id: notification.id,
+    type: notification.type,
+    status: notification.status,
+    message: notification.message,
+    targetGameId: notification.targetGameId,
   };
 }
 
@@ -856,6 +1085,10 @@ function defaultCreatePendingGameId() {
 
 function defaultCreateStartedGameId() {
   return globalThis.crypto?.randomUUID?.() ?? `started-game-${Date.now()}`;
+}
+
+function defaultCreateNotificationId() {
+  return globalThis.crypto?.randomUUID?.() ?? `notification-${Date.now()}`;
 }
 
 function recoverProfile(row) {

@@ -308,6 +308,104 @@ describe("Pending Game repository", () => {
     assert.equal(Array.isArray(startedGame.setup.slotOrder), false);
   });
 
+  it("starts accepted Games with participant-local current sections and entry notifications", async () => {
+    const creatorProfile = createPlayerTestCreatorProfile();
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const creatorDashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    const inviteeDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    const blankRows = Array.from({ length: 10 }, (_, rowIndex) => ({
+      rowIndex,
+      value: "",
+    }));
+
+    assert.equal(creatorDashboard.awaitingYourEntries.length, 1);
+    assert.equal(inviteeDashboard.awaitingYourEntries.length, 1);
+    assert.equal(creatorDashboard.awaitingOtherPlayerEntries.length, 0);
+    assert.equal(inviteeDashboard.awaitingOtherPlayerEntries.length, 0);
+    assert.equal(creatorDashboard.completedBatches.length, 0);
+    assert.equal(inviteeDashboard.completedBatches.length, 0);
+    assert.deepEqual(
+      creatorDashboard.awaitingYourEntries[0].currentSection,
+      {
+        id: "started-game-1-section-creator-1",
+        entryKind: "adjective",
+        sectionIndex: 0,
+        sectionCount: 1,
+        rows: blankRows,
+      },
+    );
+    assert.deepEqual(
+      inviteeDashboard.awaitingYourEntries[0].currentSection,
+      {
+        id: "started-game-1-section-invitee-1",
+        entryKind: "noun",
+        sectionIndex: 0,
+        sectionCount: 2,
+        rows: blankRows,
+      },
+    );
+    for (const dashboard of [creatorDashboard, inviteeDashboard]) {
+      const dashboardJson = JSON.stringify(dashboard);
+      assert.equal(dashboardJson.includes(creatorProfile.accountId), false);
+      assert.equal(dashboardJson.includes(inviteeProfile.accountId), false);
+    }
+
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: creatorProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-1",
+          type: "entries_needed",
+          status: "unread",
+          message:
+            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+      ],
+    );
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-2",
+          type: "entries_needed",
+          status: "unread",
+          message:
+            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+      ],
+    );
+  });
+
   it("loads the active Started Game Turn for the assigned participant", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1385,4 +1483,20 @@ function matchesFilters(row, filters) {
   return Object.entries(filters).every(([column, value]) =>
     value instanceof Set ? value.has(row[column]) : row[column] === value,
   );
+}
+
+function createSequenceId(prefix) {
+  let sequence = 0;
+  return () => {
+    sequence += 1;
+    return `${prefix}-${sequence}`;
+  };
+}
+
+function createPlayerTestCreatorProfile() {
+  return {
+    ...creatorProfile,
+    handle: "player-test-account",
+    gamerName: "Player Test Account",
+  };
 }

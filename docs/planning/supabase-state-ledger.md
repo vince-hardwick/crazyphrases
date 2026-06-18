@@ -48,6 +48,22 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260618081517` | `start_pending_game_foundation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260618102626` | `started_game_turn_submission` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 
+## Pending Hosted Migration Preconditions
+
+As of the Task 7 source closeout for the ADR 0015 participant-section
+multiplayer foundation, the source migration
+`supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`
+has not been applied to hosted Supabase, and no `dev`, `test`, or production
+deployment has been triggered for that foundation.
+
+Before hosted application, follow
+`docs/runbooks/supabase-auth-and-postgres.md`: verify that no meaningful legacy
+Started Game Turn submissions exist in hosted `public.game_turns` or
+`public.game_entries`, get explicit owner approval for the live backend
+mutation, apply the migration through the approved route, then record the dated
+hosted migration, schema verification, smoke, cleanup, and deployment evidence
+in this ledger.
+
 ## Schema Verification Summary
 
 ### Signed-In Current Games

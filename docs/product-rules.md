@@ -342,11 +342,15 @@ the invited participant's response state. Signed-in invitees can see incoming
 Pending Game invites for their Account Profile, accept an invite, or decline an
 invite. Once every invited human participant accepts, the Game Creator can start
 the Pending Game and see that the Game shell has started. Decline cancels the
-Pending Game in the MVP. The current MVP invite UI still does not add invite
-expiry, creator cancellation UI, Reveal, Share Consent, friends, nudges, or
-public discovery. The historical first Started Game turn-submission slice added
-global active Turn storage and submission only; future multiplayer execution is
-governed by the participant-section model in ADR 0015.
+Pending Game in the MVP. The source-controlled participant-section foundation
+for ADR 0015 lets signed-in participants submit their own assigned sections,
+wait for other participant entries, receive in-app notifications, and reveal a
+completed multiplayer batch for themselves after all sections are submitted.
+The current MVP invite UI still does not add invite expiry, creator
+cancellation UI, Share Consent, friends, nudges, or public discovery. The
+historical first Started Game turn-submission slice added global active Turn
+storage and submission only; current multiplayer execution is governed by the
+participant-section model in ADR 0015.
 
 ### Nudges
 

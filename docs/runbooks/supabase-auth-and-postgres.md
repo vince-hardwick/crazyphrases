@@ -565,6 +565,21 @@ from the historical Turn model into participant sections; do not accept the
 source-only active assignment and `entries_needed` notification backfill as a
 complete migration of submitted legacy data.
 
+Local source verification for the participant-section migration and browser
+surface was completed on 2026-06-18 during Task 7 closeout. Plain `node` and
+`npm` were unavailable on the Codex sandbox `PATH`, so verification used the
+documented bundled Node executable at
+`C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe`.
+Targeted results were `tests/pending-game.test.mjs` 37/37 passing,
+`tests/supabase-migration-surface.test.mjs` 13/13 passing, and
+`tests/browser-smoke.test.mjs` 13/13 passing. `npm test` itself did not run
+because `npm` was unavailable; the equivalent `node.exe --test` command for
+the package script passed 141/141 tests.
+
+Hosted application has not occurred as part of the source-controlled closeout;
+do not record hosted evidence until the migration has been applied after owner
+approval and the ledger has dated hosted validation output.
+
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
 persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
@@ -614,20 +629,20 @@ config creates a Supabase client. Local localhost smoke uses
 and signed-out anonymous play cannot reach Pending Game creation or invite
 responses.
 
-The current browser UI creates Pending Games and exposes response visibility for
-created and incoming invites. It lets the Game Creator start a fully accepted
-Pending Game, see that the Game shell has started, load the current Account's
-active Started Game Turn, and submit one complete Turn. Turn submission stores
-Entries and advances availability only; it does not configure expiry, expose
-creator cancellation UI, reveal a batch, request Share Consent, manage friends,
-send nudges, or publish to discovery surfaces.
+The current source-controlled browser UI creates Pending Games, exposes response
+visibility for created and incoming invites, lets the Game Creator start a fully
+accepted Pending Game, and renders ADR 0015 participant-section Multiplayer
+buckets for signed-in participants. The browser calls the repository methods
+for dashboard reads, participant-section submission, participant-scoped Reveal,
+notification listing, and notification read-status updates. It does not
+configure expiry, expose creator cancellation UI, request Share Consent, manage
+friends, send nudges, or publish to discovery surfaces.
 
 As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
-for future multiplayer work. The source-controlled `game_turns` and
-`submit_started_game_turn` surface remains historical implementation evidence,
-but future Reveal, completion, and notification work should use the
-participant-section execution model instead of extending the global Turn queue.
-The source-controlled Supabase participant-section surface is now
+for multiplayer work. The source-controlled `game_turns` and
+`submit_started_game_turn` surface remains historical implementation evidence;
+do not extend the global Turn queue for Reveal, completion, or notifications.
+The source-controlled Supabase participant-section surface is
 `supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`;
 hosted browser wiring should use its three public RPCs rather than direct
 section-entry table writes, and should treat direct notification table updates

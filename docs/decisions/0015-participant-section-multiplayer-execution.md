@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted. Implementation is pending.
+Accepted. Source-controlled implementation is complete. Hosted Supabase
+migration application, deployment, and hosted smoke validation are pending
+explicit owner approval.
 
 ## Context
 

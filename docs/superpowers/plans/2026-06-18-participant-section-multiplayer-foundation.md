@@ -1,6 +1,17 @@
 # Participant-Section Multiplayer Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** Historical/source-controlled complete as of 2026-06-18. Do not
+> execute this as an active source plan. Hosted Supabase migration application,
+> `dev` deployment, hosted schema verification, and hosted write/cleanup smoke
+> remain pending explicit owner approval under
+> `docs/runbooks/supabase-auth-and-postgres.md`.
+>
+> **For provenance:** This plan was originally executable with
+> superpowers:subagent-driven-development or superpowers:executing-plans. Future
+> agents should use `docs/product-rules.md`, ADR 0015,
+> `docs/runbooks/supabase-auth-and-postgres.md`,
+> `docs/planning/supabase-state-ledger.md`, and `docs/backlog.md` as current
+> authority.
 
 **Goal:** Replace global Started Game Turn sequencing with participant-local section queues, completion-gated Reveal, and durable in-app notification foundation for signed-in 2-player multiplayer.
 
@@ -1409,7 +1420,7 @@ git commit -m "Render participant section multiplayer UI"
 - Modify: `docs/superpowers/README.md`
 - Modify: `docs/superpowers/plans/2026-06-18-participant-section-multiplayer-foundation.md`
 
-- [ ] **Step 1: Update durable docs**
+- [x] **Step 1: Update durable docs**
 
 Record:
 
@@ -1419,7 +1430,7 @@ Record:
 - any follow-up deferrals in `docs/backlog.md`;
 - hosted migration/deployment evidence in `docs/planning/supabase-state-ledger.md` only after hosted validation occurs.
 
-- [ ] **Step 2: Run targeted tests**
+- [x] **Step 2: Run targeted tests**
 
 Run:
 
@@ -1431,7 +1442,13 @@ node --test tests/browser-smoke.test.mjs
 
 Expected: all targeted tests PASS.
 
-- [ ] **Step 3: Run full local suite**
+Actual on 2026-06-18: plain `node` was unavailable on the Codex sandbox `PATH`,
+so the documented bundled Node executable was used.
+`tests/pending-game.test.mjs` passed 37/37 tests,
+`tests/supabase-migration-surface.test.mjs` passed 13/13 tests, and
+`tests/browser-smoke.test.mjs` passed 13/13 tests.
+
+- [x] **Step 3: Run full local suite**
 
 Run:
 
@@ -1441,7 +1458,11 @@ npm test
 
 Expected: all suites PASS with no unexpected warnings.
 
-- [ ] **Step 4: Inspect diff and whitespace**
+Actual on 2026-06-18: plain `npm` was unavailable on the Codex sandbox `PATH`,
+so `npm test` did not run. The package script is `node --test`; the equivalent
+bundled `node.exe --test` command passed 141/141 tests.
+
+- [x] **Step 4: Inspect diff and whitespace**
 
 Run:
 
@@ -1452,14 +1473,18 @@ git diff --stat
 
 Expected: no whitespace errors. LF/CRLF warnings are acceptable if they match the repo's existing Windows behaviour.
 
-- [ ] **Step 5: Commit docs and closeout**
+Actual on 2026-06-18: `git diff --check` reported no whitespace errors and
+only the existing Windows LF-to-CRLF working-copy warnings. `git diff --stat`
+showed documentation-only closeout changes.
+
+- [x] **Step 5: Commit docs and closeout**
 
 ```powershell
 git add docs/product-rules.md docs/runbooks/supabase-auth-and-postgres.md docs/planning/supabase-state-ledger.md docs/backlog.md docs/superpowers/README.md docs/superpowers/plans/2026-06-18-participant-section-multiplayer-foundation.md
 git commit -m "Document participant section multiplayer foundation"
 ```
 
-- [ ] **Step 6: Stop before hosted mutation**
+- [x] **Step 6: Stop before hosted mutation**
 
 Do not apply hosted Supabase migrations, deploy to `dev`, or run hosted write smokes without explicit owner approval. Hosted migration application is a live backend mutation under `docs/runbooks/supabase-auth-and-postgres.md`.
 

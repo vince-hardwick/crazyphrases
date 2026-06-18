@@ -24,6 +24,14 @@ const inviteeProfile = {
   avatarKey: "paper",
 };
 
+const otherCreatorProfile = {
+  accountId: "other-creator-auth-account",
+  profileId: "other-creator-profile-id",
+  handle: "other-creator",
+  gamerName: "Other Creator",
+  avatarKey: "moon",
+};
+
 describe("Pending Game repository", () => {
   it("creates a browser-safe Pending Game from a handle invite", async () => {
     const repository = createTestPendingGameRepository({
@@ -244,6 +252,165 @@ describe("Pending Game repository", () => {
       },
     ]);
     assert.equal(JSON.stringify(createdGames).includes("auth-account"), false);
+  });
+
+  it("starts an accepted Pending Game as a browser-safe Started Game", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    assert.deepEqual(startedGame, {
+      id: "started-game-1",
+      pendingGameId: "pending-game-1",
+      status: "started",
+      templateId: "default-adjective-noun-noun",
+      rowCount: 10,
+      participants: [
+        {
+          role: "creator",
+          profileId: "creator-profile-id",
+          handle: "creator-one",
+          gamerName: "Creator One",
+          avatarKey: "spark",
+        },
+        {
+          role: "invitee",
+          profileId: "invitee-profile-id",
+          handle: "invitee-two",
+          gamerName: "Invitee Two",
+          avatarKey: "paper",
+        },
+      ],
+      setup: {
+        slotAllocation: "resolved",
+        slotOrder: "resolved",
+      },
+    });
+    assert.equal(JSON.stringify(startedGame).includes("auth-account"), false);
+    assert.equal(Array.isArray(startedGame.setup.slotAllocation), false);
+    assert.equal(Array.isArray(startedGame.setup.slotOrder), false);
+  });
+
+  it("rejects starting a Pending Game before invitee acceptance", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+
+    await assert.rejects(
+      () =>
+        repository.startPendingGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /ready to start/i,
+    );
+  });
+
+  it("rejects starting a cancelled Pending Game", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.declinePendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    await assert.rejects(
+      () =>
+        repository.startPendingGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /ready to start/i,
+    );
+  });
+
+  it("rejects starting another creator's Pending Game", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      profiles: [creatorProfile, inviteeProfile, otherCreatorProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    await assert.rejects(
+      () =>
+        repository.startPendingGame({
+          creatorAccountId: otherCreatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /ready to start/i,
+    );
+  });
+
+  it("rejects starting the same Pending Game twice", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    await assert.rejects(
+      () =>
+        repository.startPendingGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /ready to start/i,
+    );
   });
 
   it("rejects an unknown invitee Handle", async () => {
@@ -526,6 +693,75 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(createdGames).includes("auth-account"), false);
   });
 
+  it("starts accepted Pending Games through Supabase rows with resolved setup state", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    assert.deepEqual(startedGame, {
+      id: "supabase-started-game-1",
+      pendingGameId: "supabase-pending-game-1",
+      status: "started",
+      templateId: "default-adjective-noun-noun",
+      rowCount: 15,
+      participants: [
+        {
+          role: "creator",
+          profileId: creatorProfile.profileId,
+          handle: creatorProfile.handle,
+          gamerName: creatorProfile.gamerName,
+          avatarKey: creatorProfile.avatarKey,
+        },
+        {
+          role: "invitee",
+          profileId: inviteeProfile.profileId,
+          handle: inviteeProfile.handle,
+          gamerName: inviteeProfile.gamerName,
+          avatarKey: inviteeProfile.avatarKey,
+        },
+      ],
+      setup: {
+        slotAllocation: "resolved",
+        slotOrder: "resolved",
+      },
+    });
+    assert.equal(JSON.stringify(startedGame).includes("auth-account"), false);
+    assert.equal(JSON.stringify(startedGame).includes("slot_id"), false);
+    assert.equal(supabase.startedGameRows.length, 1);
+    assert.equal(supabase.startedGameRows[0].slot_allocation.length, 3);
+    assert.deepEqual(
+      supabase.startedGameRows[0].slot_order.map((slot) => slot.slot_id).sort(),
+      ["adjective", "noun-1", "noun-2"],
+    );
+    assert.deepEqual(
+      supabase.startedGameRows[0].slot_allocation
+        .map((slot) => slot.participant_profile_id)
+        .sort(),
+      [
+        creatorProfile.profileId,
+        inviteeProfile.profileId,
+        inviteeProfile.profileId,
+      ].sort(),
+    );
+  });
+
   it("wires app Pending Game creation behind local test and hosted repositories", async () => {
     const repository = createLocalTestPendingGameRepository({
       createPendingGameId: () => "local-pending-game-1",
@@ -551,17 +787,24 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
   const state = {
     creatorProfile,
     inviteeProfile,
+    gameParticipants: [],
     pendingGame: null,
     participants: [],
+    startedGames: [],
   };
 
   return {
+    get startedGameRows() {
+      return state.startedGames;
+    },
     tableCalls: [],
     from(tableName) {
       assert.ok(
         [
           "account_profiles",
           "account_profile_directory",
+          "games",
+          "game_participants",
           "pending_games",
           "pending_game_participants",
         ].includes(tableName),
@@ -694,6 +937,56 @@ class FakePendingGameQuery {
       return updatedRows.map((row) => ({ ...row, ...this.updatedRow }));
     }
 
+    if (this.tableName === "games" && this.insertedRow) {
+      const pendingGame = this.state.pendingGame;
+      const isAccepted =
+        pendingGame?.id === this.insertedRow.pending_game_id &&
+        pendingGame.status === "pending" &&
+        this.state.participants.every(
+          (participant) => participant.invite_status === "accepted",
+        );
+
+      if (!isAccepted) {
+        return [];
+      }
+
+      this.state.pendingGame = {
+        ...pendingGame,
+        status: "started",
+      };
+      const startedGame = {
+        id: "supabase-started-game-1",
+        pending_game_id: pendingGame.id,
+        template_id: pendingGame.template_id,
+        row_count: pendingGame.row_count,
+        status: "started",
+        slot_allocation: createFakeSlotAllocation({
+          creatorProfile: this.state.creatorProfile,
+          inviteeProfile: this.state.inviteeProfile,
+        }),
+        slot_order: [
+          { slot_id: "adjective", entry_kind: "adjective" },
+          { slot_id: "noun-1", entry_kind: "noun" },
+          { slot_id: "noun-2", entry_kind: "noun" },
+        ],
+      };
+      this.state.startedGames.push(startedGame);
+      this.state.gameParticipants = this.state.participants.map((participant) =>
+        toStartedParticipantRow(participant, { gameId: startedGame.id }),
+      );
+      return [startedGame];
+    }
+
+    if (this.tableName === "games") {
+      return this.state.startedGames.filter((row) => matchesFilters(row, this.filters));
+    }
+
+    if (this.tableName === "game_participants") {
+      return this.state.gameParticipants.filter((row) =>
+        matchesFilters(row, this.filters),
+      );
+    }
+
     if (this.tableName === "pending_game_participants") {
       return this.state.participants.filter(
         (row) => matchesFilters(row, this.filters),
@@ -727,6 +1020,37 @@ function toParticipantRow(profile, { inviteStatus, pendingGameId, role }) {
     participant_role: role,
     invite_status: inviteStatus,
   };
+}
+
+function toStartedParticipantRow(participant, { gameId }) {
+  return {
+    game_id: gameId,
+    profile_id: participant.profile_id,
+    handle: participant.handle,
+    gamer_name: participant.gamer_name,
+    avatar_key: participant.avatar_key,
+    participant_role: participant.participant_role,
+  };
+}
+
+function createFakeSlotAllocation({ creatorProfile, inviteeProfile }) {
+  return [
+    {
+      slot_id: "adjective",
+      entry_kind: "adjective",
+      participant_profile_id: creatorProfile.profileId,
+    },
+    {
+      slot_id: "noun-1",
+      entry_kind: "noun",
+      participant_profile_id: inviteeProfile.profileId,
+    },
+    {
+      slot_id: "noun-2",
+      entry_kind: "noun",
+      participant_profile_id: inviteeProfile.profileId,
+    },
+  ];
 }
 
 function matchesFilters(row, filters) {

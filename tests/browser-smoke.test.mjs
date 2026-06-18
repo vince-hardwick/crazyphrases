@@ -273,6 +273,87 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("shows a cancelled Pending Game when an invitee declines", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.getByRole("button", { name: "Create invite" }).click();
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Decline invite from @player-test-account" })
+      .click();
+    await assertTextVisible(page, "Game invite declined.");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Cancelled");
+    await assertTextVisible(page, "Declined");
+    assert.equal(
+      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      0,
+    );
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
+  it("lets the creator start an accepted Pending Game foundation", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.getByRole("button", { name: "Create invite" }).click();
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+    await assertTextVisible(page, "Game invite accepted.");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+
+    await assertTextVisible(page, "Game started. Turns are not available yet.");
+    await assertTextVisible(page, "Started");
+    await assertNoHorizontalOverflow(page);
+    assert.equal(
+      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      0,
+    );
+    assertNoConsoleErrors();
+  });
+
   it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

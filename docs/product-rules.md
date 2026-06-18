@@ -58,6 +58,14 @@ A multiplayer game starts only after all invited human participants accept. Befo
 
 Random slot allocation and random slot order are resolved when the game starts, not when the pending game is created.
 
+After every invited human participant has accepted, the Game Creator may start
+the Pending Game. Starting creates a durable Game instance, marks the Pending
+Game as started for provenance, copies browser-safe participant snapshots,
+stores the configured row count and template id, and stores the resolved random
+default-template Slot Allocation and Slot Order. A started Game shell without
+turn storage is intentionally incomplete and must not imply that turns, entries,
+or Reveal are available.
+
 If an invited human participant declines, the pending game is cancelled in the MVP.
 
 Pending game invites expire automatically after a fixed period. The exact expiry duration is a product tuning value to be chosen later.
@@ -303,11 +311,11 @@ The handle-invite UI is signed-in only. It lets the Game Creator select the
 batch row count, enter another account's Handle, create a Game Invite, and see
 the invited participant's response state. Signed-in invitees can see incoming
 Pending Game invites for their Account Profile, accept an invite, or decline an
-invite. Acceptance records response state only; game-start conversion remains a
-later lifecycle slice. Decline cancels the Pending Game in the MVP. The current
-MVP invite UI still does not add invite expiry, creator cancellation UI, turn
-storage, Slot Allocation or Slot Order resolution, Reveal, Share Consent,
-friends, nudges, or public discovery.
+invite. Once every invited human participant accepts, the Game Creator can start
+the Pending Game and see that the Game shell has started. Decline cancels the
+Pending Game in the MVP. The current MVP invite UI still does not add invite
+expiry, creator cancellation UI, turn storage, turn submission, Reveal, Share
+Consent, friends, nudges, or public discovery.
 
 ### Nudges
 

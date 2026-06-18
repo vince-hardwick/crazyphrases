@@ -2,7 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** Active on `codex/started-game-turn-submission`.
+**Status:** Historical/completed. Implemented by PR #56 and promoted through
+`dev`, `test`, and production on 2026-06-18. Current authority lives in
+`docs/product-rules.md`, ADR 0014, `docs/runbooks/supabase-auth-and-postgres.md`,
+and `docs/planning/supabase-state-ledger.md`.
 
 **Goal:** Let a signed-in participant load and submit their active Started Game turn without exposing other slots, entries, or Reveal.
 

@@ -926,7 +926,13 @@ git commit -m "Add participant section Supabase surface"
 - Modify: `tests/pending-game.test.mjs`
 - Modify: `assets/pending-game.js`
 
-- [ ] **Step 1: Write failing Supabase adapter tests**
+**Completion note (2026-06-18):** Task 5 completed in commit `dbd897d`.
+Follow-up commit `ad576bf` named the public SQL RPC arguments
+(`target_assignment_id`, `submitted_entries`, `target_game_id`) so Supabase JS
+named `.rpc()` params match the migration contract. The public execute grants
+remain checked by type signature.
+
+- [x] **Step 1: Write failing Supabase adapter tests**
 
 Add tests proving the Supabase repository calls the new RPCs and notification table surface:
 
@@ -1006,7 +1012,7 @@ it("lists and marks in-app notifications through Supabase rows", async () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify RED**
+- [x] **Step 2: Run tests to verify RED**
 
 Run:
 
@@ -1016,7 +1022,7 @@ node --test tests/pending-game.test.mjs
 
 Expected: FAIL because Supabase repository methods are missing.
 
-- [ ] **Step 3: Implement Supabase adapter methods**
+- [x] **Step 3: Implement Supabase adapter methods**
 
 In `createSupabasePendingGameRepository()`, add:
 
@@ -1079,11 +1085,11 @@ async markInAppNotificationRead({ accountId, notificationId }) {
 },
 ```
 
-- [ ] **Step 4: Extend fake Supabase client**
+- [x] **Step 4: Extend fake Supabase client**
 
 Update `createFakePendingGameSupabase()` and `FakePendingGameQuery` to support the new RPC names and `in_app_notifications` table.
 
-- [ ] **Step 5: Run tests to verify GREEN**
+- [x] **Step 5: Run tests to verify GREEN**
 
 Run:
 
@@ -1093,7 +1099,7 @@ node --test tests/pending-game.test.mjs
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add assets/pending-game.js tests/pending-game.test.mjs

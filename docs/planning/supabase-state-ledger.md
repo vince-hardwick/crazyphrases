@@ -46,6 +46,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260616141452` | `create_pending_games` | Applied after explicit owner approval; schema verified. |
 | `20260617135237` | `support_pending_game_invite_responses` | Applied after explicit owner approval; schema verified. |
 | `20260618081517` | `start_pending_game_foundation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
+| `20260618102626` | `started_game_turn_submission` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 
 ## Schema Verification Summary
 
@@ -206,6 +207,27 @@ Read-only hosted SQL confirmed:
   warning. Performance advisors reported expected `unused_index` info for the
   brand-new Started Game indexes before live query traffic exists, plus the
   existing multiple-permissive-policy warnings on Pending Game select policies.
+- The Started Game turn-submission migration adds `public.game_turns` and
+  `public.game_entries` with Row Level Security enabled, no `anon` grants, no
+  direct authenticated write grant on Turns or Entries, an authenticated
+  `select` grant only on currently active assigned Turns, private trigger-owned
+  Turn creation, and the narrow authenticated
+  `public.submit_started_game_turn(uuid, jsonb)` RPC for complete Entry
+  submission.
+- Hosted verification for
+  `20260618102626 started_game_turn_submission` confirmed the table grants,
+  RLS policy, private helper and trigger functions, Started Game trigger
+  attachment, and `public.submit_started_game_turn(uuid, jsonb)` RPC. Supabase
+  generated TypeScript types after the schema change; the output included
+  `game_turns`, `game_entries`, and `submit_started_game_turn`, but no type file
+  was committed because the current app is plain JavaScript.
+- Supabase advisors after the Started Game turn-submission migration reported
+  intentional warnings for `game_entries` having RLS with no direct policy and
+  for authenticated execution of the guarded `security definer` RPC, plus the
+  existing project-level Auth leaked-password-protection warning. Performance
+  advisors reported expected `unused_index` info for the new Turn/Entry indexes
+  before live query traffic exists, plus existing Started Game and Pending Game
+  advisories.
 
 ## Deployment And Smoke Evidence
 
@@ -225,6 +247,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-17 | Pending Game invite response promotion | PR #54 merge commit `97c64ac455d53a512d870d6fb46b4838b0e7cc6e`, promotion run `27694666076`, deployed through `test` and production after owner approvals. Visible `test` and production browser smokes confirmed stamped runtime assets at the merge commit, hidden localhost-only test sign-in controls, anonymous 10-phrase reveal, `Copy all`, clean browser logs, and no horizontal overflow. Production smoke was anonymous-only and did not mutate hosted Supabase data. |
 | 2026-06-18 | Started Game foundation hosted smoke | PR #55 branch `codex/started-game-foundation` commit `fbe086926aa7c88b58f9d764e40e6a7154521b38` was deployed to `dev` after owner approval. Hosted migration `20260618081517 start_pending_game_foundation` was applied after explicit owner approval and schema-verified. Visible `dev` browser smoke confirmed stamped `assets/app.js` and `assets/site.css`, hidden localhost-only test controls, Account-backed mode for existing profile `@player-00c9137f-e786-4e7d`, clean browser warnings/errors, and no horizontal overflow. The smoke created a temporary invitee Auth/Profile fixture with Handle `@codex-smoke-sg-c5fff9`, created a 15-phrase Pending Game through the signed-in creator UI, simulated invitee acceptance through the authenticated RLS path, started the accepted Pending Game through the creator UI, verified the UI showed `Game started. Turns are not available yet.` and `Started`, and verified the persisted Started Game row, participant snapshots, three Slot Allocation entries, and three Slot Order entries. Cleanup removed the Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, participant, Started Game, and Started Game participant rows remained, and both Pending Game and Started Game tables were empty. |
 | 2026-06-18 | Started Game foundation promotion | PR #55 merged to `main` as merge commit `22abb6bfd5652adb7b262636e3303fd64141cff3` and promoted through `test` and production by promotion run `27747189569` after owner approvals. Visible `test` and production browser smokes confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell for existing profile `@player-00c9137f-e786-4e7d`, Started Game-safe Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Production verification kept hosted Supabase data read-only because the visible browser was signed in with an existing account-backed reveal; a separate temporary anonymous Playwright context verified a 10-phrase production reveal plus per-phrase copy and `Copy all` clipboard output without hosted Supabase mutation. |
+| 2026-06-18 | Started Game turn-submission dev smoke | PR #56 branch `codex/started-game-turn-submission` commit `aadc524fe88b66d2c9c2ac34eb4b26254df1bc61` was deployed to `dev` after owner approval. Hosted migration `20260618102626 started_game_turn_submission` was applied after explicit owner approval and schema-verified. Visible `dev` browser smoke confirmed stamped runtime assets, hidden localhost-only test sign-in controls, clean browser warnings/errors, and no horizontal overflow. Hosted SQL smoke marker `codex-smoke-ts-bee3e1` created temporary Auth/Profile fixtures, inserted a Pending Game as the simulated authenticated creator, accepted it as the simulated authenticated invitee, started the Started Game through the authenticated `public.games(pending_game_id)` grant, confirmed three trigger-created Turns, submitted the first active Turn through `public.submit_started_game_turn(uuid, jsonb)`, confirmed 10 Entries and exactly one next active Turn visible to its assignee, and confirmed the submitted Turn was no longer visible to the submitter. Cleanup deleted the Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, participant, Started Game, Turn, and Entry rows remained. |
 
 ## Signed-In Persistence Evidence
 

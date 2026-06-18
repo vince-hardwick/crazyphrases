@@ -45,6 +45,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260616093056` | `replace_account_profile_directory_view` | Applied after explicit owner approval; schema verified. |
 | `20260616141452` | `create_pending_games` | Applied after explicit owner approval; schema verified. |
 | `20260617135237` | `support_pending_game_invite_responses` | Applied after explicit owner approval; schema verified. |
+| `20260618081517` | `start_pending_game_foundation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 
 ## Schema Verification Summary
 
@@ -187,16 +188,24 @@ Read-only hosted SQL confirmed:
   `private.cancel_pending_game_after_invite_decline()` use an empty
   `search_path`, are not executable by `public`, `anon`, or `authenticated`,
   and are attached to the expected participant update triggers.
-- Source-controlled local verification for the Started Game foundation branch
-  asserts that `supabase/migrations/20260617151940_start_pending_game_foundation.sql`
-  adds `public.games` and `public.game_participants` with RLS, no `anon`
-  grants, narrow authenticated insert on `public.games(pending_game_id)`, no
-  browser update authority on `public.pending_games`, private trigger-owned
-  Pending Game conversion, a private RLS helper with narrow authenticated
-  execute permission, participant snapshots, and resolved random Slot
-  Allocation and Slot Order storage. Hosted migration application, hosted SQL
-  verification, Supabase advisors, and deployed browser smoke remain pending
-  explicit approval or the documented deployment gates.
+- The Started Game foundation migration adds `public.games` and
+  `public.game_participants` with Row Level Security enabled, no `anon` grants,
+  a narrow authenticated column grant only on
+  `public.games(pending_game_id)`, no browser update authority on
+  `public.pending_games`, private trigger-owned Pending Game conversion, a
+  private RLS helper with narrow authenticated execute permission,
+  participant snapshots, and resolved random Slot Allocation and Slot Order
+  storage.
+- Hosted verification for `20260618081517 start_pending_game_foundation`
+  confirmed `public.games` and `public.game_participants` RLS, policies,
+  private helper and trigger function `security definer` state, empty
+  `search_path`, trigger attachment, column-level insert grant, no broad
+  `pending_games` update authority, and zero rows immediately before the smoke.
+- Supabase security advisors after the Started Game foundation migration
+  reported only the existing project-level Auth leaked-password-protection
+  warning. Performance advisors reported expected `unused_index` info for the
+  brand-new Started Game indexes before live query traffic exists, plus the
+  existing multiple-permissive-policy warnings on Pending Game select policies.
 
 ## Deployment And Smoke Evidence
 
@@ -214,6 +223,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-17 | Pending Game invite response dev deployment | Branch `codex/pending-game-invite-response` commit `4d37d1d470c3b516e09e8e70048808760fd8add9`, deploy-dev run `27692609312`, deployed to `dev` after owner approval. Visible `dev` browser smoke confirmed stamped `assets/app.js` and `assets/site.css` with the deployed commit SHA, hidden localhost-only test sign-in controls remained hidden, the anonymous 10-phrase flow reached reveal, `Copy all` copied the title plus ten phrases, and the browser had no console errors. No hosted Supabase data mutation or signed-in invite-response smoke was performed; source migration `20260617131817_support_pending_game_invite_responses.sql` remains unapplied to hosted Supabase pending separate approval. |
 | 2026-06-17 | Pending Game invite response hosted smoke | After explicit owner approval, hosted migration `20260617135237 support_pending_game_invite_responses` was applied and schema-verified. Visible `dev` browser smoke signed in as the existing Account Profile `@player-00c9137f-e786-4e7d`, created invites to temporary Handle `@codex-smoke-ir-8d4`, simulated invitee accept and decline through the authenticated RLS path, verified the creator UI rendered `Accepted` and `Declined`, and saw no browser warnings or errors. Cleanup removed both smoke Pending Games and the temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, and participant rows remained, and both Pending Game tables were empty. |
 | 2026-06-17 | Pending Game invite response promotion | PR #54 merge commit `97c64ac455d53a512d870d6fb46b4838b0e7cc6e`, promotion run `27694666076`, deployed through `test` and production after owner approvals. Visible `test` and production browser smokes confirmed stamped runtime assets at the merge commit, hidden localhost-only test sign-in controls, anonymous 10-phrase reveal, `Copy all`, clean browser logs, and no horizontal overflow. Production smoke was anonymous-only and did not mutate hosted Supabase data. |
+| 2026-06-18 | Started Game foundation hosted smoke | PR #55 branch `codex/started-game-foundation` commit `fbe086926aa7c88b58f9d764e40e6a7154521b38` was deployed to `dev` after owner approval. Hosted migration `20260618081517 start_pending_game_foundation` was applied after explicit owner approval and schema-verified. Visible `dev` browser smoke confirmed stamped `assets/app.js` and `assets/site.css`, hidden localhost-only test controls, Account-backed mode for existing profile `@player-00c9137f-e786-4e7d`, clean browser warnings/errors, and no horizontal overflow. The smoke created a temporary invitee Auth/Profile fixture with Handle `@codex-smoke-sg-c5fff9`, created a 15-phrase Pending Game through the signed-in creator UI, simulated invitee acceptance through the authenticated RLS path, started the accepted Pending Game through the creator UI, verified the UI showed `Game started. Turns are not available yet.` and `Started`, and verified the persisted Started Game row, participant snapshots, three Slot Allocation entries, and three Slot Order entries. Cleanup removed the Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, participant, Started Game, and Started Game participant rows remained, and both Pending Game and Started Game tables were empty. |
 
 ## Signed-In Persistence Evidence
 

@@ -312,7 +312,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("lets the creator start an accepted Pending Game foundation", async () => {
+  it("lets the creator start an accepted Pending Game and submit the first active turn", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -344,8 +344,21 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
 
-    await assertTextVisible(page, "Game started. Turns are not available yet.");
+    await assertTextVisible(page, "Game started. Your turn is ready.");
     await assertTextVisible(page, "Started");
+    await assertTextVisible(page, "Fill these adjectives");
+    for (let rowIndex = 0; rowIndex < 15; rowIndex += 1) {
+      await page
+        .locator(`[data-started-game-turn-input="${rowIndex}"]`)
+        .fill(`brisk-${rowIndex}`);
+    }
+    await page.getByRole("button", { name: "Submit turn" }).click();
+    await assertTextVisible(page, "Turn submitted. Waiting for another participant.");
+    assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await assertTextVisible(page, "Fill these nouns");
     await assertNoHorizontalOverflow(page);
     assert.equal(
       await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),

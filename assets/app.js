@@ -145,6 +145,7 @@ let pendingGameIncomingList = null;
 let currentPendingGame = null;
 let createdPendingGames = [];
 let incomingPendingGameInvites = [];
+let activeStartedGameTurns = new Map();
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
@@ -681,6 +682,7 @@ function removePendingGamePanel() {
   pendingGameSummary = null;
   pendingGameIncomingList = null;
   currentPendingGame = null;
+  activeStartedGameTurns = new Map();
 }
 
 async function createPendingGameInvite(event) {
@@ -800,6 +802,9 @@ function renderPendingGameCard(
   }
   if (includeStartActions && isPendingGameReadyToStart(pendingGame)) {
     card.append(renderPendingGameStartActions(pendingGame));
+  }
+  if (pendingGame.startedGameId) {
+    card.append(renderStartedGameTurn(pendingGame));
   }
 
   return card;
@@ -963,13 +968,20 @@ async function startPendingGame(pendingGameId) {
       creatorAccountId: accountShell.accountId,
       pendingGameId,
     });
+    const activeTurn = await pendingGameRepository.loadActiveStartedGameTurn({
+      accountId: accountShell.accountId,
+      gameId: startedGame.id,
+    });
+    activeStartedGameTurns.set(startedGame.id, activeTurn);
     createdPendingGames = upsertPendingGame(
       createdPendingGames,
       createPendingGameFromStartedGame(startedGame),
     );
     renderPendingGamePanel();
     pendingGameStatus.textContent =
-      "Game started. Turns are not available yet.";
+      activeTurn
+        ? "Game started. Your turn is ready."
+        : "Game started. Waiting for another participant.";
   } catch {
     pendingGameStatus.textContent = "Game could not be started. Try again.";
   }
@@ -978,6 +990,7 @@ async function startPendingGame(pendingGameId) {
 function createPendingGameFromStartedGame(startedGame) {
   return {
     id: startedGame.pendingGameId,
+    startedGameId: startedGame.id,
     status: startedGame.status,
     templateId: startedGame.templateId,
     rowCount: startedGame.rowCount,
@@ -988,10 +1001,118 @@ function createPendingGameFromStartedGame(startedGame) {
   };
 }
 
+function renderStartedGameTurn(pendingGame) {
+  const activeTurn = activeStartedGameTurns.get(pendingGame.startedGameId);
+  const container = document.createElement("div");
+  container.className = "started-game-turn";
+
+  if (!activeTurn) {
+    const waiting = document.createElement("p");
+    waiting.className = "pending-game-row-count";
+    waiting.textContent = "Waiting for another participant.";
+    container.append(waiting);
+    return container;
+  }
+
+  const form = document.createElement("form");
+  form.className = "started-game-turn-form";
+  form.dataset.startedGameTurnForm = "";
+  form.addEventListener("submit", (event) => {
+    void submitStartedGameTurn(event, activeTurn);
+  });
+
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const kicker = document.createElement("p");
+  kicker.className = "section-kicker";
+  kicker.textContent = `Turn ${activeTurn.turnIndex + 1} of 3`;
+
+  const title = document.createElement("h3");
+  title.textContent = getStartedGameTurnTitle(activeTurn.entryKind);
+
+  const list = document.createElement("div");
+  list.className = "started-game-turn-list";
+  list.replaceChildren(
+    ...activeTurn.rows.map((row) => renderStartedGameTurnRow(row, activeTurn)),
+  );
+
+  const submitButton = document.createElement("button");
+  submitButton.type = "submit";
+  submitButton.className = "primary-button";
+  submitButton.textContent = "Submit turn";
+
+  heading.append(kicker, title);
+  form.append(heading, list, submitButton);
+  container.append(form);
+  return container;
+}
+
+function renderStartedGameTurnRow(row, activeTurn) {
+  const label = document.createElement("label");
+  label.className = "started-game-turn-row";
+
+  const text = document.createElement("span");
+  text.textContent = `Phrase ${row.rowIndex + 1}`;
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.autocomplete = "off";
+  input.required = true;
+  input.value = row.value;
+  input.dataset.startedGameTurnInput = String(row.rowIndex);
+  input.placeholder =
+    activeTurn.entryKind === "adjective" ? "brisk" : "teapot";
+
+  label.append(text, input);
+  return label;
+}
+
+async function submitStartedGameTurn(event, activeTurn) {
+  event.preventDefault();
+
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const form = event.currentTarget;
+  const entries = [...form.querySelectorAll("[data-started-game-turn-input]")]
+    .map((input) => ({
+      rowIndex: Number(input.dataset.startedGameTurnInput),
+      value: input.value,
+    }));
+
+  pendingGameStatus.textContent = "";
+
+  try {
+    await pendingGameRepository.submitStartedGameTurn({
+      accountId: accountShell.accountId,
+      entries,
+      turnId: activeTurn.id,
+    });
+    const nextActiveTurn = await pendingGameRepository.loadActiveStartedGameTurn({
+      accountId: accountShell.accountId,
+      gameId: activeTurn.gameId,
+    });
+    activeStartedGameTurns.set(activeTurn.gameId, nextActiveTurn);
+    renderPendingGamePanel();
+    pendingGameStatus.textContent = nextActiveTurn
+      ? "Turn submitted. Your next turn is ready."
+      : "Turn submitted. Waiting for another participant.";
+  } catch {
+    pendingGameStatus.textContent = "Turn could not be submitted. Try again.";
+  }
+}
+
+function getStartedGameTurnTitle(entryKind) {
+  return entryKind === "adjective" ? "Fill these adjectives" : "Fill these nouns";
+}
+
 async function loadPendingGameLists() {
   if (accountShell.persistenceAuthority.type !== "account") {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
+    activeStartedGameTurns = new Map();
     return;
   }
 
@@ -1004,11 +1125,33 @@ async function loadPendingGameLists() {
         accountId: accountShell.accountId,
       }),
     ]);
+    await loadActiveStartedGameTurns();
   } catch {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
+    activeStartedGameTurns = new Map();
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
+}
+
+async function loadActiveStartedGameTurns() {
+  const startedGames = [
+    ...createdPendingGames,
+    ...incomingPendingGameInvites,
+  ].filter((pendingGame) => pendingGame.startedGameId);
+  const activeTurns = new Map();
+
+  await Promise.all(
+    startedGames.map(async (pendingGame) => {
+      const activeTurn = await pendingGameRepository.loadActiveStartedGameTurn({
+        accountId: accountShell.accountId,
+        gameId: pendingGame.startedGameId,
+      });
+      activeTurns.set(pendingGame.startedGameId, activeTurn);
+    }),
+  );
+
+  activeStartedGameTurns = activeTurns;
 }
 
 function upsertPendingGame(pendingGames, pendingGame) {
@@ -1500,6 +1643,7 @@ async function applyAccountShell(shell) {
     batchFavourites = [];
     createdPendingGames = [];
     incomingPendingGameInvites = [];
+    activeStartedGameTurns = new Map();
     hidePersistenceRecovery();
   }
 

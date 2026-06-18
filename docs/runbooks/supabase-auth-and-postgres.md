@@ -500,6 +500,28 @@ functions remain non-executable by browser roles. Hosted application of this
 migration remains behind explicit owner approval or the documented deployment
 gate.
 
+The first Started Game Turn submission migration is:
+
+```text
+supabase/migrations/20260618120000_started_game_turn_submission.sql
+```
+
+It creates `public.game_turns` and `public.game_entries` for account-backed
+Started Game Turn storage. A private trigger creates one Turn per resolved Slot
+Order entry when a Started Game is inserted, using the existing resolved Slot
+Allocation to assign each Turn to a participant snapshot. Authenticated browser
+clients may select only their currently active Turn through Row Level Security:
+the Turn must be assigned to their Account Profile and every earlier Turn in
+the Game must already be submitted.
+
+Browser clients do not receive direct insert, update, or delete grants on
+`public.game_entries`, and they do not receive update grants on
+`public.game_turns`. Turn submission goes through the narrow authenticated RPC
+`public.submit_started_game_turn(uuid, jsonb)`, which validates the assigned
+active Turn and a complete non-empty Entry payload before inserting Entries and
+marking the Turn submitted. Hosted application of this migration remains behind
+explicit owner approval or the documented deployment gate.
+
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
 persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
@@ -551,9 +573,11 @@ responses.
 
 The current browser UI creates Pending Games and exposes response visibility for
 created and incoming invites. It lets the Game Creator start a fully accepted
-Pending Game and see that the Game shell has started. It does not configure
-expiry, expose creator cancellation UI, store turns, reveal a batch, request
-Share Consent, manage friends, send nudges, or publish to discovery surfaces.
+Pending Game, see that the Game shell has started, load the current Account's
+active Started Game Turn, and submit one complete Turn. Turn submission stores
+Entries and advances availability only; it does not configure expiry, expose
+creator cancellation UI, reveal a batch, request Share Consent, manage friends,
+send nudges, or publish to discovery surfaces.
 
 ## Current Game Repository Adapter
 

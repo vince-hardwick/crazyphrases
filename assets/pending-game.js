@@ -16,6 +16,7 @@ export function createTestPendingGameRepository({
     ]),
   );
   const pendingGames = [];
+  const startedTurns = [];
 
   return {
     async createPendingGameFromHandle({
@@ -70,7 +71,7 @@ export function createTestPendingGameRepository({
 
       return pendingGames.filter(
         (pendingGame) =>
-          pendingGame.status === "pending" &&
+          ["pending", "started"].includes(pendingGame.status) &&
           pendingGame.participants.some(
             (participant) =>
               participant.role === "invitee" &&
@@ -179,6 +180,10 @@ export function createTestPendingGameRepository({
       }
 
       const pendingGame = pendingGames[pendingGameIndex];
+      const startedGame = createStartedGameDto({
+        id: createStartedGameId(),
+        pendingGame,
+      });
       if (
         pendingGame.participants.some(
           (participant) => participant.inviteStatus !== "accepted",
@@ -190,15 +195,67 @@ export function createTestPendingGameRepository({
       pendingGames[pendingGameIndex] = createPendingGameDto({
         id: pendingGame.id,
         rowCount: pendingGame.rowCount,
+        startedGameId: startedGame.id,
         status: "started",
         templateId: pendingGame.templateId,
         participants: pendingGame.participants,
       });
 
-      return createStartedGameDto({
-        id: createStartedGameId(),
-        pendingGame,
+      startedTurns.push(...createStartedGameTurns({ pendingGame, startedGame }));
+
+      return startedGame;
+    },
+
+    async loadActiveStartedGameTurn({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+
+      const profile = profilesByAccountId.get(accountId);
+      if (!profile) {
+        return null;
+      }
+
+      const nextTurn = startedTurns
+        .filter((turn) => turn.gameId === gameId && turn.status !== "submitted")
+        .toSorted((left, right) => left.turnIndex - right.turnIndex)[0];
+
+      if (!nextTurn || nextTurn.participantProfileId !== profile.profileId) {
+        return null;
+      }
+
+      return createStartedGameTurnDto(nextTurn);
+    },
+
+    async submitStartedGameTurn({ accountId, entries, turnId }) {
+      assertAccountId(accountId);
+      assertText(turnId, "A Started Game Turn id is required.");
+
+      const profile = profilesByAccountId.get(accountId);
+      const turn = startedTurns.find((candidate) => candidate.id === turnId);
+      if (!profile || !turn || turn.participantProfileId !== profile.profileId) {
+        throw new Error("Started Game Turn is not active for this Account.");
+      }
+
+      const nextTurn = startedTurns
+        .filter(
+          (candidate) =>
+            candidate.gameId === turn.gameId && candidate.status !== "submitted",
+        )
+        .toSorted((left, right) => left.turnIndex - right.turnIndex)[0];
+      if (nextTurn?.id !== turn.id) {
+        throw new Error("Started Game Turn is not active for this Account.");
+      }
+
+      turn.entries = normaliseSubmittedEntries(entries, {
+        rowCount: turn.rowCount,
       });
+      turn.status = "submitted";
+
+      return {
+        id: turn.id,
+        gameId: turn.gameId,
+        status: turn.status,
+      };
     },
   };
 }
@@ -307,9 +364,15 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
             "Could not load Pending Game participants",
           );
 
+          const startedGameId = await loadStartedGameId({
+            pendingGameRow,
+            supabase,
+          });
+
           return recoverPendingGame({
             participantRows: participantResponse.data,
             pendingGameRow,
+            startedGameId,
           });
         }),
       );
@@ -337,7 +400,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
         .from("pending_games")
         .select("id, template_id, row_count, status")
         .eq("invitee_profile_id", inviteeProfile.profileId)
-        .eq("status", "pending");
+        .in("status", ["pending", "started"]);
       assertNoSupabaseError(
         pendingGameResponse,
         "Could not load incoming Pending Game invites",
@@ -356,9 +419,15 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
             "Could not load Pending Game participants",
           );
 
+          const startedGameId = await loadStartedGameId({
+            pendingGameRow,
+            supabase,
+          });
+
           return recoverPendingGame({
             participantRows: participantResponse.data,
             pendingGameRow,
+            startedGameId,
           });
         }),
       );
@@ -519,16 +588,80 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
         startedGameRow: startedGameResponse.data,
       });
     },
+
+    async loadActiveStartedGameTurn({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+
+      const profileResponse = await supabase
+        .from("account_profiles")
+        .select("profile_id")
+        .eq("account_id", accountId)
+        .maybeSingle();
+      assertNoSupabaseError(
+        profileResponse,
+        "Could not load Account Profile",
+      );
+
+      if (!profileResponse.data) {
+        return null;
+      }
+
+      const turnResponse = await supabase
+        .from("game_turns")
+        .select("id, game_id, status, turn_index, entry_kind, row_count")
+        .eq("game_id", gameId)
+        .eq("participant_profile_id", profileResponse.data.profile_id)
+        .eq("status", "active")
+        .maybeSingle();
+      assertNoSupabaseError(
+        turnResponse,
+        "Could not load active Started Game Turn",
+      );
+
+      return turnResponse.data
+        ? recoverStartedGameTurn(turnResponse.data)
+        : null;
+    },
+
+    async submitStartedGameTurn({ accountId, entries, turnId }) {
+      assertAccountId(accountId);
+      assertText(turnId, "A Started Game Turn id is required.");
+
+      const submissionResponse = await supabase.rpc(
+        "submit_started_game_turn",
+        {
+          submitted_entries: normaliseSubmittedEntries(entries, {
+            rowCount: entries?.length ?? 0,
+          }),
+          target_turn_id: turnId,
+        },
+      );
+      assertNoSupabaseError(
+        submissionResponse,
+        "Could not submit Started Game Turn",
+      );
+
+      return recoverSubmittedStartedGameTurn(submissionResponse.data);
+    },
   };
 }
 
-function createPendingGameDto({ id, participants, rowCount, status, templateId }) {
+function createPendingGameDto({
+  id,
+  participants,
+  rowCount,
+  startedGameId,
+  status,
+  templateId,
+}) {
   return {
     id,
     status,
     templateId,
     rowCount,
     participants,
+    ...(startedGameId ? { startedGameId } : {}),
   };
 }
 
@@ -565,6 +698,66 @@ function createStartedParticipantDto(participant) {
     handle: participant.handle,
     gamerName: participant.gamerName,
     avatarKey: participant.avatarKey,
+  };
+}
+
+function createStartedGameTurns({ pendingGame, startedGame }) {
+  const creator = pendingGame.participants.find(
+    (participant) => participant.role === "creator",
+  );
+  const invitee = pendingGame.participants.find(
+    (participant) => participant.role === "invitee",
+  );
+
+  return [
+    {
+      id: `${startedGame.id}-turn-1`,
+      gameId: startedGame.id,
+      status: "active",
+      turnIndex: 0,
+      slotId: "adjective",
+      entryKind: "adjective",
+      participantProfileId: creator.profileId,
+      rowCount: pendingGame.rowCount,
+      entries: [],
+    },
+    {
+      id: `${startedGame.id}-turn-2`,
+      gameId: startedGame.id,
+      status: "active",
+      turnIndex: 1,
+      slotId: "noun-1",
+      entryKind: "noun",
+      participantProfileId: invitee.profileId,
+      rowCount: pendingGame.rowCount,
+      entries: [],
+    },
+    {
+      id: `${startedGame.id}-turn-3`,
+      gameId: startedGame.id,
+      status: "active",
+      turnIndex: 2,
+      slotId: "noun-2",
+      entryKind: "noun",
+      participantProfileId: invitee.profileId,
+      rowCount: pendingGame.rowCount,
+      entries: [],
+    },
+  ];
+}
+
+function createStartedGameTurnDto(turn) {
+  return {
+    id: turn.id,
+    gameId: turn.gameId,
+    status: turn.status,
+    turnIndex: turn.turnIndex,
+    entryKind: turn.entryKind,
+    rowCount: turn.rowCount,
+    rows: Array.from({ length: turn.rowCount }, (_, rowIndex) => ({
+      rowIndex,
+      value: "",
+    })),
   };
 }
 
@@ -609,6 +802,38 @@ function assertRowCount(rowCount) {
   }
 }
 
+function normaliseSubmittedEntries(entries, { rowCount }) {
+  if (!Array.isArray(entries) || entries.length !== rowCount) {
+    throw new Error("Submit one Entry for every row.");
+  }
+
+  const entriesByRow = new Map();
+  for (const entry of entries) {
+    if (
+      !Number.isInteger(entry?.rowIndex) ||
+      entry.rowIndex < 0 ||
+      entry.rowIndex >= rowCount ||
+      entriesByRow.has(entry.rowIndex)
+    ) {
+      throw new Error("Submit one Entry for every row.");
+    }
+
+    entriesByRow.set(
+      entry.rowIndex,
+      assertText(entry.value, "Every submitted Entry needs text."),
+    );
+  }
+
+  if (entriesByRow.size !== rowCount) {
+    throw new Error("Submit one Entry for every row.");
+  }
+
+  return Array.from({ length: rowCount }, (_, rowIndex) => ({
+    rowIndex,
+    value: entriesByRow.get(rowIndex),
+  }));
+}
+
 function assertText(value, message) {
   if (typeof value !== "string" || value.trim() === "") {
     throw new Error(message);
@@ -642,7 +867,7 @@ function recoverProfile(row) {
   };
 }
 
-function recoverPendingGame({ participantRows, pendingGameRow }) {
+function recoverPendingGame({ participantRows, pendingGameRow, startedGameId }) {
   const participants = participantRows
     .map((row) => ({
       role: row.participant_role,
@@ -659,8 +884,24 @@ function recoverPendingGame({ participantRows, pendingGameRow }) {
     status: pendingGameRow.status,
     templateId: pendingGameRow.template_id,
     rowCount: pendingGameRow.row_count,
+    startedGameId,
     participants,
   });
+}
+
+async function loadStartedGameId({ pendingGameRow, supabase }) {
+  if (pendingGameRow.status !== "started") {
+    return null;
+  }
+
+  const startedGameResponse = await supabase
+    .from("games")
+    .select("id")
+    .eq("pending_game_id", pendingGameRow.id)
+    .maybeSingle();
+  assertNoSupabaseError(startedGameResponse, "Could not load Started Game");
+
+  return startedGameResponse.data?.id ?? null;
 }
 
 function recoverStartedGame({ participantRows, startedGameRow }) {
@@ -688,6 +929,28 @@ function recoverStartedGame({ participantRows, startedGameRow }) {
       slotAllocation: "resolved",
       slotOrder: "resolved",
     },
+  };
+}
+
+function recoverStartedGameTurn(turnRow) {
+  return createStartedGameTurnDto({
+    id: assertText(turnRow?.id, "A Started Game Turn id is required."),
+    gameId: assertText(turnRow?.game_id, "A Started Game id is required."),
+    status: turnRow.status,
+    turnIndex: turnRow.turn_index,
+    entryKind: turnRow.entry_kind,
+    rowCount: turnRow.row_count,
+  });
+}
+
+function recoverSubmittedStartedGameTurn(turnRow) {
+  return {
+    id: assertText(
+      turnRow?.turn_id ?? turnRow?.id,
+      "A Started Game Turn id is required.",
+    ),
+    gameId: assertText(turnRow?.game_id, "A Started Game id is required."),
+    status: turnRow.status,
   };
 }
 

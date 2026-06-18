@@ -463,6 +463,174 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(waitingDashboard).includes("adjective"), false);
   });
 
+  it("completes batches after all sections and reveals per participant", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    const startedGame = await startAcceptedLocalGame(repository);
+    await submitAllCurrentSections(repository, inviteeProfile.accountId, "noun");
+
+    const creatorDashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    const creatorSection =
+      creatorDashboard.awaitingYourEntries[0].currentSection;
+
+    await repository.submitMultiplayerSection({
+      accountId: creatorProfile.accountId,
+      sectionId: creatorSection.id,
+      entries: creatorSection.rows.map((row) => ({
+        rowIndex: row.rowIndex,
+        value: `brisk-${row.rowIndex}`,
+      })),
+    });
+
+    const completedForCreator = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    const completedForInvitee = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+
+    assert.equal(completedForCreator.completedBatches.length, 1);
+    assert.equal(completedForInvitee.completedBatches.length, 1);
+    assert.equal(completedForCreator.completedBatches[0].revealed, false);
+    assert.equal(completedForInvitee.completedBatches[0].revealed, false);
+
+    const creatorNotifications = await repository.listInAppNotifications({
+      accountId: creatorProfile.accountId,
+    });
+    const inviteeNotifications = await repository.listInAppNotifications({
+      accountId: inviteeProfile.accountId,
+    });
+    assert.equal(creatorNotifications.at(-1).type, "batch_complete");
+    assert.equal(creatorNotifications.at(-1).status, "read");
+    assert.equal(inviteeNotifications.at(-1).type, "batch_complete");
+    assert.equal(inviteeNotifications.at(-1).status, "unread");
+
+    const revealed = await repository.revealMultiplayerBatch({
+      accountId: inviteeProfile.accountId,
+      gameId: startedGame.id,
+    });
+    assert.deepEqual(revealed.phrases.slice(0, 2), [
+      "Brisk-0 noun-a-0 noun-b-0",
+      "Brisk-1 noun-a-1 noun-b-1",
+    ]);
+
+    const afterInviteeReveal = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    const afterCreatorReveal = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    assert.equal(afterInviteeReveal.completedBatches[0].revealed, true);
+    assert.equal(afterCreatorReveal.completedBatches[0].revealed, false);
+  });
+
+  it("rejects reveal requests without leaking completion state or writing reveal state", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile, otherCreatorProfile],
+    });
+
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: inviteeProfile.accountId,
+          gameId: startedGame.id,
+        }),
+      /Multiplayer batch is not complete\./,
+    );
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: otherCreatorProfile.accountId,
+          gameId: startedGame.id,
+        }),
+      /Multiplayer batch was not found\./,
+    );
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: creatorProfile.accountId,
+          gameId: "unknown-started-game",
+        }),
+      /Multiplayer batch was not found\./,
+    );
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: "unknown-auth-account",
+          gameId: startedGame.id,
+        }),
+      /Multiplayer batch was not found\./,
+    );
+
+    await submitAllCurrentSections(repository, inviteeProfile.accountId, "noun");
+    await submitAllCurrentSections(
+      repository,
+      creatorProfile.accountId,
+      "brisk",
+    );
+
+    await assert.rejects(
+      () =>
+        repository.revealMultiplayerBatch({
+          accountId: otherCreatorProfile.accountId,
+          gameId: startedGame.id,
+        }),
+      /Multiplayer batch was not found\./,
+    );
+
+    const creatorDashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    const inviteeDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    assert.equal(creatorDashboard.completedBatches[0].revealed, false);
+    assert.equal(inviteeDashboard.completedBatches[0].revealed, false);
+  });
+
+  it("lists only the five most recently completed batches", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 7; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const dashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(
+      dashboard.completedBatches.map((batch) => batch.id),
+      [
+        "started-game-7",
+        "started-game-6",
+        "started-game-5",
+        "started-game-4",
+        "started-game-3",
+      ],
+    );
+  });
+
   it("rejects multiplayer section submissions from the wrong participant or out of participant-local order", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1692,17 +1860,54 @@ function createSubmittedEntries(rows, prefix) {
 }
 
 async function startAcceptedLocalGame(repository) {
-  await repository.createPendingGameFromHandle({
+  const pendingGame = await repository.createPendingGameFromHandle({
     creatorAccountId: creatorProfile.accountId,
     inviteeHandle: inviteeProfile.handle,
     rowCount: 10,
   });
   await repository.acceptPendingGameInvite({
     accountId: inviteeProfile.accountId,
-    pendingGameId: "pending-game-1",
+    pendingGameId: pendingGame.id,
   });
   return repository.startPendingGame({
     creatorAccountId: creatorProfile.accountId,
-    pendingGameId: "pending-game-1",
+    pendingGameId: pendingGame.id,
   });
+}
+
+async function submitAllCurrentSections(repository, accountId, prefix) {
+  while (true) {
+    const dashboard = await repository.listMultiplayerDashboard({ accountId });
+    const section = dashboard.awaitingYourEntries[0]?.currentSection;
+    if (!section) {
+      return;
+    }
+    await repository.submitMultiplayerSection({
+      accountId,
+      sectionId: section.id,
+      entries: section.rows.map((row) => ({
+        rowIndex: row.rowIndex,
+        value: `${prefix}-${section.sectionIndex === 0 ? "a" : "b"}-${
+          row.rowIndex
+        }`,
+      })),
+    });
+  }
+}
+
+async function completeAcceptedLocalGame(
+  repository,
+  { adjectivePrefix, nounPrefix },
+) {
+  await startAcceptedLocalGame(repository);
+  await submitAllCurrentSections(
+    repository,
+    inviteeProfile.accountId,
+    nounPrefix,
+  );
+  await submitAllCurrentSections(
+    repository,
+    creatorProfile.accountId,
+    adjectivePrefix,
+  );
 }

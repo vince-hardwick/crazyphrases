@@ -19,8 +19,11 @@ export function createTestPendingGameRepository({
   );
   const pendingGames = [];
   const assignedSections = [];
+  const completedMultiplayerBatches = [];
   const inAppNotifications = [];
+  const revealedMultiplayerBatches = [];
   const startedTurns = [];
+  let multiplayerCompletionOrder = 0;
 
   return {
     async createPendingGameFromHandle({
@@ -231,8 +234,10 @@ export function createTestPendingGameRepository({
 
       return createMultiplayerDashboard({
         assignedSections,
+        completedMultiplayerBatches,
         pendingGames,
         profile,
+        revealedMultiplayerBatches,
       });
     },
 
@@ -274,11 +279,66 @@ export function createTestPendingGameRepository({
       });
       section.status = "submitted";
 
+      if (
+        isGameComplete({ assignedSections, gameId: section.gameId }) &&
+        !isBatchCompleted({
+          completedMultiplayerBatches,
+          gameId: section.gameId,
+        })
+      ) {
+        multiplayerCompletionOrder += 1;
+        completedMultiplayerBatches.push({
+          completedOrder: multiplayerCompletionOrder,
+          gameId: section.gameId,
+        });
+        inAppNotifications.push(
+          ...createBatchCompleteNotifications({
+            accountIdsByProfileId,
+            createNotificationId,
+            finalSubmitterAccountId: accountId,
+            participants: findStartedGameParticipants({
+              gameId: section.gameId,
+              pendingGames,
+            }),
+            startedGameId: section.gameId,
+          }),
+        );
+      }
+
       return {
         id: section.id,
         gameId: section.gameId,
         status: section.status,
       };
+    },
+
+    async revealMultiplayerBatch({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+
+      const profile = profilesByAccountId.get(accountId);
+      if (
+        !profile ||
+        !isStartedGameParticipant({ gameId, pendingGames, profile })
+      ) {
+        throw new Error("Multiplayer batch was not found.");
+      }
+
+      if (!isGameComplete({ assignedSections, gameId })) {
+        throw new Error("Multiplayer batch is not complete.");
+      }
+
+      const phrases = renderMultiplayerPhrases({
+        assignedSections,
+        gameId,
+      });
+      upsertRevealState({
+        gameId,
+        profileId: profile.profileId,
+        revealedMultiplayerBatches,
+      });
+
+      return { gameId, phrases, revealed: true };
     },
 
     async loadActiveStartedGameTurn({ accountId, gameId }) {
@@ -937,7 +997,13 @@ function createEmptyMultiplayerDashboard() {
   };
 }
 
-function createMultiplayerDashboard({ assignedSections, pendingGames, profile }) {
+function createMultiplayerDashboard({
+  assignedSections,
+  completedMultiplayerBatches,
+  pendingGames,
+  profile,
+  revealedMultiplayerBatches,
+}) {
   return {
     awaitingYourEntries: createCurrentSectionBatches({
       assignedSections,
@@ -949,7 +1015,13 @@ function createMultiplayerDashboard({ assignedSections, pendingGames, profile })
       pendingGames,
       profile,
     }),
-    completedBatches: [],
+    completedBatches: createCompletedBatches({
+      assignedSections,
+      completedMultiplayerBatches,
+      pendingGames,
+      profile,
+      revealedMultiplayerBatches,
+    }),
   };
 }
 
@@ -1041,6 +1113,49 @@ function createWaitingSectionBatches({ assignedSections, pendingGames, profile }
   });
 }
 
+function createCompletedBatches({
+  assignedSections,
+  completedMultiplayerBatches,
+  pendingGames,
+  profile,
+  revealedMultiplayerBatches,
+}) {
+  return completedMultiplayerBatches
+    .toSorted((left, right) => right.completedOrder - left.completedOrder)
+    .flatMap((completedBatch) => {
+      const pendingGame = pendingGames.find(
+        (candidate) => candidate.startedGameId === completedBatch.gameId,
+      );
+      if (
+        !pendingGame ||
+        pendingGame.status !== "started" ||
+        !pendingGame.participants.some(
+          (participant) => participant.profileId === profile.profileId,
+        ) ||
+        !isGameComplete({ assignedSections, gameId: completedBatch.gameId })
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          id: pendingGame.startedGameId,
+          pendingGameId: pendingGame.id,
+          rowCount: pendingGame.rowCount,
+          participants: pendingGame.participants.map(
+            toMultiplayerParticipantDto,
+          ),
+          revealed: isBatchRevealed({
+            gameId: pendingGame.startedGameId,
+            profileId: profile.profileId,
+            revealedMultiplayerBatches,
+          }),
+        },
+      ];
+    })
+    .slice(0, 5);
+}
+
 function findCurrentAssignedSection({
   assignedSections,
   gameId,
@@ -1090,6 +1205,109 @@ function toNotificationDto(notification) {
     message: notification.message,
     targetGameId: notification.targetGameId,
   };
+}
+
+function createBatchCompleteNotifications({
+  accountIdsByProfileId,
+  createNotificationId,
+  finalSubmitterAccountId,
+  participants,
+  startedGameId,
+}) {
+  const message = createParticipantNotificationMessage({
+    participants,
+    text: "A batch is complete with",
+  });
+
+  return participants.map((participant) => {
+    const accountId = accountIdsByProfileId.get(participant.profileId);
+
+    return {
+      id: createNotificationId(),
+      accountId,
+      createdAt: new Date(0).toISOString(),
+      message,
+      status: accountId === finalSubmitterAccountId ? "read" : "unread",
+      targetGameId: startedGameId,
+      type: "batch_complete",
+    };
+  });
+}
+
+function findStartedGameParticipants({ gameId, pendingGames }) {
+  return (
+    pendingGames.find((pendingGame) => pendingGame.startedGameId === gameId)
+      ?.participants ?? []
+  );
+}
+
+function isStartedGameParticipant({ gameId, pendingGames, profile }) {
+  return findStartedGameParticipants({ gameId, pendingGames }).some(
+    (participant) => participant.profileId === profile.profileId,
+  );
+}
+
+function isGameComplete({ assignedSections, gameId }) {
+  const gameSections = assignedSections.filter(
+    (section) => section.gameId === gameId,
+  );
+  return (
+    gameSections.length > 0 &&
+    gameSections.every((section) => section.status === "submitted")
+  );
+}
+
+function isBatchCompleted({ completedMultiplayerBatches, gameId }) {
+  return completedMultiplayerBatches.some((batch) => batch.gameId === gameId);
+}
+
+function renderMultiplayerPhrases({ assignedSections, gameId }) {
+  const submittedSections = assignedSections
+    .filter((section) => section.gameId === gameId)
+    .toSorted(
+      (left, right) =>
+        slotRenderOrder(left.slotId) - slotRenderOrder(right.slotId),
+    );
+
+  return Array.from({ length: submittedSections[0].rowCount }, (_, rowIndex) => {
+    const phrase = submittedSections
+      .map((section) => section.entries[rowIndex]?.value ?? "")
+      .join(" ")
+      .trim()
+      .replace(/\s+/g, " ");
+    return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+  });
+}
+
+function slotRenderOrder(slotId) {
+  const order = ["adjective", "noun-1", "noun-2"].indexOf(slotId);
+  if (order < 0) {
+    throw new Error(`Unknown multiplayer slot id: ${slotId}.`);
+  }
+
+  return order;
+}
+
+function upsertRevealState({
+  gameId,
+  profileId,
+  revealedMultiplayerBatches,
+}) {
+  if (
+    !isBatchRevealed({
+      gameId,
+      profileId,
+      revealedMultiplayerBatches,
+    })
+  ) {
+    revealedMultiplayerBatches.push({ gameId, profileId });
+  }
+}
+
+function isBatchRevealed({ gameId, profileId, revealedMultiplayerBatches }) {
+  return revealedMultiplayerBatches.some(
+    (batch) => batch.gameId === gameId && batch.profileId === profileId,
+  );
 }
 
 function findIncomingPendingGameIndex({

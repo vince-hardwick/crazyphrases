@@ -50,6 +50,9 @@ const supportPendingGameInviteResponsesMigrationUrl = findMigrationUrl(
 const startPendingGameFoundationMigrationUrl = findMigrationUrl(
   "start_pending_game_foundation",
 );
+const startedGameTurnSubmissionMigrationUrl = findMigrationUrl(
+  "started_game_turn_submission",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -705,6 +708,100 @@ describe("Supabase migration surface", () => {
     assert.match(
       startPendingGameFoundationMigration,
       /create trigger create_started_game_participants\s+after insert on public\.games/,
+    );
+  });
+
+  it("creates Started Game turn storage with narrow submission authority", () => {
+    assert.equal(existsSync(startedGameTurnSubmissionMigrationUrl), true);
+
+    const startedGameTurnSubmissionMigration = readFileSync(
+      startedGameTurnSubmissionMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create table if not exists public\.game_turns/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create table if not exists public\.game_entries/,
+    );
+    assert.match(startedGameTurnSubmissionMigration, /status text not null default 'active'/);
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /unique \(game_id, turn_index\)/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /unique \(turn_id, row_index\)/,
+    );
+
+    for (const tableName of ["game_turns", "game_entries"]) {
+      assert.match(
+        startedGameTurnSubmissionMigration,
+        new RegExp(`alter table public\\.${tableName} enable row level security`),
+      );
+      assert.match(
+        startedGameTurnSubmissionMigration,
+        new RegExp(`revoke all on table public\\.${tableName} from anon`),
+      );
+    }
+
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /grant select on table public\.game_turns to authenticated/,
+    );
+    assert.doesNotMatch(
+      startedGameTurnSubmissionMigration,
+      /grant insert .*on table public\.game_entries to authenticated/i,
+    );
+    assert.doesNotMatch(
+      startedGameTurnSubmissionMigration,
+      /grant update .*on table public\.game_turns to authenticated/i,
+    );
+
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /Participants can view their active Started Game Turns/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create or replace function private\.is_active_started_game_turn_assignee\(/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create or replace function private\.create_started_game_turns\(\)/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /jsonb_array_elements\(new\.slot_order\)/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create trigger create_started_game_turns\s+after insert on public\.games/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /create or replace function public\.submit_started_game_turn\(/,
+    );
+    assert.match(startedGameTurnSubmissionMigration, /security definer/);
+    assert.match(startedGameTurnSubmissionMigration, /set search_path = ''/);
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /grant execute on function public\.submit_started_game_turn\(uuid, jsonb\)\s+to authenticated/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /insert into public\.game_entries/,
+    );
+    assert.match(
+      startedGameTurnSubmissionMigration,
+      /update public\.game_turns\s+set status = 'submitted'/,
+    );
+    assert.doesNotMatch(
+      startedGameTurnSubmissionMigration,
+      /create or replace function private\.submit_started_game_turn/i,
     );
   });
 });

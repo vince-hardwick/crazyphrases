@@ -308,6 +308,112 @@ describe("Pending Game repository", () => {
     assert.equal(Array.isArray(startedGame.setup.slotOrder), false);
   });
 
+  it("loads the active Started Game Turn for the assigned participant", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const activeTurn = await repository.loadActiveStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    assert.deepEqual(activeTurn, {
+      id: "started-game-1-turn-1",
+      gameId: "started-game-1",
+      status: "active",
+      turnIndex: 0,
+      entryKind: "adjective",
+      rowCount: 10,
+      rows: Array.from({ length: 10 }, (_, rowIndex) => ({
+        rowIndex,
+        value: "",
+      })),
+    });
+    assert.equal(JSON.stringify(activeTurn).includes("profile-id"), false);
+    assert.equal(JSON.stringify(activeTurn).includes("auth-account"), false);
+  });
+
+  it("submits a complete active Started Game Turn and advances to the next participant", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    const activeTurn = await repository.loadActiveStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    const submittedTurn = await repository.submitStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      turnId: activeTurn.id,
+      entries: activeTurn.rows.map((row) => ({
+        rowIndex: row.rowIndex,
+        value: `brisk-${row.rowIndex}`,
+      })),
+    });
+
+    assert.deepEqual(submittedTurn, {
+      id: "started-game-1-turn-1",
+      gameId: "started-game-1",
+      status: "submitted",
+    });
+    assert.equal(
+      await repository.loadActiveStartedGameTurn({
+        accountId: creatorProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      null,
+    );
+    assert.deepEqual(await repository.loadActiveStartedGameTurn({
+      accountId: inviteeProfile.accountId,
+      gameId: startedGame.id,
+    }), {
+      id: "started-game-1-turn-2",
+      gameId: "started-game-1",
+      status: "active",
+      turnIndex: 1,
+      entryKind: "noun",
+      rowCount: 10,
+      rows: Array.from({ length: 10 }, (_, rowIndex) => ({
+        rowIndex,
+        value: "",
+      })),
+    });
+    assert.equal(JSON.stringify(submittedTurn).includes("brisk-"), false);
+  });
+
   it("rejects starting a Pending Game before invitee acceptance", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -762,6 +868,98 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("loads active Started Game Turns through Supabase rows", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    const activeTurn = await repository.loadActiveStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    assert.deepEqual(activeTurn, {
+      id: "supabase-started-game-1-turn-1",
+      gameId: "supabase-started-game-1",
+      status: "active",
+      turnIndex: 0,
+      entryKind: "adjective",
+      rowCount: 15,
+      rows: Array.from({ length: 15 }, (_, rowIndex) => ({
+        rowIndex,
+        value: "",
+      })),
+    });
+    assert.equal(JSON.stringify(activeTurn).includes("profile-id"), false);
+    assert.equal(JSON.stringify(activeTurn).includes("auth-account"), false);
+  });
+
+  it("submits active Started Game Turns through a Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+    const activeTurn = await repository.loadActiveStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    const submittedTurn = await repository.submitStartedGameTurn({
+      accountId: creatorProfile.accountId,
+      turnId: activeTurn.id,
+      entries: activeTurn.rows.map((row) => ({
+        rowIndex: row.rowIndex,
+        value: `brisk-${row.rowIndex}`,
+      })),
+    });
+
+    assert.deepEqual(submittedTurn, {
+      id: "supabase-started-game-1-turn-1",
+      gameId: "supabase-started-game-1",
+      status: "submitted",
+    });
+    assert.deepEqual(supabase.rpcCalls, ["submit_started_game_turn"]);
+    assert.equal(supabase.submittedEntryRows.length, 15);
+    assert.equal(
+      await repository.loadActiveStartedGameTurn({
+        accountId: creatorProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      null,
+    );
+  });
+
   it("wires app Pending Game creation behind local test and hosted repositories", async () => {
     const repository = createLocalTestPendingGameRepository({
       createPendingGameId: () => "local-pending-game-1",
@@ -788,15 +986,21 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
     creatorProfile,
     inviteeProfile,
     gameParticipants: [],
+    gameTurns: [],
     pendingGame: null,
     participants: [],
+    submittedEntries: [],
     startedGames: [],
   };
 
   return {
+    get submittedEntryRows() {
+      return state.submittedEntries;
+    },
     get startedGameRows() {
       return state.startedGames;
     },
+    rpcCalls: [],
     tableCalls: [],
     from(tableName) {
       assert.ok(
@@ -804,6 +1008,7 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
           "account_profiles",
           "account_profile_directory",
           "games",
+          "game_turns",
           "game_participants",
           "pending_games",
           "pending_game_participants",
@@ -811,6 +1016,57 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
       );
       this.tableCalls.push(tableName);
       return new FakePendingGameQuery(tableName, state);
+    },
+    async rpc(functionName, params) {
+      assert.equal(functionName, "submit_started_game_turn");
+      this.rpcCalls.push(functionName);
+
+      const turn = state.gameTurns.find(
+        (candidate) => candidate.id === params.target_turn_id,
+      );
+      if (!turn) {
+        return {
+          data: null,
+          error: { message: "turn not found" },
+        };
+      }
+
+      const earliestUnsubmittedTurn = state.gameTurns
+        .filter(
+          (candidate) =>
+            candidate.game_id === turn.game_id &&
+            candidate.status !== "submitted",
+        )
+        .toSorted((left, right) => left.turn_index - right.turn_index)[0];
+      if (earliestUnsubmittedTurn?.id !== turn.id) {
+        return {
+          data: null,
+          error: { message: "turn is not active" },
+        };
+      }
+
+      const submittedEntries = normaliseFakeSubmittedEntries(
+        params.submitted_entries,
+        { rowCount: turn.row_count },
+      );
+      state.submittedEntries.push(
+        ...submittedEntries.map((entry) => ({
+          game_id: turn.game_id,
+          row_index: entry.rowIndex,
+          turn_id: turn.id,
+          value: entry.value,
+        })),
+      );
+      turn.status = "submitted";
+
+      return {
+        data: {
+          game_id: turn.game_id,
+          status: turn.status,
+          turn_id: turn.id,
+        },
+        error: null,
+      };
     },
   };
 }
@@ -839,6 +1095,11 @@ class FakePendingGameQuery {
 
   eq(column, value) {
     this.filters[column] = value;
+    return this;
+  }
+
+  in(column, values) {
+    this.filters[column] = new Set(values);
     return this;
   }
 
@@ -910,14 +1171,7 @@ class FakePendingGameQuery {
 
     if (this.tableName === "pending_games") {
       return [this.state.pendingGame].filter(
-        (row) =>
-          row &&
-          (!this.filters.id || row.id === this.filters.id) &&
-          (!this.filters.creator_account_id ||
-            row.creator_account_id === this.filters.creator_account_id) &&
-          (!this.filters.invitee_profile_id ||
-            row.invitee_profile_id === this.filters.invitee_profile_id) &&
-          (!this.filters.status || row.status === this.filters.status),
+        (row) => row && matchesFilters(row, this.filters),
       );
     }
 
@@ -974,6 +1228,11 @@ class FakePendingGameQuery {
       this.state.gameParticipants = this.state.participants.map((participant) =>
         toStartedParticipantRow(participant, { gameId: startedGame.id }),
       );
+      this.state.gameTurns = createFakeStartedGameTurns({
+        creatorProfile: this.state.creatorProfile,
+        inviteeProfile: this.state.inviteeProfile,
+        startedGame,
+      });
       return [startedGame];
     }
 
@@ -985,6 +1244,21 @@ class FakePendingGameQuery {
       return this.state.gameParticipants.filter((row) =>
         matchesFilters(row, this.filters),
       );
+    }
+
+    if (this.tableName === "game_turns") {
+      return this.state.gameTurns
+        .filter((row) => matchesFilters(row, this.filters))
+        .filter((row) => {
+          const earliestUnsubmittedTurn = this.state.gameTurns
+            .filter(
+              (turn) =>
+                turn.game_id === row.game_id && turn.status !== "submitted",
+            )
+            .toSorted((left, right) => left.turn_index - right.turn_index)[0];
+
+          return earliestUnsubmittedTurn?.id === row.id;
+        });
     }
 
     if (this.tableName === "pending_game_participants") {
@@ -1053,6 +1327,62 @@ function createFakeSlotAllocation({ creatorProfile, inviteeProfile }) {
   ];
 }
 
+function createFakeStartedGameTurns({ creatorProfile, inviteeProfile, startedGame }) {
+  return [
+    {
+      id: `${startedGame.id}-turn-1`,
+      game_id: startedGame.id,
+      status: "active",
+      turn_index: 0,
+      slot_id: "adjective",
+      entry_kind: "adjective",
+      participant_profile_id: creatorProfile.profileId,
+      row_count: startedGame.row_count,
+    },
+    {
+      id: `${startedGame.id}-turn-2`,
+      game_id: startedGame.id,
+      status: "active",
+      turn_index: 1,
+      slot_id: "noun-1",
+      entry_kind: "noun",
+      participant_profile_id: inviteeProfile.profileId,
+      row_count: startedGame.row_count,
+    },
+    {
+      id: `${startedGame.id}-turn-3`,
+      game_id: startedGame.id,
+      status: "active",
+      turn_index: 2,
+      slot_id: "noun-2",
+      entry_kind: "noun",
+      participant_profile_id: inviteeProfile.profileId,
+      row_count: startedGame.row_count,
+    },
+  ];
+}
+
+function normaliseFakeSubmittedEntries(entries, { rowCount }) {
+  assert.equal(Array.isArray(entries), true);
+  assert.equal(entries.length, rowCount);
+
+  const rowIndexes = entries.map((entry) => entry.rowIndex).toSorted(
+    (left, right) => left - right,
+  );
+  assert.deepEqual(
+    rowIndexes,
+    Array.from({ length: rowCount }, (_, rowIndex) => rowIndex),
+  );
+  assert.equal(
+    entries.every((entry) => typeof entry.value === "string" && entry.value),
+    true,
+  );
+
+  return entries;
+}
+
 function matchesFilters(row, filters) {
-  return Object.entries(filters).every(([column, value]) => row[column] === value);
+  return Object.entries(filters).every(([column, value]) =>
+    value instanceof Set ? value.has(row[column]) : row[column] === value,
+  );
 }

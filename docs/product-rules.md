@@ -84,6 +84,18 @@ When a participant has multiple slot assignments, they complete each assignment 
 
 A turn consists of completing one active slot across every row in the batch. Games do not advance row by row in the first product shape.
 
+For Started Games, the active Turn is the first unsubmitted slot in the
+resolved Slot Order. A participant may see and submit only their own active
+Turn, including its entry kind and one input per row. If another participant's
+Turn is active, the UI may show a waiting state but must not reveal that
+participant's entry kind, slot id, or entries before Reveal.
+
+Submitting a multiplayer Turn stores one non-empty Entry for every row in that
+Turn and locks those Entries. The first turn-submission slice stores submitted
+Entries and advances turn availability only; it does not add Reveal, completed
+phrase rendering, Share Consent, external sharing for multiplayer, nudges, or
+public discovery.
+
 For anonymous solo MVP, the active slot is entered through a single vertical form showing all rows for that slot. The participant may fill rows in any order within the active slot, rather than being forced top to bottom. Each row may support manual entry and dice assistance.
 
 The participant cannot submit an active slot until every row in that slot has a non-empty entry.
@@ -314,8 +326,9 @@ Pending Game invites for their Account Profile, accept an invite, or decline an
 invite. Once every invited human participant accepts, the Game Creator can start
 the Pending Game and see that the Game shell has started. Decline cancels the
 Pending Game in the MVP. The current MVP invite UI still does not add invite
-expiry, creator cancellation UI, turn storage, turn submission, Reveal, Share
-Consent, friends, nudges, or public discovery.
+expiry, creator cancellation UI, Reveal, Share Consent, friends, nudges, or
+public discovery. The first Started Game turn-submission slice adds active Turn
+storage and submission only.
 
 ### Nudges
 

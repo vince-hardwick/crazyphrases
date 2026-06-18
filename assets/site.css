@@ -625,6 +625,55 @@ h1 {
   margin-top: 12px;
 }
 
+.started-game-turn {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.started-game-turn-form {
+  display: grid;
+  gap: 12px;
+}
+
+.started-game-turn-form h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.started-game-turn-list {
+  display: grid;
+  gap: 8px;
+}
+
+.started-game-turn-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 96px) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.started-game-turn-row input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 700;
+}
+
+.started-game-turn-row input:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .favourites-list {
   display: grid;
   gap: 10px;

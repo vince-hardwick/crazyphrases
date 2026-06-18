@@ -680,7 +680,10 @@ revoke all on function public.list_multiplayer_dashboard()
 grant execute on function public.list_multiplayer_dashboard()
   to authenticated;
 
-create or replace function public.submit_multiplayer_section(uuid, jsonb)
+create or replace function public.submit_multiplayer_section(
+  target_assignment_id uuid,
+  submitted_entries jsonb
+)
 returns table (
   assignment_id uuid,
   game_id uuid,
@@ -691,8 +694,6 @@ security definer
 set search_path = ''
 as $$
 declare
-  target_assignment_id alias for $1;
-  submitted_entries alias for $2;
   target_assignment public.game_section_assignments%rowtype;
   current_assignment public.game_section_assignments%rowtype;
   caller_account_id uuid := (select auth.uid());
@@ -887,7 +888,7 @@ revoke all on function public.submit_multiplayer_section(uuid, jsonb)
 grant execute on function public.submit_multiplayer_section(uuid, jsonb)
   to authenticated;
 
-create or replace function public.reveal_multiplayer_batch(uuid)
+create or replace function public.reveal_multiplayer_batch(target_game_id uuid)
 returns table (
   game_id uuid,
   phrases jsonb,
@@ -898,7 +899,6 @@ security definer
 set search_path = ''
 as $$
 declare
-  target_game_id alias for $1;
   caller_profile_id uuid;
   rendered_phrases jsonb;
 begin

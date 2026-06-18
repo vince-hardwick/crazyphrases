@@ -959,11 +959,15 @@ describe("Supabase migration surface", () => {
     );
     assert.match(
       migration,
-      /create or replace function public\.submit_multiplayer_section\(uuid, jsonb\)/,
+      /create or replace function public\.submit_multiplayer_section\(\s*target_assignment_id uuid,\s*submitted_entries jsonb\s*\)/,
     );
     assert.match(
       migration,
-      /create or replace function public\.reveal_multiplayer_batch\(uuid\)/,
+      /create or replace function public\.reveal_multiplayer_batch\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /alias for \$[12]/,
     );
 
     assert.match(

@@ -244,6 +244,43 @@ export function createTestPendingGameRepository({
         .map(toNotificationDto);
     },
 
+    async submitMultiplayerSection({ accountId, entries, sectionId }) {
+      assertAccountId(accountId);
+      assertText(sectionId, "A multiplayer section id is required.");
+
+      const profile = profilesByAccountId.get(accountId);
+      const section = assignedSections.find(
+        (candidate) => candidate.id === sectionId,
+      );
+      if (
+        !profile ||
+        !section ||
+        section.participantProfileId !== profile.profileId
+      ) {
+        throw new Error("Multiplayer section is not active for this Account.");
+      }
+
+      const currentSection = findCurrentAssignedSection({
+        assignedSections,
+        gameId: section.gameId,
+        participantProfileId: profile.profileId,
+      });
+      if (currentSection?.id !== section.id) {
+        throw new Error("Multiplayer section is not active for this Account.");
+      }
+
+      section.entries = normaliseSubmittedEntries(entries, {
+        rowCount: section.rowCount,
+      });
+      section.status = "submitted";
+
+      return {
+        id: section.id,
+        gameId: section.gameId,
+        status: section.status,
+      };
+    },
+
     async loadActiveStartedGameTurn({ accountId, gameId }) {
       assertAccountId(accountId);
       assertText(gameId, "A Started Game id is required.");
@@ -907,31 +944,36 @@ function createMultiplayerDashboard({ assignedSections, pendingGames, profile })
       pendingGames,
       profile,
     }),
-    awaitingOtherPlayerEntries: [],
+    awaitingOtherPlayerEntries: createWaitingSectionBatches({
+      assignedSections,
+      pendingGames,
+      profile,
+    }),
     completedBatches: [],
   };
 }
 
 function createCurrentSectionBatches({ assignedSections, pendingGames, profile }) {
-  const currentSectionsByGame = new Map();
-  const sectionsForProfile = assignedSections
-    .filter(
-      (section) =>
-        section.participantProfileId === profile.profileId &&
-        section.status === "active",
+  const gameIdsForProfile = new Set(
+    assignedSections
+      .filter((section) => section.participantProfileId === profile.profileId)
+      .map((section) => section.gameId),
+  );
+  const currentSections = Array.from(gameIdsForProfile)
+    .map((gameId) =>
+      findCurrentAssignedSection({
+        assignedSections,
+        gameId,
+        participantProfileId: profile.profileId,
+      }),
     )
+    .filter(Boolean)
     .toSorted(
       (left, right) =>
         left.participantSectionIndex - right.participantSectionIndex,
     );
 
-  for (const section of sectionsForProfile) {
-    if (!currentSectionsByGame.has(section.gameId)) {
-      currentSectionsByGame.set(section.gameId, section);
-    }
-  }
-
-  return Array.from(currentSectionsByGame.values()).flatMap((section) => {
+  return currentSections.flatMap((section) => {
     const pendingGame = pendingGames.find(
       (candidate) => candidate.startedGameId === section.gameId,
     );
@@ -955,6 +997,66 @@ function createCurrentSectionBatches({ assignedSections, pendingGames, profile }
       },
     ];
   });
+}
+
+function createWaitingSectionBatches({ assignedSections, pendingGames, profile }) {
+  return pendingGames.flatMap((pendingGame) => {
+    if (
+      pendingGame.status !== "started" ||
+      !pendingGame.startedGameId ||
+      !pendingGame.participants.some(
+        (participant) => participant.profileId === profile.profileId,
+      )
+    ) {
+      return [];
+    }
+
+    const currentSection = findCurrentAssignedSection({
+      assignedSections,
+      gameId: pendingGame.startedGameId,
+      participantProfileId: profile.profileId,
+    });
+    if (currentSection) {
+      return [];
+    }
+
+    const hasOtherIncompleteSections = assignedSections.some(
+      (section) =>
+        section.gameId === pendingGame.startedGameId &&
+        section.participantProfileId !== profile.profileId &&
+        section.status !== "submitted",
+    );
+    if (!hasOtherIncompleteSections) {
+      return [];
+    }
+
+    return [
+      {
+        id: pendingGame.startedGameId,
+        pendingGameId: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        participants: pendingGame.participants.map(toMultiplayerParticipantDto),
+      },
+    ];
+  });
+}
+
+function findCurrentAssignedSection({
+  assignedSections,
+  gameId,
+  participantProfileId,
+}) {
+  return assignedSections
+    .filter(
+      (section) =>
+        section.gameId === gameId &&
+        section.participantProfileId === participantProfileId &&
+        section.status !== "submitted",
+    )
+    .toSorted(
+      (left, right) =>
+        left.participantSectionIndex - right.participantSectionIndex,
+    )[0] ?? null;
 }
 
 function toMultiplayerParticipantDto(participant) {

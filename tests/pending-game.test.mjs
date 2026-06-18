@@ -406,6 +406,189 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("submits participant sections in participant-local order without notifying same-user progression", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await startAcceptedLocalGame(repository);
+
+    const inviteeFirstDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    const firstSection =
+      inviteeFirstDashboard.awaitingYourEntries[0].currentSection;
+
+    await repository.submitMultiplayerSection({
+      accountId: inviteeProfile.accountId,
+      sectionId: firstSection.id,
+      entries: firstSection.rows.map((row) => ({
+        rowIndex: row.rowIndex,
+        value: `noun-a-${row.rowIndex}`,
+      })),
+    });
+
+    const inviteeSecondDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    assert.equal(inviteeSecondDashboard.awaitingYourEntries.length, 1);
+    assert.equal(
+      inviteeSecondDashboard.awaitingYourEntries[0].currentSection.sectionIndex,
+      1,
+    );
+    assert.equal(
+      (await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      })).length,
+      1,
+    );
+
+    await repository.submitMultiplayerSection({
+      accountId: inviteeProfile.accountId,
+      sectionId: inviteeSecondDashboard.awaitingYourEntries[0].currentSection.id,
+      entries: inviteeSecondDashboard.awaitingYourEntries[0].currentSection.rows.map(
+        (row) => ({ rowIndex: row.rowIndex, value: `noun-b-${row.rowIndex}` }),
+      ),
+    });
+
+    const waitingDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    assert.equal(waitingDashboard.awaitingYourEntries.length, 0);
+    assert.equal(waitingDashboard.awaitingOtherPlayerEntries.length, 1);
+    assert.equal(waitingDashboard.completedBatches.length, 0);
+    assert.equal(JSON.stringify(waitingDashboard).includes("adjective"), false);
+  });
+
+  it("rejects multiplayer section submissions from the wrong participant or out of participant-local order", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await startAcceptedLocalGame(repository);
+
+    const inviteeDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    const inviteeFirstSection =
+      inviteeDashboard.awaitingYourEntries[0].currentSection;
+
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: creatorProfile.accountId,
+          sectionId: inviteeFirstSection.id,
+          entries: createSubmittedEntries(inviteeFirstSection.rows, "noun-a"),
+        }),
+      /not active for this Account/i,
+    );
+
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: "started-game-1-section-invitee-2",
+          entries: createSubmittedEntries(inviteeFirstSection.rows, "noun-b"),
+        }),
+      /not active for this Account/i,
+    );
+
+    assert.equal(
+      (
+        await repository.listMultiplayerDashboard({
+          accountId: inviteeProfile.accountId,
+        })
+      ).awaitingYourEntries[0].currentSection.id,
+      inviteeFirstSection.id,
+    );
+  });
+
+  it("rejects multiplayer section submissions with invalid section ids or row entries", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await startAcceptedLocalGame(repository);
+
+    const inviteeDashboard = await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    const inviteeFirstSection =
+      inviteeDashboard.awaitingYourEntries[0].currentSection;
+    const completeEntries = createSubmittedEntries(
+      inviteeFirstSection.rows,
+      "noun-a",
+    );
+
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: "unknown-section",
+          entries: completeEntries,
+        }),
+      /not active for this Account/i,
+    );
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: " ",
+          entries: completeEntries,
+        }),
+      /section id is required/i,
+    );
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: inviteeFirstSection.id,
+          entries: completeEntries.slice(1),
+        }),
+      /Submit one Entry for every row/i,
+    );
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: inviteeFirstSection.id,
+          entries: completeEntries.map((entry, index) =>
+            index === 1 ? { ...entry, rowIndex: 0 } : entry,
+          ),
+        }),
+      /Submit one Entry for every row/i,
+    );
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: inviteeFirstSection.id,
+          entries: completeEntries.map((entry, index) =>
+            index === 0
+              ? { ...entry, rowIndex: inviteeFirstSection.rows.length }
+              : entry,
+          ),
+        }),
+      /Submit one Entry for every row/i,
+    );
+
+    assert.equal(
+      (
+        await repository.listMultiplayerDashboard({
+          accountId: inviteeProfile.accountId,
+        })
+      ).awaitingYourEntries[0].currentSection.id,
+      inviteeFirstSection.id,
+    );
+  });
+
   it("loads the active Started Game Turn for the assigned participant", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1499,4 +1682,27 @@ function createPlayerTestCreatorProfile() {
     handle: "player-test-account",
     gamerName: "Player Test Account",
   };
+}
+
+function createSubmittedEntries(rows, prefix) {
+  return rows.map((row) => ({
+    rowIndex: row.rowIndex,
+    value: `${prefix}-${row.rowIndex}`,
+  }));
+}
+
+async function startAcceptedLocalGame(repository) {
+  await repository.createPendingGameFromHandle({
+    creatorAccountId: creatorProfile.accountId,
+    inviteeHandle: inviteeProfile.handle,
+    rowCount: 10,
+  });
+  await repository.acceptPendingGameInvite({
+    accountId: inviteeProfile.accountId,
+    pendingGameId: "pending-game-1",
+  });
+  return repository.startPendingGame({
+    creatorAccountId: creatorProfile.accountId,
+    pendingGameId: "pending-game-1",
+  });
 }

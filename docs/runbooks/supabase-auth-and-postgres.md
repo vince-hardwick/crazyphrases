@@ -579,6 +579,12 @@ Entries and advances availability only; it does not configure expiry, expose
 creator cancellation UI, reveal a batch, request Share Consent, manage friends,
 send nudges, or publish to discovery surfaces.
 
+As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
+for future multiplayer work. The source-controlled `game_turns` and
+`submit_started_game_turn` surface remains historical implementation evidence,
+but future Reveal, completion, and notification work should use the
+participant-section execution model instead of extending the global Turn queue.
+
 ## Current Game Repository Adapter
 
 The provider-facing browser repository adapter lives in:

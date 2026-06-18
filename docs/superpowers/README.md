@@ -54,6 +54,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-15-private-phrase-and-batch-favourites-prd.md` | Published PRD provenance. Current child-ticket status belongs to GitHub Issues and backlog. | GitHub issue #33 and child issues, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-16-durable-account-profile-handle-directory-prd.md` | Published PRD provenance. Current remaining profile-management scope is tracked separately. | GitHub issue #43, GitHub issue #47, ADR 0011, `docs/backlog.md` |
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
+| `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design. Implementation has not started. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 
 ## Adding Future Plans Or Specs
 

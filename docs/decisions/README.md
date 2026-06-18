@@ -17,7 +17,8 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0011-account-profile-handle-directory.md` - durable Account Profile and Handle Directory boundary.
 - `0012-pending-game-invite-response-authority.md` - Pending Game invitee response authority, visibility, and decline cancellation boundary.
 - `0013-pending-game-start-conversion-authority.md` - Pending Game to Started Game conversion authority and durable setup boundary.
-- `0014-started-game-turn-submission-authority.md` - Started Game Turn storage, active-turn visibility, and submission authority boundary.
+- `0014-started-game-turn-submission-authority.md` - historical Started Game Turn storage and submission authority boundary; global active-turn sequencing is superseded by ADR 0015.
+- `0015-participant-section-multiplayer-execution.md` - participant-section multiplayer execution, participant-scoped Reveal, and in-app notification lifecycle boundary.
 
 ## Status Values
 

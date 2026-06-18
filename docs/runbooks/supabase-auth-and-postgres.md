@@ -514,13 +514,56 @@ clients may select only their currently active Turn through Row Level Security:
 the Turn must be assigned to their Account Profile and every earlier Turn in
 the Game must already be submitted.
 
-Browser clients do not receive direct insert, update, or delete grants on
-`public.game_entries`, and they do not receive update grants on
-`public.game_turns`. Turn submission goes through the narrow authenticated RPC
-`public.submit_started_game_turn(uuid, jsonb)`, which validates the assigned
-active Turn and a complete non-empty Entry payload before inserting Entries and
-marking the Turn submitted. Hosted application of this migration remains behind
-explicit owner approval or the documented deployment gate.
+Browser clients did not receive direct insert, update, or delete grants on
+`public.game_entries`, and they did not receive update grants on
+`public.game_turns`. Turn submission originally went through the narrow
+authenticated RPC `public.submit_started_game_turn(uuid, jsonb)`. The later
+participant-section migration decommissions this global Turn execution
+authority, so this migration is historical storage provenance rather than the
+current multiplayer execution surface.
+
+The participant-section multiplayer execution migration is:
+
+```text
+supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql
+```
+
+It creates `public.game_section_assignments`, `public.game_section_entries`,
+`public.multiplayer_batch_reveals`, and `public.in_app_notifications` for the
+ADR 0015 participant-section execution model. A private trigger creates one
+participant-local section assignment per resolved Slot Allocation entry when a
+Started Game is inserted, and creates Game-start `entries_needed`
+notifications for every participant. Authenticated browser clients do not
+receive direct insert authority on section entries, section assignments, or
+Reveal state. Section submission runs through
+`public.submit_multiplayer_section(uuid, jsonb)`, batch dashboard reads run
+through `public.list_multiplayer_dashboard()`, and participant-scoped Reveal
+runs through `public.reveal_multiplayer_batch(uuid)`.
+
+The migration grants authenticated clients direct table access only for
+account-owned notification select/update paths governed by Row Level Security.
+It also revokes the earlier table-wide authenticated `public.games` select and
+re-grants only safe metadata columns; `slot_allocation` and `slot_order` remain
+behind participant-section RPCs until Reveal.
+Batch-complete notifications are created by the final section submission; the
+final submitter's notification is stored as `read`, and other participant
+notifications are stored as `unread`. Reveal checks confirm that the caller is
+a participant before checking completion, so nonparticipants receive the
+not-found path rather than a completion-state leak. The migration also drops
+the legacy `create_started_game_turns` trigger, removes the active-Turn select
+policy, revokes authenticated access to the old `game_turns`/`game_entries`
+browser path, and revokes authenticated execution of
+`public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows are
+preserved for history; future Started Games should use participant-section
+execution only. Hosted application of this migration remains behind explicit
+owner approval or the documented deployment gate.
+
+Before hosted application of this migration, verify that no meaningful legacy
+Started Game Turn submissions exist in `public.game_turns` or
+`public.game_entries`. If they do, pause and write an explicit data migration
+from the historical Turn model into participant sections; do not accept the
+source-only active assignment and `entries_needed` notification backfill as a
+complete migration of submitted legacy data.
 
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
@@ -584,6 +627,11 @@ for future multiplayer work. The source-controlled `game_turns` and
 `submit_started_game_turn` surface remains historical implementation evidence,
 but future Reveal, completion, and notification work should use the
 participant-section execution model instead of extending the global Turn queue.
+The source-controlled Supabase participant-section surface is now
+`supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`;
+hosted browser wiring should use its three public RPCs rather than direct
+section-entry table writes, and should treat direct notification table updates
+as read-status changes only.
 
 ## Current Game Repository Adapter
 

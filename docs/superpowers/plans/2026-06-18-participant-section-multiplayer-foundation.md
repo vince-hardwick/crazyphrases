@@ -11,7 +11,8 @@
 > agents should use `docs/product-rules.md`, ADR 0015,
 > `docs/runbooks/supabase-auth-and-postgres.md`,
 > `docs/planning/supabase-state-ledger.md`, and `docs/backlog.md` as current
-> authority.
+> authority. Any unchecked task checkboxes below are historical provenance, not
+> active implementation status.
 
 **Goal:** Replace global Started Game Turn sequencing with participant-local section queues, completion-gated Reveal, and durable in-app notification foundation for signed-in 2-player multiplayer.
 

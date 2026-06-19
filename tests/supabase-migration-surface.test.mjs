@@ -56,6 +56,9 @@ const startedGameTurnSubmissionMigrationUrl = findMigrationUrl(
 const participantSectionExecutionMigrationUrl = findMigrationUrl(
   "participant_section_multiplayer_execution",
 );
+const creatorMultiplayerCancellationMigrationUrl = findMigrationUrl(
+  "creator_multiplayer_cancellation",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1120,6 +1123,133 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       migration,
       /create or replace function public\.create_started_game_section_assignments/i,
+    );
+  });
+
+  it("adds creator-controlled multiplayer cancellation with pending-aware notifications", () => {
+    assert.equal(existsSync(creatorMultiplayerCancellationMigrationUrl), true);
+
+    const migration = readFileSync(
+      creatorMultiplayerCancellationMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /alter table public\.in_app_notifications\s+add column if not exists target_pending_game_id uuid\s+references public\.pending_games \(id\)\s+on delete cascade/,
+    );
+    assert.match(
+      migration,
+      /alter table public\.in_app_notifications\s+alter column target_game_id drop not null/,
+    );
+    assert.match(
+      migration,
+      /drop constraint if exists in_app_notifications_type/,
+    );
+    assert.match(
+      migration,
+      /notification_type in \('entries_needed', 'batch_complete', 'game_cancelled'\)/,
+    );
+    assert.match(
+      migration,
+      /drop constraint if exists in_app_notifications_target_required/,
+    );
+    assert.match(
+      migration,
+      /target_game_id is not null\s+and\s+target_pending_game_id is null/,
+    );
+    assert.match(
+      migration,
+      /target_game_id is null\s+and\s+target_pending_game_id is not null/,
+    );
+    assert.match(
+      migration,
+      /drop constraint if exists in_app_notifications_target_game_id_account_id_notification_type_key/,
+    );
+    assert.match(
+      migration,
+      /create unique index if not exists in_app_notifications_target_game_unique\s+on public\.in_app_notifications \(target_game_id, account_id, notification_type\)\s+where target_game_id is not null/,
+    );
+    assert.match(
+      migration,
+      /create unique index if not exists in_app_notifications_target_pending_game_unique\s+on public\.in_app_notifications \(target_pending_game_id, account_id, notification_type\)\s+where target_pending_game_id is not null/,
+    );
+
+    assert.match(
+      migration,
+      /create or replace function public\.cancel_created_game\(\s*target_pending_game_id uuid\s*\)/,
+    );
+    assert.match(
+      migration,
+      /returns table \(\s*id uuid,\s*template_id text,\s*row_count integer,\s*status text,\s*started_game_id uuid\s*\)/,
+    );
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(
+      migration,
+      /caller_account_id uuid := \(select auth\.uid\(\)\)/,
+    );
+    assert.match(
+      migration,
+      /where pending_game\.id = target_pending_game_id\s+for update/,
+    );
+    assert.match(
+      migration,
+      /pending_game\.creator_account_id <> caller_account_id/,
+    );
+    assert.match(
+      migration,
+      /pending_game\.status not in \('pending', 'started'\)/,
+    );
+    assert.match(
+      migration,
+      /exists \(\s*select 1\s+from public\.multiplayer_batch_reveals as reveal/,
+    );
+    assert.match(
+      migration,
+      /update public\.pending_games\s+set status = 'cancelled'/,
+    );
+    assert.match(
+      migration,
+      /update public\.in_app_notifications\s+set notification_status = 'read'[\s\S]*notification_type = 'entries_needed'/,
+    );
+    assert.match(
+      migration,
+      /'game_cancelled',\s+'unread'/,
+    );
+    assert.match(
+      migration,
+      /case\s+when started_game_id is null then null\s+else started_game_id\s+end/,
+    );
+    assert.match(
+      migration,
+      /case\s+when started_game_id is null then target_pending_game_id\s+else null\s+end/,
+    );
+
+    assert.match(
+      migration,
+      /create or replace function public\.list_multiplayer_dashboard\(\)/,
+    );
+    assert.match(
+      migration,
+      /join public\.pending_games as pending_game\s+on pending_game\.id = game_row\.pending_game_id\s+and pending_game\.status = 'started'/,
+    );
+    assert.match(
+      migration,
+      /Multiplayer game has been cancelled\./,
+    );
+
+    for (const role of ["public", "anon", "authenticated", "service_role"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function public\\.cancel_created_game\\(uuid\\)\\s+from ${role}`,
+        ),
+      );
+    }
+    assert.match(
+      migration,
+      /grant execute on function public\.cancel_created_game\(uuid\)\s+to authenticated/,
     );
   });
 });

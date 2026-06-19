@@ -635,6 +635,184 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("lets the creator cancel a started game before reveal", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await startAcceptedLocalGame(repository);
+
+    const cancelledGame = await repository.cancelCreatedGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    assert.deepEqual(cancelledGame, {
+      id: "pending-game-1",
+      status: "cancelled",
+      templateId: "default-adjective-noun-noun",
+      rowCount: 10,
+      startedGameId: "started-game-1",
+      participants: [
+        {
+          role: "creator",
+          inviteStatus: "accepted",
+          profileId: "creator-profile-id",
+          handle: "creator-one",
+          gamerName: "Creator One",
+          avatarKey: "spark",
+        },
+        {
+          role: "invitee",
+          inviteStatus: "accepted",
+          profileId: "invitee-profile-id",
+          handle: "invitee-two",
+          gamerName: "Invitee Two",
+          avatarKey: "paper",
+        },
+      ],
+    });
+
+    assert.deepEqual(
+      await repository.listMultiplayerDashboard({
+        accountId: creatorProfile.accountId,
+      }),
+      {
+        awaitingYourEntries: [],
+        awaitingOtherPlayerEntries: [],
+        completedBatches: [],
+      },
+    );
+    assert.deepEqual(
+      await repository.listMultiplayerDashboard({
+        accountId: inviteeProfile.accountId,
+      }),
+      {
+        awaitingYourEntries: [],
+        awaitingOtherPlayerEntries: [],
+        completedBatches: [],
+      },
+    );
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-2",
+          type: "entries_needed",
+          status: "read",
+          message:
+            "You can submit entries to a batch with @creator-one and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+        {
+          id: "notification-3",
+          type: "game_cancelled",
+          status: "unread",
+          message: "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+      ],
+    );
+
+    await assert.rejects(
+      () =>
+        repository.submitMultiplayerSection({
+          accountId: inviteeProfile.accountId,
+          sectionId: "started-game-1-section-invitee-1",
+          entries: Array.from({ length: 10 }, (_, rowIndex) => ({
+            rowIndex,
+            value: `noun-${rowIndex}`,
+          })),
+        }),
+      /cancelled/i,
+    );
+  });
+
+  it("lets the creator cancel an accepted Pending Game before start", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const cancelledGame = await repository.cancelCreatedGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    assert.equal(cancelledGame.status, "cancelled");
+    assert.equal("startedGameId" in cancelledGame, false);
+    assert.deepEqual(
+      await repository.listIncomingPendingGameInvites({
+        accountId: inviteeProfile.accountId,
+      }),
+      [],
+    );
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-1",
+          type: "game_cancelled",
+          status: "unread",
+          message:
+            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          targetPendingGameId: "pending-game-1",
+        },
+      ],
+    );
+  });
+
+  it("rejects creator cancellation after the batch has been revealed", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await completeAcceptedLocalGame(repository, {
+      adjectivePrefix: "brisk",
+      nounPrefix: "noun",
+    });
+    await repository.revealMultiplayerBatch({
+      accountId: creatorProfile.accountId,
+      gameId: "started-game-1",
+    });
+
+    await assert.rejects(
+      () =>
+        repository.cancelCreatedGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /not cancellable/i,
+    );
+
+    const dashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    assert.equal(dashboard.completedBatches.length, 1);
+    assert.equal(dashboard.completedBatches[0].revealed, true);
+  });
+
   it("rejects multiplayer section submissions from the wrong participant or out of participant-local order", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1503,6 +1681,101 @@ describe("Pending Game repository", () => {
     assert.deepEqual(revealed.phrases, ["Brisk teapot cloud"]);
   });
 
+  it("cancels creator-owned games through a Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+    await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    const cancelledGame = await repository.cancelCreatedGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    assert.deepEqual(supabase.rpcCalls.at(-1), "cancel_created_game");
+    assert.deepEqual(supabase.rpcParams.at(-1), {
+      target_pending_game_id: "supabase-pending-game-1",
+    });
+    assert.deepEqual(cancelledGame, {
+      id: "supabase-pending-game-1",
+      status: "cancelled",
+      templateId: "default-adjective-noun-noun",
+      rowCount: 15,
+      startedGameId: "supabase-started-game-1",
+      participants: [
+        {
+          role: "creator",
+          inviteStatus: "accepted",
+          profileId: creatorProfile.profileId,
+          handle: creatorProfile.handle,
+          gamerName: creatorProfile.gamerName,
+          avatarKey: creatorProfile.avatarKey,
+        },
+        {
+          role: "invitee",
+          inviteStatus: "accepted",
+          profileId: inviteeProfile.profileId,
+          handle: inviteeProfile.handle,
+          gamerName: inviteeProfile.gamerName,
+          avatarKey: inviteeProfile.avatarKey,
+        },
+      ],
+    });
+    assert.equal(JSON.stringify(cancelledGame).includes("auth-account"), false);
+  });
+
+  it("recovers pre-start cancellation notifications from Supabase rows", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+    await repository.cancelCreatedGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "supabase-pending-game-1",
+    });
+
+    const notifications = await repository.listInAppNotifications({
+      accountId: inviteeProfile.accountId,
+    });
+
+    assert.deepEqual(notifications, [
+      {
+        id: "supabase-notification-2",
+        type: "game_cancelled",
+        status: "unread",
+        message:
+          "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+        targetPendingGameId: "supabase-pending-game-1",
+      },
+    ]);
+  });
+
   it("rejects empty reveal multiplayer batch RPC row arrays", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,
@@ -1554,8 +1827,14 @@ describe("Pending Game repository", () => {
       {
         method: "select",
         projection:
-          "id, notification_type, notification_status, message, target_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
         tableName: "in_app_notifications",
+      },
+      {
+        column: "account_id",
+        method: "eq",
+        tableName: "in_app_notifications",
+        value: creatorProfile.accountId,
       },
       {
         column: "created_at",
@@ -1580,9 +1859,15 @@ describe("Pending Game repository", () => {
         value: "supabase-notification-1",
       },
       {
+        column: "account_id",
+        method: "eq",
+        tableName: "in_app_notifications",
+        value: creatorProfile.accountId,
+      },
+      {
         method: "select",
         projection:
-          "id, notification_type, notification_status, message, target_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
         tableName: "in_app_notifications",
       },
     ]);
@@ -1723,6 +2008,51 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
               game_id: params.target_game_id,
               phrases: ["Brisk teapot cloud"],
               revealed: true,
+            },
+          ],
+          error: null,
+        };
+      }
+
+      if (functionName === "cancel_created_game") {
+        assert.deepEqual(Object.keys(params), ["target_pending_game_id"]);
+        if (
+          !state.pendingGame ||
+          state.pendingGame.id !== params.target_pending_game_id
+        ) {
+          return {
+            data: null,
+            error: { message: "game is not cancellable" },
+          };
+        }
+
+        const startedGame = state.startedGames.find(
+          (candidate) =>
+            candidate.pending_game_id === params.target_pending_game_id,
+        );
+        state.pendingGame = {
+          ...state.pendingGame,
+          status: "cancelled",
+        };
+        state.inAppNotifications.push({
+          id: "supabase-notification-2",
+          account_id: inviteeProfile.accountId,
+          created_at: "2026-01-01T00:00:01.000Z",
+          message:
+            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          notification_status: "unread",
+          notification_type: "game_cancelled",
+          target_game_id: startedGame?.id ?? null,
+          target_pending_game_id: startedGame
+            ? null
+            : params.target_pending_game_id,
+        });
+
+        return {
+          data: [
+            {
+              ...state.pendingGame,
+              started_game_id: startedGame?.id ?? null,
             },
           ],
           error: null,

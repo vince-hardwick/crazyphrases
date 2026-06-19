@@ -364,14 +364,19 @@ Nudge timeout is configured per game during setup from a small set of allowed va
 
 MVP notifications are in-app only. Game status, invites, consent requests, and nudges do not require email or push notification delivery in the first product shape.
 
-Multiplayer Game-start and batch-complete notifications are durable in-app
-notification rows stored per participant. When a Game starts after all invited
-participants have accepted, every participant receives an unread actionable
-notification that they can submit entries. When the final assigned section is
-submitted and the batch becomes complete, every participant receives a
-batch-complete notification. The final submitter's batch-complete notification
-is created as read because the submit flow takes them directly to the completed
-batch and Reveal action; other participants receive it unread.
+Multiplayer Game-start, batch-complete, and creator-cancellation notifications
+are durable in-app notification rows stored per participant. When a Game starts
+after all invited participants have accepted, every participant receives an
+unread actionable notification that they can submit entries. When the final
+assigned section is submitted and the batch becomes complete, every participant
+receives a batch-complete notification. The final submitter's batch-complete
+notification is created as read because the submit flow takes them directly to
+the completed batch and Reveal action; other participants receive it unread.
+When the Game Creator cancels a Pending Game or unrevealed Started Game,
+accepted participants other than the creator receive an unread cancellation
+notification. If the cancelled Game had earlier entry-needed notifications,
+those notifications are marked read so stale entry prompts do not remain
+unread.
 
 Viewing notification items in the top-bar notification dropdown marks them
 read. Read notifications remain listed. No notification is created for a
@@ -403,7 +408,22 @@ MVP reveal effects should be simple and polished. Subtle transitions are accepta
 
 ### Cancellation
 
-The game creator may cancel an in-progress game before reveal. Invited participants may decline before accepting or starting. Once revealed, a game becomes completed history rather than cancellable. Cancellation notifies accepted participants and prevents further turns.
+The Game Creator may cancel a Pending Game before start or a Started Game
+before any participant has revealed the batch. Invited participants may decline
+before accepting or starting. Once any participant has revealed the batch, the
+Game becomes completed history rather than cancellable.
+
+Cancellation preserves the Pending Game, Started Game, participant snapshots,
+assigned sections, submitted entries, and notification rows for history and
+audit; it does not hard-delete collaborative game records. Cancelled Games are
+removed from active `Awaiting your entries`, `Awaiting other player entries`,
+and `Batches completed` dashboard buckets, and further section submission or
+Reveal is blocked.
+
+Cancellation notifies accepted participants other than the creator. Pre-start
+Pending Game cancellation notifications target the Pending Game; Started Game
+cancellation notifications target the Started Game and supersede earlier
+entry-needed notifications by marking those older prompts read.
 
 ### Entry validation
 

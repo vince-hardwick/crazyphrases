@@ -49,6 +49,77 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260618102626` | `started_game_turn_submission` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619131018` | `participant_section_multiplayer_execution` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
+| `20260619221615` | `creator_multiplayer_cancellation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
+
+Source-controlled migration
+`supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
+was applied to hosted Supabase on 2026-06-19 after explicit owner approval as
+hosted migration `20260619221615 creator_multiplayer_cancellation`.
+
+Local source verification for the creator-cancellation branch used the bundled
+Node executable documented in `docs/runbooks/node-npm-for-codex.md`.
+`node.exe --test` passed 149/149 tests, including repository, migration-surface,
+and browser smoke coverage for creator cancellation. `git diff --check` passed;
+Git emitted only LF-to-CRLF working-copy warnings. No hosted Supabase mutation
+or deployed environment smoke was performed during this local source pass.
+
+After explicit owner approval on 2026-06-19, deploy-dev run `27849518676`
+deployed branch `codex/creator-cancel-multiplayer` to `dev` at runtime-changing
+commit `751f0ad82d26bc56ef282e7bfe76b01c23c77f85`. Later branch commits
+`e4ed6eb`, `66b1365`, and `cade251` were documentation-only and did not request
+another static runtime deployment. Visible `dev` browser inspection confirmed
+`https://dev.crazyphrases.com/` loaded as Crazy Phrases, top-level
+`assets/site.css` and `assets/app.js` were stamped with the deployed commit SHA,
+all observed first-party JavaScript modules including `pending-game.js` were
+stamped with the same SHA, the Account-backed shell rendered for the existing
+dev browser session, the Notifications button and Multiplayer panel rendered,
+there was no horizontal overflow, and browser warning/error logs were empty.
+Because source migration
+`20260619151000_creator_multiplayer_cancellation.sql` has not yet been applied
+to hosted Supabase, the signed-in Multiplayer panel showed the expected
+schema-mismatch loading error, `Game invites could not be loaded. Try again.`
+No hosted Supabase data mutation or signed-in write/cleanup smoke was performed
+during this deployment check.
+
+After explicit owner approval later on 2026-06-19, hosted migration
+`20260619221615 creator_multiplayer_cancellation` was applied through the
+Supabase MCP. Hosted migration history then listed the new migration. Read-only
+schema verification confirmed `public.in_app_notifications.target_game_id` and
+`target_pending_game_id` are both nullable UUID targets, the notification type
+check includes `game_cancelled`, the exactly-one-target check exists, the new
+game and Pending Game notification indexes exist, and
+`public.cancel_created_game(uuid)` exposes the expected cancellation status
+check, reveal guard, stale `entries_needed` cleanup, pending-aware notification
+targeting, and `game_cancelled` notification creation. Execute privileges
+confirmed `public` and `anon` cannot execute the multiplayer RPCs checked, while
+`authenticated` can execute `cancel_created_game`, dashboard, section-submit,
+and Reveal RPCs. Read-only hosted data inspection found zero Pending Game rows.
+Visible `dev` browser reload then confirmed the previous signed-in Multiplayer
+loading error was gone, the three dashboard buckets rendered, Notifications
+rendered, there was no horizontal overflow, and browser warning/error logs were
+empty. No signed-in write/cleanup smoke was performed during this migration
+verification.
+
+After separate explicit owner approval on 2026-06-19, a signed-in
+creator-cancellation write/cleanup smoke ran in `dev` using existing creator
+Account Profile `@player-00c9137f-e786-4e7d` and temporary invitee Handle
+`@codex-smoke-cc-0803c1`. The visible browser created a 10-phrase Pending Game
+invite, the temporary invitee accepted through the authenticated RLS path, the
+creator started the accepted game, and the creator cancelled the Started Game
+before Reveal. The visible UI showed `Game cancelled.`, the Created invite card
+showed `Cancelled`, no `Submit section` control remained, the Multiplayer
+dashboard buckets were empty, and there was no horizontal overflow. Hosted SQL
+confirmed Pending Game `100fac25-0994-4120-a32b-8590a510587a` was `cancelled`,
+Started Game `376b6745-3af2-481b-a416-3fb12684374b` was preserved, three
+section assignments existed, zero Reveal rows existed, prior `entries_needed`
+notifications were marked `read`, and the invitee had one unread
+`game_cancelled` notification. Cleanup deleted one Started Game, one Pending
+Game, and one temporary invitee Auth user; follow-up SQL confirmed zero rows
+remained for the smoke Auth user, Account Profile, Handle Directory entry,
+Pending Game, Pending Game participants, Started Game, Started Game
+participants, section assignments, section entries, multiplayer reveals, and
+in-app notifications. A final visible `dev` reload showed Account-backed mode,
+an empty Multiplayer dashboard, no smoke Handle, and no horizontal overflow.
 
 ## Participant-Section Hosted Application
 
@@ -285,6 +356,14 @@ Read-only hosted SQL confirmed:
   advisors reported expected `unused_index` info for the new Turn/Entry indexes
   before live query traffic exists, plus existing Started Game and Pending Game
   advisories.
+- The source-controlled creator-cancellation migration
+  `20260619151000_creator_multiplayer_cancellation.sql` adds pending-aware
+  notification targets, the `game_cancelled` notification type,
+  `public.cancel_created_game(uuid)`, stale `entries_needed` read-status
+  cleanup, and cancelled-game guards for dashboard, section submission, and
+  Reveal. Hosted migration `20260619221615 creator_multiplayer_cancellation`
+  applied it after explicit owner approval on 2026-06-19 and read-only
+  verification confirmed the schema/RPC surface.
 
 ## Deployment And Smoke Evidence
 
@@ -310,6 +389,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-19 | Participant-section hosted migration and dev smoke | After explicit owner approval, hosted migration `20260619131018 participant_section_multiplayer_execution` was applied, then corrective migration `20260619132023 fix_multiplayer_reveal_conflict_target` fixed the reveal RPC conflict target and added the section-entry composite FK index. Schema verification confirmed participant-section tables/RLS/indexes/RPCs, legacy Turn trigger/RPC revocation, notification grants, and cleanup-empty new tables. Visible `dev` smoke with existing Account Profile `@player-00c9137f-e786-4e7d` and temporary Handle `@codex-smoke-ps-6e2f` created an invite, accepted it through invitee-authenticated RLS, started a game, submitted only the visible creator sections while the invitee submitted through authenticated RPC, verified final-submitter `batch_complete` notification status `read`, revealed phrases in the browser, verified dropdown rows marked read when viewed, independently revealed as invitee through RPC, and cleaned up all smoke Auth/Profile/Pending Game/Started Game/section/entry/reveal/notification rows. Final visible reload showed an empty Multiplayer dashboard, no smoke handle, no load error, and no browser warning/error logs. |
 | 2026-06-19 | Participant-section test promotion | PR #57 merged to `main` as merge commit `60b0fe7d169c1b829f50ff97ab62cf1e712d0e97` and promotion run `27833585561` deployed it to `test` after owner approval. Visible `test` browser smoke confirmed stamped top-level assets and transitive first-party JavaScript modules at the merge commit SHA, signed-in Account-backed mode, the top-bar Notifications button, the Multiplayer dashboard buckets `Awaiting your entries`, `Awaiting other player entries`, and `Batches completed`, hidden localhost-only test sign-in controls, no invite-load error, no browser warning/error logs, and no horizontal overflow. No production approval/deployment or hosted Supabase data mutation was performed during this test smoke. |
 | 2026-06-19 | Participant-section production promotion | Promotion run `27833585561` deployed PR #57 merge commit `60b0fe7d169c1b829f50ff97ab62cf1e712d0e97` to production after owner approval. Visible production browser smoke confirmed stamped top-level assets, transitive first-party JavaScript modules, and the Word Bank JSON at the merge commit SHA, signed-in Account-backed mode, the top-bar Notifications button, the Multiplayer dashboard buckets `Awaiting your entries`, `Awaiting other player entries`, and `Batches completed`, hidden localhost-only test sign-in controls, no invite-load error, no browser warning/error logs, and no horizontal overflow. The smoke was read-only apart from normal signed-in session refresh/read queries and did not create, update, or clean up hosted game data. |
+| 2026-06-19 | Creator-cancellation dev write/cleanup smoke | After explicit owner approval, visible `dev` browser smoke used existing creator `@player-00c9137f-e786-4e7d` and temporary invitee `@codex-smoke-cc-0803c1`. The browser created a 10-phrase invite, the invitee accepted through authenticated RLS, the creator started and then cancelled the Started Game before Reveal, and the UI showed `Game cancelled.`, `Cancelled`, no `Submit section`, empty dashboard buckets, and no horizontal overflow. Hosted SQL verified cancelled Pending Game `100fac25-0994-4120-a32b-8590a510587a`, Started Game `376b6745-3af2-481b-a416-3fb12684374b`, no Reveal, read stale `entries_needed` notifications, and one unread invitee `game_cancelled` notification. Cleanup deleted the smoke Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke rows across Auth, Profile, Directory, Pending Game, Started Game, section, reveal, and notification tables. |
 
 ## Signed-In Persistence Evidence
 

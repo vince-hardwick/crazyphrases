@@ -12,6 +12,25 @@ smoke notes, and historical hosted-state observations live in
 `docs/planning/supabase-state-ledger.md`. Use that ledger for provenance before
 loading this full runbook for operational commands.
 
+## Agent Fast Path
+
+- For hosted Supabase migrations, use the authenticated Supabase MCP first:
+  `list_projects`, `list_migrations`, approved `apply_migration`, then
+  `list_migrations` again.
+- Do not install the Supabase CLI just because sandboxed PowerShell cannot
+  resolve `supabase`; on 2026-06-19, Codex verified that MCP can see the
+  `crazyphrases` project and exposes hosted migration tools.
+- Use or install/invoke the CLI only when MCP is unavailable for the required
+  action or the task needs CLI-only local repository operations such as
+  `supabase migration new`, `supabase db pull`, local migration listing, or
+  local stack management.
+- Live hosted mutation still requires explicit user approval or an accepted
+  task-specific plan. MCP authentication, project detection, and branch context
+  do not authorise mutation.
+- If a needed `npx supabase ...` command cannot access Node/npm or the user npm
+  cache from the sandbox, rerun it with sandbox escalation instead of adding a
+  project-local CLI package.
+
 ## Project
 
 | Field | Value |
@@ -99,6 +118,10 @@ operations:
   embedded in query results;
 - use `generate_typescript_types` after schema changes that affect app-facing
   types.
+
+The 2026-06-19 MCP capability check behind the fast path verified that the
+authenticated Supabase MCP can see the `crazyphrases` project and exposes hosted
+migration tools, including `apply_migration` and `list_migrations`.
 
 For repository work, keep SQL migrations, generated types, and any Edge Function
 source in git. Keep runtime secrets in environment-specific secret stores.
@@ -534,34 +557,62 @@ The hosted corrective migration applied during dev validation is:
 supabase/migrations/20260619134000_fix_multiplayer_reveal_conflict_target.sql
 ```
 
-It creates `public.game_section_assignments`, `public.game_section_entries`,
-`public.multiplayer_batch_reveals`, and `public.in_app_notifications` for the
-ADR 0015 participant-section execution model. A private trigger creates one
-participant-local section assignment per resolved Slot Allocation entry when a
-Started Game is inserted, and creates Game-start `entries_needed`
-notifications for every participant. Authenticated browser clients do not
-receive direct insert authority on section entries, section assignments, or
-Reveal state. Section submission runs through
+The participant-section migration creates `public.game_section_assignments`,
+`public.game_section_entries`, `public.multiplayer_batch_reveals`, and
+`public.in_app_notifications` for the ADR 0015 participant-section execution
+model. A private trigger creates one participant-local section assignment per
+resolved Slot Allocation entry when a Started Game is inserted, and creates
+Game-start `entries_needed` notifications for every participant. Authenticated
+browser clients do not receive direct insert authority on section entries,
+section assignments, or Reveal state. Section submission runs through
 `public.submit_multiplayer_section(uuid, jsonb)`, batch dashboard reads run
 through `public.list_multiplayer_dashboard()`, and participant-scoped Reveal
 runs through `public.reveal_multiplayer_batch(uuid)`.
 
-The migration grants authenticated clients direct table access only for
-account-owned notification select/update paths governed by Row Level Security.
-It also revokes the earlier table-wide authenticated `public.games` select and
-re-grants only safe metadata columns; `slot_allocation` and `slot_order` remain
-behind participant-section RPCs until Reveal.
-Batch-complete notifications are created by the final section submission; the
-final submitter's notification is stored as `read`, and other participant
-notifications are stored as `unread`. Reveal checks confirm that the caller is
-a participant before checking completion, so nonparticipants receive the
-not-found path rather than a completion-state leak. The migration also drops
-the legacy `create_started_game_turns` trigger, removes the active-Turn select
-policy, revokes authenticated access to the old `game_turns`/`game_entries`
-browser path, and revokes authenticated execution of
-`public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows are
-preserved for history; future Started Games should use participant-section
+The participant-section migration grants authenticated clients direct table
+access only for account-owned notification select/update paths governed by Row
+Level Security. It also revokes the earlier table-wide authenticated
+`public.games` select and re-grants only safe metadata columns;
+`slot_allocation` and `slot_order` remain behind participant-section RPCs until
+Reveal. Batch-complete notifications are created by the final section
+submission; the final submitter's notification is stored as `read`, and other
+participant notifications are stored as `unread`. Reveal checks confirm that
+the caller is a participant before checking completion, so nonparticipants
+receive the not-found path rather than a completion-state leak. The migration
+also drops the legacy `create_started_game_turns` trigger, removes the
+active-Turn select policy, revokes authenticated access to the old
+`game_turns`/`game_entries` browser path, and revokes authenticated execution
+of `public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows
+are preserved for history; future Started Games should use participant-section
 execution only.
+
+The creator-controlled multiplayer cancellation migration is:
+
+```text
+supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql
+```
+
+The creator-cancellation migration extends `public.in_app_notifications` so a
+notification targets exactly one of `target_game_id` or
+`target_pending_game_id`, adds `game_cancelled` notification type support, and
+creates the narrow authenticated `public.cancel_created_game(uuid)` RPC. The
+RPC marks a creator-owned Pending Game as `cancelled` only while it is still
+`pending` or `started` and no participant has revealed the Started Game. It
+does not grant browser clients direct update authority on
+`public.pending_games`. Started Game cancellation marks prior `entries_needed`
+notifications read before creating an unread cancellation notification for
+accepted participants other than the creator. Dashboard, section-submission,
+and Reveal RPCs exclude or reject Games whose source Pending Game is
+`cancelled`.
+
+On 2026-06-19, the creator-cancellation source migration was applied to hosted
+Supabase after explicit owner approval as hosted migration
+`20260619221615 creator_multiplayer_cancellation`. Read-only hosted verification
+confirmed migration history, notification target columns and constraints,
+notification indexes, RPC definitions, and execute grants. A visible `dev`
+browser reload confirmed the signed-in Multiplayer loading error cleared after
+the migration. This application does not authorise later signed-in write/cleanup
+smokes; those remain separate live data mutations requiring explicit approval.
 
 On 2026-06-19, the participant-section migration was applied to hosted
 Supabase after explicit owner approval as hosted migration
@@ -628,7 +679,9 @@ Supabase browser client. The browser-facing repository can:
 - list incoming Pending Game invites for the signed-in Account Profile;
 - accept an incoming Pending Game invite;
 - decline an incoming Pending Game invite;
-- start an accepted Pending Game as the Game Creator.
+- start an accepted Pending Game as the Game Creator;
+- cancel a creator-owned Pending Game before start or Started Game before
+  Reveal.
 
 Creation resolves the creator through `public.account_profiles`, resolves the
 invitee through `public.account_profile_directory`, inserts one
@@ -650,6 +703,12 @@ status, participant snapshot creation, and resolved random setup storage. The
 repository returns a browser-safe Started Game shell that confirms setup is
 resolved without exposing hidden Slot Allocation or Slot Order details.
 
+Creator cancellation calls `public.cancel_created_game(uuid)` and returns a
+browser-safe cancelled Pending Game DTO. Cancellation preserves records, hides
+the Game from active Multiplayer dashboard buckets, blocks further section
+submission and Reveal, and creates `game_cancelled` notifications for accepted
+participants other than the creator.
+
 `assets/app.js` selects this Supabase repository only after hosted runtime
 config creates a Supabase client. Local localhost smoke uses
 `createLocalTestPendingGameRepository()` after the local test sign-in controls,
@@ -661,8 +720,8 @@ visibility for created and incoming invites, lets the Game Creator start a fully
 accepted Pending Game, and renders ADR 0015 participant-section Multiplayer
 buckets for signed-in participants. The browser calls the repository methods
 for dashboard reads, participant-section submission, participant-scoped Reveal,
-notification listing, and notification read-status updates. It does not
-configure expiry, expose creator cancellation UI, request Share Consent, manage
+notification listing, notification read-status updates, and creator
+cancellation. It does not configure expiry, request Share Consent, manage
 friends, send nudges, or publish to discovery surfaces.
 
 As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model

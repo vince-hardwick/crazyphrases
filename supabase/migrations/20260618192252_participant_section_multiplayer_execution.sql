@@ -115,6 +115,8 @@ create index if not exists game_section_entries_game_id_idx
   on public.game_section_entries (game_id);
 create index if not exists game_section_entries_assignment_id_idx
   on public.game_section_entries (assignment_id);
+create index if not exists game_section_entries_assignment_game_idx
+  on public.game_section_entries (assignment_id, game_id);
 create index if not exists multiplayer_batch_reveals_game_id_idx
   on public.multiplayer_batch_reveals (game_id);
 create index if not exists multiplayer_batch_reveals_participant_profile_id_idx
@@ -495,7 +497,7 @@ as $$
   rendered_rows as (
     select
       row_number.row_index,
-      pg_catalog.trim(
+      pg_catalog.btrim(
         pg_catalog.regexp_replace(
           string_agg(entry.value, ' ' order by section.slot_render_order),
           '\s+',
@@ -996,7 +998,8 @@ begin
     target_game_id,
     caller_profile_id
   )
-  on conflict (game_id, participant_profile_id) do nothing;
+  on conflict on constraint multiplayer_batch_reveals_game_id_participant_profile_id_key
+  do nothing;
 
   return query
   select

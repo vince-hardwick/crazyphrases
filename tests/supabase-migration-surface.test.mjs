@@ -860,6 +860,10 @@ describe("Supabase migration surface", () => {
     );
     assert.match(migration, /notification_type in \('entries_needed', 'batch_complete'\)/);
     assert.match(migration, /notification_status in \('unread', 'read'\)/);
+    assert.match(
+      migration,
+      /create index if not exists game_section_entries_assignment_game_idx\s+on public\.game_section_entries \(assignment_id, game_id\)/,
+    );
     assert.deepEqual(tableGrantSet(migration, "game_section_assignments"), [
       "grant select, insert, update on table public.game_section_assignments to service_role",
     ]);
@@ -969,6 +973,22 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /create or replace function public\.reveal_multiplayer_batch\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /on conflict \(game_id, participant_profile_id\) do nothing/,
+    );
+    assert.match(
+      migration,
+      /on conflict on constraint multiplayer_batch_reveals_game_id_participant_profile_id_key\s+do nothing/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /pg_catalog\.trim\(/,
+    );
+    assert.match(
+      migration,
+      /pg_catalog\.btrim\(\s*pg_catalog\.regexp_replace/,
     );
     assert.doesNotMatch(
       migration,

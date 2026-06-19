@@ -47,13 +47,15 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260617135237` | `support_pending_game_invite_responses` | Applied after explicit owner approval; schema verified. |
 | `20260618081517` | `start_pending_game_foundation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260618102626` | `started_game_turn_submission` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
+| `20260619131018` | `participant_section_multiplayer_execution` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
+| `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
 
-## Pending Hosted Migration Preconditions
+## Participant-Section Hosted Application
 
-As of the Task 7 source closeout for the ADR 0015 participant-section
+During Task 7 source closeout for the ADR 0015 participant-section
 multiplayer foundation, the source migration
 `supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`
-has not been applied to hosted Supabase. PR #57 was deployed to `dev` on
+had not yet been applied to hosted Supabase. PR #57 was deployed to `dev` on
 2026-06-19 as branch commit
 `f8ef3e1bae66324904f1377f9a86cf3a4b6376f7`; no `test` or production
 deployment has been triggered for that foundation.
@@ -67,15 +69,41 @@ present in hosted Supabase. Visible `dev` browser inspection therefore reached
 the deployed runtime but showed the signed-in Multiplayer loading error path
 until the hosted migration is applied.
 
-Before hosted application, follow
-`docs/runbooks/supabase-auth-and-postgres.md`: run the read-only legacy
-`public.game_turns` / `public.game_entries` check, treating any rows as
-smoke-test artefacts because the owner confirmed on 2026-06-19 that the live
-site has no users yet. Get explicit owner approval for any cleanup and for the
-live backend migration, apply the migration through the approved route, then
-record the dated hosted migration, schema verification, smoke, cleanup, and
-deployment evidence in this ledger. A legacy Turn data migration is not
-required unless the owner later identifies real user-owned legacy submissions.
+After explicit owner approval on 2026-06-19, hosted migration
+`20260619131018 participant_section_multiplayer_execution` was applied to the
+live Supabase project. Schema verification confirmed the participant-section
+tables, RLS, indexes, public RPCs, private helpers, trigger replacement,
+legacy Turn execution revocation, notification grants, and zero new table rows
+before smoke data setup. During signed-in smoke, the reveal RPC exposed an
+ambiguous PL/pgSQL `ON CONFLICT` target; corrective hosted migration
+`20260619132023 fix_multiplayer_reveal_conflict_target` replaced the reveal
+function with a named unique-constraint conflict target and added the composite
+`public.game_section_entries(assignment_id, game_id)` index required by the
+Supabase performance advisor.
+
+The signed-in `dev` smoke used existing Account Profile
+`@player-00c9137f-e786-4e7d` and temporary Handle
+`@codex-smoke-ps-6e2f`. The visible browser created the Pending Game invite,
+the invitee accepted through the authenticated RLS path, the creator started
+the game, and participant-section execution created per-participant
+`entries_needed` notifications. The creator saw only their next assigned
+section, submitted section 1 of 2, saw section 2 of 2, and made the final
+submission after the invitee submitted their section through
+`public.submit_multiplayer_section(uuid, jsonb)`. Hosted SQL confirmed the
+final submitter's `batch_complete` notification was stored as `read` while the
+other participant's was `unread`. The visible browser revealed the completed
+batch, the top-bar notification dropdown listed both durable notification rows
+and marked the remaining unread row read, and the invitee revealed the same
+batch independently through `public.reveal_multiplayer_batch(uuid)`.
+
+Cleanup deleted the Started Game, Pending Game, and temporary Auth/Profile
+fixture. Follow-up hosted SQL confirmed zero rows remained for the smoke Auth
+user, Account Profile, Handle Directory entry, Pending Game, Pending Game
+participants, Started Game, Started Game participants, participant-section
+assignments, participant-section entries, multiplayer reveals, and in-app
+notifications. A final visible `dev` reload confirmed Account-backed mode,
+an empty three-bucket Multiplayer dashboard, no smoke Handle, no load error,
+and no browser warning/error logs.
 
 ## Schema Verification Summary
 
@@ -279,6 +307,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-18 | Started Game turn-submission dev smoke | PR #56 branch `codex/started-game-turn-submission` commit `aadc524fe88b66d2c9c2ac34eb4b26254df1bc61` was deployed to `dev` after owner approval. Hosted migration `20260618102626 started_game_turn_submission` was applied after explicit owner approval and schema-verified. Visible `dev` browser smoke confirmed stamped runtime assets, hidden localhost-only test sign-in controls, clean browser warnings/errors, and no horizontal overflow. Hosted SQL smoke marker `codex-smoke-ts-bee3e1` created temporary Auth/Profile fixtures, inserted a Pending Game as the simulated authenticated creator, accepted it as the simulated authenticated invitee, started the Started Game through the authenticated `public.games(pending_game_id)` grant, confirmed three trigger-created Turns, submitted the first active Turn through `public.submit_started_game_turn(uuid, jsonb)`, confirmed 10 Entries and exactly one next active Turn visible to its assignee, and confirmed the submitted Turn was no longer visible to the submitter. Cleanup deleted the Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, participant, Started Game, Turn, and Entry rows remained. |
 | 2026-06-18 | Started Game turn-submission promotion | PR #56 merged to `main` as merge commit `46033c134b2e3f10bd7f6d5a57865eebad39cfcd` and promoted through `test` and production by promotion run `27754207753` after owner approvals. Visible `test` smoke confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell rendering, reveal, favourites, Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Visible production smoke confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell rendering, reveal, favourites, Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Both `test` and production promotion smokes were read-only and did not mutate hosted Supabase data. |
 | 2026-06-19 | Participant-section pre-migration dev observation | PR #57 branch `codex/multiplayer-execution-redesign` commit `f8ef3e1bae66324904f1377f9a86cf3a4b6376f7` was deployed to `dev` by deploy-dev run `27826214483` after owner approval. Visible `dev` browser inspection confirmed first-party runtime assets, transitive modules, and the Word Bank JSON were stamped with the deployed commit SHA, and browser warnings/errors were clean. The existing signed-in session rendered Account-backed mode and the Notifications button, but the Multiplayer dashboard showed `Game invites could not be loaded. Try again.` Read-only hosted SQL confirmed migrations only through `20260618102626 started_game_turn_submission`, zero rows in `public.game_turns` and `public.game_entries`, and absence of participant-section tables/RPCs. No hosted data mutation smoke was performed. |
+| 2026-06-19 | Participant-section hosted migration and dev smoke | After explicit owner approval, hosted migration `20260619131018 participant_section_multiplayer_execution` was applied, then corrective migration `20260619132023 fix_multiplayer_reveal_conflict_target` fixed the reveal RPC conflict target and added the section-entry composite FK index. Schema verification confirmed participant-section tables/RLS/indexes/RPCs, legacy Turn trigger/RPC revocation, notification grants, and cleanup-empty new tables. Visible `dev` smoke with existing Account Profile `@player-00c9137f-e786-4e7d` and temporary Handle `@codex-smoke-ps-6e2f` created an invite, accepted it through invitee-authenticated RLS, started a game, submitted only the visible creator sections while the invitee submitted through authenticated RPC, verified final-submitter `batch_complete` notification status `read`, revealed phrases in the browser, verified dropdown rows marked read when viewed, independently revealed as invitee through RPC, and cleaned up all smoke Auth/Profile/Pending Game/Started Game/section/entry/reveal/notification rows. Final visible reload showed an empty Multiplayer dashboard, no smoke handle, no load error, and no browser warning/error logs. |
 
 ## Signed-In Persistence Evidence
 

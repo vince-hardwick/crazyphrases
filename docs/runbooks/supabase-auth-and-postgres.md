@@ -528,6 +528,12 @@ The participant-section multiplayer execution migration is:
 supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql
 ```
 
+The hosted corrective migration applied during dev validation is:
+
+```text
+supabase/migrations/20260619134000_fix_multiplayer_reveal_conflict_target.sql
+```
+
 It creates `public.game_section_assignments`, `public.game_section_entries`,
 `public.multiplayer_batch_reveals`, and `public.in_app_notifications` for the
 ADR 0015 participant-section execution model. A private trigger creates one
@@ -555,17 +561,32 @@ policy, revokes authenticated access to the old `game_turns`/`game_entries`
 browser path, and revokes authenticated execution of
 `public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows are
 preserved for history; future Started Games should use participant-section
-execution only. Hosted application of this migration remains behind explicit
-owner approval or the documented deployment gate.
+execution only.
 
-Before hosted application of this migration, run a read-only check of
-`public.game_turns` and `public.game_entries`. On 2026-06-19, the owner
-confirmed that the live site has no users yet, so any existing rows in those
-legacy tables are smoke-test artefacts generated during project validation and
-do not require migration into participant sections. If rows exist, record them
-as smoke-test data and clean them up through an explicitly approved hosted
-cleanup route where needed. Only pause for a data migration if the owner later
-identifies real user-owned legacy Turn submissions.
+On 2026-06-19, the participant-section migration was applied to hosted
+Supabase after explicit owner approval as hosted migration
+`20260619131018 participant_section_multiplayer_execution`. During the
+approved signed-in smoke, `public.reveal_multiplayer_batch(uuid)` exposed a
+PL/pgSQL ambiguity between its `returns table (game_id uuid, ...)` output
+column and `on conflict (game_id, participant_profile_id)`. Hosted corrective
+migration `20260619132023 fix_multiplayer_reveal_conflict_target` replaces
+that conflict target with
+`on conflict on constraint multiplayer_batch_reveals_game_id_participant_profile_id_key`
+and adds the covering
+`public.game_section_entries(assignment_id, game_id)` index required by the
+Supabase performance advisor. Future fresh environments should apply both
+source migrations in order; existing hosted evidence is recorded in
+`docs/planning/supabase-state-ledger.md`.
+
+The hosted application precondition for this migration is a read-only check of
+`public.game_turns` and `public.game_entries`. On 2026-06-19, that check showed
+both legacy tables had zero rows, and the owner confirmed that the live site
+has no users yet, so any future legacy rows should be treated as smoke-test
+artefacts generated during project validation unless the owner identifies real
+user-owned legacy Turn submissions. If rows exist in a future environment,
+record them as smoke-test data and clean them up through an explicitly approved
+hosted cleanup route where needed. Only pause for a data migration if the owner
+later identifies real user-owned legacy Turn submissions.
 
 Local source verification for the participant-section migration and browser
 surface was completed on 2026-06-18 during Task 7 closeout. Plain `node` and
@@ -578,9 +599,13 @@ Targeted results were `tests/pending-game.test.mjs` 37/37 passing,
 because `npm` was unavailable; the equivalent `node.exe --test` command for
 the package script passed 141/141 tests.
 
-Hosted application has not occurred as part of the source-controlled closeout;
-do not record hosted evidence until the migration has been applied after owner
-approval and the ledger has dated hosted validation output.
+After the 2026-06-19 hosted corrective migration, bundled
+`node.exe --test tests/supabase-migration-surface.test.mjs` passed 13/13 and
+bundled `node.exe --test` passed 142/142.
+
+Hosted application, schema verification, signed-in `dev` smoke, corrective
+migration, and cleanup evidence are recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in

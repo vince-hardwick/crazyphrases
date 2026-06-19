@@ -769,6 +769,7 @@ async function createPendingGameInvite(event) {
 function renderCreatedPendingGames() {
   renderPendingGameList({
     container: pendingGameSummary,
+    includeCancelActions: true,
     headingText: "Created invites",
     includeResponseActions: false,
     includeStartActions: true,
@@ -779,6 +780,7 @@ function renderCreatedPendingGames() {
 function renderIncomingPendingGameInvites() {
   renderPendingGameList({
     container: pendingGameIncomingList,
+    includeCancelActions: false,
     headingText: "Incoming invites",
     includeResponseActions: true,
     includeStartActions: false,
@@ -789,6 +791,7 @@ function renderIncomingPendingGameInvites() {
 function renderPendingGameList({
   container,
   headingText,
+  includeCancelActions,
   includeResponseActions,
   includeStartActions,
   pendingGames,
@@ -812,6 +815,7 @@ function renderPendingGameList({
     heading,
     ...pendingGames.map((pendingGame) =>
       renderPendingGameCard(pendingGame, {
+        includeCancelActions,
         includeResponseActions,
         includeStartActions,
       }),
@@ -821,7 +825,7 @@ function renderPendingGameList({
 
 function renderPendingGameCard(
   pendingGame,
-  { includeResponseActions, includeStartActions },
+  { includeCancelActions, includeResponseActions, includeStartActions },
 ) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
@@ -851,6 +855,9 @@ function renderPendingGameCard(
   if (includeStartActions && isPendingGameReadyToStart(pendingGame)) {
     card.append(renderPendingGameStartActions(pendingGame));
   }
+  if (includeCancelActions && isPendingGameCancellable(pendingGame)) {
+    card.append(renderPendingGameCancelActions(pendingGame));
+  }
 
   return card;
 }
@@ -864,6 +871,20 @@ function isPendingGameReadyToStart(pendingGame) {
   );
 }
 
+function isPendingGameCancellable(pendingGame) {
+  if (!["pending", "started"].includes(pendingGame.status)) {
+    return false;
+  }
+
+  if (!pendingGame.startedGameId) {
+    return true;
+  }
+
+  return !multiplayerDashboard.completedBatches.some(
+    (batch) => batch.id === pendingGame.startedGameId && batch.revealed,
+  );
+}
+
 function getPendingGameStateLabel(pendingGame) {
   if (pendingGame.status === "started") {
     return "Started";
@@ -874,6 +895,29 @@ function getPendingGameStateLabel(pendingGame) {
   }
 
   return "Waiting for responses";
+}
+
+function renderPendingGameCancelActions(pendingGame) {
+  const invitee = pendingGame.participants.find(
+    (participant) => participant.role === "invitee",
+  );
+  const actions = document.createElement("div");
+  actions.className = "pending-game-actions";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.className = "danger-button";
+  cancelButton.textContent = "Cancel game";
+  cancelButton.setAttribute(
+    "aria-label",
+    `Cancel game with @${invitee.handle}`,
+  );
+  cancelButton.addEventListener("click", () => {
+    void cancelCreatedGame(pendingGame.id);
+  });
+
+  actions.append(cancelButton);
+  return actions;
 }
 
 function renderPendingGameResponseActions(pendingGame) {
@@ -998,6 +1042,27 @@ async function respondToPendingGameInvite(pendingGameId, response) {
       response === "accept" ? "Game invite accepted." : "Game invite declined.";
   } catch {
     pendingGameStatus.textContent = "Game invite could not be updated. Try again.";
+  }
+}
+
+async function cancelCreatedGame(pendingGameId) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  pendingGameStatus.textContent = "";
+
+  try {
+    const pendingGame = await pendingGameRepository.cancelCreatedGame({
+      creatorAccountId: accountShell.accountId,
+      pendingGameId,
+    });
+    createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
+    await loadMultiplayerDashboard();
+    renderPendingGamePanel();
+    pendingGameStatus.textContent = "Game cancelled.";
+  } catch {
+    pendingGameStatus.textContent = "Game could not be cancelled. Try again.";
   }
 }
 

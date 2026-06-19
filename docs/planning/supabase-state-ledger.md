@@ -50,6 +50,19 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260619131018` | `participant_section_multiplayer_execution` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
 
+Source-controlled migration
+`supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
+has not been applied to hosted Supabase. It remains a local branch artifact
+until explicit owner approval or the documented deployment workflow gate
+authorises hosted mutation.
+
+Local source verification for the creator-cancellation branch used the bundled
+Node executable documented in `docs/runbooks/node-npm-for-codex.md`.
+`node.exe --test` passed 149/149 tests, including repository, migration-surface,
+and browser smoke coverage for creator cancellation. `git diff --check` passed;
+Git emitted only LF-to-CRLF working-copy warnings. No hosted Supabase mutation
+or deployed environment smoke was performed during this local source pass.
+
 ## Participant-Section Hosted Application
 
 During Task 7 source closeout for the ADR 0015 participant-section
@@ -285,6 +298,13 @@ Read-only hosted SQL confirmed:
   advisors reported expected `unused_index` info for the new Turn/Entry indexes
   before live query traffic exists, plus existing Started Game and Pending Game
   advisories.
+- The source-controlled creator-cancellation migration
+  `20260619151000_creator_multiplayer_cancellation.sql` adds pending-aware
+  notification targets, the `game_cancelled` notification type,
+  `public.cancel_created_game(uuid)`, stale `entries_needed` read-status
+  cleanup, and cancelled-game guards for dashboard, section submission, and
+  Reveal. It has local migration-surface coverage only; hosted Supabase still
+  requires explicit approval before this migration is applied.
 
 ## Deployment And Smoke Evidence
 

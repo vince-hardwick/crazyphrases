@@ -397,6 +397,60 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("lets the creator cancel a started multiplayer game before reveal", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("10");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await assertTextVisible(page, "Awaiting your entries");
+
+    await page
+      .getByRole("button", { name: "Cancel game with @invitee-two" })
+      .click();
+
+    await assertTextVisible(page, "Game cancelled.");
+    await assertTextVisible(page, "Cancelled");
+    assert.equal(
+      await page.getByRole("button", { name: "Submit section" }).count(),
+      0,
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    assert.equal(
+      await page.getByRole("button", { name: "Submit section" }).count(),
+      0,
+    );
+    await page.getByRole("button", { name: "Notifications, 1 unread" }).click();
+    await assertTextVisible(
+      page,
+      "@player-test-account cancelled a batch with @player-test-account and @invitee-two.",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("shows a recoverable error when multiplayer reveal fails", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

@@ -225,6 +225,59 @@ export function createTestPendingGameRepository({
       return startedGame;
     },
 
+    async cancelCreatedGame({ creatorAccountId, pendingGameId }) {
+      assertAccountId(creatorAccountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const creatorProfile = profilesByAccountId.get(creatorAccountId);
+      const pendingGameIndex = pendingGames.findIndex(
+        (pendingGame) =>
+          pendingGame.id === pendingGameId &&
+          ["pending", "started"].includes(pendingGame.status) &&
+          !hasStartedGameReveal({
+            gameId: pendingGame.startedGameId,
+            revealedMultiplayerBatches,
+          }) &&
+          pendingGame.participants.some(
+            (participant) =>
+              participant.role === "creator" &&
+              participant.profileId === creatorProfile?.profileId,
+          ),
+      );
+
+      if (pendingGameIndex < 0) {
+        throw new Error("Game is not cancellable by this creator.");
+      }
+
+      const pendingGame = pendingGames[pendingGameIndex];
+      const updatedPendingGame = createPendingGameDto({
+        id: pendingGame.id,
+        rowCount: pendingGame.rowCount,
+        startedGameId: pendingGame.startedGameId,
+        status: "cancelled",
+        templateId: pendingGame.templateId,
+        participants: pendingGame.participants,
+      });
+      pendingGames[pendingGameIndex] = updatedPendingGame;
+
+      markEntriesNeededNotificationsRead({
+        inAppNotifications,
+        targetGameId: pendingGame.startedGameId,
+      });
+      inAppNotifications.push(
+        ...createGameCancelledNotifications({
+          accountIdsByProfileId,
+          createNotificationId,
+          creatorProfile,
+          participants: pendingGame.participants,
+          targetGameId: pendingGame.startedGameId,
+          targetPendingGameId: pendingGame.id,
+        }),
+      );
+
+      return updatedPendingGame;
+    },
+
     async listMultiplayerDashboard({ accountId }) {
       assertAccountId(accountId);
 
@@ -258,6 +311,9 @@ export function createTestPendingGameRepository({
       const section = assignedSections.find(
         (candidate) => candidate.id === sectionId,
       );
+      if (isCancelledStartedGame({ gameId: section?.gameId, pendingGames })) {
+        throw new Error("Multiplayer game has been cancelled.");
+      }
       if (
         !profile ||
         !section ||
@@ -729,6 +785,37 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       });
     },
 
+    async cancelCreatedGame({ creatorAccountId, pendingGameId }) {
+      assertAccountId(creatorAccountId);
+      assertText(pendingGameId, "A Pending Game id is required.");
+
+      const cancelResponse = await supabase.rpc("cancel_created_game", {
+        target_pending_game_id: pendingGameId,
+      });
+      assertNoSupabaseError(cancelResponse, "Could not cancel game");
+      const pendingGameRow = recoverSingleSupabaseRow(
+        cancelResponse.data,
+        "Could not cancel game",
+      );
+
+      const participantResponse = await supabase
+        .from("pending_game_participants")
+        .select(
+          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+        )
+        .eq("pending_game_id", pendingGameId);
+      assertNoSupabaseError(
+        participantResponse,
+        "Could not load Pending Game participants",
+      );
+
+      return recoverPendingGame({
+        participantRows: participantResponse.data,
+        pendingGameRow,
+        startedGameId: pendingGameRow.started_game_id,
+      });
+    },
+
     async listMultiplayerDashboard({ accountId }) {
       assertAccountId(accountId);
       const response = await supabase.rpc("list_multiplayer_dashboard");
@@ -774,8 +861,9 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       const response = await supabase
         .from("in_app_notifications")
         .select(
-          "id, notification_type, notification_status, message, target_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
         )
+        .eq("account_id", accountId)
         .order("created_at", { ascending: false })
         .limit(20);
       assertNoSupabaseError(response, "Could not load notifications");
@@ -791,8 +879,9 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
           notification_status: "read",
         })
         .eq("id", notificationId)
+        .eq("account_id", accountId)
         .select(
-          "id, notification_type, notification_status, message, target_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
         )
         .single();
       assertNoSupabaseError(response, "Could not mark notification read");
@@ -1054,6 +1143,55 @@ function createGameStartedNotifications({
   }));
 }
 
+function createGameCancelledNotifications({
+  accountIdsByProfileId,
+  createNotificationId,
+  creatorProfile,
+  participants,
+  targetGameId,
+  targetPendingGameId,
+}) {
+  const acceptedRecipients = participants.filter(
+    (participant) =>
+      participant.inviteStatus === "accepted" &&
+      participant.profileId !== creatorProfile.profileId,
+  );
+  const message = createParticipantNotificationMessage({
+    participants,
+    text: `@${creatorProfile.handle} cancelled a batch with`,
+  });
+
+  return acceptedRecipients.map((participant) => ({
+    id: createNotificationId(),
+    accountId: accountIdsByProfileId.get(participant.profileId),
+    createdAt: new Date(0).toISOString(),
+    message,
+    status: "unread",
+    ...(targetGameId
+      ? { targetGameId }
+      : { targetPendingGameId }),
+    type: "game_cancelled",
+  }));
+}
+
+function markEntriesNeededNotificationsRead({
+  inAppNotifications,
+  targetGameId,
+}) {
+  if (!targetGameId) {
+    return;
+  }
+
+  for (const notification of inAppNotifications) {
+    if (
+      notification.targetGameId === targetGameId &&
+      notification.type === "entries_needed"
+    ) {
+      notification.status = "read";
+    }
+  }
+}
+
 function createParticipantNotificationMessage({ participants, text }) {
   const handles = participants.map((participant) => `@${participant.handle}`);
 
@@ -1125,6 +1263,9 @@ function createCurrentSectionBatches({ assignedSections, pendingGames, profile }
       (candidate) => candidate.startedGameId === section.gameId,
     );
     if (!pendingGame) {
+      return [];
+    }
+    if (pendingGame.status !== "started") {
       return [];
     }
 
@@ -1304,7 +1445,12 @@ function toNotificationDto(notification) {
     type: notification.type,
     status: notification.status,
     message: notification.message,
-    targetGameId: notification.targetGameId,
+    ...(notification.targetGameId
+      ? { targetGameId: notification.targetGameId }
+      : {}),
+    ...(notification.targetPendingGameId
+      ? { targetPendingGameId: notification.targetPendingGameId }
+      : {}),
   };
 }
 
@@ -1408,6 +1554,19 @@ function upsertRevealState({
 function isBatchRevealed({ gameId, profileId, revealedMultiplayerBatches }) {
   return revealedMultiplayerBatches.some(
     (batch) => batch.gameId === gameId && batch.profileId === profileId,
+  );
+}
+
+function hasStartedGameReveal({ gameId, revealedMultiplayerBatches }) {
+  return Boolean(gameId) && revealedMultiplayerBatches.some(
+    (batch) => batch.gameId === gameId,
+  );
+}
+
+function isCancelledStartedGame({ gameId, pendingGames }) {
+  return pendingGames.some(
+    (pendingGame) =>
+      pendingGame.startedGameId === gameId && pendingGame.status === "cancelled",
   );
 }
 
@@ -1715,6 +1874,11 @@ function recoverRevealedMultiplayerBatch(batchRow) {
 }
 
 function recoverInAppNotification(notificationRow) {
+  const targetGameId = notificationRow?.targetGameId ?? notificationRow?.target_game_id;
+  const targetPendingGameId =
+    notificationRow?.targetPendingGameId ??
+    notificationRow?.target_pending_game_id;
+
   return {
     id: assertText(notificationRow?.id, "A notification id is required."),
     type: notificationRow?.type ?? notificationRow?.notification_type,
@@ -1723,10 +1887,19 @@ function recoverInAppNotification(notificationRow) {
       notificationRow?.message,
       "A notification message is required.",
     ),
-    targetGameId: assertText(
-      notificationRow?.targetGameId ?? notificationRow?.target_game_id,
-      "A Started Game id is required.",
-    ),
+    ...(targetGameId
+      ? {
+          targetGameId: assertText(
+            targetGameId,
+            "A Started Game id is required.",
+          ),
+        }
+      : {
+          targetPendingGameId: assertText(
+            targetPendingGameId,
+            "A Pending Game id is required.",
+          ),
+        }),
   };
 }
 

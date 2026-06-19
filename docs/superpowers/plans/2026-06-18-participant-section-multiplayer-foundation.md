@@ -2,9 +2,9 @@
 
 > **Status:** Historical/source-controlled complete as of 2026-06-18. Do not
 > execute this as an active source plan. Hosted Supabase migration application,
-> `dev` deployment, hosted schema verification, and hosted write/cleanup smoke
-> remain pending explicit owner approval under
-> `docs/runbooks/supabase-auth-and-postgres.md`.
+> `dev` validation, `test` promotion, and production promotion completed on
+> 2026-06-19 after owner approvals; current evidence belongs in
+> `docs/planning/supabase-state-ledger.md`.
 >
 > **For provenance:** This plan was originally executable with
 > superpowers:subagent-driven-development or superpowers:executing-plans. Future

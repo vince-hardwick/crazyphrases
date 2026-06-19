@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted. Source-controlled implementation is complete. PR #57 was deployed to
-`dev` on 2026-06-19 after owner approval. Hosted Supabase migration application
-and hosted smoke validation remain pending explicit owner approval.
+Accepted. Source-controlled implementation is complete. PR #57 was deployed
+through `dev`, `test`, and production on 2026-06-19 after owner approvals.
+Hosted Supabase migrations were applied after explicit owner approval, then
+schema-verified and smoke-tested in `dev`.
 
 ## Context
 

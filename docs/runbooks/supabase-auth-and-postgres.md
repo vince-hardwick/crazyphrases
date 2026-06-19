@@ -12,6 +12,25 @@ smoke notes, and historical hosted-state observations live in
 `docs/planning/supabase-state-ledger.md`. Use that ledger for provenance before
 loading this full runbook for operational commands.
 
+## Agent Fast Path
+
+- For hosted Supabase migrations, use the authenticated Supabase MCP first:
+  `list_projects`, `list_migrations`, approved `apply_migration`, then
+  `list_migrations` again.
+- Do not install the Supabase CLI just because sandboxed PowerShell cannot
+  resolve `supabase`; on 2026-06-19, Codex verified that MCP can see the
+  `crazyphrases` project and exposes hosted migration tools.
+- Use or install/invoke the CLI only when MCP is unavailable for the required
+  action or the task needs CLI-only local repository operations such as
+  `supabase migration new`, `supabase db pull`, local migration listing, or
+  local stack management.
+- Live hosted mutation still requires explicit user approval or an accepted
+  task-specific plan. MCP authentication, project detection, and branch context
+  do not authorise mutation.
+- If a needed `npx supabase ...` command cannot access Node/npm or the user npm
+  cache from the sandbox, rerun it with sandbox escalation instead of adding a
+  project-local CLI package.
+
 ## Project
 
 | Field | Value |
@@ -100,14 +119,9 @@ operations:
 - use `generate_typescript_types` after schema changes that affect app-facing
   types.
 
-On 2026-06-19, Codex verified that the authenticated Supabase MCP can see the
-`crazyphrases` project and exposes hosted migration tools, including
-`apply_migration` and `list_migrations`. Do not install the Supabase CLI solely
-because sandboxed PowerShell cannot resolve `supabase`; the MCP can perform
-approved hosted migration application. Install or invoke the CLI only when the
-MCP is unavailable for the required action, or when a task specifically needs
-CLI-only local repository operations such as `supabase migration new`,
-`supabase db pull`, local migration listing, or local stack management.
+The 2026-06-19 MCP capability check behind the fast path verified that the
+authenticated Supabase MCP can see the `crazyphrases` project and exposes hosted
+migration tools, including `apply_migration` and `list_migrations`.
 
 For repository work, keep SQL migrations, generated types, and any Edge Function
 source in git. Keep runtime secrets in environment-specific secret stores.

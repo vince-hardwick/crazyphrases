@@ -149,6 +149,7 @@ Deployment is managed by these workflows:
 - `.github/workflows/ci.yml` - verifies feature branches, `main`, and pull requests.
 - `.github/workflows/deploy-dev.yml` - deploys approved feature-branch commits to `dev`.
 - `.github/workflows/promote.yml` - promotes `main` commits through `test` and gated `production`.
+- `.github/workflows/ftps-preflight.yml` - manually verifies `test` and `production` FTPS targets without deploying.
 
 ### Promotion Model
 
@@ -161,7 +162,7 @@ Feature slices move through environments in order:
 5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication. For user-observed Codex smoke tests, use the visible in-app browser path in `docs/runbooks/in-app-browser-verification.md`.
 6. Open or update the pull request into `main`.
 7. Merge the pull request after review and dev inspection.
-8. `promote.yml` deploys the merged `main` commit to `test`.
+8. `promote.yml` deploys the merged `main` commit to `test` when the merge includes hosted runtime changes.
 9. Complete formal/human testing at `https://test.crazyphrases.com/`.
 10. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
 11. After production deployment and post-promotion verification succeed, delete the merged feature branch from GitHub and prune stale local tracking refs.
@@ -170,16 +171,11 @@ The anonymous solo MVP may replace the homepage in `dev` and `test` during revie
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
 
-Automatic `dev` deployment requests currently watch `.htaccess`, `index.html`, and `assets/**`. The workflow also includes a changed-file guard before any environment-backed job, so source-only pushes such as documentation, workflow-file, package metadata, Supabase migration, or test-only changes do not request `dev` deployment unless a hosted static runtime path changed in the same push. CI remains responsible for source-only verification. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+Automatic `dev` deployment requests currently watch `.htaccess`, `index.html`, and `assets/**`. The workflow also includes a changed-file guard before any environment-backed job, so source-only pushes such as documentation, workflow-file, package metadata, Supabase migration, or test-only changes do not request `dev` deployment unless a hosted static runtime path changed in the same push. CI remains responsible for source-only verification.
 
-`promote.yml` currently runs on every push to `main`, including documentation-only
-commits. Documentation paths are excluded from the FTPS payload, so a docs-only
-runbook closeout does not upload the changed documentation to hosted web roots.
-If a docs-only `main` push is made only to record durable operational evidence,
-cancel the triggered `promote.yml` run before approving any GitHub Environment
-deployment. If such a run is allowed to deploy, it re-stamps and re-uploads the
-static runtime files for the docs commit SHA even though the source runtime did
-not change.
+Automatic `main` promotion requests also ignore source-only paths: `.github/**`, `AGENTS.md`, `CONTEXT.md`, `README.md`, `docs/**`, `output/**`, `package.json`, `package-lock.json`, `supabase/**`, and `tests/**`. A docs-only or source-only merge to `main` must not request `test` or `production` deployment because those paths are excluded from the hosted FTPS payload and do not change the static runtime. If a future source-only `main` push creates a `promote.yml` run, treat that as a workflow regression and cancel it before approving any GitHub Environment deployment.
+
+FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
 
 ### Branch Lifecycle
 
@@ -215,11 +211,13 @@ Inspect workflow runs:
 gh run list --workflow ci.yml --limit 5
 gh run list --workflow deploy-dev.yml --limit 5
 gh run list --workflow promote.yml --limit 5
+gh run list --workflow ftps-preflight.yml --limit 5
 gh run view <run-id>
 gh run watch <run-id> --exit-status
 ```
 
-Cancel a docs-only `main` promotion run that should not deploy:
+Cancel an unexpected source-only `main` promotion run before any deployment
+approval:
 
 ```powershell
 gh run list --workflow promote.yml --branch main --limit 5
@@ -247,12 +245,14 @@ gh workflow run promote.yml --ref main -f promote_production=false
 ```
 
 Run read-only strict FTPS preflights against the `test` and `production` GitHub
-Environment secrets without deploying:
+Environment secrets without deploying. These checks live in
+`ftps-preflight.yml` so normal `promote.yml` runs do not show skipped manual
+preflight jobs:
 
 ```powershell
-gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=test
-gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=production
-gh workflow run promote.yml --ref main -f promote_production=false -f ftps_preflight_target=all
+gh workflow run ftps-preflight.yml --ref main -f target=test
+gh workflow run ftps-preflight.yml --ref main -f target=production
+gh workflow run ftps-preflight.yml --ref main -f target=all
 ```
 
 Manually request production promotion from `main` after test acceptance:

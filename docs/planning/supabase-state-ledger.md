@@ -53,8 +53,19 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 As of the Task 7 source closeout for the ADR 0015 participant-section
 multiplayer foundation, the source migration
 `supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`
-has not been applied to hosted Supabase, and no `dev`, `test`, or production
+has not been applied to hosted Supabase. PR #57 was deployed to `dev` on
+2026-06-19 as branch commit
+`f8ef3e1bae66324904f1377f9a86cf3a4b6376f7`; no `test` or production
 deployment has been triggered for that foundation.
+
+On 2026-06-19, read-only hosted SQL confirmed that `public.game_turns` and
+`public.game_entries` both had zero rows before participant-section hosted
+application. Read-only hosted SQL also confirmed that the participant-section
+tables and RPCs from source migration
+`20260618192252_participant_section_multiplayer_execution.sql` were not yet
+present in hosted Supabase. Visible `dev` browser inspection therefore reached
+the deployed runtime but showed the signed-in Multiplayer loading error path
+until the hosted migration is applied.
 
 Before hosted application, follow
 `docs/runbooks/supabase-auth-and-postgres.md`: run the read-only legacy
@@ -267,6 +278,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-18 | Started Game foundation promotion | PR #55 merged to `main` as merge commit `22abb6bfd5652adb7b262636e3303fd64141cff3` and promoted through `test` and production by promotion run `27747189569` after owner approvals. Visible `test` and production browser smokes confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell for existing profile `@player-00c9137f-e786-4e7d`, Started Game-safe Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Production verification kept hosted Supabase data read-only because the visible browser was signed in with an existing account-backed reveal; a separate temporary anonymous Playwright context verified a 10-phrase production reveal plus per-phrase copy and `Copy all` clipboard output without hosted Supabase mutation. |
 | 2026-06-18 | Started Game turn-submission dev smoke | PR #56 branch `codex/started-game-turn-submission` commit `aadc524fe88b66d2c9c2ac34eb4b26254df1bc61` was deployed to `dev` after owner approval. Hosted migration `20260618102626 started_game_turn_submission` was applied after explicit owner approval and schema-verified. Visible `dev` browser smoke confirmed stamped runtime assets, hidden localhost-only test sign-in controls, clean browser warnings/errors, and no horizontal overflow. Hosted SQL smoke marker `codex-smoke-ts-bee3e1` created temporary Auth/Profile fixtures, inserted a Pending Game as the simulated authenticated creator, accepted it as the simulated authenticated invitee, started the Started Game through the authenticated `public.games(pending_game_id)` grant, confirmed three trigger-created Turns, submitted the first active Turn through `public.submit_started_game_turn(uuid, jsonb)`, confirmed 10 Entries and exactly one next active Turn visible to its assignee, and confirmed the submitted Turn was no longer visible to the submitter. Cleanup deleted the Started Game, Pending Game, and temporary Auth/Profile fixture; follow-up SQL confirmed zero smoke Auth, Profile, directory, Pending Game, participant, Started Game, Turn, and Entry rows remained. |
 | 2026-06-18 | Started Game turn-submission promotion | PR #56 merged to `main` as merge commit `46033c134b2e3f10bd7f6d5a57865eebad39cfcd` and promoted through `test` and production by promotion run `27754207753` after owner approvals. Visible `test` smoke confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell rendering, reveal, favourites, Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Visible production smoke confirmed stamped runtime assets at the merge commit, hidden localhost-only test controls, signed-in Account shell rendering, reveal, favourites, Multiplayer invite panel rendering, clean browser logs, and no horizontal overflow. Both `test` and production promotion smokes were read-only and did not mutate hosted Supabase data. |
+| 2026-06-19 | Participant-section pre-migration dev observation | PR #57 branch `codex/multiplayer-execution-redesign` commit `f8ef3e1bae66324904f1377f9a86cf3a4b6376f7` was deployed to `dev` by deploy-dev run `27826214483` after owner approval. Visible `dev` browser inspection confirmed first-party runtime assets, transitive modules, and the Word Bank JSON were stamped with the deployed commit SHA, and browser warnings/errors were clean. The existing signed-in session rendered Account-backed mode and the Notifications button, but the Multiplayer dashboard showed `Game invites could not be loaded. Try again.` Read-only hosted SQL confirmed migrations only through `20260618102626 started_game_turn_submission`, zero rows in `public.game_turns` and `public.game_entries`, and absence of participant-section tables/RPCs. No hosted data mutation smoke was performed. |
 
 ## Signed-In Persistence Evidence
 

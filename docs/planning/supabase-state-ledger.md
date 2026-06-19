@@ -63,6 +63,24 @@ and browser smoke coverage for creator cancellation. `git diff --check` passed;
 Git emitted only LF-to-CRLF working-copy warnings. No hosted Supabase mutation
 or deployed environment smoke was performed during this local source pass.
 
+After explicit owner approval on 2026-06-19, deploy-dev run `27849518676`
+deployed branch `codex/creator-cancel-multiplayer` to `dev` at runtime-changing
+commit `751f0ad82d26bc56ef282e7bfe76b01c23c77f85`. Later branch commits
+`e4ed6eb`, `66b1365`, and `cade251` were documentation-only and did not request
+another static runtime deployment. Visible `dev` browser inspection confirmed
+`https://dev.crazyphrases.com/` loaded as Crazy Phrases, top-level
+`assets/site.css` and `assets/app.js` were stamped with the deployed commit SHA,
+all observed first-party JavaScript modules including `pending-game.js` were
+stamped with the same SHA, the Account-backed shell rendered for the existing
+dev browser session, the Notifications button and Multiplayer panel rendered,
+there was no horizontal overflow, and browser warning/error logs were empty.
+Because source migration
+`20260619151000_creator_multiplayer_cancellation.sql` has not yet been applied
+to hosted Supabase, the signed-in Multiplayer panel showed the expected
+schema-mismatch loading error, `Game invites could not be loaded. Try again.`
+No hosted Supabase data mutation or signed-in write/cleanup smoke was performed
+during this deployment check.
+
 ## Participant-Section Hosted Application
 
 During Task 7 source closeout for the ADR 0015 participant-section

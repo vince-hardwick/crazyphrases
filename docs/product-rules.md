@@ -346,10 +346,11 @@ Pending Game in the MVP. The source-controlled participant-section foundation
 for ADR 0015 lets signed-in participants submit their own assigned sections,
 wait for other participant entries, receive in-app notifications, and reveal a
 completed multiplayer batch for themselves after all sections are submitted.
-The current MVP invite UI still does not add invite expiry, creator
-cancellation UI, Share Consent, friends, nudges, or public discovery. The
-historical first Started Game turn-submission slice added global active Turn
-storage and submission only; current multiplayer execution is governed by the
+The current MVP invite UI includes creator cancellation for Pending Games
+before start and unrevealed Started Games, but still does not add invite
+expiry, Share Consent, friends, nudges, or public discovery. The historical
+first Started Game turn-submission slice added global active Turn storage and
+submission only; current multiplayer execution is governed by the
 participant-section model in ADR 0015.
 
 ### Nudges

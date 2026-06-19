@@ -100,6 +100,15 @@ operations:
 - use `generate_typescript_types` after schema changes that affect app-facing
   types.
 
+On 2026-06-19, Codex verified that the authenticated Supabase MCP can see the
+`crazyphrases` project and exposes hosted migration tools, including
+`apply_migration` and `list_migrations`. Do not install the Supabase CLI solely
+because sandboxed PowerShell cannot resolve `supabase`; the MCP can perform
+approved hosted migration application. Install or invoke the CLI only when the
+MCP is unavailable for the required action, or when a task specifically needs
+CLI-only local repository operations such as `supabase migration new`,
+`supabase db pull`, local migration listing, or local stack management.
+
 For repository work, keep SQL migrations, generated types, and any Edge Function
 source in git. Keep runtime secrets in environment-specific secret stores.
 

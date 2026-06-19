@@ -514,13 +514,98 @@ clients may select only their currently active Turn through Row Level Security:
 the Turn must be assigned to their Account Profile and every earlier Turn in
 the Game must already be submitted.
 
-Browser clients do not receive direct insert, update, or delete grants on
-`public.game_entries`, and they do not receive update grants on
-`public.game_turns`. Turn submission goes through the narrow authenticated RPC
-`public.submit_started_game_turn(uuid, jsonb)`, which validates the assigned
-active Turn and a complete non-empty Entry payload before inserting Entries and
-marking the Turn submitted. Hosted application of this migration remains behind
-explicit owner approval or the documented deployment gate.
+Browser clients did not receive direct insert, update, or delete grants on
+`public.game_entries`, and they did not receive update grants on
+`public.game_turns`. Turn submission originally went through the narrow
+authenticated RPC `public.submit_started_game_turn(uuid, jsonb)`. The later
+participant-section migration decommissions this global Turn execution
+authority, so this migration is historical storage provenance rather than the
+current multiplayer execution surface.
+
+The participant-section multiplayer execution migration is:
+
+```text
+supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql
+```
+
+The hosted corrective migration applied during dev validation is:
+
+```text
+supabase/migrations/20260619134000_fix_multiplayer_reveal_conflict_target.sql
+```
+
+It creates `public.game_section_assignments`, `public.game_section_entries`,
+`public.multiplayer_batch_reveals`, and `public.in_app_notifications` for the
+ADR 0015 participant-section execution model. A private trigger creates one
+participant-local section assignment per resolved Slot Allocation entry when a
+Started Game is inserted, and creates Game-start `entries_needed`
+notifications for every participant. Authenticated browser clients do not
+receive direct insert authority on section entries, section assignments, or
+Reveal state. Section submission runs through
+`public.submit_multiplayer_section(uuid, jsonb)`, batch dashboard reads run
+through `public.list_multiplayer_dashboard()`, and participant-scoped Reveal
+runs through `public.reveal_multiplayer_batch(uuid)`.
+
+The migration grants authenticated clients direct table access only for
+account-owned notification select/update paths governed by Row Level Security.
+It also revokes the earlier table-wide authenticated `public.games` select and
+re-grants only safe metadata columns; `slot_allocation` and `slot_order` remain
+behind participant-section RPCs until Reveal.
+Batch-complete notifications are created by the final section submission; the
+final submitter's notification is stored as `read`, and other participant
+notifications are stored as `unread`. Reveal checks confirm that the caller is
+a participant before checking completion, so nonparticipants receive the
+not-found path rather than a completion-state leak. The migration also drops
+the legacy `create_started_game_turns` trigger, removes the active-Turn select
+policy, revokes authenticated access to the old `game_turns`/`game_entries`
+browser path, and revokes authenticated execution of
+`public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows are
+preserved for history; future Started Games should use participant-section
+execution only.
+
+On 2026-06-19, the participant-section migration was applied to hosted
+Supabase after explicit owner approval as hosted migration
+`20260619131018 participant_section_multiplayer_execution`. During the
+approved signed-in smoke, `public.reveal_multiplayer_batch(uuid)` exposed a
+PL/pgSQL ambiguity between its `returns table (game_id uuid, ...)` output
+column and `on conflict (game_id, participant_profile_id)`. Hosted corrective
+migration `20260619132023 fix_multiplayer_reveal_conflict_target` replaces
+that conflict target with
+`on conflict on constraint multiplayer_batch_reveals_game_id_participant_profile_id_key`
+and adds the covering
+`public.game_section_entries(assignment_id, game_id)` index required by the
+Supabase performance advisor. Future fresh environments should apply both
+source migrations in order; existing hosted evidence is recorded in
+`docs/planning/supabase-state-ledger.md`.
+
+The hosted application precondition for this migration is a read-only check of
+`public.game_turns` and `public.game_entries`. On 2026-06-19, that check showed
+both legacy tables had zero rows, and the owner confirmed that the live site
+has no users yet, so any future legacy rows should be treated as smoke-test
+artefacts generated during project validation unless the owner identifies real
+user-owned legacy Turn submissions. If rows exist in a future environment,
+record them as smoke-test data and clean them up through an explicitly approved
+hosted cleanup route where needed. Only pause for a data migration if the owner
+later identifies real user-owned legacy Turn submissions.
+
+Local source verification for the participant-section migration and browser
+surface was completed on 2026-06-18 during Task 7 closeout. Plain `node` and
+`npm` were unavailable on the Codex sandbox `PATH`, so verification used the
+documented bundled Node executable at
+`C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe`.
+Targeted results were `tests/pending-game.test.mjs` 37/37 passing,
+`tests/supabase-migration-surface.test.mjs` 13/13 passing, and
+`tests/browser-smoke.test.mjs` 13/13 passing. `npm test` itself did not run
+because `npm` was unavailable; the equivalent `node.exe --test` command for
+the package script passed 141/141 tests.
+
+After the 2026-06-19 hosted corrective migration, bundled
+`node.exe --test tests/supabase-migration-surface.test.mjs` passed 13/13 and
+bundled `node.exe --test` passed 142/142.
+
+Hosted application, schema verification, signed-in `dev` smoke, corrective
+migration, and cleanup evidence are recorded in
+`docs/planning/supabase-state-ledger.md`.
 
 Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
@@ -571,13 +656,24 @@ config creates a Supabase client. Local localhost smoke uses
 and signed-out anonymous play cannot reach Pending Game creation or invite
 responses.
 
-The current browser UI creates Pending Games and exposes response visibility for
-created and incoming invites. It lets the Game Creator start a fully accepted
-Pending Game, see that the Game shell has started, load the current Account's
-active Started Game Turn, and submit one complete Turn. Turn submission stores
-Entries and advances availability only; it does not configure expiry, expose
-creator cancellation UI, reveal a batch, request Share Consent, manage friends,
-send nudges, or publish to discovery surfaces.
+The current source-controlled browser UI creates Pending Games, exposes response
+visibility for created and incoming invites, lets the Game Creator start a fully
+accepted Pending Game, and renders ADR 0015 participant-section Multiplayer
+buckets for signed-in participants. The browser calls the repository methods
+for dashboard reads, participant-section submission, participant-scoped Reveal,
+notification listing, and notification read-status updates. It does not
+configure expiry, expose creator cancellation UI, request Share Consent, manage
+friends, send nudges, or publish to discovery surfaces.
+
+As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
+for multiplayer work. The source-controlled `game_turns` and
+`submit_started_game_turn` surface remains historical implementation evidence;
+do not extend the global Turn queue for Reveal, completion, or notifications.
+The source-controlled Supabase participant-section surface is
+`supabase/migrations/20260618192252_participant_section_multiplayer_execution.sql`;
+hosted browser wiring should use its three public RPCs rather than direct
+section-entry table writes, and should treat direct notification table updates
+as read-status changes only.
 
 ## Current Game Repository Adapter
 

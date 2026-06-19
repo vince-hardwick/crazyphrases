@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 0015 for future multiplayer execution.
+
+This ADR remains historical evidence for the first source-controlled Started
+Game turn-submission slice and for the narrow mutation-authority principle. Do
+not extend the global active-Turn sequencing model for future Reveal work.
 
 ## Context
 

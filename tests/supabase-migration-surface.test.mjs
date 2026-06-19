@@ -53,6 +53,9 @@ const startPendingGameFoundationMigrationUrl = findMigrationUrl(
 const startedGameTurnSubmissionMigrationUrl = findMigrationUrl(
   "started_game_turn_submission",
 );
+const participantSectionExecutionMigrationUrl = findMigrationUrl(
+  "participant_section_multiplayer_execution",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -804,6 +807,321 @@ describe("Supabase migration surface", () => {
       /create or replace function private\.submit_started_game_turn/i,
     );
   });
+
+  it("creates participant-section multiplayer execution with notifications and reveal state", () => {
+    assert.equal(existsSync(participantSectionExecutionMigrationUrl), true);
+
+    const migration = readFileSync(
+      participantSectionExecutionMigrationUrl,
+      "utf8",
+    );
+
+    for (const tableName of [
+      "game_section_assignments",
+      "game_section_entries",
+      "multiplayer_batch_reveals",
+      "in_app_notifications",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`create table if not exists public\\.${tableName}`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`alter table public\\.${tableName} enable row level security`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`revoke all on table public\\.${tableName} from anon`),
+      );
+      for (const role of ["public", "authenticated", "service_role"]) {
+        assert.match(
+          migration,
+          new RegExp(`revoke all on table public\\.${tableName} from ${role}`),
+        );
+      }
+    }
+
+    assert.match(migration, /participant_section_index integer not null/);
+    assert.match(migration, /unique \(game_id, participant_profile_id, participant_section_index\)/);
+    assert.match(migration, /unique \(assignment_id, row_index\)/);
+    assert.match(migration, /unique \(id, game_id\)/);
+    assert.match(
+      migration,
+      /constraint game_section_assignments_participant_fk\s+foreign key \(game_id, participant_profile_id\)\s+references public\.game_participants \(game_id, profile_id\)/,
+    );
+    assert.match(
+      migration,
+      /constraint multiplayer_batch_reveals_participant_fk\s+foreign key \(game_id, participant_profile_id\)\s+references public\.game_participants \(game_id, profile_id\)/,
+    );
+    assert.match(
+      migration,
+      /constraint game_section_entries_assignment_game_fk\s+foreign key \(assignment_id, game_id\)\s+references public\.game_section_assignments \(id, game_id\)/,
+    );
+    assert.match(migration, /notification_type in \('entries_needed', 'batch_complete'\)/);
+    assert.match(migration, /notification_status in \('unread', 'read'\)/);
+    assert.match(
+      migration,
+      /create index if not exists game_section_entries_assignment_game_idx\s+on public\.game_section_entries \(assignment_id, game_id\)/,
+    );
+    assert.deepEqual(tableGrantSet(migration, "game_section_assignments"), [
+      "grant select, insert, update on table public.game_section_assignments to service_role",
+    ]);
+    assert.deepEqual(tableGrantSet(migration, "game_section_entries"), [
+      "grant select, insert on table public.game_section_entries to service_role",
+    ]);
+    assert.deepEqual(tableGrantSet(migration, "multiplayer_batch_reveals"), [
+      "grant select, insert on table public.multiplayer_batch_reveals to service_role",
+    ]);
+    assert.deepEqual(tableGrantSet(migration, "in_app_notifications"), [
+      "grant select on table public.in_app_notifications to authenticated",
+      "grant select, insert, update on table public.in_app_notifications to service_role",
+      "grant update (notification_status) on table public.in_app_notifications to authenticated",
+    ]);
+
+    for (const tableName of [
+      "game_section_assignments",
+      "game_section_entries",
+      "multiplayer_batch_reveals",
+      "in_app_notifications",
+    ]) {
+      assert.deepEqual(
+        tableGrantRoles(migration, tableName).sort(),
+        tableName === "in_app_notifications"
+          ? ["authenticated", "service_role"]
+          : ["service_role"],
+      );
+      assertNoTableGrantToRoles(migration, tableName, ["public", "anon"]);
+    }
+    assertNoTableGrantToRoles(
+      migration,
+      "game_section_assignments",
+      ["authenticated"],
+    );
+    assertNoTableGrantToRoles(
+      migration,
+      "game_section_entries",
+      ["authenticated"],
+    );
+    assertNoTableGrantToRoles(
+      migration,
+      "multiplayer_batch_reveals",
+      ["authenticated"],
+    );
+    assertNoTableGrantWithPrivileges(
+      migration,
+      "in_app_notifications",
+      "authenticated",
+      ["insert", "delete"],
+    );
+
+    assert.match(
+      migration,
+      /create or replace function private\.create_started_game_section_assignments\(\)/,
+    );
+    for (const [helperName, signature] of [
+      ["set_in_app_notifications_updated_at", ""],
+      ["multiplayer_participant_message", "uuid, text"],
+      ["create_started_game_section_assignments", ""],
+      ["current_game_section_assignment", "uuid, uuid"],
+      ["multiplayer_batch_is_complete", "uuid"],
+      ["render_multiplayer_phrases", "uuid"],
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`create or replace function private\\.${helperName}\\(`),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.${helperName}\\(${escapeRegExp(signature)}\\)\\s+from public`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.${helperName}\\(${escapeRegExp(signature)}\\)\\s+from anon`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.${helperName}\\(${escapeRegExp(signature)}\\)\\s+from authenticated`,
+        ),
+      );
+      assert.doesNotMatch(
+        migration,
+        new RegExp(`create or replace function public\\.${helperName}`, "i"),
+      );
+    }
+    assert.match(
+      migration,
+      /create trigger create_started_game_section_assignments\s+after insert on public\.games/,
+    );
+    assert.match(
+      migration,
+      /create or replace function public\.list_multiplayer_dashboard\(\)/,
+    );
+    assert.match(
+      migration,
+      /'phrases',\s*case\s+when exists \(\s*select 1\s+from public\.multiplayer_batch_reveals[\s\S]*?then private\.render_multiplayer_phrases\(game_row\.id\)/,
+    );
+    assert.match(
+      migration,
+      /create or replace function public\.submit_multiplayer_section\(\s*target_assignment_id uuid,\s*submitted_entries jsonb\s*\)/,
+    );
+    assert.match(
+      migration,
+      /create or replace function public\.reveal_multiplayer_batch\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /on conflict \(game_id, participant_profile_id\) do nothing/,
+    );
+    assert.match(
+      migration,
+      /on conflict on constraint multiplayer_batch_reveals_game_id_participant_profile_id_key\s+do nothing/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /pg_catalog\.trim\(/,
+    );
+    assert.match(
+      migration,
+      /pg_catalog\.btrim\(\s*pg_catalog\.regexp_replace/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /alias for \$[12]/,
+    );
+
+    assert.match(
+      migration,
+      /grant execute on function public\.list_multiplayer_dashboard\(\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.submit_multiplayer_section\(uuid, jsonb\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.reveal_multiplayer_batch\(uuid\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /revoke select on table public\.games\s+from authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant select \(id, pending_game_id, creator_account_id, creator_profile_id, invitee_profile_id, template_id, row_count, status, created_at, updated_at\)\s+on table public\.games\s+to authenticated/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select on table public\.games\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select \([^)]*slot_allocation[^)]*\)\s+on table public\.games\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select \([^)]*slot_order[^)]*\)\s+on table public\.games\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /revoke all on table public\.games\s+from authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /revoke insert .*on table public\.games\s+from authenticated/i,
+    );
+    assert.match(
+      migration,
+      /drop trigger if exists create_started_game_turns\s+on public\.games/,
+    );
+    assert.match(
+      migration,
+      /drop policy if exists "Participants can view their active Started Game Turns"\s+on public\.game_turns/,
+    );
+    assert.match(
+      migration,
+      /revoke all on table public\.game_turns\s+from authenticated/,
+    );
+    assert.match(
+      migration,
+      /revoke all on table public\.game_entries\s+from authenticated/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function private\.is_active_started_game_turn_assignee\(uuid, uuid\)\s+from authenticated/,
+    );
+    for (const role of ["public", "anon", "authenticated", "service_role"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function public\\.submit_started_game_turn\\(uuid, jsonb\\)\\s+from ${role}`,
+        ),
+      );
+    }
+    assert.doesNotMatch(
+      migration,
+      /grant .* on table public\.game_turns\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant .* on table public\.game_entries\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant execute on function public\.submit_started_game_turn\(uuid, jsonb\)\s+to authenticated/i,
+    );
+    assert.match(
+      migration,
+      /create or replace function private\.set_in_app_notifications_updated_at\(\)/,
+    );
+    assert.match(
+      migration,
+      /new\.updated_at = pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.match(
+      migration,
+      /create trigger set_in_app_notifications_updated_at\s+before update on public\.in_app_notifications/,
+    );
+    assert.match(migration, /order by assignment\.id\s+for update/);
+    assert.match(
+      migration,
+      /(?:select|perform) 1\s+from public\.games as game_row\s+where game_row\.id = target_assignment\.game_id\s+for update/,
+    );
+    assert.match(
+      migration,
+      /row_index_text !~ '\^\[0-9\]\+\$'/,
+    );
+    assert.match(
+      migration,
+      /case\s+when participant\.account_id = caller_account_id then 'read'\s+else 'unread'\s+end/,
+    );
+    assert.match(
+      migration,
+      /limit 5/,
+    );
+    assert(
+      migration.indexOf("if caller_profile_id is null then") <
+        migration.indexOf("if not private.multiplayer_batch_is_complete(target_game_id) then"),
+      "reveal must check participant membership before completion",
+    );
+    assert.match(
+      migration,
+      /Precondition: hosted application must verify there are no meaningful legacy Started Game Turn submissions/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant insert .*on table public\.game_section_entries to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /create or replace function public\.create_started_game_section_assignments/i,
+    );
+  });
 });
 
 function findMigrationUrl(name) {
@@ -814,4 +1132,104 @@ function findMigrationUrl(name) {
     ) ?? `00000000000000_${name}.sql`;
 
   return new URL(fileName, migrationsDir);
+}
+
+function tableGrantSet(migration, tableName) {
+  return tableGrantMatches(migration, tableName)
+    .map((grant) => grant.statement)
+    .sort();
+}
+
+function tableGrantRoles(migration, tableName) {
+  return [
+    ...new Set(
+      tableGrantMatches(migration, tableName).flatMap((grant) => grant.roles),
+    ),
+  ];
+}
+
+function assertNoTableGrantToRoles(migration, tableName, disallowedRoles) {
+  for (const grant of tableGrantMatches(migration, tableName)) {
+    for (const role of disallowedRoles) {
+      assert.equal(
+        grant.roles.includes(role),
+        false,
+        `${tableName} must not grant ${grant.privileges} to ${role}`,
+      );
+    }
+  }
+}
+
+function assertNoTableGrantWithPrivileges(
+  migration,
+  tableName,
+  role,
+  disallowedPrivileges,
+) {
+  for (const grant of tableGrantMatches(migration, tableName)) {
+    if (!grant.roles.includes(role)) {
+      continue;
+    }
+
+    for (const privilege of disallowedPrivileges) {
+      assert.equal(
+        grant.privilegeNames.includes(privilege),
+        false,
+        `${tableName} must not grant ${privilege} to ${role}`,
+      );
+    }
+  }
+}
+
+function tableGrantMatches(migration, tableName) {
+  const grantPattern = new RegExp(
+    `grant\\s+([a-z_,\\s()]+?)\\s+on\\s+table\\s+public\\.${escapeRegExp(tableName)}\\s+to\\s+([^;]+);`,
+    "gi",
+  );
+  const lastRevokeIndex = lastTableRevokeIndex(migration, tableName);
+
+  return [...migration.matchAll(grantPattern)].map((match) => {
+    assert(
+      match.index > lastRevokeIndex,
+      `${tableName} grant appears before the table revokes`,
+    );
+
+    const privileges = canonicalizeSqlFragment(match[1]);
+    return {
+      statement: canonicalizeSqlFragment(match[0].replace(/;$/, "")),
+      privileges,
+      privilegeNames: privileges
+        .split(",")
+        .map((privilege) => privilege.trim().split(/\s+/)[0]),
+      roles: match[2]
+        .split(",")
+        .map((role) => canonicalizeSqlFragment(role)),
+    };
+  });
+}
+
+function lastTableRevokeIndex(migration, tableName) {
+  const revokePattern = new RegExp(
+    `revoke\\s+all\\s+on\\s+table\\s+public\\.${escapeRegExp(tableName)}\\s+from\\s+(?:public|anon|authenticated|service_role)\\s*;`,
+    "gi",
+  );
+  const revokeIndexes = [...migration.matchAll(revokePattern)].map(
+    (match) => match.index,
+  );
+
+  assert.equal(
+    revokeIndexes.length,
+    4,
+    `${tableName} must revoke all table grants from public, anon, authenticated, and service_role`,
+  );
+
+  return Math.max(...revokeIndexes);
+}
+
+function canonicalizeSqlFragment(fragment) {
+  return fragment.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

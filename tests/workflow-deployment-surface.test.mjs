@@ -29,6 +29,23 @@ const requiredSourceOnlyExcludes = [
   "tests/**",
 ];
 
+const automaticDevDeploymentPaths = [".htaccess", "index.html", "assets/**"];
+
+function getDeployDevPushPaths() {
+  const workflow = readFileSync(workflowPaths[0], "utf8");
+  const match = workflow.match(
+    /\n  push:\r?\n(?:.*\r?\n)*?    paths:\r?\n((?:      - .+(?:\r?\n|$))+)/,
+  );
+
+  assert.ok(match, `${workflowPaths[0].pathname} must declare push path filters`);
+
+  return match[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^- /, "").replace(/^"|"$/g, ""));
+}
+
 function getFtpDeployExcludeLists(workflowUrl) {
   const workflow = readFileSync(workflowUrl, "utf8");
   const actionBlocks = workflow
@@ -49,6 +66,28 @@ function getFtpDeployExcludeLists(workflowUrl) {
 }
 
 describe("workflow deployment surface", () => {
+  it("only requests automatic dev deployments for hosted static runtime changes", () => {
+    const deployDevWorkflow = readFileSync(workflowPaths[0], "utf8");
+    const pushPaths = getDeployDevPushPaths();
+
+    assert.deepEqual(pushPaths, automaticDevDeploymentPaths);
+
+    for (const sourceOnlyPath of requiredSourceOnlyExcludes) {
+      assert.ok(
+        !pushPaths.includes(sourceOnlyPath),
+        `${workflowPaths[0].pathname} automatic dev push paths must not include ${sourceOnlyPath}`,
+      );
+    }
+
+    assert.match(deployDevWorkflow, /detect-deployment-surface:/);
+    assert.match(deployDevWorkflow, /should_deploy/);
+    assert.match(deployDevWorkflow, /needs: detect-deployment-surface/);
+    assert.match(
+      deployDevWorkflow,
+      /needs\.detect-deployment-surface\.outputs\.should_deploy == 'true'/,
+    );
+  });
+
   for (const workflowPath of workflowPaths) {
     it(`${workflowPath.pathname} excludes source-only paths from each FTPS upload`, () => {
       const excludeLists = getFtpDeployExcludeLists(workflowPath);

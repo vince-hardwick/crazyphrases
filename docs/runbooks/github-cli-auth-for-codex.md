@@ -4,6 +4,20 @@
 
 This runbook records how Codex sessions should use Git and the GitHub CLI for this repository without rediscovering authentication behaviour each time.
 
+## First-Hop Rule For Codex
+
+Before running an authenticated GitHub CLI command from Codex, open this runbook
+and assume the sandbox may not be able to read the desktop user's Windows
+keyring token.
+
+For authenticated `gh` commands such as `gh auth status`, `gh repo view`,
+`gh issue *`, `gh pr *`, `gh workflow run`, or `gh run view`, use the existing
+user-level login and run the command with sandbox escalation when the command
+needs GitHub authentication. If a sandboxed `gh` command reports `401`,
+`invalid token`, unauthenticated `403`, or API rate limiting, rerun the same
+command with sandbox escalation before asking the owner to re-authenticate or
+before falling back to manual GitHub UI instructions.
+
 ## Current Setup
 
 GitHub CLI is installed at:
@@ -75,8 +89,12 @@ Examples of operations that may need escalation because they read the keyring to
 - `gh repo edit`
 - `gh issue create`
 - `gh issue list`
+- `gh pr create`
+- `gh pr view`
 - `gh workflow run`
 - `gh run view`
+- `gh run list`
+- `gh run watch`
 
 Do not copy tokens into the repository, commit credentials, or create project-local token files. Do not work around keyring access by setting a persistent project-level `GH_TOKEN`.
 

@@ -37,4 +37,4 @@ The current public site is a static Crazy Phrases app. See `docs/runbooks/live-s
 
 DNS, Cloudflare Access, and non-production environment access controls are documented in `docs/runbooks/cloudflare-dns-and-access.md`.
 
-Git and GitHub CLI authentication behaviour for Codex sessions is documented in `docs/runbooks/github-cli-auth-for-codex.md`.
+Git and GitHub CLI authentication behaviour for Codex sessions is documented in `docs/runbooks/github-cli-auth-for-codex.md`. Open that runbook before using authenticated `gh` commands from Codex; sandboxed `401`, invalid-token, unauthenticated `403`, or rate-limit responses usually mean the command needs Windows-keyring access through sandbox escalation.

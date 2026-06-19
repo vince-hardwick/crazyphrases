@@ -48,12 +48,14 @@ runbooks, backlog entries, or GitHub issue state.
 | `plans/2026-06-16-durable-account-profile-handle-directory.md` | Historical/completed. Do not execute as an active plan. | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/runbooks/supabase-auth-and-postgres.md`, GitHub issue #43 and child issues |
 | `plans/2026-06-16-pending-game-foundation.md` | Historical/completed. Do not execute as an active plan. | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `plans/2026-06-18-started-game-turn-submission.md` | Historical/completed. Do not execute as an active plan. | `docs/decisions/0014-started-game-turn-submission-authority.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md` |
+| `plans/2026-06-18-participant-section-multiplayer-foundation.md` | Historical/source-controlled complete. Do not execute as an active source plan; PR #57 is deployed to `dev`, hosted migrations are applied, and signed-in multiplayer smoke/cleanup passed. | ADR 0015, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, `docs/backlog.md`, PR #57 |
 | `specs/2026-06-08-bare-landing-page-design.md` | Historical. | `README.md`, `docs/runbooks/live-static-hosting.md` |
 | `specs/2026-06-11-anonymous-solo-mvp-prd.md` | Published historical PRD. | GitHub issue #1, `docs/product-rules.md`, ADRs 0004 and 0008 |
 | `specs/2026-06-12-signed-in-foundation-solo-persistence-prd.md` | Published historical PRD. | GitHub issue #22, ADR 0010, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-15-private-phrase-and-batch-favourites-prd.md` | Published PRD provenance. Current child-ticket status belongs to GitHub Issues and backlog. | GitHub issue #33 and child issues, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-16-durable-account-profile-handle-directory-prd.md` | Published PRD provenance. Current remaining profile-management scope is tracked separately. | GitHub issue #43, GitHub issue #47, ADR 0011, `docs/backlog.md` |
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
+| `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is deployed to `dev`, hosted migrations are applied, and signed-in multiplayer smoke/cleanup passed. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
 
 ## Adding Future Plans Or Specs
 

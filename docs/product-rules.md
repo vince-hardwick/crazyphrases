@@ -56,45 +56,60 @@ Games are asynchronous by default. Participants do not need to be present at the
 
 A multiplayer game starts only after all invited human participants accept. Before that it remains pending. CPU participants are treated as accepted immediately.
 
-Random slot allocation and random slot order are resolved when the game starts, not when the pending game is created.
+Random Slot Allocation and participant-local section order are resolved when
+the Game starts, not when the Pending Game is created.
 
 After every invited human participant has accepted, the Game Creator may start
 the Pending Game. Starting creates a durable Game instance, marks the Pending
 Game as started for provenance, copies browser-safe participant snapshots,
 stores the configured row count and template id, and stores the resolved random
-default-template Slot Allocation and Slot Order. A started Game shell without
-turn storage is intentionally incomplete and must not imply that turns, entries,
-or Reveal are available.
+default-template Slot Allocation plus participant-local section order. A
+Started Game shell without assigned-section storage is intentionally incomplete
+and must not imply that entries, completion, or Reveal are available.
 
 If an invited human participant declines, the pending game is cancelled in the MVP.
 
 Pending game invites expire automatically after a fixed period. The exact expiry duration is a product tuning value to be chosen later.
 
-### Slot allocation and order
+### Slot allocation and section order
 
 For games with two or more participants, including games with CPU participants, slot allocation defaults to random. Templates may allow the game creator to manually allocate slots during game setup.
 
-Slot order may also be random or manually configured during game setup when the template allows it. The resolved slot allocation and slot order belong to the game instance so participants have a stable sequence of slot assignments to complete.
+Each participant's assigned sections have a participant-local order. For the
+default 2-player template, random Slot Allocation is resolved when the Game
+starts, and each participant's assigned sections are ordered randomly for that
+participant. There is no single global Slot Order that blocks other
+participants from entering their own assigned sections.
 
-If the game creator manually configures slot allocation or slot order, they can see those choices before the game starts. If random slot allocation or random slot order is selected, the resolved allocation or order is stored by the game but not shown to the creator before reveal.
+If the game creator manually configures slot allocation or section ordering in
+a future template mode, they can see those choices before the game starts. If
+random slot allocation or participant-local section order is selected, the
+resolved allocation or order is stored by the Game but not shown to the creator
+before Reveal except for the current participant's own active section.
 
-Participants may see their own slot assignments before reveal, but should not see other participants' slot assignments before reveal unless required for invitations or coarse turn status. Turn status may say that the game is waiting for another participant without revealing the entry kind or slot that participant is filling.
+Participants may see only their own next incomplete assigned section before
+Reveal. They should not see other participants' section assignments, entry
+kinds, or entries before Reveal. The MVP concurrent model does not show coarse
+other-participant section progress beyond placing the Game in `Awaiting other
+player entries` when the current participant has no remaining section available
+and the batch is not complete.
 
-When a participant has multiple slot assignments, they complete each assignment only when that slot becomes active in the resolved slot order. Multiple assignments do not merge into one turn.
+When a participant has multiple section assignments, they complete each
+assigned section separately in their participant-local order. Multiple
+assignments do not merge into one contribution.
 
-A turn consists of completing one active slot across every row in the batch. Games do not advance row by row in the first product shape.
+An assigned section submission consists of completing one active section across
+every row in the batch. Games do not advance row by row in the first product
+shape.
 
-For Started Games, the active Turn is the first unsubmitted slot in the
-resolved Slot Order. A participant may see and submit only their own active
-Turn, including its entry kind and one input per row. If another participant's
-Turn is active, the UI may show a waiting state but must not reveal that
-participant's entry kind, slot id, or entries before Reveal.
+For Started Games, each participant may see and submit only their own next
+incomplete assigned section, including its entry kind and one input per row.
+Different participants may submit their own current sections concurrently.
 
-Submitting a multiplayer Turn stores one non-empty Entry for every row in that
-Turn and locks those Entries. The first turn-submission slice stores submitted
-Entries and advances turn availability only; it does not add Reveal, completed
-phrase rendering, Share Consent, external sharing for multiplayer, nudges, or
-public discovery.
+Submitting a multiplayer assigned section stores one non-empty Entry for every
+row in that section and locks those Entries. A batch becomes complete only when
+all assigned sections in the Game have been submitted. Completion does not
+automatically reveal the batch for every participant.
 
 For anonymous solo MVP, the active slot is entered through a single vertical form showing all rows for that slot. The participant may fill rows in any order within the active slot, rather than being forced top to bottom. Each row may support manual entry and dice assistance.
 
@@ -128,7 +143,9 @@ For casing, entries that match words in the global word bank use normalized word
 
 Casing normalization affects rendered phrases only. Entries are stored as typed, with word-bank match metadata if needed for display.
 
-For MVP setup, the default template supports configurable row count and nudge timeout. Slot allocation and slot order use the simple default random behavior; manual allocation and ordering controls are deferred.
+For MVP setup, the default template supports configurable row count and nudge
+timeout. Slot allocation and participant-local section ordering use the simple
+default random behaviour; manual allocation and ordering controls are deferred.
 
 ### Solo concealment
 
@@ -325,10 +342,15 @@ the invited participant's response state. Signed-in invitees can see incoming
 Pending Game invites for their Account Profile, accept an invite, or decline an
 invite. Once every invited human participant accepts, the Game Creator can start
 the Pending Game and see that the Game shell has started. Decline cancels the
-Pending Game in the MVP. The current MVP invite UI still does not add invite
-expiry, creator cancellation UI, Reveal, Share Consent, friends, nudges, or
-public discovery. The first Started Game turn-submission slice adds active Turn
-storage and submission only.
+Pending Game in the MVP. The source-controlled participant-section foundation
+for ADR 0015 lets signed-in participants submit their own assigned sections,
+wait for other participant entries, receive in-app notifications, and reveal a
+completed multiplayer batch for themselves after all sections are submitted.
+The current MVP invite UI still does not add invite expiry, creator
+cancellation UI, Share Consent, friends, nudges, or public discovery. The
+historical first Started Game turn-submission slice added global active Turn
+storage and submission only; current multiplayer execution is governed by the
+participant-section model in ADR 0015.
 
 ### Nudges
 
@@ -342,15 +364,40 @@ Nudge timeout is configured per game during setup from a small set of allowed va
 
 MVP notifications are in-app only. Game status, invites, consent requests, and nudges do not require email or push notification delivery in the first product shape.
 
+Multiplayer Game-start and batch-complete notifications are durable in-app
+notification rows stored per participant. When a Game starts after all invited
+participants have accepted, every participant receives an unread actionable
+notification that they can submit entries. When the final assigned section is
+submitted and the batch becomes complete, every participant receives a
+batch-complete notification. The final submitter's batch-complete notification
+is created as read because the submit flow takes them directly to the completed
+batch and Reveal action; other participants receive it unread.
+
+Viewing notification items in the top-bar notification dropdown marks them
+read. Read notifications remain listed. No notification is created for a
+participant's own next assigned section after submitting a previous assigned
+section, because the participant can continue immediately in the same flow.
+
 ### Reveal
 
 A game reveals its batch only when every required entry is complete. Partial reveal and timeout reveal are not part of the first product shape.
+
+For multiplayer Games, Reveal is a per-participant viewing action after batch
+completion, not a global Game transition. Every assigned section in the Game
+must be submitted before any participant can reveal the batch. Each participant
+clicks `Reveal phrases` for themselves; revealing the batch for one participant
+does not reveal it for another participant.
 
 For anonymous solo MVP, reveal is final for the completed local game. After reveal, the participant can view the completed batch, copy/share it, or start again; the completed batch does not need a re-hide action.
 
 Revealed batches show phrases in original row order. Reveal does not shuffle completed phrases.
 
 Reveal presents final rendered phrases first. An optional details view may show the contributing entries grouped by slot.
+
+The signed-in multiplayer surface groups Started Games and completed batches
+into `Awaiting your entries`, `Awaiting other player entries`, and `Batches
+completed`. `Batches completed` lists only the five most recently completed
+multiplayer batches for the signed-in Account in the MVP.
 
 MVP reveal effects should be simple and polished. Subtle transitions are acceptable, but heavy animation or confetti is deferred.
 

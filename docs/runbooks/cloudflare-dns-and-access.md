@@ -156,7 +156,7 @@ Feature slices move through environments in order:
 
 1. Push a feature branch such as `codex/issue-2-manual-anonymous-solo`.
 2. CI runs against the branch.
-3. `deploy-dev.yml` creates a deployment request for the shared `dev` environment when the branch changes current static runtime or test paths.
+3. `deploy-dev.yml` creates a deployment request for the shared `dev` environment when the branch changes hosted static runtime paths.
 4. Approve the `dev` GitHub Environment deployment when that branch is ready for engineering inspection.
 5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication. For user-observed Codex smoke tests, use the visible in-app browser path in `docs/runbooks/in-app-browser-verification.md`.
 6. Open or update the pull request into `main`.
@@ -170,7 +170,7 @@ The anonymous solo MVP may replace the homepage in `dev` and `test` during revie
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.
 
-Automatic `dev` deployment requests currently watch `index.html`, `assets/**`, `package.json`, `package-lock.json`, and `tests/**`. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
+Automatic `dev` deployment requests currently watch `.htaccess`, `index.html`, and `assets/**`. The workflow also includes a changed-file guard before any environment-backed job, so source-only pushes such as documentation, workflow-file, package metadata, Supabase migration, or test-only changes do not request `dev` deployment unless a hosted static runtime path changed in the same push. CI remains responsible for source-only verification. FTPS deployments must exclude source-only repository paths, including `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json`, from the static hosting payload. If the app later moves to a build output directory or framework-specific source tree, update `.github/workflows/deploy-dev.yml`, `.github/workflows/promote.yml`, and the deployment-surface regression test in the same change as that app-structure migration. Use manual `workflow_dispatch` for exceptional branch deployments outside the watched paths.
 
 `promote.yml` currently runs on every push to `main`, including documentation-only
 commits. Documentation paths are excluded from the FTPS payload, so a docs-only

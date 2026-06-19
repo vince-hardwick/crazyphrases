@@ -24,7 +24,7 @@ Use a branch-to-environment promotion model:
 
 1. Feature work happens on non-`main` branches such as `codex/**`, `feature/**`, `fix/**`, or `chore/**`.
 2. CI runs on feature-branch pushes and pull requests.
-3. A push to a feature branch can create a `dev` deployment request. The `dev` GitHub Environment reviewer gate decides whether that branch commit may overwrite the shared `dev` environment.
+3. A push to a feature branch can create a `dev` deployment request when it changes hosted static runtime paths. Source-only changes such as documentation, workflow files, package metadata, Supabase migrations, or tests rely on CI and do not automatically request `dev` deployment unless a hosted static runtime path changed in the same push. The `dev` GitHub Environment reviewer gate decides whether that branch commit may overwrite the shared `dev` environment.
 4. The implementing engineer inspects the feature branch in `dev` before asking for merge acceptance.
 5. Reviewed work merges to `main` through a pull request.
 6. A push to `main` deploys that exact `main` commit to `test`.

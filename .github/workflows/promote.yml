@@ -4,6 +4,17 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - ".github/**"
+      - "AGENTS.md"
+      - "CONTEXT.md"
+      - "README.md"
+      - "docs/**"
+      - "output/**"
+      - "package.json"
+      - "package-lock.json"
+      - "supabase/**"
+      - "tests/**"
   workflow_dispatch:
     inputs:
       promote_production:
@@ -11,16 +22,6 @@ on:
         required: true
         default: false
         type: boolean
-      ftps_preflight_target:
-        description: Run strict FTPS preflight without deploying
-        required: true
-        default: none
-        type: choice
-        options:
-          - none
-          - test
-          - production
-          - all
 
 permissions:
   contents: read
@@ -28,7 +29,6 @@ permissions:
 jobs:
   verify:
     name: Verify static site
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ftps_preflight_target == 'none' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -44,7 +44,6 @@ jobs:
 
   deploy-test:
     name: Deploy main to test
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ftps_preflight_target == 'none' }}
     needs: verify
     runs-on: ubuntu-latest
     concurrency:
@@ -103,7 +102,7 @@ jobs:
 
   deploy-production:
     name: Deploy main to production
-    if: ${{ github.event_name == 'push' || (inputs.promote_production == true && inputs.ftps_preflight_target == 'none') }}
+    if: ${{ github.event_name == 'push' || inputs.promote_production == true }}
     needs: deploy-test
     runs-on: ubuntu-latest
     concurrency:
@@ -159,47 +158,3 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
-
-  preflight-test:
-    name: Verify test FTPS target
-    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.ftps_preflight_target == 'test' || inputs.ftps_preflight_target == 'all') }}
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-test
-      cancel-in-progress: false
-    environment:
-      name: test
-      url: https://test.crazyphrases.com/
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Verify strict FTPS deploy target
-        uses: ./.github/actions/verify-ftps-deploy-target
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-
-  preflight-production:
-    name: Verify production FTPS target
-    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.ftps_preflight_target == 'production' || inputs.ftps_preflight_target == 'all') }}
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    environment:
-      name: production
-      url: https://www.crazyphrases.com/
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Verify strict FTPS deploy target
-        uses: ./.github/actions/verify-ftps-deploy-target
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}

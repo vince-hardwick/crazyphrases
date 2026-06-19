@@ -6,6 +6,10 @@ const workflowPaths = [
   new URL("../.github/workflows/deploy-dev.yml", import.meta.url),
   new URL("../.github/workflows/promote.yml", import.meta.url),
 ];
+const ftpsPreflightWorkflowPath = new URL(
+  "../.github/workflows/ftps-preflight.yml",
+  import.meta.url,
+);
 
 const ftpsPreflightActionPath = new URL(
   "../.github/actions/verify-ftps-deploy-target/action.yml",
@@ -38,6 +42,21 @@ function getDeployDevPushPaths() {
   );
 
   assert.ok(match, `${workflowPaths[0].pathname} must declare push path filters`);
+
+  return match[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^- /, "").replace(/^"|"$/g, ""));
+}
+
+function getPromotePushPathsIgnore() {
+  const workflow = readFileSync(workflowPaths[1], "utf8");
+  const match = workflow.match(
+    /\n  push:\r?\n(?:.*\r?\n)*?    paths-ignore:\r?\n((?:      - .+(?:\r?\n|$))+)/,
+  );
+
+  assert.ok(match, `${workflowPaths[1].pathname} must declare push paths-ignore filters`);
 
   return match[1]
     .split(/\r?\n/)
@@ -88,6 +107,15 @@ describe("workflow deployment surface", () => {
     );
   });
 
+  it("does not request automatic main promotion for source-only pushes", () => {
+    const promoteWorkflow = readFileSync(workflowPaths[1], "utf8");
+    const ignoredPaths = getPromotePushPathsIgnore();
+
+    assert.deepEqual(ignoredPaths, requiredSourceOnlyExcludes);
+    assert.match(promoteWorkflow, /promote_production/);
+    assert.doesNotMatch(promoteWorkflow, /ftps_preflight_target/);
+  });
+
   for (const workflowPath of workflowPaths) {
     it(`${workflowPath.pathname} excludes source-only paths from each FTPS upload`, () => {
       const excludeLists = getFtpDeployExcludeLists(workflowPath);
@@ -129,12 +157,19 @@ describe("workflow deployment surface", () => {
   it("provides read-only strict FTPS preflight modes for environment secrets", () => {
     const deployDevWorkflow = readFileSync(workflowPaths[0], "utf8");
     const promoteWorkflow = readFileSync(workflowPaths[1], "utf8");
+    const ftpsPreflightWorkflow = readFileSync(ftpsPreflightWorkflowPath, "utf8");
 
     assert.match(deployDevWorkflow, /ftps_preflight_only/);
     assert.match(deployDevWorkflow, /name: Verify dev FTPS target/);
-    assert.match(promoteWorkflow, /ftps_preflight_target/);
-    assert.match(promoteWorkflow, /name: Verify test FTPS target/);
-    assert.match(promoteWorkflow, /name: Verify production FTPS target/);
+    assert.doesNotMatch(promoteWorkflow, /ftps_preflight_target/);
+    assert.doesNotMatch(promoteWorkflow, /name: Verify test FTPS target/);
+    assert.doesNotMatch(promoteWorkflow, /name: Verify production FTPS target/);
+
+    assert.match(ftpsPreflightWorkflow, /workflow_dispatch/);
+    assert.match(ftpsPreflightWorkflow, /target:/);
+    assert.match(ftpsPreflightWorkflow, /name: Verify test FTPS target/);
+    assert.match(ftpsPreflightWorkflow, /name: Verify production FTPS target/);
+    assert.match(ftpsPreflightWorkflow, /uses: \.\/\.github\/actions\/verify-ftps-deploy-target/);
   });
 
   it("renders Supabase runtime config from environment variables before each upload", () => {

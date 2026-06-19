@@ -10,7 +10,7 @@ Use the GitHub CLI for issue operations where possible.
 
 ## GitHub CLI Auth
 
-Codex can execute `gh`, but sandboxed commands may not be able to read the Windows keyring token. For authenticated GitHub CLI operations, follow `docs/runbooks/github-cli-auth-for-codex.md`.
+Codex can execute `gh`, but sandboxed commands may not be able to read the Windows keyring token. For authenticated GitHub CLI operations, follow `docs/runbooks/github-cli-auth-for-codex.md` before interpreting auth failures. If a sandboxed issue or PR command reports `401`, `invalid token`, unauthenticated `403`, or API rate limiting, rerun the same command with sandbox escalation before asking the owner to re-authenticate or switching to manual GitHub UI instructions.
 
 Do not put GitHub tokens in project files, checked-in scripts, or long-lived project-local environment variables.
 
@@ -28,4 +28,3 @@ Infer the repo from `git remote -v` when running inside this clone.
 ## Publishing PRDs
 
 When a skill says to publish a PRD to the issue tracker, create a GitHub issue with the PRD body and apply the `ready-for-agent` label unless the user asks for a different state.
-

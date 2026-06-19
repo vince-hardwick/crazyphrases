@@ -27,7 +27,7 @@ For large documents, search for the relevant heading first and then read that se
 | Accepted product, UX, game lifecycle, MVP scope, and validation rules | `docs/product-rules.md` | First stop for feature behaviour and MVP boundaries. |
 | Durable architectural, governance, lifecycle, or deployment decisions | `docs/decisions/*.md` | ADRs explain why a durable boundary exists. |
 | ADR index and creation guidance | `docs/decisions/README.md` | Keep the decision list and ADR policy discoverable. |
-| Operational commands, deployment procedures, auth setup, and approval-gated flows | `docs/runbooks/*.md` | Runbooks own exact command shapes and operational sequencing. |
+| Operational commands, deployment procedures, auth setup, and approval-gated flows | `docs/runbooks/*.md` | Runbooks own exact command shapes and operational sequencing. For authenticated GitHub CLI work, route to `docs/runbooks/github-cli-auth-for-codex.md` before interpreting sandboxed auth failures. |
 | Deferred product or operational work | `docs/backlog.md` | Deferrals include what is deferred, why, revisit trigger, and remaining risk. |
 | Hosted Supabase migration, deployment, smoke, and state evidence | `docs/planning/supabase-state-ledger.md` | Evidence/provenance only. The Supabase runbook owns procedures and mutation authority. |
 | Candidate sources and research notes | `docs/research/*.md` | Research is not accepted architecture until promoted to rules or ADRs. |
@@ -52,14 +52,14 @@ For large documents, search for the relevant heading first and then read that se
 | Deferred future features | `docs/backlog.md` |
 | Word-bank source candidates | `docs/research/word-bank-sources.md` |
 | MVP seed Word Bank asset and rules | `assets/word-bank-seed.json`, `docs/product-rules.md` |
-| Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md` |
+| Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md`; for `gh workflow run`, `gh run view`, or other authenticated GitHub CLI commands, read `docs/runbooks/github-cli-auth-for-codex.md` first. |
 | Visible in-app browser verification | `docs/runbooks/in-app-browser-verification.md` |
 | Local static frontend smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md` - read the Local Static Site Fast Path before starting any local server or hidden Playwright run. |
 | Deployed dev/test/production browser smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
 | Browser side pane not visible, localhost refused, or Playwright wrapper limitations | `docs/runbooks/in-app-browser-verification.md` - use the failure-mode checklist before falling back to standalone or Edge-backed Playwright. |
 | Branch-based dev deployment and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |
-| Git and GitHub CLI authentication from Codex | `docs/runbooks/github-cli-auth-for-codex.md` |
+| Git and GitHub CLI authentication from Codex, including sandboxed `401`, invalid-token, unauthenticated `403`, rate-limit, Windows keyring, `gh workflow run`, `gh run view`, issue, and PR commands | `docs/runbooks/github-cli-auth-for-codex.md` |
 | Node, npm, npx, and package installs from Codex | `docs/runbooks/node-npm-for-codex.md` |
 | Static-first anonymous solo architecture | `docs/decisions/0008-static-first-anonymous-solo.md` |
 | Cached word-bank architecture | `docs/decisions/0004-cached-word-bank-for-entry-candidates.md` |

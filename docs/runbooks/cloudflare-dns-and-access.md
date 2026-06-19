@@ -201,6 +201,14 @@ Superseded branches may be deleted once their intended changes are present on `m
 
 ### Operator Commands
 
+The commands in this section use the GitHub CLI. When Codex runs any
+authenticated `gh` command, follow
+`docs/runbooks/github-cli-auth-for-codex.md` first: sandboxed `gh` can report
+`401`, `invalid token`, unauthenticated `403`, or API rate limiting because it
+cannot read the Windows keyring token. Rerun the same `gh` command with sandbox
+escalation before asking the owner to re-authenticate or switching to manual UI
+instructions.
+
 Inspect workflow runs:
 
 ```powershell

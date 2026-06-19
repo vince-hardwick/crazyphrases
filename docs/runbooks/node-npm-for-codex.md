@@ -20,6 +20,8 @@ nvm version  # 1.2.2
 node --version  # v22.19.0
 npm --version  # 11.14.1
 npx --version  # 11.14.1
+corepack --version  # 0.34.0
+pnpm --version  # 11.8.0
 ```
 
 Codex also has a bundled Node runtime under:
@@ -29,6 +31,11 @@ C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\
 ```
 
 Use the bundled Node executable for local no-network commands such as `node --test` when it is sufficient.
+On 2026-06-19, that bundled Node `bin` directory was added to the
+Windows user-level `Path` as a sandbox-friendly fallback. Existing Codex desktop
+processes may keep their original inherited environment until the app is
+restarted; in the same already-running session, temporarily append the bundled
+Node `bin` directory to `$env:PATH` or call `node.exe` by absolute path.
 
 The project owner's Windows user account has NVM and the active Node.js install
 on its normal `PATH`. When a Codex sandboxed shell reports `node`, `npm`, `npx`,
@@ -39,6 +46,10 @@ normal NVM-managed toolchain.
 ## Sandbox Behaviour
 
 The Codex workspace sandbox can see `NVM_HOME` and `NVM_SYMLINK`, but it may be denied permission to list or execute files under those paths.
+On 2026-06-19, sandboxed PowerShell could `Test-Path` the NVM-managed
+`node.exe`, `npm.cmd`, `npx.cmd`, and `nvm.exe`, but direct execution failed
+with `Access is denied`. That is an execution boundary, not a missing PATH
+entry.
 
 Known symptoms from sandboxed PowerShell:
 
@@ -63,6 +74,7 @@ Use these rules:
   node --test
   npm --version
   npx --version
+  pnpm --version
   nvm version
   ```
 
@@ -71,10 +83,14 @@ Use these rules:
   that write to protected machine locations.
 
 - For quick local tests that need no package install and do not depend on the
-  owner's exact Node version, the bundled Node executable is an acceptable
-  fallback:
+  owner's exact Node version, use sandboxed `node --test`. If the current Codex
+  app process has not picked up the user-level PATH update yet, append the
+  bundled Node directory for that command or call the executable by absolute
+  path:
 
   ```powershell
+  $env:PATH = "$env:PATH;C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin"
+  node --test
   & 'C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test
   ```
 
@@ -88,6 +104,11 @@ Use these rules:
   npm ci
   npx playwright install chromium
   ```
+
+- For package-manager-backed verification in this repository, prefer escalated
+  `npm test` over manually spelling out the long bundled Node path. On
+  2026-06-19, escalated `npm test` used the NVM-managed Node v22.19.0 toolchain
+  and passed 149/149 tests.
 
 - Do not work around sandbox execution denial by copying global Node installations into the repository.
 - Do not install project dependencies into `output/` except as a temporary ignored diagnostic workaround. If a dependency is part of the project workflow, add it to `package.json` and commit the resulting `package-lock.json`.

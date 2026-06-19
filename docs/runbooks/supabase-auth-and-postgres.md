@@ -557,40 +557,40 @@ The hosted corrective migration applied during dev validation is:
 supabase/migrations/20260619134000_fix_multiplayer_reveal_conflict_target.sql
 ```
 
+The participant-section migration creates `public.game_section_assignments`,
+`public.game_section_entries`, `public.multiplayer_batch_reveals`, and
+`public.in_app_notifications` for the ADR 0015 participant-section execution
+model. A private trigger creates one participant-local section assignment per
+resolved Slot Allocation entry when a Started Game is inserted, and creates
+Game-start `entries_needed` notifications for every participant. Authenticated
+browser clients do not receive direct insert authority on section entries,
+section assignments, or Reveal state. Section submission runs through
+`public.submit_multiplayer_section(uuid, jsonb)`, batch dashboard reads run
+through `public.list_multiplayer_dashboard()`, and participant-scoped Reveal
+runs through `public.reveal_multiplayer_batch(uuid)`.
+
+The participant-section migration grants authenticated clients direct table
+access only for account-owned notification select/update paths governed by Row
+Level Security. It also revokes the earlier table-wide authenticated
+`public.games` select and re-grants only safe metadata columns;
+`slot_allocation` and `slot_order` remain behind participant-section RPCs until
+Reveal. Batch-complete notifications are created by the final section
+submission; the final submitter's notification is stored as `read`, and other
+participant notifications are stored as `unread`. Reveal checks confirm that
+the caller is a participant before checking completion, so nonparticipants
+receive the not-found path rather than a completion-state leak. The migration
+also drops the legacy `create_started_game_turns` trigger, removes the
+active-Turn select policy, revokes authenticated access to the old
+`game_turns`/`game_entries` browser path, and revokes authenticated execution
+of `public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows
+are preserved for history; future Started Games should use participant-section
+execution only.
+
 The creator-controlled multiplayer cancellation migration is:
 
 ```text
 supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql
 ```
-
-It creates `public.game_section_assignments`, `public.game_section_entries`,
-`public.multiplayer_batch_reveals`, and `public.in_app_notifications` for the
-ADR 0015 participant-section execution model. A private trigger creates one
-participant-local section assignment per resolved Slot Allocation entry when a
-Started Game is inserted, and creates Game-start `entries_needed`
-notifications for every participant. Authenticated browser clients do not
-receive direct insert authority on section entries, section assignments, or
-Reveal state. Section submission runs through
-`public.submit_multiplayer_section(uuid, jsonb)`, batch dashboard reads run
-through `public.list_multiplayer_dashboard()`, and participant-scoped Reveal
-runs through `public.reveal_multiplayer_batch(uuid)`.
-
-The migration grants authenticated clients direct table access only for
-account-owned notification select/update paths governed by Row Level Security.
-It also revokes the earlier table-wide authenticated `public.games` select and
-re-grants only safe metadata columns; `slot_allocation` and `slot_order` remain
-behind participant-section RPCs until Reveal.
-Batch-complete notifications are created by the final section submission; the
-final submitter's notification is stored as `read`, and other participant
-notifications are stored as `unread`. Reveal checks confirm that the caller is
-a participant before checking completion, so nonparticipants receive the
-not-found path rather than a completion-state leak. The migration also drops
-the legacy `create_started_game_turns` trigger, removes the active-Turn select
-policy, revokes authenticated access to the old `game_turns`/`game_entries`
-browser path, and revokes authenticated execution of
-`public.submit_started_game_turn(uuid, jsonb)`. Existing legacy Turn rows are
-preserved for history; future Started Games should use participant-section
-execution only.
 
 The creator-cancellation migration extends `public.in_app_notifications` so a
 notification targets exactly one of `target_game_id` or
@@ -605,10 +605,14 @@ accepted participants other than the creator. Dashboard, section-submission,
 and Reveal RPCs exclude or reject Games whose source Pending Game is
 `cancelled`.
 
-The creator-cancellation source migration has not been applied to hosted
-Supabase until an explicit owner approval or documented deployment workflow
-gate applies it. Do not treat local branch detection, deployed host, or current
-session state as authority to apply this migration.
+On 2026-06-19, the creator-cancellation source migration was applied to hosted
+Supabase after explicit owner approval as hosted migration
+`20260619221615 creator_multiplayer_cancellation`. Read-only hosted verification
+confirmed migration history, notification target columns and constraints,
+notification indexes, RPC definitions, and execute grants. A visible `dev`
+browser reload confirmed the signed-in Multiplayer loading error cleared after
+the migration. This application does not authorise later signed-in write/cleanup
+smokes; those remain separate live data mutations requiring explicit approval.
 
 On 2026-06-19, the participant-section migration was applied to hosted
 Supabase after explicit owner approval as hosted migration

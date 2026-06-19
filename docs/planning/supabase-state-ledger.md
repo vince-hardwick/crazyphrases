@@ -49,12 +49,12 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260618102626` | `started_game_turn_submission` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619131018` | `participant_section_multiplayer_execution` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
+| `20260619221615` | `creator_multiplayer_cancellation` | Applied after explicit owner approval; schema verified and read-only dev-smoke checked. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
-has not been applied to hosted Supabase. It remains a local branch artifact
-until explicit owner approval or the documented deployment workflow gate
-authorises hosted mutation.
+was applied to hosted Supabase on 2026-06-19 after explicit owner approval as
+hosted migration `20260619221615 creator_multiplayer_cancellation`.
 
 Local source verification for the creator-cancellation branch used the bundled
 Node executable documented in `docs/runbooks/node-npm-for-codex.md`.
@@ -80,6 +80,25 @@ to hosted Supabase, the signed-in Multiplayer panel showed the expected
 schema-mismatch loading error, `Game invites could not be loaded. Try again.`
 No hosted Supabase data mutation or signed-in write/cleanup smoke was performed
 during this deployment check.
+
+After explicit owner approval later on 2026-06-19, hosted migration
+`20260619221615 creator_multiplayer_cancellation` was applied through the
+Supabase MCP. Hosted migration history then listed the new migration. Read-only
+schema verification confirmed `public.in_app_notifications.target_game_id` and
+`target_pending_game_id` are both nullable UUID targets, the notification type
+check includes `game_cancelled`, the exactly-one-target check exists, the new
+game and Pending Game notification indexes exist, and
+`public.cancel_created_game(uuid)` exposes the expected cancellation status
+check, reveal guard, stale `entries_needed` cleanup, pending-aware notification
+targeting, and `game_cancelled` notification creation. Execute privileges
+confirmed `public` and `anon` cannot execute the multiplayer RPCs checked, while
+`authenticated` can execute `cancel_created_game`, dashboard, section-submit,
+and Reveal RPCs. Read-only hosted data inspection found zero Pending Game rows.
+Visible `dev` browser reload then confirmed the previous signed-in Multiplayer
+loading error was gone, the three dashboard buckets rendered, Notifications
+rendered, there was no horizontal overflow, and browser warning/error logs were
+empty. No signed-in write/cleanup smoke was performed during this migration
+verification.
 
 ## Participant-Section Hosted Application
 
@@ -321,8 +340,9 @@ Read-only hosted SQL confirmed:
   notification targets, the `game_cancelled` notification type,
   `public.cancel_created_game(uuid)`, stale `entries_needed` read-status
   cleanup, and cancelled-game guards for dashboard, section submission, and
-  Reveal. It has local migration-surface coverage only; hosted Supabase still
-  requires explicit approval before this migration is applied.
+  Reveal. Hosted migration `20260619221615 creator_multiplayer_cancellation`
+  applied it after explicit owner approval on 2026-06-19 and read-only
+  verification confirmed the schema/RPC surface.
 
 ## Deployment And Smoke Evidence
 

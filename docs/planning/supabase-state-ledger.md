@@ -57,12 +57,14 @@ has not been applied to hosted Supabase, and no `dev`, `test`, or production
 deployment has been triggered for that foundation.
 
 Before hosted application, follow
-`docs/runbooks/supabase-auth-and-postgres.md`: verify that no meaningful legacy
-Started Game Turn submissions exist in hosted `public.game_turns` or
-`public.game_entries`, get explicit owner approval for the live backend
-mutation, apply the migration through the approved route, then record the dated
-hosted migration, schema verification, smoke, cleanup, and deployment evidence
-in this ledger.
+`docs/runbooks/supabase-auth-and-postgres.md`: run the read-only legacy
+`public.game_turns` / `public.game_entries` check, treating any rows as
+smoke-test artefacts because the owner confirmed on 2026-06-19 that the live
+site has no users yet. Get explicit owner approval for any cleanup and for the
+live backend migration, apply the migration through the approved route, then
+record the dated hosted migration, schema verification, smoke, cleanup, and
+deployment evidence in this ledger. A legacy Turn data migration is not
+required unless the owner later identifies real user-owned legacy submissions.
 
 ## Schema Verification Summary
 

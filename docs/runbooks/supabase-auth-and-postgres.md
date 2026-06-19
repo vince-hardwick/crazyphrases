@@ -558,12 +558,14 @@ preserved for history; future Started Games should use participant-section
 execution only. Hosted application of this migration remains behind explicit
 owner approval or the documented deployment gate.
 
-Before hosted application of this migration, verify that no meaningful legacy
-Started Game Turn submissions exist in `public.game_turns` or
-`public.game_entries`. If they do, pause and write an explicit data migration
-from the historical Turn model into participant sections; do not accept the
-source-only active assignment and `entries_needed` notification backfill as a
-complete migration of submitted legacy data.
+Before hosted application of this migration, run a read-only check of
+`public.game_turns` and `public.game_entries`. On 2026-06-19, the owner
+confirmed that the live site has no users yet, so any existing rows in those
+legacy tables are smoke-test artefacts generated during project validation and
+do not require migration into participant sections. If rows exist, record them
+as smoke-test data and clean them up through an explicitly approved hosted
+cleanup route where needed. Only pause for a data migration if the owner later
+identifies real user-owned legacy Turn submissions.
 
 Local source verification for the participant-section migration and browser
 surface was completed on 2026-06-18 during Task 7 closeout. Plain `node` and

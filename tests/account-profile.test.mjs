@@ -157,7 +157,15 @@ describe("Account Profile repository", () => {
     assert.match(appSource, /createSupabaseAccountProfileRepository/);
     assert.match(
       appSource,
-      /profileRepository: createSupabaseAccountProfileRepository\(\{ supabase \}\)/,
+      /const hostedAccountProfileRepository =\s*createSupabaseAccountProfileRepository\(\{ supabase \}\)/,
+    );
+    assert.match(
+      appSource,
+      /profileRepository: hostedAccountProfileRepository/,
+    );
+    assert.match(
+      appSource,
+      /accountProfileRepository = hostedAccountProfileRepository/,
     );
   });
 });

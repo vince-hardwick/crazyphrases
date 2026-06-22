@@ -213,6 +213,19 @@ not signed-in production authority. It must remain separate from anonymous solo
 local recovery and must not upload, merge, or import anonymous local games when
 the participant clicks `Test sign in`.
 
+Local browser tests may also persist Account Profile fixture edits under
+`crazyphrases.localTest.accountProfiles.v1`. This storage is localhost-only test
+state for Account Profile management smoke coverage. It does not call hosted
+Supabase, does not create or update production profile rows, and does not
+authorise live mutation.
+
+Local browser smoke tests may add the localhost-only query parameter
+`testAccountProfile=save-fails`. This forces the local Account Profile fixture
+to simulate a failed profile update so the UI can verify that save failures are
+visible and do not falsely claim success. The app must ignore this fixture value
+outside `localhost` and `127.0.0.1`; it is not hosted Supabase state, does not
+call hosted Supabase, and does not authorise live mutation.
+
 Local browser smoke tests may add the localhost-only query parameter
 `testSignedInPersistence` with one of these values:
 

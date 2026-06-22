@@ -182,6 +182,21 @@ creator Account. A final visible `dev` reload showed Account-backed mode, empty
 Multiplayer dashboard buckets, no smoke Handle, no horizontal overflow, and no
 browser warning/error logs.
 
+PR #69 was merged to `main` on 2026-06-22 as merge commit
+`060295a50408b0b724c8283364018c4f534e291a`. Promotion run `27962578783`
+deployed that commit to `test` after explicit owner approval for the
+`Deploy main to test` GitHub Environment gate. The `Deploy main to test` job
+succeeded from 2026-06-22T15:08:41Z to 2026-06-22T15:08:58Z. Visible
+`test` browser verification confirmed Account-backed mode for `@vhcoder`, an
+empty completed Multiplayer history page, no `codex-smoke-history-1a75a4`
+smoke Handle, no horizontal overflow, and no browser warning/error logs. The
+top-level stylesheet plus all observed first-party JavaScript modules,
+including `pending-game.js` and `supabase-config.js`, were stamped with merge
+commit `060295a50408b0b724c8283364018c4f534e291a`, and no
+`__ASSET_VERSION__` placeholder was visible. The same promotion run is waiting
+at the separate `Deploy main to production` GitHub Environment gate pending
+formal `test` acceptance and explicit production approval.
+
 ## Participant-Section Hosted Application
 
 During Task 7 source closeout for the ADR 0015 participant-section

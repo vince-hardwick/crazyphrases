@@ -26,6 +26,7 @@ export function createTestPendingGameRepository({
   const revealedMultiplayerBatches = [];
   const startedTurns = [];
   let multiplayerCompletionOrder = 0;
+  let revealFailureCount = 0;
 
   return {
     async createPendingGameFromHandle({
@@ -395,7 +396,10 @@ export function createTestPendingGameRepository({
       assertAccountId(accountId);
       assertText(gameId, "A Started Game id is required.");
 
-      if (failureMode === "reveal-fails") {
+      if (
+        failureMode === "reveal-fails" ||
+        (failureMode === "reveal-fails-once" && revealFailureCount++ === 0)
+      ) {
         throw new Error("Could not reveal Multiplayer batch.");
       }
 

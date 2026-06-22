@@ -768,7 +768,10 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Completed multiplayer history");
     await assertTextVisible(page, "Batch with @player-test-account and @invitee-two.");
     await assertTextVisible(page, "Not revealed yet.");
-    await assertTextHidden(page, "Brisk-0 teapot-0 ladder-0");
+    await assertTextAbsent(page, "Brisk-0 teapot-0 ladder-0");
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+    await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
+    await assertTextVisible(page, "Brisk-9 teapot-9 ladder-9");
     await page.getByRole("button", { name: "Back to dashboard" }).click();
     await assertTextVisible(page, "Batches completed");
     await assertNoHorizontalOverflow(page);
@@ -797,6 +800,57 @@ describe("solo browser smoke", () => {
       "Completed batches could not be loaded. Try again.",
     );
     assert.equal(await page.getByRole("button", { name: "Retry" }).isVisible(), true);
+    await page.getByRole("button", { name: "Back to dashboard" }).click();
+    await assertTextVisible(page, "Batches completed");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps completed multiplayer history retryable when Reveal fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails-once`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("10");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await submitMultiplayerSection(page, "teapot");
+    await submitMultiplayerSection(page, "ladder");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await submitMultiplayerSection(page, "brisk");
+    await page.getByRole("button", { name: "View all completed batches" }).click();
+
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+    await assertTextVisible(page, "Phrases could not be revealed. Try again.");
+    await assertTextVisible(page, "Completed multiplayer history");
+    await assertTextVisible(page, "Not revealed yet.");
+    await assertTextAbsent(page, "Brisk-0 teapot-0 ladder-0");
+
+    await page.getByRole("button", { name: "Reveal phrases" }).click();
+    await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
     await page.getByRole("button", { name: "Back to dashboard" }).click();
     await assertTextVisible(page, "Batches completed");
     await assertNoHorizontalOverflow(page);
@@ -1345,6 +1399,10 @@ async function assertTextVisible(page, text) {
 
 async function assertTextHidden(page, text) {
   assert.equal(await page.getByText(text).first().isVisible(), false);
+}
+
+async function assertTextAbsent(page, text) {
+  assert.equal(await page.getByText(text).count(), 0);
 }
 
 async function assertNoFavouriteDom(page) {

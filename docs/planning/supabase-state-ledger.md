@@ -197,6 +197,21 @@ commit `060295a50408b0b724c8283364018c4f534e291a`, and no
 at the separate `Deploy main to production` GitHub Environment gate pending
 formal `test` acceptance and explicit production approval.
 
+After explicit owner approval for production on 2026-06-22, the same promotion
+run `27962578783` deployed merge commit
+`060295a50408b0b724c8283364018c4f534e291a` to production. The
+`Deploy main to production` job succeeded from 2026-06-22T15:23:02Z to
+2026-06-22T15:23:18Z. Visible production browser verification at
+`https://crazyphrases.com/` was read-only and confirmed the signed-out
+Anonymous solo surface loaded, hosted sign-in controls were available, no
+`codex-smoke-history-1a75a4` smoke Handle was present, there was no horizontal
+overflow, and browser warning/error logs were empty. The top-level stylesheet
+plus all observed first-party JavaScript modules, including `pending-game.js`
+and `supabase-config.js`, were stamped with merge commit
+`060295a50408b0b724c8283364018c4f534e291a`, and no `__ASSET_VERSION__`
+placeholder was visible. No hosted production Supabase data mutation was
+performed during this production verification.
+
 ## Participant-Section Hosted Application
 
 During Task 7 source closeout for the ADR 0015 participant-section

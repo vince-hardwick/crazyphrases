@@ -50,6 +50,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260619131018` | `participant_section_multiplayer_execution` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
 | `20260619221615` | `creator_multiplayer_cancellation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
+| `20260622144027` | `completed_multiplayer_history` | Applied after explicit owner approval; schema verified and read-only dev-smoke tested. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
@@ -120,6 +121,66 @@ Pending Game, Pending Game participants, Started Game, Started Game
 participants, section assignments, section entries, multiplayer reveals, and
 in-app notifications. A final visible `dev` reload showed Account-backed mode,
 an empty Multiplayer dashboard, no smoke Handle, and no horizontal overflow.
+
+After explicit owner approval on 2026-06-22, hosted migration
+`20260622144027 completed_multiplayer_history` was applied through the
+Supabase MCP from source migration
+`supabase/migrations/20260622120000_completed_multiplayer_history.sql`.
+Hosted migration history then listed the new migration. Read-only schema
+verification confirmed `public.list_completed_multiplayer_history()` exists as
+a stable `security definer` function with an empty `search_path`, returns the
+expected empty unauthenticated page shape, scopes history through `auth.uid()`,
+requires the source Pending Game to remain `started`, limits the first page to
+20 completed batches, and includes phrase text only behind the caller's reveal
+row. Execute privileges confirmed only `postgres` and `authenticated` can run
+the RPC. Supabase security advisors added the expected signed-in
+`security definer` warning for the new intentional authenticated RPC, alongside
+existing participant-section and project-level warnings; performance advisors
+reported only existing index/policy warnings.
+
+A read-only authenticated-context SQL check using existing profile `vhcoder`
+confirmed `auth.uid()` resolved to
+`f222c9a8-e424-4156-a378-c34eabc71bbf` and
+`public.list_completed_multiplayer_history()` returned `{"batches":[]}` for
+that Account. Visible `dev` browser reload confirmed
+`https://dev.crazyphrases.com/` loaded as Crazy Phrases with top-level
+`assets/app.js` and `assets/site.css` stamped at branch commit
+`d3409f41cc8326297a7841defe46817a6432c544`, no invite-load error, no browser
+console errors, and no horizontal overflow. No signed-in write/cleanup smoke
+was performed during this migration verification; creating fresh completed
+history data remains a separate hosted data-mutation approval.
+
+After separate explicit owner approval on 2026-06-22, a signed-in
+completed-history write/cleanup smoke ran in `dev` using existing creator
+Account Profile `@vhcoder` and temporary invitee Handle
+`@codex-smoke-history-1a75a4`. The visible browser created a 10-phrase Pending
+Game invite, the temporary invitee accepted through the authenticated RLS path,
+the creator started the accepted game, and the creator submitted their active
+`noun-2` section through the signed-in browser UI. Hosted SQL then submitted
+the temporary invitee's `noun-1` and `adjective` sections through
+`public.submit_multiplayer_section(uuid, jsonb)` under the invitee's
+authenticated context. Hosted SQL confirmed Started Game
+`d6552a0b-05d8-4d9f-9a65-0f0bbaab8e46` had all three assignments submitted,
+30 section entries, zero Reveal rows, and
+`public.list_completed_multiplayer_history()` returned one unrevealed batch for
+creator Account `f222c9a8-e424-4156-a378-c34eabc71bbf`.
+
+The visible `dev` browser opened `Completed multiplayer history` and confirmed
+the batch appeared as `Not revealed yet.` with no phrase text and no horizontal
+overflow. The browser then revealed the batch as the creator, reopened
+completed history, and confirmed ten `Brisk ladder teapot` phrases rendered
+with no horizontal overflow. Cleanup deleted four in-app notifications, one
+Reveal row, 30 section entries, three section assignments, two Started Game
+participants, one Started Game, two Pending Game participants, one Pending
+Game, one Handle Directory row, one Account Profile row, and one temporary
+Auth user. Follow-up hosted SQL confirmed zero rows remained for the smoke Auth
+user, Account Profile, Handle Directory entry, Pending Game, Pending Game
+participants, Started Game, Started Game participants, section assignments,
+section entries, multiplayer reveals, and in-app notifications, and
+`public.list_completed_multiplayer_history()` returned `{"batches":[]}` for the
+creator Account. A final visible `dev` reload showed Account-backed mode, empty
+Multiplayer dashboard buckets, no smoke Handle, no horizontal overflow, and no
+browser warning/error logs.
 
 ## Participant-Section Hosted Application
 

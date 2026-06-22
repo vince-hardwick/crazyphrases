@@ -635,6 +635,120 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("lists an empty completed multiplayer history page", async () => {
+    const repository = createTestPendingGameRepository({
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(history, { batches: [] });
+  });
+
+  it("lists fewer than five completed multiplayer history batches", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 3; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(
+      history.batches.map((batch) => batch.id),
+      ["started-game-3", "started-game-2", "started-game-1"],
+    );
+  });
+
+  it("lists exactly five completed multiplayer history batches", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 5; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(
+      history.batches.map((batch) => batch.id),
+      [
+        "started-game-5",
+        "started-game-4",
+        "started-game-3",
+        "started-game-2",
+        "started-game-1",
+      ],
+    );
+  });
+
+  it("lists the first completed multiplayer history page beyond the dashboard cap", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 7; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const dashboard = await repository.listMultiplayerDashboard({
+      accountId: creatorProfile.accountId,
+    });
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(
+      dashboard.completedBatches.map((batch) => batch.id),
+      [
+        "started-game-7",
+        "started-game-6",
+        "started-game-5",
+        "started-game-4",
+        "started-game-3",
+      ],
+    );
+    assert.deepEqual(
+      history.batches.map((batch) => batch.id),
+      [
+        "started-game-7",
+        "started-game-6",
+        "started-game-5",
+        "started-game-4",
+        "started-game-3",
+        "started-game-2",
+        "started-game-1",
+      ],
+    );
+  });
+
   it("lets the creator cancel a started game before reveal", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1614,6 +1728,34 @@ describe("Pending Game repository", () => {
     ]);
   });
 
+  it("loads completed multiplayer history through Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["list_completed_multiplayer_history"]);
+    assert.deepEqual(supabase.rpcParams, []);
+    assert.deepEqual(history.batches, [
+      {
+        id: "supabase-completed-game-1",
+        pendingGameId: "supabase-completed-pending-game-1",
+        rowCount: 1,
+        participants: [
+          { handle: creatorProfile.handle },
+          { handle: inviteeProfile.handle },
+        ],
+        phrases: ["Brisk teapot cloud"],
+        revealed: true,
+      },
+    ]);
+  });
+
   it("submits participant sections through Supabase RPC", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,
@@ -1973,6 +2115,17 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
         assert.equal(arguments.length, 1);
         return {
           data: createFakeMultiplayerDashboard({
+            creatorProfile,
+            inviteeProfile,
+          }),
+          error: null,
+        };
+      }
+
+      if (functionName === "list_completed_multiplayer_history") {
+        assert.equal(arguments.length, 1);
+        return {
+          data: createFakeCompletedMultiplayerHistory({
             creatorProfile,
             inviteeProfile,
           }),
@@ -2457,6 +2610,15 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
         revealed: true,
       },
     ],
+  };
+}
+
+function createFakeCompletedMultiplayerHistory({ creatorProfile, inviteeProfile }) {
+  return {
+    batches: createFakeMultiplayerDashboard({
+      creatorProfile,
+      inviteeProfile,
+    }).completedBatches,
   };
 }
 

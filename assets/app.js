@@ -159,10 +159,12 @@ let pendingGameStatus = null;
 let pendingGameSummary = null;
 let pendingGameIncomingList = null;
 let multiplayerDashboardMount = null;
+let completedMultiplayerHistoryPanel = null;
 let currentPendingGame = null;
 let createdPendingGames = [];
 let incomingPendingGameInvites = [];
 let multiplayerDashboard = createEmptyMultiplayerDashboard();
+let completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
 let inAppNotifications = [];
 let accountProfilePanel = null;
 let favouritesPanel = null;
@@ -688,7 +690,7 @@ function getLocalTestPendingGameFailureMode() {
     "testPendingGame",
   );
 
-  if (failureMode === "reveal-fails") {
+  if (["history-fails", "reveal-fails"].includes(failureMode)) {
     return failureMode;
   }
 
@@ -895,6 +897,11 @@ function ensurePendingGamePanel() {
   multiplayerDashboardMount = document.createElement("div");
   multiplayerDashboardMount.dataset.multiplayerDashboardMount = "";
 
+  completedMultiplayerHistoryPanel = document.createElement("section");
+  completedMultiplayerHistoryPanel.className = "pending-game-summary";
+  completedMultiplayerHistoryPanel.dataset.completedMultiplayerHistory = "";
+  completedMultiplayerHistoryPanel.hidden = true;
+
   heading.append(kicker, title);
   handleLabel.append(pendingGameHandleInput);
   rowCountLabel.append(pendingGameRowCountSelect);
@@ -906,6 +913,7 @@ function ensurePendingGamePanel() {
     pendingGameSummary,
     pendingGameIncomingList,
     multiplayerDashboardMount,
+    completedMultiplayerHistoryPanel,
   );
   gamePanel.after(pendingGamePanel);
   return pendingGamePanel;
@@ -920,8 +928,10 @@ function removePendingGamePanel() {
   pendingGameSummary = null;
   pendingGameIncomingList = null;
   multiplayerDashboardMount = null;
+  completedMultiplayerHistoryPanel = null;
   currentPendingGame = null;
   multiplayerDashboard = createEmptyMultiplayerDashboard();
+  completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
   inAppNotifications = [];
 }
 
@@ -1307,6 +1317,20 @@ function renderMultiplayerDashboard() {
   const dashboard = document.createElement("div");
   dashboard.className = "multiplayer-dashboard";
   dashboard.dataset.multiplayerDashboard = "";
+  const completedBucket = renderMultiplayerBucket({
+    headingText: "Batches completed",
+    items: multiplayerDashboard.completedBatches,
+    renderItem: renderCompletedMultiplayerBatch,
+  });
+  const historyButton = document.createElement("button");
+  historyButton.className = "secondary-button";
+  historyButton.type = "button";
+  historyButton.textContent = "View all completed batches";
+  historyButton.addEventListener("click", () => {
+    void openCompletedMultiplayerHistory();
+  });
+  completedBucket.append(historyButton);
+
   dashboard.replaceChildren(
     renderMultiplayerBucket({
       headingText: "Awaiting your entries",
@@ -1318,11 +1342,7 @@ function renderMultiplayerDashboard() {
       items: multiplayerDashboard.awaitingOtherPlayerEntries,
       renderItem: renderAwaitingOtherPlayerEntries,
     }),
-    renderMultiplayerBucket({
-      headingText: "Batches completed",
-      items: multiplayerDashboard.completedBatches,
-      renderItem: renderCompletedMultiplayerBatch,
-    }),
+    completedBucket,
   );
   return dashboard;
 }
@@ -1391,6 +1411,109 @@ function renderCompletedMultiplayerBatch(batchSummary) {
   );
   card.append(heading, list);
   return card;
+}
+
+async function openCompletedMultiplayerHistory() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  pendingGameStatus.textContent = "";
+  multiplayerDashboardMount.hidden = true;
+  completedMultiplayerHistoryPanel.hidden = false;
+  renderCompletedMultiplayerHistoryLoading();
+
+  try {
+    completedMultiplayerHistory =
+      await pendingGameRepository.listCompletedMultiplayerHistory({
+        accountId: accountShell.accountId,
+      });
+    renderCompletedMultiplayerHistory();
+  } catch {
+    renderCompletedMultiplayerHistoryError();
+  }
+}
+
+function showMultiplayerDashboard() {
+  completedMultiplayerHistoryPanel.hidden = true;
+  multiplayerDashboardMount.hidden = false;
+}
+
+function renderCompletedMultiplayerHistoryLoading() {
+  renderCompletedMultiplayerHistoryShell([
+    createPendingGameNote("Loading completed batches..."),
+  ]);
+}
+
+function renderCompletedMultiplayerHistoryError() {
+  const retryButton = document.createElement("button");
+  retryButton.className = "secondary-button";
+  retryButton.type = "button";
+  retryButton.textContent = "Retry";
+  retryButton.addEventListener("click", () => {
+    void openCompletedMultiplayerHistory();
+  });
+
+  renderCompletedMultiplayerHistoryShell([
+    createPendingGameNote("Completed batches could not be loaded. Try again."),
+    retryButton,
+  ]);
+}
+
+function renderCompletedMultiplayerHistory() {
+  const children =
+    completedMultiplayerHistory.batches.length === 0
+      ? [createPendingGameNote("No completed multiplayer batches yet.")]
+      : completedMultiplayerHistory.batches.map(renderCompletedHistoryBatch);
+
+  renderCompletedMultiplayerHistoryShell(children);
+}
+
+function renderCompletedMultiplayerHistoryShell(children) {
+  const heading = document.createElement("h3");
+  heading.textContent = "Completed multiplayer history";
+
+  const actions = document.createElement("div");
+  actions.className = "pending-game-actions";
+
+  const backButton = document.createElement("button");
+  backButton.className = "secondary-button";
+  backButton.type = "button";
+  backButton.textContent = "Back to dashboard";
+  backButton.addEventListener("click", showMultiplayerDashboard);
+  actions.append(backButton);
+
+  completedMultiplayerHistoryPanel.replaceChildren(heading, actions, ...children);
+}
+
+function renderCompletedHistoryBatch(batchSummary) {
+  const card = document.createElement("div");
+  card.className = "pending-game-card";
+  card.append(renderMultiplayerParticipantSummary(batchSummary));
+
+  if (!batchSummary.revealed) {
+    card.append(createPendingGameNote("Not revealed yet."));
+    return card;
+  }
+
+  const list = document.createElement("ol");
+  list.className = "phrase-list";
+  list.replaceChildren(
+    ...batchSummary.phrases.map((phrase) => {
+      const item = document.createElement("li");
+      item.textContent = phrase;
+      return item;
+    }),
+  );
+  card.append(list);
+  return card;
+}
+
+function createPendingGameNote(text) {
+  const note = document.createElement("p");
+  note.className = "pending-game-row-count";
+  note.textContent = text;
+  return note;
 }
 
 function renderMultiplayerParticipantSummary(batchSummary) {
@@ -1590,6 +1713,7 @@ async function loadPendingGameLists() {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
     multiplayerDashboard = createEmptyMultiplayerDashboard();
+    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
     inAppNotifications = [];
     return;
   }
@@ -1608,6 +1732,7 @@ async function loadPendingGameLists() {
     createdPendingGames = [];
     incomingPendingGameInvites = [];
     multiplayerDashboard = createEmptyMultiplayerDashboard();
+    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
     inAppNotifications = [];
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
@@ -1636,6 +1761,10 @@ function createEmptyMultiplayerDashboard() {
     awaitingOtherPlayerEntries: [],
     completedBatches: [],
   };
+}
+
+function createEmptyCompletedMultiplayerHistory() {
+  return { batches: [] };
 }
 
 function upsertPendingGame(pendingGames, pendingGame) {

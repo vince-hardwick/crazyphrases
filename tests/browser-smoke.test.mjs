@@ -722,6 +722,88 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("opens completed multiplayer history from the dashboard", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    assert.equal(
+      await page.getByRole("button", { name: "View all completed batches" }).count(),
+      0,
+    );
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("10");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await submitMultiplayerSection(page, "teapot");
+    await submitMultiplayerSection(page, "ladder");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await submitMultiplayerSection(page, "brisk");
+    await assertTextVisible(page, "Batches completed");
+
+    await page.getByRole("button", { name: "View all completed batches" }).click();
+
+    await assertTextVisible(page, "Completed multiplayer history");
+    await assertTextVisible(page, "Batch with @player-test-account and @invitee-two.");
+    await assertTextVisible(page, "Not revealed yet.");
+    await assertTextHidden(page, "Brisk-0 teapot-0 ladder-0");
+    await page.getByRole("button", { name: "Back to dashboard" }).click();
+    await assertTextVisible(page, "Batches completed");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows a recoverable error when completed multiplayer history cannot be loaded", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=history-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Batches completed");
+
+    await page.getByRole("button", { name: "View all completed batches" }).click();
+
+    await assertTextVisible(
+      page,
+      "Completed batches could not be loaded. Try again.",
+    );
+    assert.equal(await page.getByRole("button", { name: "Retry" }).isVisible(), true);
+    await page.getByRole("button", { name: "Back to dashboard" }).click();
+    await assertTextVisible(page, "Batches completed");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("lets the creator cancel a started multiplayer game before reveal", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

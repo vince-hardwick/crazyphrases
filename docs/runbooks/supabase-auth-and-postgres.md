@@ -618,6 +618,22 @@ accepted participants other than the creator. Dashboard, section-submission,
 and Reveal RPCs exclude or reject Games whose source Pending Game is
 `cancelled`.
 
+The completed multiplayer history migration is:
+
+```text
+supabase/migrations/20260622120000_completed_multiplayer_history.sql
+```
+
+It creates the narrow authenticated
+`public.list_completed_multiplayer_history()` read RPC for the first completed
+multiplayer history page. The RPC returns up to 20 completed batches for the
+authenticated Account, excludes cancelled Games by requiring the source Pending
+Game to remain `started`, and includes phrase text only when the caller's
+participant snapshot already has a `public.multiplayer_batch_reveals` row. It
+does not grant direct browser table access. Hosted application remains a live
+backend mutation requiring explicit owner approval or the documented deployment
+workflow gate.
+
 On 2026-06-19, the creator-cancellation source migration was applied to hosted
 Supabase after explicit owner approval as hosted migration
 `20260619221615 creator_multiplayer_cancellation`. Read-only hosted verification

@@ -410,9 +410,12 @@ from the `Batches completed` dashboard bucket. The dashboard keeps its five-item
 cap. The first history slice lists up to 20 completed multiplayer batches for
 the current Account, newest first, with invite-safe participant Handles and row
 count context. Cancelled Games are excluded. Unrevealed completed batches show
-that they have not been revealed yet and must not render phrase text in visible
-or hidden DOM. Reveal from history and cursor pagination are separate follow-up
-slices.
+that they have not been revealed yet, offer `Reveal phrases` for the current
+participant, and must not render phrase text in visible or hidden DOM before
+that participant's successful Reveal. Successful Reveal from history uses the
+existing participant-scoped Multiplayer Reveal authority, updates only the
+current participant's reveal state, and renders phrases in original row order.
+Cursor pagination is a separate follow-up slice.
 
 MVP reveal effects should be simple and polished. Subtle transitions are acceptable, but heavy animation or confetti is deferred.
 

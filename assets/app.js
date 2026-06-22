@@ -690,7 +690,9 @@ function getLocalTestPendingGameFailureMode() {
     "testPendingGame",
   );
 
-  if (["history-fails", "reveal-fails"].includes(failureMode)) {
+  if (
+    ["history-fails", "reveal-fails", "reveal-fails-once"].includes(failureMode)
+  ) {
     return failureMode;
   }
 
@@ -1492,7 +1494,14 @@ function renderCompletedHistoryBatch(batchSummary) {
   card.append(renderMultiplayerParticipantSummary(batchSummary));
 
   if (!batchSummary.revealed) {
-    card.append(createPendingGameNote("Not revealed yet."));
+    const revealButton = document.createElement("button");
+    revealButton.className = "secondary-button";
+    revealButton.type = "button";
+    revealButton.textContent = "Reveal phrases";
+    revealButton.addEventListener("click", () => {
+      void revealMultiplayerBatch(batchSummary.id);
+    });
+    card.append(createPendingGameNote("Not revealed yet."), revealButton);
     return card;
   }
 
@@ -1649,7 +1658,13 @@ async function revealMultiplayerBatch(gameId) {
     multiplayerDashboard.completedBatches = multiplayerDashboard.completedBatches.map(
       (batch) => batch.id === gameId ? { ...batch, ...revealed } : batch,
     );
+    completedMultiplayerHistory.batches = completedMultiplayerHistory.batches.map(
+      (batch) => batch.id === gameId ? { ...batch, ...revealed } : batch,
+    );
     renderPendingGamePanel();
+    if (completedMultiplayerHistoryPanel && !completedMultiplayerHistoryPanel.hidden) {
+      renderCompletedMultiplayerHistory();
+    }
   } catch {
     try {
       await loadMultiplayerDashboard();

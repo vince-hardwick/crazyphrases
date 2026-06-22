@@ -150,6 +150,38 @@ console errors, and no horizontal overflow. No signed-in write/cleanup smoke
 was performed during this migration verification; creating fresh completed
 history data remains a separate hosted data-mutation approval.
 
+After separate explicit owner approval on 2026-06-22, a signed-in
+completed-history write/cleanup smoke ran in `dev` using existing creator
+Account Profile `@vhcoder` and temporary invitee Handle
+`@codex-smoke-history-1a75a4`. The visible browser created a 10-phrase Pending
+Game invite, the temporary invitee accepted through the authenticated RLS path,
+the creator started the accepted game, and the creator submitted their active
+`noun-2` section through the signed-in browser UI. Hosted SQL then submitted
+the temporary invitee's `noun-1` and `adjective` sections through
+`public.submit_multiplayer_section(uuid, jsonb)` under the invitee's
+authenticated context. Hosted SQL confirmed Started Game
+`d6552a0b-05d8-4d9f-9a65-0f0bbaab8e46` had all three assignments submitted,
+30 section entries, zero Reveal rows, and
+`public.list_completed_multiplayer_history()` returned one unrevealed batch for
+creator Account `f222c9a8-e424-4156-a378-c34eabc71bbf`.
+
+The visible `dev` browser opened `Completed multiplayer history` and confirmed
+the batch appeared as `Not revealed yet.` with no phrase text and no horizontal
+overflow. The browser then revealed the batch as the creator, reopened
+completed history, and confirmed ten `Brisk ladder teapot` phrases rendered
+with no horizontal overflow. Cleanup deleted four in-app notifications, one
+Reveal row, 30 section entries, three section assignments, two Started Game
+participants, one Started Game, two Pending Game participants, one Pending
+Game, one Handle Directory row, one Account Profile row, and one temporary
+Auth user. Follow-up hosted SQL confirmed zero rows remained for the smoke Auth
+user, Account Profile, Handle Directory entry, Pending Game, Pending Game
+participants, Started Game, Started Game participants, section assignments,
+section entries, multiplayer reveals, and in-app notifications, and
+`public.list_completed_multiplayer_history()` returned `{"batches":[]}` for the
+creator Account. A final visible `dev` reload showed Account-backed mode, empty
+Multiplayer dashboard buckets, no smoke Handle, no horizontal overflow, and no
+browser warning/error logs.
+
 ## Participant-Section Hosted Application
 
 During Task 7 source closeout for the ADR 0015 participant-section

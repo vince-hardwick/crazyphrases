@@ -193,9 +193,9 @@ smoke Handle, no horizontal overflow, and no browser warning/error logs. The
 top-level stylesheet plus all observed first-party JavaScript modules,
 including `pending-game.js` and `supabase-config.js`, were stamped with merge
 commit `060295a50408b0b724c8283364018c4f534e291a`, and no
-`__ASSET_VERSION__` placeholder was visible. The same promotion run is waiting
-at the separate `Deploy main to production` GitHub Environment gate pending
-formal `test` acceptance and explicit production approval.
+`__ASSET_VERSION__` placeholder was visible. The same promotion run then
+waited at the separate `Deploy main to production` GitHub Environment gate
+pending formal `test` acceptance and explicit production approval.
 
 After explicit owner approval for production on 2026-06-22, the same promotion
 run `27962578783` deployed merge commit

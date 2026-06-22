@@ -405,6 +405,15 @@ into `Awaiting your entries`, `Awaiting other player entries`, and `Batches
 completed`. `Batches completed` lists only the five most recently completed
 multiplayer batches for the signed-in Account in the MVP.
 
+Signed-in participants can open a dedicated completed multiplayer history view
+from the `Batches completed` dashboard bucket. The dashboard keeps its five-item
+cap. The first history slice lists up to 20 completed multiplayer batches for
+the current Account, newest first, with invite-safe participant Handles and row
+count context. Cancelled Games are excluded. Unrevealed completed batches show
+that they have not been revealed yet and must not render phrase text in visible
+or hidden DOM. Reveal from history and cursor pagination are separate follow-up
+slices.
+
 MVP reveal effects should be simple and polished. Subtle transitions are acceptable, but heavy animation or confetti is deferred.
 
 ### Cancellation

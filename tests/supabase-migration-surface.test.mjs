@@ -59,6 +59,9 @@ const participantSectionExecutionMigrationUrl = findMigrationUrl(
 const creatorMultiplayerCancellationMigrationUrl = findMigrationUrl(
   "creator_multiplayer_cancellation",
 );
+const completedMultiplayerHistoryMigrationUrl = findMigrationUrl(
+  "completed_multiplayer_history",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1250,6 +1253,53 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /grant execute on function public\.cancel_created_game\(uuid\)\s+to authenticated/,
+    );
+  });
+
+  it("adds an Account-scoped completed multiplayer history read RPC", () => {
+    assert.equal(existsSync(completedMultiplayerHistoryMigrationUrl), true);
+
+    const migration = readFileSync(
+      completedMultiplayerHistoryMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /create or replace function public\.list_completed_multiplayer_history\(\)/,
+    );
+    assert.match(migration, /returns jsonb/);
+    assert.match(migration, /stable/);
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(
+      migration,
+      /participant\.account_id = history_account_id/,
+    );
+    assert.match(
+      migration,
+      /join public\.pending_games as pending_game\s+on pending_game\.id = game_row\.pending_game_id\s+and pending_game\.status = 'started'/,
+    );
+    assert.match(
+      migration,
+      /'phrases',\s*case\s+when exists \(\s*select 1\s+from public\.multiplayer_batch_reveals[\s\S]*?then private\.render_multiplayer_phrases\(game_row\.id\)/,
+    );
+    assert.match(migration, /limit 20/);
+    assert.match(
+      migration,
+      /'batches',\s*coalesce\(/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.list_completed_multiplayer_history\(\)\s+from public/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.list_completed_multiplayer_history\(\)\s+from anon/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.list_completed_multiplayer_history\(\)\s+to authenticated/,
     );
   });
 });

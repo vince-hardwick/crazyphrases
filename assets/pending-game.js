@@ -1,5 +1,6 @@
 export const DEFAULT_TEMPLATE_ID = "default-adjective-noun-noun";
 const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
+const COMPLETED_HISTORY_FIRST_PAGE_LIMIT = 20;
 
 export function createTestPendingGameRepository({
   createPendingGameId = defaultCreatePendingGameId,
@@ -287,6 +288,27 @@ export function createTestPendingGameRepository({
       }
 
       return createMultiplayerDashboard({
+        assignedSections,
+        completedMultiplayerBatches,
+        pendingGames,
+        profile,
+        revealedMultiplayerBatches,
+      });
+    },
+
+    async listCompletedMultiplayerHistory({ accountId }) {
+      assertAccountId(accountId);
+
+      if (failureMode === "history-fails") {
+        throw new Error("Could not load completed Multiplayer history.");
+      }
+
+      const profile = profilesByAccountId.get(accountId);
+      if (!profile) {
+        return createEmptyCompletedMultiplayerHistoryPage();
+      }
+
+      return createCompletedMultiplayerHistoryPage({
         assignedSections,
         completedMultiplayerBatches,
         pendingGames,
@@ -823,6 +845,16 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       return recoverMultiplayerDashboard(response.data);
     },
 
+    async listCompletedMultiplayerHistory({ accountId }) {
+      assertAccountId(accountId);
+      const response = await supabase.rpc("list_completed_multiplayer_history");
+      assertNoSupabaseError(
+        response,
+        "Could not load completed Multiplayer history",
+      );
+      return recoverCompletedMultiplayerHistoryPage(response.data);
+    },
+
     async submitMultiplayerSection({ accountId, entries, sectionId }) {
       assertAccountId(accountId);
       assertText(sectionId, "A multiplayer section id is required.");
@@ -1210,6 +1242,29 @@ function createEmptyMultiplayerDashboard() {
   };
 }
 
+function createEmptyCompletedMultiplayerHistoryPage() {
+  return { batches: [] };
+}
+
+function createCompletedMultiplayerHistoryPage({
+  assignedSections,
+  completedMultiplayerBatches,
+  pendingGames,
+  profile,
+  revealedMultiplayerBatches,
+}) {
+  return {
+    batches: createCompletedBatches({
+      assignedSections,
+      completedMultiplayerBatches,
+      limit: COMPLETED_HISTORY_FIRST_PAGE_LIMIT,
+      pendingGames,
+      profile,
+      revealedMultiplayerBatches,
+    }),
+  };
+}
+
 function createMultiplayerDashboard({
   assignedSections,
   completedMultiplayerBatches,
@@ -1332,6 +1387,7 @@ function createWaitingSectionBatches({ assignedSections, pendingGames, profile }
 function createCompletedBatches({
   assignedSections,
   completedMultiplayerBatches,
+  limit = 5,
   pendingGames,
   profile,
   revealedMultiplayerBatches,
@@ -1370,7 +1426,7 @@ function createCompletedBatches({
         },
       ];
     })
-    .slice(0, 5);
+    .slice(0, limit);
 }
 
 function findCurrentAssignedSection({
@@ -1792,6 +1848,14 @@ function recoverMultiplayerDashboard(dashboardRow) {
       []
     ).map((batch) =>
       recoverMultiplayerBatch(batch, { includeRevealState: true }),
+    ),
+  };
+}
+
+function recoverCompletedMultiplayerHistoryPage(historyRow) {
+  return {
+    batches: (historyRow?.batches ?? historyRow?.completed_batches ?? []).map(
+      (batch) => recoverMultiplayerBatch(batch, { includeRevealState: true }),
     ),
   };
 }

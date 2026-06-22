@@ -48,6 +48,7 @@ import {
 } from "./pending-game.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
+const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
@@ -143,6 +144,7 @@ const localTestAccountProfileRepository = createLocalTestAccountProfileRepositor
   },
 );
 const localTestPendingGameRepository = createLocalTestPendingGameRepository({
+  completedHistorySeedCount: getLocalTestPendingGameSeedCount(),
   createPendingGameId: createLocalTestPendingGameId,
   failureMode: getLocalTestPendingGameFailureMode(),
   profiles: localTestProfiles,
@@ -691,12 +693,31 @@ function getLocalTestPendingGameFailureMode() {
   );
 
   if (
-    ["history-fails", "reveal-fails", "reveal-fails-once"].includes(failureMode)
+    [
+      "history-fails",
+      "history-load-more-fails",
+      "reveal-fails",
+      "reveal-fails-once",
+    ].includes(failureMode)
   ) {
     return failureMode;
   }
 
   return null;
+}
+
+function getLocalTestPendingGameSeedCount() {
+  if (!isLocalTestAuthAvailable()) {
+    return 0;
+  }
+
+  const testMode = new URLSearchParams(window.location.search).get(
+    "testPendingGame",
+  );
+
+  return ["history-pages", "history-load-more-fails"].includes(testMode)
+    ? 21
+    : 0;
 }
 
 function renderEntryRow(row, rowIndex, entryKind) {
@@ -1426,14 +1447,55 @@ async function openCompletedMultiplayerHistory() {
   renderCompletedMultiplayerHistoryLoading();
 
   try {
-    completedMultiplayerHistory =
-      await pendingGameRepository.listCompletedMultiplayerHistory({
-        accountId: accountShell.accountId,
-      });
+    completedMultiplayerHistory = await loadCompletedMultiplayerHistoryPage();
     renderCompletedMultiplayerHistory();
   } catch {
     renderCompletedMultiplayerHistoryError();
   }
+}
+
+async function loadCompletedMultiplayerHistoryPage({ cursor } = {}) {
+  return pendingGameRepository.listCompletedMultiplayerHistory({
+    accountId: accountShell.accountId,
+    ...(cursor ? { cursor } : {}),
+    pageSize: COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE,
+  });
+}
+
+async function loadMoreCompletedMultiplayerHistory() {
+  if (
+    !completedMultiplayerHistory.hasMore ||
+    !completedMultiplayerHistory.nextCursor
+  ) {
+    return;
+  }
+
+  const existingBatches = completedMultiplayerHistory.batches;
+  completedMultiplayerHistory = {
+    ...completedMultiplayerHistory,
+    loadMoreError: false,
+    loadingMore: true,
+  };
+  renderCompletedMultiplayerHistory();
+
+  try {
+    const nextPage = await loadCompletedMultiplayerHistoryPage({
+      cursor: completedMultiplayerHistory.nextCursor,
+    });
+    completedMultiplayerHistory = {
+      ...nextPage,
+      batches: [...existingBatches, ...nextPage.batches],
+    };
+  } catch {
+    completedMultiplayerHistory = {
+      ...completedMultiplayerHistory,
+      batches: existingBatches,
+      loadMoreError: true,
+      loadingMore: false,
+    };
+  }
+
+  renderCompletedMultiplayerHistory();
 }
 
 function showMultiplayerDashboard() {
@@ -1468,7 +1530,32 @@ function renderCompletedMultiplayerHistory() {
       ? [createPendingGameNote("No completed multiplayer batches yet.")]
       : completedMultiplayerHistory.batches.map(renderCompletedHistoryBatch);
 
+  if (completedMultiplayerHistory.loadMoreError) {
+    children.push(
+      createPendingGameNote(
+        "More completed batches could not be loaded. Try again.",
+      ),
+    );
+  }
+  if (completedMultiplayerHistory.hasMore) {
+    children.push(renderCompletedHistoryLoadMore());
+  }
+
   renderCompletedMultiplayerHistoryShell(children);
+}
+
+function renderCompletedHistoryLoadMore() {
+  const loadMoreButton = document.createElement("button");
+  loadMoreButton.className = "secondary-button";
+  loadMoreButton.type = "button";
+  loadMoreButton.textContent = completedMultiplayerHistory.loadingMore
+    ? "Loading more..."
+    : "Load more";
+  loadMoreButton.disabled = Boolean(completedMultiplayerHistory.loadingMore);
+  loadMoreButton.addEventListener("click", () => {
+    void loadMoreCompletedMultiplayerHistory();
+  });
+  return loadMoreButton;
 }
 
 function renderCompletedMultiplayerHistoryShell(children) {
@@ -1779,7 +1866,11 @@ function createEmptyMultiplayerDashboard() {
 }
 
 function createEmptyCompletedMultiplayerHistory() {
-  return { batches: [] };
+  return {
+    batches: [],
+    hasMore: false,
+    nextCursor: null,
+  };
 }
 
 function upsertPendingGame(pendingGames, pendingGame) {

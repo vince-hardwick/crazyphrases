@@ -779,6 +779,93 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("loads another completed multiplayer history page without replacing the first page", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "View all completed batches" }).click();
+
+    await assertTextVisible(page, "Completed multiplayer history");
+    const historyPanel = page.locator("[data-completed-multiplayer-history]");
+    assert.equal(
+      await historyPanel
+        .getByText("Batch with @player-test-account and @invitee-two.")
+        .count(),
+      20,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Load more" }).isVisible(),
+      true,
+    );
+
+    await page.getByRole("button", { name: "Load more" }).click();
+
+    assert.equal(
+      await historyPanel
+        .getByText("Batch with @player-test-account and @invitee-two.")
+        .count(),
+      21,
+    );
+    assert.equal(await page.getByRole("button", { name: "Load more" }).count(), 0);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps completed multiplayer history visible when loading another page fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(
+      `${staticServer.origin}/?testPendingGame=history-load-more-fails`,
+    );
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "View all completed batches" }).click();
+
+    const historyPanel = page.locator("[data-completed-multiplayer-history]");
+    assert.equal(
+      await historyPanel
+        .getByText("Batch with @player-test-account and @invitee-two.")
+        .count(),
+      20,
+    );
+
+    await page.getByRole("button", { name: "Load more" }).click();
+
+    await assertTextVisible(
+      page,
+      "More completed batches could not be loaded. Try again.",
+    );
+    assert.equal(
+      await historyPanel
+        .getByText("Batch with @player-test-account and @invitee-two.")
+        .count(),
+      20,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Load more" }).isVisible(),
+      true,
+    );
+    await page.getByRole("button", { name: "Back to dashboard" }).click();
+    await assertTextVisible(page, "Batches completed");
+
+    assertNoConsoleErrors();
+  });
+
   it("shows a recoverable error when completed multiplayer history cannot be loaded", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

@@ -62,6 +62,9 @@ const creatorMultiplayerCancellationMigrationUrl = findMigrationUrl(
 const completedMultiplayerHistoryMigrationUrl = findMigrationUrl(
   "completed_multiplayer_history",
 );
+const completedMultiplayerHistoryPaginationMigrationUrl = findMigrationUrl(
+  "completed_multiplayer_history_pagination",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1300,6 +1303,60 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /grant execute on function public\.list_completed_multiplayer_history\(\)\s+to authenticated/,
+    );
+  });
+
+  it("upgrades completed multiplayer history to an Account-scoped paginated read RPC", () => {
+    assert.equal(
+      existsSync(completedMultiplayerHistoryPaginationMigrationUrl),
+      true,
+    );
+
+    const migration = readFileSync(
+      completedMultiplayerHistoryPaginationMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /create or replace function public\.list_completed_multiplayer_history\(\s*page_size integer default 20,\s*after_completed_order bigint default null,\s*after_game_id uuid default null\s*\)/,
+    );
+    assert.match(migration, /returns jsonb/);
+    assert.match(migration, /stable/);
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(
+      migration,
+      /least\(greatest\(coalesce\(page_size, 20\), 1\), 50\)/,
+    );
+    assert.match(
+      migration,
+      /pg_catalog\.extract\(epoch from max\(assignment\.submitted_at\)\) \* 1000000/,
+    );
+    assert.match(
+      migration,
+      /order by\s+completed_order desc,\s+game_id desc/,
+    );
+    assert.match(
+      migration,
+      /where\s+after_completed_order is null\s+or after_game_id is null\s+or \(completed_order, game_id\) < \(after_completed_order, after_game_id\)/,
+    );
+    assert.match(migration, /'hasMore', page_has_more/);
+    assert.match(
+      migration,
+      /'nextCursor',\s+case\s+when page_has_more then pg_catalog\.jsonb_build_object\(\s*'completedOrder', page_cursor_completed_order,\s*'gameId', page_cursor_game_id/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.list_completed_multiplayer_history\(integer, bigint, uuid\)\s+from public/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.list_completed_multiplayer_history\(integer, bigint, uuid\)\s+from anon/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.list_completed_multiplayer_history\(integer, bigint, uuid\)\s+to authenticated/,
     );
   });
 });

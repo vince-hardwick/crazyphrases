@@ -45,10 +45,12 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Local play in this browser");
     assert.equal(await page.locator(".site-domain").count(), 0);
     await assertNoFavouriteDom(page);
+    await assertNoProfileEditorDom(page);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "@player-test-account");
+    await assertProfileManagementSurfaceMounted(page);
     await assertFavouriteSurfaceMounted(page);
     assert.equal(await page.locator("[data-save-batch-button]").count(), 0);
     assert.equal(await page.locator("[data-save-phrase-index]").count(), 0);
@@ -57,6 +59,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Anonymous solo");
     await assertTextVisible(page, "Local play in this browser");
     await assertNoFavouriteDom(page);
+    await assertNoProfileEditorDom(page);
 
     await page.getByRole("button", { name: "How to play" }).click();
     assert.equal(await page.locator("#help-panel").isVisible(), true);
@@ -185,6 +188,328 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(await page.locator("[data-section-title]").innerText(), signedInSectionTitle);
     assert.equal(await page.locator("[data-row-index]").count(), 10);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("updates a signed-in profile Gamer Name in local test mode", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByLabel("Gamer Name").fill("Captain Spoon");
+    await page.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(page, "Profile saved.");
+    assert.equal(
+      await page.getByLabel("Gamer Name").inputValue(),
+      "Captain Spoon",
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertNoProfileEditorDom(page);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page.getByLabel("Gamer Name").inputValue(),
+      "Captain Spoon",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("normalises blank or whitespace signed-in profile Gamer Name input safely", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Gamer Name").fill("");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Profile saved.");
+    assert.equal(
+      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      "Player",
+    );
+
+    await profileRegion.getByLabel("Gamer Name").fill("   ");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Profile saved.");
+    assert.equal(
+      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      "Player",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("truncates overlong signed-in profile Gamer Name input safely", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const gamerName =
+      "Captain Spoon With A Surprisingly Long Profile Display Name";
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Gamer Name").fill(gamerName);
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Profile saved.");
+    assert.equal(
+      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      gamerName.slice(0, 40),
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows a profile save failure without changing saved profile state", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testAccountProfile=save-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(
+      profileRegion,
+      "Profile could not be saved. Try again.",
+    );
+    await assertTextHidden(profileRegion, "Profile saved.");
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Profile" })
+        .getByLabel("Gamer Name")
+        .inputValue(),
+      "Player",
+    );
+    await assertTextVisible(page, "@player-test-account");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("updates a signed-in profile Handle in local test mode", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Handle").fill("Captain Spoon");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Profile saved.");
+    assert.equal(
+      await profileRegion.getByLabel("Handle").inputValue(),
+      "captain-spoon",
+    );
+    await assertTextVisible(page, "@captain-spoon");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Profile" })
+        .getByLabel("Handle")
+        .inputValue(),
+      "captain-spoon",
+    );
+    await assertTextVisible(page, "@captain-spoon");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows a duplicate Handle error without changing the saved profile", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Handle").fill("invitee-two");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Handle is already in use.");
+    await assertTextHidden(page, "Profile saved.");
+    await assertTextVisible(page, "@player-test-account");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Profile" })
+        .getByLabel("Handle")
+        .inputValue(),
+      "player-test-account",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows an invalid Handle error without changing the saved profile", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Handle").fill("x");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Handle must be at least 3 characters.");
+    await assertTextVisible(page, "@player-test-account");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Profile" })
+        .getByLabel("Handle")
+        .inputValue(),
+      "player-test-account",
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("updates a signed-in profile Avatar in local test mode", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Avatar").selectOption("moon");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await assertTextVisible(profileRegion, "Profile saved.");
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "moon");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Profile" })
+        .getByLabel("Avatar")
+        .inputValue(),
+      "moon",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("restores signed-in profile changes after local test reload", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    let profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
+    await profileRegion.getByLabel("Handle").fill("Captain Spoon");
+    await profileRegion.getByLabel("Avatar").selectOption("moon");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+    await assertTextVisible(profileRegion, "Profile saved.");
+
+    await page.reload();
+    await assertTextVisible(page, "Anonymous solo");
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    profileRegion = page.getByRole("region", { name: "Profile" });
+
+    assert.equal(
+      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      "Captain Spoon",
+    );
+    assert.equal(
+      await profileRegion.getByLabel("Handle").inputValue(),
+      "captain-spoon",
+    );
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "moon");
+    await assertTextVisible(page, "@captain-spoon");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -952,6 +1277,31 @@ async function assertFavouriteSurfaceMounted(page) {
   assert.equal(await page.locator("[data-favourites-panel]").count(), 1);
   assert.equal(await page.locator("[data-favourites-status]").count(), 1);
   assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 1);
+}
+
+async function assertNoProfileEditorDom(page) {
+  assert.equal(await page.locator("[data-account-profile-panel]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-gamer-name]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-handle]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-avatar]").count(), 0);
+}
+
+async function assertProfileManagementSurfaceMounted(page) {
+  assert.equal(await page.locator("[data-account-profile-panel]").count(), 1);
+  const profileRegion = page.getByRole("region", { name: "Profile" });
+  await assertTextVisible(profileRegion, "Profile");
+  await assertTextVisible(profileRegion, "Gamer Name");
+  assert.equal(
+    await profileRegion.getByLabel("Gamer Name").inputValue(),
+    "Player",
+  );
+  await assertTextVisible(profileRegion, "Handle");
+  assert.equal(
+    await profileRegion.getByLabel("Handle").inputValue(),
+    "player-test-account",
+  );
+  await assertTextVisible(profileRegion, "Avatar");
+  assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "spark");
 }
 
 async function assertNoPendingGameDom(page) {

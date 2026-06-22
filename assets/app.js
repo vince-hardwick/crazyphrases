@@ -26,7 +26,10 @@ import {
 import { createBrowserSupabaseClient } from "./supabase-browser-client.js?v=__ASSET_VERSION__";
 import { SUPABASE_RUNTIME_CONFIG } from "./supabase-config.js?v=__ASSET_VERSION__";
 import { createSupabaseAuthSession } from "./supabase-auth-session.js?v=__ASSET_VERSION__";
-import { createSupabaseAccountProfileRepository } from "./account-profile.js?v=__ASSET_VERSION__";
+import {
+  createLocalTestAccountProfileRepository,
+  createSupabaseAccountProfileRepository,
+} from "./account-profile.js?v=__ASSET_VERSION__";
 import {
   createLocalTestSignedInSoloGameRepository,
   createSupabaseSignedInSoloGameRepository,
@@ -72,6 +75,7 @@ const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
 const revealDetails = document.querySelector("[data-reveal-details]");
 const copyStatus = document.querySelector("[data-copy-status]");
+const accountShellElement = document.querySelector("[data-account-shell]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
 const testSignInButton = document.querySelector("[data-test-sign-in-button]");
@@ -131,12 +135,20 @@ const localTestProfiles = [
 ];
 const localTestCreatorProfile = localTestProfiles[0];
 const localTestInviteeProfile = localTestProfiles[1];
+const localTestAccountProfileRepository = createLocalTestAccountProfileRepository(
+  window.localStorage,
+  {
+    failureMode: getLocalTestAccountProfileFailureMode(),
+    initialProfiles: localTestProfiles,
+  },
+);
 const localTestPendingGameRepository = createLocalTestPendingGameRepository({
   createPendingGameId: createLocalTestPendingGameId,
   failureMode: getLocalTestPendingGameFailureMode(),
   profiles: localTestProfiles,
 });
 let pendingGameRepository = localTestPendingGameRepository;
+let accountProfileRepository = localTestAccountProfileRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
 let saveBatchButton = null;
@@ -152,6 +164,7 @@ let createdPendingGames = [];
 let incomingPendingGameInvites = [];
 let multiplayerDashboard = createEmptyMultiplayerDashboard();
 let inAppNotifications = [];
+let accountProfilePanel = null;
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
@@ -172,10 +185,14 @@ async function applyLocalTestAccountShell(profile) {
   signedInGameSession = localTestSignedInGameSession;
   privateFavouritesRepository = localTestPrivateFavouritesRepository;
   pendingGameRepository = localTestPendingGameRepository;
+  accountProfileRepository = localTestAccountProfileRepository;
+  const currentProfile = await accountProfileRepository.ensureOwnProfile({
+    accountId: profile.accountId,
+  });
   await applyAccountShell(
     createAccountShell({
       account: { id: profile.accountId },
-      profile,
+      profile: currentProfile,
     }),
   );
 }
@@ -448,7 +465,166 @@ function renderAccountShell(shell) {
     notificationPanel.hidden = true;
     notificationPanel.replaceChildren();
   }
+  renderAccountProfilePanel(shell);
   updateNotificationToggle();
+}
+
+function renderAccountProfilePanel(shell) {
+  if (shell.mode !== "signed-in") {
+    removeAccountProfilePanel();
+    return;
+  }
+
+  const panel = ensureAccountProfilePanel();
+  const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
+  const handle = panel.querySelector("[data-account-profile-handle]");
+  const avatar = panel.querySelector("[data-account-profile-avatar]");
+
+  gamerName.value = shell.profile.gamerName;
+  handle.value = shell.profile.handle;
+  avatar.value = shell.profile.avatarKey;
+}
+
+function ensureAccountProfilePanel() {
+  if (accountProfilePanel) {
+    return accountProfilePanel;
+  }
+
+  accountProfilePanel = document.createElement("section");
+  accountProfilePanel.className = "account-profile-panel";
+  accountProfilePanel.dataset.accountProfilePanel = "";
+  accountProfilePanel.setAttribute("aria-label", "Profile");
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Profile";
+
+  const form = document.createElement("form");
+  form.className = "account-profile-form";
+  form.dataset.accountProfileForm = "";
+  form.noValidate = true;
+  form.addEventListener("submit", saveAccountProfile);
+
+  const gamerNameField = createProfileInputField({
+    datasetKey: "accountProfileGamerName",
+    label: "Gamer Name",
+    required: false,
+  });
+  const handleField = createProfileInputField({
+    datasetKey: "accountProfileHandle",
+    label: "Handle",
+  });
+  const avatarField = createProfileAvatarField();
+  const status = document.createElement("p");
+  const submitButton = document.createElement("button");
+
+  status.className = "account-profile-status";
+  status.dataset.accountProfileStatus = "";
+  status.setAttribute("aria-live", "polite");
+  submitButton.type = "submit";
+  submitButton.className = "text-button";
+  submitButton.textContent = "Save profile";
+
+  form.append(
+    gamerNameField,
+    handleField,
+    avatarField,
+    submitButton,
+    status,
+  );
+  accountProfilePanel.append(heading, form);
+  accountShellElement.append(accountProfilePanel);
+
+  return accountProfilePanel;
+}
+
+function createProfileInputField({ datasetKey, label, required = true }) {
+  const field = document.createElement("label");
+  const input = document.createElement("input");
+
+  field.className = "account-profile-field";
+  field.textContent = label;
+  input.type = "text";
+  input.dataset[datasetKey] = "";
+  input.required = required;
+  field.append(input);
+  return field;
+}
+
+function createProfileAvatarField() {
+  const field = document.createElement("label");
+  const select = document.createElement("select");
+  const avatarKeys = ["spark", "paper", "moon", "star", "comet", "kite"];
+
+  field.className = "account-profile-field";
+  field.textContent = "Avatar";
+  select.dataset.accountProfileAvatar = "";
+  for (const avatarKey of avatarKeys) {
+    const option = document.createElement("option");
+    option.value = avatarKey;
+    option.textContent = formatProfileLabel(avatarKey);
+    select.append(option);
+  }
+  field.append(select);
+  return field;
+}
+
+function removeAccountProfilePanel() {
+  accountProfilePanel?.remove();
+  accountProfilePanel = null;
+}
+
+function formatProfileLabel(value) {
+  return String(value ?? "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+async function saveAccountProfile(event) {
+  event.preventDefault();
+
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const panel = ensureAccountProfilePanel();
+  const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
+  const handle = panel.querySelector("[data-account-profile-handle]");
+  const avatar = panel.querySelector("[data-account-profile-avatar]");
+  const status = panel.querySelector("[data-account-profile-status]");
+
+  status.textContent = "";
+
+  try {
+    const profile = await accountProfileRepository.updateOwnProfile({
+      accountId: accountShell.accountId,
+      profile: {
+        avatarKey: avatar.value,
+        gamerName: gamerName.value,
+        handle: handle.value,
+      },
+    });
+    accountShell = createAccountShell({
+      account: { id: accountShell.accountId },
+      profile,
+    });
+    renderAccountShell(accountShell);
+    panel.querySelector("[data-account-profile-status]").textContent =
+      "Profile saved.";
+  } catch (error) {
+    status.textContent = getProfileSaveFailureMessage(error);
+  }
+}
+
+function getProfileSaveFailureMessage(error) {
+  if (error instanceof Error && /already in use/i.test(error.message)) {
+    return "Handle is already in use.";
+  }
+
+  if (error instanceof Error && /at least 3/i.test(error.message)) {
+    return "Handle must be at least 3 characters.";
+  }
+
+  return "Profile could not be saved. Try again.";
 }
 
 function isLocalTestAuthAvailable() {
@@ -481,6 +657,22 @@ function getLocalTestPrivateFavouritesFailureMode() {
   );
 
   if (failureMode === "remove-fails") {
+    return failureMode;
+  }
+
+  return null;
+}
+
+function getLocalTestAccountProfileFailureMode() {
+  if (!isLocalTestAuthAvailable()) {
+    return null;
+  }
+
+  const failureMode = new URLSearchParams(window.location.search).get(
+    "testAccountProfile",
+  );
+
+  if (failureMode === "save-fails") {
     return failureMode;
   }
 
@@ -1893,10 +2085,14 @@ async function initialiseHostedAuth() {
       return;
     }
 
+    const hostedAccountProfileRepository =
+      createSupabaseAccountProfileRepository({ supabase });
+
     hostedAuthSession = createSupabaseAuthSession({
-      profileRepository: createSupabaseAccountProfileRepository({ supabase }),
+      profileRepository: hostedAccountProfileRepository,
       supabase,
     });
+    accountProfileRepository = hostedAccountProfileRepository;
     hostedAuthAvailable = true;
     signedInGameSession = createSignedInGameSession({
       repository: createSupabaseSignedInSoloGameRepository({ supabase }),
@@ -1913,6 +2109,7 @@ async function initialiseHostedAuth() {
     signedInGameSession = localTestSignedInGameSession;
     privateFavouritesRepository = localTestPrivateFavouritesRepository;
     pendingGameRepository = localTestPendingGameRepository;
+    accountProfileRepository = localTestAccountProfileRepository;
     authMessage.textContent = "Sign in unavailable.";
     renderAccountShell(accountShell);
   }

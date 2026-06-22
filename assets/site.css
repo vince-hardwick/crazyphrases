@@ -114,6 +114,61 @@ body {
   font-weight: 700;
 }
 
+.account-profile-panel {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.account-profile-panel h2 {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  font-size: 0.84rem;
+  line-height: 1.15;
+}
+
+.account-profile-form {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.account-profile-field {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.account-profile-field input,
+.account-profile-field select {
+  width: 100%;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.account-profile-field input:focus-visible,
+.account-profile-field select:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.account-profile-status {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .persistence-recovery {
   margin-top: 6px;
 }

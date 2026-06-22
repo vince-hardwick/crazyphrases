@@ -8,9 +8,15 @@ const ACCOUNT_PROFILE_DIRECTORY_TABLE = "account_profile_directory";
 
 export function createMemoryAccountProfileRepository({
   createProfileId = defaultCreateProfileId,
+  initialProfiles = [],
+  onChange = () => {},
 } = {}) {
   const rowsByAccountId = new Map();
   const accountIdByHandle = new Map();
+
+  for (const profile of initialProfiles) {
+    seedProfile(profile);
+  }
 
   return {
     async ensureOwnProfile({ accountId }) {
@@ -34,6 +40,7 @@ export function createMemoryAccountProfileRepository({
 
       rowsByAccountId.set(accountId, row);
       accountIdByHandle.set(row.handle, accountId);
+      notifyChange();
 
       return toOwnProfile(row);
     },
@@ -67,6 +74,7 @@ export function createMemoryAccountProfileRepository({
       };
       rowsByAccountId.set(accountId, row);
       accountIdByHandle.set(row.handle, accountId);
+      notifyChange();
 
       return toOwnProfile(row);
     },
@@ -76,6 +84,62 @@ export function createMemoryAccountProfileRepository({
       const row = accountId ? rowsByAccountId.get(accountId) : null;
 
       return row ? toDirectoryProfile(row) : null;
+    },
+  };
+
+  function seedProfile(profile) {
+    const accountId = profile.accountId;
+    assertAccountId(accountId);
+
+    if (rowsByAccountId.has(accountId)) {
+      throw new Error("Account Profile already exists.");
+    }
+
+    const profileId = profile.profileId ?? createProfileId();
+    const row = {
+      accountId,
+      profileId,
+      ...normaliseProfile({ accountId, profile }),
+    };
+
+    if (accountIdByHandle.has(row.handle)) {
+      throw new Error("Handle is already in use.");
+    }
+
+    rowsByAccountId.set(accountId, row);
+    accountIdByHandle.set(row.handle, accountId);
+  }
+
+  function notifyChange() {
+    onChange([...rowsByAccountId.values()].map(toStoredProfile));
+  }
+}
+
+export function createLocalTestAccountProfileRepository(
+  storage,
+  {
+    createProfileId = defaultCreateProfileId,
+    failureMode = null,
+    initialProfiles = [],
+    storageKey = "crazyphrases.localTest.accountProfiles.v1",
+  } = {},
+) {
+  const repository = createMemoryAccountProfileRepository({
+    createProfileId,
+    initialProfiles: loadStoredProfiles(storage, storageKey) ?? initialProfiles,
+    onChange(profiles) {
+      saveStoredProfiles(storage, storageKey, profiles);
+    },
+  });
+
+  return {
+    ...repository,
+    async updateOwnProfile({ accountId, profile }) {
+      if (failureMode === "save-fails") {
+        throw new Error("Local test Account Profile save failed.");
+      }
+
+      return repository.updateOwnProfile({ accountId, profile });
     },
   };
 }
@@ -237,6 +301,16 @@ function toDirectoryProfile(row) {
   };
 }
 
+function toStoredProfile(row) {
+  return {
+    accountId: row.accountId,
+    profileId: row.profileId,
+    handle: row.handle,
+    gamerName: row.gamerName,
+    avatarKey: row.avatarKey,
+  };
+}
+
 function recoverSupabaseProfile(row) {
   const profile = {
     profileId: row?.profile_id,
@@ -259,6 +333,48 @@ function recoverSupabaseProfile(row) {
   }
 
   return profile;
+}
+
+function loadStoredProfiles(storage, storageKey) {
+  try {
+    const parsed = JSON.parse(storage?.getItem(storageKey) ?? "null");
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed.map(recoverStoredProfile);
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredProfiles(storage, storageKey, profiles) {
+  storage?.setItem(storageKey, JSON.stringify(profiles));
+}
+
+function recoverStoredProfile(profile) {
+  if (
+    typeof profile?.accountId !== "string" ||
+    profile.accountId.trim() === "" ||
+    typeof profile?.profileId !== "string" ||
+    profile.profileId.trim() === "" ||
+    typeof profile?.handle !== "string" ||
+    profile.handle.trim() === "" ||
+    typeof profile?.gamerName !== "string" ||
+    profile.gamerName.trim() === "" ||
+    typeof profile?.avatarKey !== "string" ||
+    profile.avatarKey.trim() === ""
+  ) {
+    throw new Error("A valid stored Account Profile is required.");
+  }
+
+  return {
+    accountId: profile.accountId,
+    profileId: profile.profileId,
+    handle: profile.handle,
+    gamerName: profile.gamerName,
+    avatarKey: profile.avatarKey,
+  };
 }
 
 function assertNoSupabaseError(response, message) {

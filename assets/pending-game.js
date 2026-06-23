@@ -1,6 +1,7 @@
 export const DEFAULT_TEMPLATE_ID = "default-adjective-noun-noun";
 const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
 const COMPLETED_HISTORY_FIRST_PAGE_LIMIT = 20;
+const PENDING_GAME_INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function createTestPendingGameRepository({
   completedHistorySeedCount = 0,
@@ -8,6 +9,8 @@ export function createTestPendingGameRepository({
   createStartedGameId = defaultCreateStartedGameId,
   createNotificationId = defaultCreateNotificationId,
   failureMode = null,
+  now = () => new Date(),
+  pendingGameInviteExpiryMs = PENDING_GAME_INVITE_EXPIRY_MS,
   profiles = [],
 } = {}) {
   const normalisedProfiles = profiles.map(normaliseProfile);
@@ -24,6 +27,7 @@ export function createTestPendingGameRepository({
   const assignedSections = [];
   const completedMultiplayerBatches = [];
   const inAppNotifications = [];
+  const pendingGameExpiryTimes = new Map();
   const revealedMultiplayerBatches = [];
   const startedTurns = [];
   let multiplayerCompletionOrder = 0;
@@ -78,7 +82,15 @@ export function createTestPendingGameRepository({
         ],
       });
       pendingGames.push(pendingGame);
-      return pendingGame;
+      pendingGameExpiryTimes.set(
+        pendingGame.id,
+        now().getTime() + pendingGameInviteExpiryMs,
+      );
+      return createEffectivePendingGameDto({
+        now,
+        pendingGame,
+        pendingGameExpiryTimes,
+      });
     },
 
     async listIncomingPendingGameInvites({ accountId }) {
@@ -89,15 +101,23 @@ export function createTestPendingGameRepository({
         return [];
       }
 
-      return pendingGames.filter(
-        (pendingGame) =>
-          ["pending", "started"].includes(pendingGame.status) &&
-          pendingGame.participants.some(
-            (participant) =>
-              participant.role === "invitee" &&
-              participant.profileId === inviteeProfile.profileId,
-          ),
-      );
+      return pendingGames
+        .filter(
+          (pendingGame) =>
+            ["pending", "started"].includes(pendingGame.status) &&
+            pendingGame.participants.some(
+              (participant) =>
+                participant.role === "invitee" &&
+                participant.profileId === inviteeProfile.profileId,
+            ),
+        )
+        .map((pendingGame) =>
+          createEffectivePendingGameDto({
+            now,
+            pendingGame,
+            pendingGameExpiryTimes,
+          }),
+        );
     },
 
     async listCreatedPendingGames({ accountId }) {
@@ -108,13 +128,21 @@ export function createTestPendingGameRepository({
         return [];
       }
 
-      return pendingGames.filter((pendingGame) =>
-        pendingGame.participants.some(
-          (participant) =>
-            participant.role === "creator" &&
-            participant.profileId === creatorProfile.profileId,
-        ),
-      );
+      return pendingGames
+        .filter((pendingGame) =>
+          pendingGame.participants.some(
+            (participant) =>
+              participant.role === "creator" &&
+              participant.profileId === creatorProfile.profileId,
+          ),
+        )
+        .map((pendingGame) =>
+          createEffectivePendingGameDto({
+            now,
+            pendingGame,
+            pendingGameExpiryTimes,
+          }),
+        );
     },
 
     async acceptPendingGameInvite({ accountId, pendingGameId }) {
@@ -124,7 +152,9 @@ export function createTestPendingGameRepository({
       const inviteeProfile = profilesByAccountId.get(accountId);
       const pendingGameIndex = findIncomingPendingGameIndex({
         inviteeProfile,
+        now,
         pendingGameId,
+        pendingGameExpiryTimes,
         pendingGames,
       });
       if (pendingGameIndex < 0) {
@@ -155,7 +185,9 @@ export function createTestPendingGameRepository({
       const inviteeProfile = profilesByAccountId.get(accountId);
       const pendingGameIndex = findIncomingPendingGameIndex({
         inviteeProfile,
+        now,
         pendingGameId,
+        pendingGameExpiryTimes,
         pendingGames,
       });
       if (pendingGameIndex < 0) {
@@ -188,6 +220,7 @@ export function createTestPendingGameRepository({
         (pendingGame) =>
           pendingGame.id === pendingGameId &&
           pendingGame.status === "pending" &&
+          !isPendingGameExpired({ now, pendingGame, pendingGameExpiryTimes }) &&
           pendingGame.participants.some(
             (participant) =>
               participant.role === "creator" &&
@@ -246,6 +279,7 @@ export function createTestPendingGameRepository({
         (pendingGame) =>
           pendingGame.id === pendingGameId &&
           ["pending", "started"].includes(pendingGame.status) &&
+          !isPendingGameExpired({ now, pendingGame, pendingGameExpiryTimes }) &&
           !hasStartedGameReveal({
             gameId: pendingGame.startedGameId,
             revealedMultiplayerBatches,
@@ -501,7 +535,10 @@ export function createLocalTestPendingGameRepository(options = {}) {
   return createTestPendingGameRepository(options);
 }
 
-export function createSupabasePendingGameRepository({ supabase } = {}) {
+export function createSupabasePendingGameRepository({
+  now = () => new Date(),
+  supabase,
+} = {}) {
   if (!supabase || typeof supabase.from !== "function") {
     throw new Error("A Supabase client is required.");
   }
@@ -555,7 +592,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
           row_count: rowCount,
           template_id: DEFAULT_TEMPLATE_ID,
         })
-        .select("id, template_id, row_count, status")
+        .select("id, template_id, row_count, status, expires_at")
         .single();
       assertNoSupabaseError(pendingGameResponse, "Could not create Pending Game");
 
@@ -571,6 +608,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       );
 
       return recoverPendingGame({
+        now,
         participantRows: participantResponse.data,
         pendingGameRow: pendingGameResponse.data,
       });
@@ -581,7 +619,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status")
+        .select("id, template_id, row_count, status, expires_at")
         .eq("creator_account_id", accountId);
       assertNoSupabaseError(
         pendingGameResponse,
@@ -607,6 +645,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
           });
 
           return recoverPendingGame({
+            now,
             participantRows: participantResponse.data,
             pendingGameRow,
             startedGameId,
@@ -635,7 +674,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       const inviteeProfile = recoverProfile(inviteeResponse.data);
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status")
+        .select("id, template_id, row_count, status, expires_at")
         .eq("invitee_profile_id", inviteeProfile.profileId)
         .in("status", ["pending", "started"]);
       assertNoSupabaseError(
@@ -662,6 +701,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
           });
 
           return recoverPendingGame({
+            now,
             participantRows: participantResponse.data,
             pendingGameRow,
             startedGameId,
@@ -708,7 +748,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status")
+        .select("id, template_id, row_count, status, expires_at")
         .eq("id", pendingGameId)
         .single();
       assertNoSupabaseError(
@@ -728,6 +768,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       );
 
       return recoverPendingGame({
+        now,
         participantRows: participantResponse.data,
         pendingGameRow: pendingGameResponse.data,
       });
@@ -771,7 +812,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status")
+        .select("id, template_id, row_count, status, expires_at")
         .eq("id", pendingGameId)
         .single();
       assertNoSupabaseError(
@@ -791,6 +832,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       );
 
       return recoverPendingGame({
+        now,
         participantRows: participantResponse.data,
         pendingGameRow: pendingGameResponse.data,
       });
@@ -851,6 +893,7 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       );
 
       return recoverPendingGame({
+        now,
         participantRows: participantResponse.data,
         pendingGameRow,
         startedGameId: pendingGameRow.started_game_id,
@@ -1019,6 +1062,28 @@ function createPendingGameDto({
     participants,
     ...(startedGameId ? { startedGameId } : {}),
   };
+}
+
+function createEffectivePendingGameDto({
+  now,
+  pendingGame,
+  pendingGameExpiryTimes,
+}) {
+  if (!isPendingGameExpired({ now, pendingGame, pendingGameExpiryTimes })) {
+    return pendingGame;
+  }
+
+  return createPendingGameDto({
+    ...pendingGame,
+    status: "expired",
+  });
+}
+
+function isPendingGameExpired({ now, pendingGame, pendingGameExpiryTimes }) {
+  return (
+    pendingGame.status === "pending" &&
+    (pendingGameExpiryTimes.get(pendingGame.id) ?? Infinity) <= now().getTime()
+  );
 }
 
 function createParticipantDto(profile, { inviteStatus, role }) {
@@ -1744,7 +1809,9 @@ function isCancelledStartedGame({ gameId, pendingGames }) {
 
 function findIncomingPendingGameIndex({
   inviteeProfile,
+  now,
   pendingGameId,
+  pendingGameExpiryTimes,
   pendingGames,
 }) {
   if (!inviteeProfile) {
@@ -1755,6 +1822,7 @@ function findIncomingPendingGameIndex({
     (pendingGame) =>
       pendingGame.id === pendingGameId &&
       pendingGame.status === "pending" &&
+      !isPendingGameExpired({ now, pendingGame, pendingGameExpiryTimes }) &&
       pendingGame.participants.some(
         (participant) =>
           participant.role === "invitee" &&
@@ -1852,7 +1920,12 @@ function recoverProfile(row) {
   };
 }
 
-function recoverPendingGame({ participantRows, pendingGameRow, startedGameId }) {
+function recoverPendingGame({
+  now = () => new Date(),
+  participantRows,
+  pendingGameRow,
+  startedGameId,
+}) {
   const participants = participantRows
     .map((row) => ({
       role: row.participant_role,
@@ -1866,12 +1939,22 @@ function recoverPendingGame({ participantRows, pendingGameRow, startedGameId }) 
 
   return createPendingGameDto({
     id: assertText(pendingGameRow?.id, "A Pending Game id is required."),
-    status: pendingGameRow.status,
+    status: isExpiredPendingGameRow({ now, pendingGameRow })
+      ? "expired"
+      : pendingGameRow.status,
     templateId: pendingGameRow.template_id,
     rowCount: pendingGameRow.row_count,
     startedGameId,
     participants,
   });
+}
+
+function isExpiredPendingGameRow({ now, pendingGameRow }) {
+  if (pendingGameRow?.status !== "pending" || !pendingGameRow?.expires_at) {
+    return false;
+  }
+
+  return Date.parse(pendingGameRow.expires_at) <= now().getTime();
 }
 
 async function loadStartedGameId({ pendingGameRow, supabase }) {

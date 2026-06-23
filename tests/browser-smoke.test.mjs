@@ -555,6 +555,58 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("shows expired Pending Game invites without creator or invitee actions", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=expire-immediately`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+    await assertTextVisible(page, "Created invites");
+    await assertTextVisible(page, "Expired");
+    assert.equal(
+      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      0,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Cancel game with @invitee-two" }).count(),
+      0,
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Expired");
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Accept invite from @player-test-account" })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Decline invite from @player-test-account" })
+        .count(),
+      0,
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("lets an invitee accept a Pending Game invite and shows the response to the creator", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

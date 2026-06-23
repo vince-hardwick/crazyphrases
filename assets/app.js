@@ -147,6 +147,7 @@ const localTestPendingGameRepository = createLocalTestPendingGameRepository({
   completedHistorySeedCount: getLocalTestPendingGameSeedCount(),
   createPendingGameId: createLocalTestPendingGameId,
   failureMode: getLocalTestPendingGameFailureMode(),
+  pendingGameInviteExpiryMs: getLocalTestPendingGameInviteExpiryMs(),
   profiles: localTestProfiles,
 });
 let pendingGameRepository = localTestPendingGameRepository;
@@ -720,6 +721,18 @@ function getLocalTestPendingGameSeedCount() {
     : 0;
 }
 
+function getLocalTestPendingGameInviteExpiryMs() {
+  if (!isLocalTestAuthAvailable()) {
+    return undefined;
+  }
+
+  const testMode = new URLSearchParams(window.location.search).get(
+    "testPendingGame",
+  );
+
+  return testMode === "expire-immediately" ? 0 : undefined;
+}
+
 function renderEntryRow(row, rowIndex, entryKind) {
   const rowElement = document.createElement("div");
   rowElement.className = "entry-row";
@@ -1074,7 +1087,11 @@ function renderPendingGameCard(
   const invitee = pendingGame.participants.find(
     (participant) => participant.role === "invitee",
   );
-  if (includeResponseActions && invitee?.inviteStatus === "pending") {
+  if (
+    includeResponseActions &&
+    pendingGame.status === "pending" &&
+    invitee?.inviteStatus === "pending"
+  ) {
     card.append(renderPendingGameResponseActions(pendingGame));
   }
   if (includeStartActions && isPendingGameReadyToStart(pendingGame)) {
@@ -1117,6 +1134,10 @@ function getPendingGameStateLabel(pendingGame) {
 
   if (pendingGame.status === "cancelled") {
     return "Cancelled";
+  }
+
+  if (pendingGame.status === "expired") {
+    return "Expired";
   }
 
   return "Waiting for responses";

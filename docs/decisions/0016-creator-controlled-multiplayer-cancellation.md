@@ -2,9 +2,13 @@
 
 ## Status
 
-Accepted. Source-controlled implementation is complete locally on
-`codex/creator-cancel-multiplayer`; hosted migration application remains
-pending explicit owner approval or the documented deployment workflow gate.
+Accepted. PR #58 merged to `main` as
+`91e855bee56286fb3a7cafdfc5447d2391cce7e7`, and promotion run
+`27851753455` deployed the creator-cancellation slice through `test` and
+production after owner approvals. Hosted migration
+`20260619221615 creator_multiplayer_cancellation` applied the source migration
+`supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
+after separate explicit owner approval.
 
 ## Context
 
@@ -72,5 +76,6 @@ so active entry forms disappear.
 - Future invite expiry, participant replacement, nudge, and Share Consent
   flows should use their own authority paths rather than extending this RPC
   beyond creator cancellation.
-- Hosted migration application remains a live backend mutation and requires
-  explicit owner approval or the documented deployment workflow gate.
+- Future cancellation-related hosted migrations remain live backend mutations
+  and require explicit owner approval or the documented deployment workflow
+  gate.

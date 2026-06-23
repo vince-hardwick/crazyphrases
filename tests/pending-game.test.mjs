@@ -117,6 +117,29 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(pendingInvites).includes("auth-account"), false);
   });
 
+  it("lists expired Pending Game invites with expired status", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+
+    currentTime = Date.parse("2026-06-09T12:00:00.000Z");
+    const pendingInvites = await repository.listIncomingPendingGameInvites({
+      accountId: inviteeProfile.accountId,
+    });
+
+    assert.equal(pendingInvites[0].status, "expired");
+    assert.equal(JSON.stringify(pendingInvites).includes("auth-account"), false);
+  });
+
   it("accepts an incoming Pending Game invite for the invitee Account", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -159,6 +182,32 @@ describe("Pending Game repository", () => {
       ],
     });
     assert.equal(JSON.stringify(acceptedInvite).includes("auth-account"), false);
+  });
+
+  it("rejects accepting an expired Pending Game invite", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+
+    currentTime = Date.parse("2026-06-09T12:00:00.000Z");
+
+    await assert.rejects(
+      () =>
+        repository.acceptPendingGameInvite({
+          accountId: inviteeProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /Pending Game invite was not found\./,
+    );
   });
 
   it("declines an incoming Pending Game invite and cancels the Pending Game", async () => {
@@ -254,6 +303,29 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(createdGames).includes("auth-account"), false);
   });
 
+  it("lists expired created Pending Games with expired status", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+
+    currentTime = Date.parse("2026-06-09T12:00:00.000Z");
+    const createdGames = await repository.listCreatedPendingGames({
+      accountId: creatorProfile.accountId,
+    });
+
+    assert.equal(createdGames[0].status, "expired");
+    assert.equal(JSON.stringify(createdGames).includes("auth-account"), false);
+  });
+
   it("starts an accepted Pending Game as a browser-safe Started Game", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -306,6 +378,37 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(startedGame).includes("auth-account"), false);
     assert.equal(Array.isArray(startedGame.setup.slotAllocation), false);
     assert.equal(Array.isArray(startedGame.setup.slotOrder), false);
+  });
+
+  it("rejects starting an accepted Pending Game after expiry", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    currentTime = Date.parse("2026-06-09T12:00:00.000Z");
+
+    await assert.rejects(
+      () =>
+        repository.startPendingGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /Pending Game is not ready to start\./,
+    );
   });
 
   it("starts accepted Games with participant-local current sections and entry notifications", async () => {
@@ -958,6 +1061,32 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("rejects creator cancellation after Pending Game expiry", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 10,
+    });
+
+    currentTime = Date.parse("2026-06-09T12:00:00.000Z");
+
+    await assert.rejects(
+      () =>
+        repository.cancelCreatedGame({
+          creatorAccountId: creatorProfile.accountId,
+          pendingGameId: "pending-game-1",
+        }),
+      /Game is not cancellable by this creator\./,
+    );
+  });
+
   it("rejects creator cancellation after the batch has been revealed", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1465,6 +1594,31 @@ describe("Pending Game repository", () => {
         ],
       },
     ]);
+    assert.equal(JSON.stringify(pendingInvites).includes("auth-account"), false);
+  });
+
+  it("lists expired incoming Pending Game invites through Supabase rows", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+      pendingGameExpiresAt: "2026-06-08T12:00:00.000Z",
+    });
+    const repository = createSupabasePendingGameRepository({
+      now: () => new Date("2026-06-09T12:00:00.000Z"),
+      supabase,
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      rowCount: 15,
+    });
+
+    const pendingInvites = await repository.listIncomingPendingGameInvites({
+      accountId: inviteeProfile.accountId,
+    });
+
+    assert.equal(pendingInvites[0].status, "expired");
     assert.equal(JSON.stringify(pendingInvites).includes("auth-account"), false);
   });
 
@@ -2146,7 +2300,11 @@ describe("Pending Game repository", () => {
   });
 });
 
-function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
+function createFakePendingGameSupabase({
+  creatorProfile,
+  inviteeProfile,
+  pendingGameExpiresAt = "2999-01-01T00:00:00.000Z",
+}) {
   const state = {
     creatorProfile,
     inviteeProfile,
@@ -2165,6 +2323,7 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
       },
     ],
     pendingGame: null,
+    pendingGameExpiresAt,
     participants: [],
     queryCalls: [],
     submittedEntries: [],
@@ -2492,6 +2651,7 @@ class FakePendingGameQuery {
         id: "supabase-pending-game-1",
         creator_account_id: this.insertedRow.creator_account_id,
         creator_profile_id: this.insertedRow.creator_profile_id,
+        expires_at: this.state.pendingGameExpiresAt,
         invitee_profile_id: this.insertedRow.invitee_profile_id,
         row_count: this.insertedRow.row_count,
         status: "pending",

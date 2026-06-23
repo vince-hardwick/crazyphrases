@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted
+Accepted. Hosted migration
+`20260617135237 support_pending_game_invite_responses` has been applied and
+promoted through production. Later lifecycle paths are recorded separately:
+start conversion in ADR `0013`, creator cancellation in ADR `0016`, and invite
+expiry in ADR `0017`.
 
 ## Context
 
@@ -31,7 +35,8 @@ grants.
 
 Accepting an invite sets the invitee participant to `invite_status = 'accepted'`
 and attaches the responding Account id to that participant row. The Pending Game
-remains `pending`; game-start conversion is a later slice.
+remains `pending`; game-start conversion is a separate creator-controlled
+authority path recorded by ADR `0013`.
 
 Declining an invite sets the invitee participant to `invite_status = 'declined'`
 and attaches the responding Account id to that participant row. A private-schema
@@ -49,10 +54,10 @@ template id, and Pending Game status, but not raw invited Auth identities.
 - Decline cancellation is atomic from the browser's perspective: the browser
   performs one participant-row response update and the database owns the
   Pending Game status transition.
-- Future creator cancellation, expiry, replacement, and game-start conversion
-  can use separate authority paths instead of overloading invitee response
-  updates.
-- A fully accepted Pending Game may still have `status = 'pending'` until a
-  later game-start conversion slice resolves Slot Allocation and Slot Order.
-- Hosted migration application remains a live backend mutation and requires
-  explicit owner approval or the documented deployment workflow gate.
+- Creator cancellation, expiry, replacement, and game-start conversion use
+  separate authority paths instead of overloading invitee response updates.
+- A fully accepted Pending Game may still have `status = 'pending'` until the
+  Game Creator starts it through the separate conversion path.
+- Future invite-response-related hosted migrations remain live backend
+  mutations and require explicit owner approval or the documented deployment
+  workflow gate.

@@ -69,7 +69,12 @@ and must not imply that entries, completion, or Reveal are available.
 
 If an invited human participant declines, the pending game is cancelled in the MVP.
 
-Pending game invites expire automatically after a fixed period. The exact expiry duration is a product tuning value to be chosen later.
+Pending Game invites expire seven days after Pending Game creation unless they
+are started, cancelled, or declined first. Expired Pending Games are preserved
+for creator and invitee visibility, appear with an expired state, and cannot be
+accepted, declined, started, or creator-cancelled in the MVP. Expiry does not
+hard-delete collaborative records and does not send expiry notifications in the
+first product shape.
 
 ### Slot allocation and section order
 
@@ -347,11 +352,11 @@ for ADR 0015 lets signed-in participants submit their own assigned sections,
 wait for other participant entries, receive in-app notifications, and reveal a
 completed multiplayer batch for themselves after all sections are submitted.
 The current MVP invite UI includes creator cancellation for Pending Games
-before start and unrevealed Started Games, but still does not add invite
-expiry, Share Consent, friends, nudges, or public discovery. The historical
-first Started Game turn-submission slice added global active Turn storage and
-submission only; current multiplayer execution is governed by the
-participant-section model in ADR 0015.
+before start and unrevealed Started Games, plus seven-day Pending Game invite
+expiry. It still does not add Share Consent, friends, nudges, or public
+discovery. The historical first Started Game turn-submission slice added global
+active Turn storage and submission only; current multiplayer execution is
+governed by the participant-section model in ADR 0015.
 
 ### Nudges
 

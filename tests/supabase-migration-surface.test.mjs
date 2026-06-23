@@ -65,6 +65,9 @@ const completedMultiplayerHistoryMigrationUrl = findMigrationUrl(
 const completedMultiplayerHistoryPaginationMigrationUrl = findMigrationUrl(
   "completed_multiplayer_history_pagination",
 );
+const pendingGameInviteExpiryMigrationUrl = findMigrationUrl(
+  "pending_game_invite_expiry",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1256,6 +1259,65 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /grant execute on function public\.cancel_created_game\(uuid\)\s+to authenticated/,
+    );
+  });
+
+  it("adds seven-day Pending Game invite expiry without broad browser mutation authority", () => {
+    assert.equal(existsSync(pendingGameInviteExpiryMigrationUrl), true);
+
+    const migration = readFileSync(
+      pendingGameInviteExpiryMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /alter table public\.pending_games\s+add column if not exists expires_at timestamp with time zone/,
+    );
+    assert.match(
+      migration,
+      /update public\.pending_games\s+set expires_at = created_at \+ interval '7 days'\s+where expires_at is null/,
+    );
+    assert.match(
+      migration,
+      /alter table public\.pending_games\s+alter column expires_at set default \(pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\) \+ interval '7 days'\)/,
+    );
+    assert.match(
+      migration,
+      /alter table public\.pending_games\s+alter column expires_at set not null/,
+    );
+    assert.match(
+      migration,
+      /status in \('pending', 'cancelled', 'started', 'expired'\)/,
+    );
+    assert.match(
+      migration,
+      /create index if not exists pending_games_pending_expires_at_idx\s+on public\.pending_games \(expires_at\)\s+where status = 'pending'/,
+    );
+
+    assert.match(
+      migration,
+      /drop policy if exists "Invitees can respond to their Pending Game invites"/,
+    );
+    assert.match(
+      migration,
+      /and expires_at > pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.match(
+      migration,
+      /drop policy if exists "Game Creators can start accepted Pending Games"/,
+    );
+    assert.match(
+      migration,
+      /pending_game\.expires_at <= pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.match(
+      migration,
+      /target_pending_game\.expires_at <= pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant update .* on table public\.pending_games to authenticated/i,
     );
   });
 

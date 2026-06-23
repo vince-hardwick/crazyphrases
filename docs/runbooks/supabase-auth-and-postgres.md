@@ -255,6 +255,13 @@ notifications, and does not authorise live mutation. Hosted Pending Game
 creation must use the Supabase repository and any hosted write/cleanup smoke
 requires explicit owner approval.
 
+Local browser smoke tests may add the localhost-only query parameter
+`testPendingGame=expire-immediately`. This forces the local Pending Game
+fixture to expire new invites immediately so the UI can verify expired-state
+rendering and hidden invite actions. The app must ignore this fixture value
+outside `localhost` and `127.0.0.1`; it is not hosted Supabase state, does not
+call hosted Supabase, and does not authorise live mutation.
+
 ## Hosted Browser Auth Wiring
 
 The hosted static app creates a Supabase browser client only when deployment
@@ -618,6 +625,23 @@ accepted participants other than the creator. Dashboard, section-submission,
 and Reveal RPCs exclude or reject Games whose source Pending Game is
 `cancelled`.
 
+The Pending Game invite expiry migration is:
+
+```text
+supabase/migrations/20260623151948_pending_game_invite_expiry.sql
+```
+
+The expiry migration adds `public.pending_games.expires_at`, defaults new rows
+to seven days after creation, backfills existing rows to
+`created_at + interval '7 days'`, and keeps the column non-null. Browser clients
+still do not receive direct update authority on `public.pending_games`.
+Invitee response policies, Game start eligibility, the private start trigger,
+and the creator-cancellation RPC all reject expired Pending Games. The
+browser-safe adapter derives an effective `expired` status for display instead
+of requiring a cron job or read-time database mutation. Hosted application of
+this migration remains a live backend mutation requiring explicit owner
+approval or the documented deployment workflow gate.
+
 The completed multiplayer history migration is:
 
 ```text
@@ -728,7 +752,9 @@ Supabase browser client. The browser-facing repository can:
 - decline an incoming Pending Game invite;
 - start an accepted Pending Game as the Game Creator;
 - cancel a creator-owned Pending Game before start or Started Game before
-  Reveal.
+  Reveal;
+- derive and render expired Pending Game invites from `expires_at` without
+  direct browser update authority.
 
 Creation resolves the creator through `public.account_profiles`, resolves the
 invitee through `public.account_profile_directory`, inserts one
@@ -738,7 +764,8 @@ invitee through `public.account_profile_directory`, inserts one
 Invitee response mutation updates only the invitee participant row's
 `account_id` and `invite_status` under Row Level Security and column-level
 grants. Accepting records `invite_status = 'accepted'` and leaves the Pending
-Game status as `pending`; game-start conversion is a later slice. Declining
+Game status as `pending`; game-start conversion remains a separate
+creator-controlled path. Declining
 records `invite_status = 'declined'`, and the private
 `private.cancel_pending_game_after_invite_decline()` trigger changes the owning
 Pending Game to `cancelled`. Browser clients do not receive update authority on
@@ -763,13 +790,14 @@ and signed-out anonymous play cannot reach Pending Game creation or invite
 responses.
 
 The current source-controlled browser UI creates Pending Games, exposes response
-visibility for created and incoming invites, lets the Game Creator start a fully
-accepted Pending Game, and renders ADR 0015 participant-section Multiplayer
+visibility for created and incoming invites, renders expired Pending Game
+invites without invite actions, lets the Game Creator start a fully accepted
+unexpired Pending Game, and renders ADR 0015 participant-section Multiplayer
 buckets for signed-in participants. The browser calls the repository methods
 for dashboard reads, participant-section submission, participant-scoped Reveal,
 notification listing, notification read-status updates, and creator
-cancellation. It does not configure expiry, request Share Consent, manage
-friends, send nudges, or publish to discovery surfaces.
+cancellation. It does not request Share Consent, manage friends, send nudges,
+or publish to discovery surfaces.
 
 As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
 for multiplayer work. The source-controlled `game_turns` and

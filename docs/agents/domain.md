@@ -17,9 +17,9 @@ If a concept is missing from `CONTEXT.md`, do not invent durable terminology cas
 
 ## ADRs
 
-ADRs live under `docs/decisions/`, not `docs/adr/`.
+ADRs live under `docs/decisions/`; no alternate ADR directory is used in this
+repository.
 
 Read relevant ADRs before changing deployment boundaries, source-of-truth rules, lifecycle behaviour, authentication, deletion semantics, template/versioning behaviour, or static/backend architecture.
 
 If work contradicts an accepted ADR, surface the contradiction explicitly before proceeding.
-

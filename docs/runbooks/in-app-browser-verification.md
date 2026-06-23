@@ -60,6 +60,16 @@ The correct recovery for a local static smoke is:
 
 Do not treat shell network access, deployment approval, or environment detection as authority to mutate a live environment. Deployment authority remains the approved GitHub Environment workflow.
 
+Feature-specific live verification must exercise the behaviour being promoted.
+For data-dependent features such as completed-history pagination, an
+empty-state browser smoke proves deployment, authentication, asset freshness,
+and empty-result handling only. It does not prove pagination, cursor ordering,
+`Load more`, Reveal-from-history on later pages, or non-empty rendering. If the
+target environment lacks the required hosted data, either obtain explicit owner
+approval for a create/verify/cleanup smoke in that environment or record the
+run as an empty-state deployment smoke with the pagination or non-empty-data
+coverage left unverified.
+
 Do not use the local static-server snippet for deployed environments. Live sites are served by the documented GitHub Actions and hosting path, and deployment authority comes from GitHub Environment approvals, not from detecting a hostname or branch.
 
 ## Local Static Site Fast Path

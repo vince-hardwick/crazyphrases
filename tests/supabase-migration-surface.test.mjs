@@ -1331,7 +1331,11 @@ describe("Supabase migration surface", () => {
     );
     assert.match(
       migration,
-      /pg_catalog\.extract\(epoch from max\(assignment\.submitted_at\)\) \* 1000000/,
+      /pg_catalog\.date_part\('epoch', max\(assignment\.submitted_at\)\) \* 1000000/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /pg_catalog\.extract\(\s*epoch\s+from/,
     );
     assert.match(
       migration,

@@ -50,7 +50,7 @@ begin
     select
       game_row.id as game_id,
       (
-        pg_catalog.extract(epoch from max(assignment.submitted_at)) * 1000000
+        pg_catalog.date_part('epoch', max(assignment.submitted_at)) * 1000000
       )::bigint as completed_order,
       pg_catalog.jsonb_build_object(
         'id', game_row.id,

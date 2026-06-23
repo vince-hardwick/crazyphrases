@@ -51,6 +51,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260619132023` | `fix_multiplayer_reveal_conflict_target` | Applied as a corrective hosted migration during the approved participant-section smoke; schema verified and dev-smoke tested. |
 | `20260619221615` | `creator_multiplayer_cancellation` | Applied after explicit owner approval; schema verified and dev-smoke tested. |
 | `20260622144027` | `completed_multiplayer_history` | Applied after explicit owner approval; schema verified and read-only dev-smoke tested. |
+| `20260623121445` | `completed_multiplayer_history_pagination` | Applied after explicit owner approval; schema verified. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
@@ -211,6 +212,32 @@ and `supabase-config.js`, were stamped with merge commit
 `060295a50408b0b724c8283364018c4f534e291a`, and no `__ASSET_VERSION__`
 placeholder was visible. No hosted production Supabase data mutation was
 performed during this production verification.
+
+After explicit owner approval on 2026-06-23, the first Supabase MCP attempt to
+apply source migration
+`supabase/migrations/20260622213000_completed_multiplayer_history_pagination.sql`
+failed before migration history advanced because the source SQL used
+`pg_catalog.extract(epoch from ...)`; PostgreSQL treats `extract ... from ...`
+as special syntax, not a schema-qualified function call. Hosted inspection
+confirmed the existing no-argument
+`public.list_completed_multiplayer_history()` RPC was still present and the
+pagination migration was not recorded. The source migration and regression
+test were corrected to use `pg_catalog.date_part('epoch', ...)`, and bundled
+`node.exe --test tests/supabase-migration-surface.test.mjs` passed 16/16.
+The corrected migration was then applied through the Supabase MCP as hosted
+version `20260623121445 completed_multiplayer_history_pagination`. Read-only
+schema verification confirmed the replacement
+`public.list_completed_multiplayer_history(integer, bigint, uuid)` function is
+stable, `security definer`, has defaulted page-size and cursor arguments, uses
+the schema-qualified `date_part` cursor expression, avoids
+schema-qualified `extract`, and grants execute only to `postgres` and
+`authenticated`. Both `public.list_completed_multiplayer_history()` and
+`public.list_completed_multiplayer_history(2, null, null)` returned the
+expected unauthenticated empty paginated shape:
+`{"batches":[],"hasMore":false,"nextCursor":null}`. No hosted browser
+deployment smoke or hosted data mutation was performed during this migration
+application; the PR #71 `dev` deployment remained behind its separate GitHub
+Environment approval gate.
 
 ## Participant-Section Hosted Application
 
@@ -486,6 +513,7 @@ Read-only hosted SQL confirmed:
 | 2026-06-22 | Completed history Reveal from history dev write/cleanup smoke | After explicit owner approval for hosted game-data mutation and cleanup, PR #70 branch commit `36c227be98297eae3bd235bca42ee291d8b92057` was smoke-tested in `dev` using existing creator Account Profile `@vhcoder` and temporary invitee Handle `@codex-smoke-history-1d1c62`. The visible browser created a 10-phrase Pending Game invite, the temporary invitee accepted through the authenticated RLS path, the creator started the accepted game through the visible UI, the temporary invitee submitted `noun-2` through `public.submit_multiplayer_section(uuid, jsonb)`, and the creator submitted `noun-1` plus `adjective` through the visible UI. Hosted SQL confirmed `public.list_completed_multiplayer_history()` returned Started Game `d8f91630-9690-4221-a690-95564adda64e` from Pending Game `342e117f-3788-4b45-857f-88525a6af04b` as `revealed: false` with `phrases: null` before Reveal. The visible `Completed multiplayer history` page showed the batch as `Not revealed yet.` with no phrase text, then the history-page `Reveal phrases` action rendered ten phrases in original row order from `Briska laddera teapota` through `Briskj ladderj teapotj`; the top-level app assets remained stamped with the deployed branch commit SHA, no `__ASSET_VERSION__` placeholder was visible, and there was no horizontal overflow. Browser console capture was unavailable in this Browser evaluate scope, so this run did not record browser warning/error logs. Cleanup deleted four in-app notifications, one Reveal row, 30 section entries, three section assignments, two Started Game participants, one Started Game, two Pending Game participants, one Pending Game, one Handle Directory row, one Account Profile row, and one temporary Auth user. Follow-up hosted SQL confirmed zero rows remained for the smoke Auth user, Account Profile, Handle Directory entry, Pending Game, Pending Game participants, Started Game, Started Game participants, section assignments, section entries, multiplayer reveals, and in-app notifications. A final visible `dev` reload showed Account-backed mode for `@vhcoder`, empty Multiplayer dashboard buckets, empty completed Multiplayer history, no smoke Handle, and no horizontal overflow. |
 | 2026-06-22 | Completed history Reveal from history test promotion | PR #70 was merged to `main` as merge commit `8524ec3c46af68b97ee39ec0f3716ec5a5a70277`. Promotion run `27976166867` deployed that commit to `test` after explicit owner approval for the `Deploy main to test` GitHub Environment gate. The `Deploy main to test` job succeeded from 2026-06-22T18:55:04Z to 2026-06-22T18:55:21Z. Visible `test` browser verification confirmed Crazy Phrases loaded in signed-in Account-backed mode for `@vhcoder`, completed Multiplayer history opened from the `Batches completed` dashboard bucket, the history page showed `No completed multiplayer batches yet.`, no `Reveal phrases` action or phrase list was rendered, no `codex-smoke-history-1d1c62` or `codex-smoke-history-1a75a4` smoke Handle was present, there was no horizontal overflow, and browser warning/error logs were empty. The top-level stylesheet plus all observed first-party JavaScript modules, including `pending-game.js`, `supabase-config.js`, and `word-bank-seed.json`, were stamped with merge commit `8524ec3c46af68b97ee39ec0f3716ec5a5a70277`, and no `__ASSET_VERSION__` placeholder was visible. The smoke was read-only apart from normal signed-in session refresh/read checks and did not create, reveal, update, or clean up hosted Supabase game data. The promotion workflow then waited at the separate `Deploy main to production` GitHub Environment gate pending explicit production approval. |
 | 2026-06-22 | Completed history Reveal from history production promotion | After explicit owner approval for production, promotion run `27976166867` deployed PR #70 merge commit `8524ec3c46af68b97ee39ec0f3716ec5a5a70277` to production. The `Deploy main to production` job succeeded from 2026-06-22T21:01:45Z to 2026-06-22T21:02:01Z. Visible production browser verification at `https://www.crazyphrases.com/` confirmed Crazy Phrases loaded in signed-in Account-backed mode for `@vhcoder`, completed Multiplayer history opened from the `Batches completed` dashboard bucket, the history page showed `No completed multiplayer batches yet.`, no `Reveal phrases` action or phrase list was rendered, no `codex-smoke-history-1d1c62` or `codex-smoke-history-1a75a4` smoke Handle was present, there was no horizontal overflow, and browser warning/error logs were empty. The top-level stylesheet plus all observed first-party JavaScript modules, including `pending-game.js`, `supabase-config.js`, and `word-bank-seed.json`, were stamped with merge commit `8524ec3c46af68b97ee39ec0f3716ec5a5a70277`, and no `__ASSET_VERSION__` placeholder was visible. The production smoke was read-only apart from normal signed-in session refresh/read checks and did not create, reveal, update, or clean up hosted Supabase game data. |
+| 2026-06-23 | Completed history pagination hosted migration | After explicit owner approval, the first Supabase MCP application of source migration `20260622213000_completed_multiplayer_history_pagination.sql` failed before migration history advanced because `pg_catalog.extract(epoch from ...)` is invalid PostgreSQL syntax. Hosted inspection confirmed the previous no-argument RPC remained in place. The source migration and regression test were corrected to `pg_catalog.date_part('epoch', ...)`; focused migration-surface tests passed 16/16. Corrected hosted migration `20260623121445 completed_multiplayer_history_pagination` then applied successfully. Read-only schema verification confirmed the defaulted `(integer, bigint, uuid)` RPC signature, authenticated-only execute grant, valid default and parameter call shapes, and no hosted browser smoke or hosted data mutation was performed. |
 
 ## Signed-In Persistence Evidence
 

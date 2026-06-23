@@ -749,6 +749,70 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("returns a continuation cursor when completed multiplayer history has another page", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 3; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+      pageSize: 2,
+    });
+
+    assert.deepEqual(
+      history.batches.map((batch) => batch.id),
+      ["started-game-3", "started-game-2"],
+    );
+    assert.equal(history.hasMore, true);
+    assert.deepEqual(history.nextCursor, {
+      completedOrder: 2,
+      gameId: "started-game-2",
+    });
+  });
+
+  it("continues completed multiplayer history after the requested cursor", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: createSequenceId("pending-game"),
+      createStartedGameId: createSequenceId("started-game"),
+      createNotificationId: createSequenceId("notification"),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    for (let index = 1; index <= 3; index += 1) {
+      await completeAcceptedLocalGame(repository, {
+        adjectivePrefix: `brisk-${index}`,
+        nounPrefix: `noun-${index}`,
+      });
+    }
+
+    const firstPage = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+      pageSize: 2,
+    });
+    const secondPage = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+      cursor: firstPage.nextCursor,
+      pageSize: 2,
+    });
+
+    assert.deepEqual(
+      secondPage.batches.map((batch) => batch.id),
+      ["started-game-1"],
+    );
+    assert.equal(secondPage.hasMore, false);
+    assert.equal(secondPage.nextCursor, null);
+  });
+
   it("lets the creator cancel a started game before reveal", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1756,6 +1820,37 @@ describe("Pending Game repository", () => {
     ]);
   });
 
+  it("loads paginated completed multiplayer history through Supabase RPC parameters", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const history = await repository.listCompletedMultiplayerHistory({
+      accountId: creatorProfile.accountId,
+      cursor: {
+        completedOrder: 2,
+        gameId: "supabase-completed-game-2",
+      },
+      pageSize: 2,
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["list_completed_multiplayer_history"]);
+    assert.deepEqual(supabase.rpcParams, [
+      {
+        after_completed_order: 2,
+        after_game_id: "supabase-completed-game-2",
+        page_size: 2,
+      },
+    ]);
+    assert.equal(history.hasMore, true);
+    assert.deepEqual(history.nextCursor, {
+      completedOrder: 1,
+      gameId: "supabase-completed-game-1",
+    });
+  });
+
   it("submits participant sections through Supabase RPC", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,
@@ -2123,11 +2218,20 @@ function createFakePendingGameSupabase({ creatorProfile, inviteeProfile }) {
       }
 
       if (functionName === "list_completed_multiplayer_history") {
-        assert.equal(arguments.length, 1);
+        if (params) {
+          assert.deepEqual(Object.keys(params).sort(), [
+            "after_completed_order",
+            "after_game_id",
+            "page_size",
+          ]);
+        } else {
+          assert.equal(arguments.length, 1);
+        }
         return {
           data: createFakeCompletedMultiplayerHistory({
             creatorProfile,
             inviteeProfile,
+            paginated: Boolean(params),
           }),
           error: null,
         };
@@ -2613,13 +2717,27 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
   };
 }
 
-function createFakeCompletedMultiplayerHistory({ creatorProfile, inviteeProfile }) {
-  return {
+function createFakeCompletedMultiplayerHistory({
+  creatorProfile,
+  inviteeProfile,
+  paginated = false,
+}) {
+  const history = {
     batches: createFakeMultiplayerDashboard({
       creatorProfile,
       inviteeProfile,
     }).completedBatches,
   };
+
+  if (paginated) {
+    history.has_more = true;
+    history.next_cursor = {
+      completed_order: 1,
+      game_id: "supabase-completed-game-1",
+    };
+  }
+
+  return history;
 }
 
 function createFakeSlotAllocation({ creatorProfile, inviteeProfile }) {

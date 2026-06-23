@@ -3,6 +3,7 @@ const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
 const COMPLETED_HISTORY_FIRST_PAGE_LIMIT = 20;
 
 export function createTestPendingGameRepository({
+  completedHistorySeedCount = 0,
   createPendingGameId = defaultCreatePendingGameId,
   createStartedGameId = defaultCreateStartedGameId,
   createNotificationId = defaultCreateNotificationId,
@@ -27,6 +28,15 @@ export function createTestPendingGameRepository({
   const startedTurns = [];
   let multiplayerCompletionOrder = 0;
   let revealFailureCount = 0;
+
+  seedCompletedMultiplayerHistory({
+    assignedSections,
+    completedMultiplayerBatches,
+    count: completedHistorySeedCount,
+    pendingGames,
+    profiles: normalisedProfiles,
+  });
+  multiplayerCompletionOrder = completedMultiplayerBatches.length;
 
   return {
     async createPendingGameFromHandle({
@@ -297,10 +307,13 @@ export function createTestPendingGameRepository({
       });
     },
 
-    async listCompletedMultiplayerHistory({ accountId }) {
+    async listCompletedMultiplayerHistory({ accountId, cursor, pageSize }) {
       assertAccountId(accountId);
 
-      if (failureMode === "history-fails") {
+      if (
+        failureMode === "history-fails" ||
+        (failureMode === "history-load-more-fails" && cursor)
+      ) {
         throw new Error("Could not load completed Multiplayer history.");
       }
 
@@ -312,6 +325,8 @@ export function createTestPendingGameRepository({
       return createCompletedMultiplayerHistoryPage({
         assignedSections,
         completedMultiplayerBatches,
+        cursor,
+        pageSize,
         pendingGames,
         profile,
         revealedMultiplayerBatches,
@@ -849,9 +864,15 @@ export function createSupabasePendingGameRepository({ supabase } = {}) {
       return recoverMultiplayerDashboard(response.data);
     },
 
-    async listCompletedMultiplayerHistory({ accountId }) {
+    async listCompletedMultiplayerHistory({ accountId, cursor, pageSize }) {
       assertAccountId(accountId);
-      const response = await supabase.rpc("list_completed_multiplayer_history");
+      const rpcParams = createCompletedMultiplayerHistoryRpcParams({
+        cursor,
+        pageSize,
+      });
+      const response = rpcParams
+        ? await supabase.rpc("list_completed_multiplayer_history", rpcParams)
+        : await supabase.rpc("list_completed_multiplayer_history");
       assertNoSupabaseError(
         response,
         "Could not load completed Multiplayer history",
@@ -1179,6 +1200,66 @@ function createGameStartedNotifications({
   }));
 }
 
+function seedCompletedMultiplayerHistory({
+  assignedSections,
+  completedMultiplayerBatches,
+  count,
+  pendingGames,
+  profiles,
+}) {
+  if (!count) {
+    return;
+  }
+
+  const creator = profiles[0];
+  const invitee = profiles[1];
+  if (!creator || !invitee) {
+    return;
+  }
+
+  for (let index = 1; index <= count; index += 1) {
+    const pendingGame = createPendingGameDto({
+      id: `seed-pending-game-${index}`,
+      rowCount: 10,
+      startedGameId: `seed-started-game-${index}`,
+      status: "started",
+      templateId: DEFAULT_TEMPLATE_ID,
+      participants: [
+        createParticipantDto(creator, {
+          inviteStatus: "accepted",
+          role: "creator",
+        }),
+        createParticipantDto(invitee, {
+          inviteStatus: "accepted",
+          role: "invitee",
+        }),
+      ],
+    });
+    const startedGame = createStartedGameDto({
+      id: pendingGame.startedGameId,
+      pendingGame,
+    });
+
+    pendingGames.push(pendingGame);
+    assignedSections.push(
+      ...createStartedGameAssignedSections({ pendingGame, startedGame }).map(
+        (section) => ({
+          ...section,
+          entries: Array.from({ length: section.rowCount }, (_, rowIndex) => ({
+            rowIndex,
+            value: `${section.entryKind}-${index}-${rowIndex}`,
+          })),
+          status: "submitted",
+        }),
+      ),
+    );
+    completedMultiplayerBatches.push({
+      completedOrder: index,
+      gameId: startedGame.id,
+    });
+  }
+}
+
 function createGameCancelledNotifications({
   accountIdsByProfileId,
   createNotificationId,
@@ -1253,19 +1334,50 @@ function createEmptyCompletedMultiplayerHistoryPage() {
 function createCompletedMultiplayerHistoryPage({
   assignedSections,
   completedMultiplayerBatches,
+  cursor,
+  pageSize,
   pendingGames,
   profile,
   revealedMultiplayerBatches,
 }) {
+  const allBatches = createCompletedBatches({
+    assignedSections,
+    completedMultiplayerBatches,
+    limit: Number.MAX_SAFE_INTEGER,
+    pendingGames,
+    profile,
+    revealedMultiplayerBatches,
+  });
+
+  if (pageSize) {
+    const firstBatchIndex = cursor
+      ? allBatches.findIndex((batch) => batch.id === cursor.gameId) + 1
+      : 0;
+    const remainingBatches = allBatches.slice(
+      Math.max(0, firstBatchIndex),
+    );
+    const batches = remainingBatches.slice(0, pageSize);
+    const hasMore = remainingBatches.length > batches.length;
+    const lastBatch = batches.at(-1);
+    const lastCompletedBatch = completedMultiplayerBatches.find(
+      (completedBatch) => completedBatch.gameId === lastBatch?.id,
+    );
+
+    return {
+      batches,
+      hasMore,
+      nextCursor:
+        hasMore && lastCompletedBatch
+          ? {
+              completedOrder: lastCompletedBatch.completedOrder,
+              gameId: lastCompletedBatch.gameId,
+            }
+          : null,
+    };
+  }
+
   return {
-    batches: createCompletedBatches({
-      assignedSections,
-      completedMultiplayerBatches,
-      limit: COMPLETED_HISTORY_FIRST_PAGE_LIMIT,
-      pendingGames,
-      profile,
-      revealedMultiplayerBatches,
-    }),
+    batches: allBatches.slice(0, COMPLETED_HISTORY_FIRST_PAGE_LIMIT),
   };
 }
 
@@ -1857,10 +1969,44 @@ function recoverMultiplayerDashboard(dashboardRow) {
 }
 
 function recoverCompletedMultiplayerHistoryPage(historyRow) {
-  return {
+  const page = {
     batches: (historyRow?.batches ?? historyRow?.completed_batches ?? []).map(
       (batch) => recoverMultiplayerBatch(batch, { includeRevealState: true }),
     ),
+  };
+  const hasMore = historyRow?.hasMore ?? historyRow?.has_more;
+  const nextCursor = historyRow?.nextCursor ?? historyRow?.next_cursor;
+
+  if (typeof hasMore === "boolean") {
+    page.hasMore = hasMore;
+    page.nextCursor = nextCursor
+      ? {
+          completedOrder:
+            nextCursor.completedOrder ?? nextCursor.completed_order,
+          gameId: assertText(
+            nextCursor.gameId ?? nextCursor.game_id,
+            "A completed history cursor Game id is required.",
+          ),
+        }
+      : null;
+  }
+
+  return page;
+}
+
+function createCompletedMultiplayerHistoryRpcParams({ cursor, pageSize }) {
+  if (!cursor && !pageSize) {
+    return null;
+  }
+
+  return {
+    ...(cursor
+      ? {
+          after_completed_order: cursor.completedOrder,
+          after_game_id: cursor.gameId,
+        }
+      : {}),
+    ...(pageSize ? { page_size: pageSize } : {}),
   };
 }
 

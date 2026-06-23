@@ -634,6 +634,24 @@ does not grant direct browser table access. Hosted application remains a live
 backend mutation requiring explicit owner approval or the documented deployment
 workflow gate.
 
+The completed multiplayer history pagination migration is:
+
+```text
+supabase/migrations/20260622213000_completed_multiplayer_history_pagination.sql
+```
+
+It replaces the no-argument history RPC with
+`public.list_completed_multiplayer_history(integer, bigint, uuid)`, using
+default arguments so existing first-page callers can still call the function
+without explicit parameters. Browser clients may pass a page size plus the
+opaque completion-order/game-id cursor returned by the previous page. The
+function clamps page size to 1-50, orders completed batches by derived
+completion order and Started Game id, returns `hasMore` and `nextCursor`
+metadata, preserves Account scoping and participant-scoped phrase visibility,
+and grants execute only to `authenticated`. Applying this migration to hosted
+Supabase remains a live backend mutation requiring explicit owner approval or
+the documented deployment workflow gate.
+
 On 2026-06-19, the creator-cancellation source migration was applied to hosted
 Supabase after explicit owner approval as hosted migration
 `20260619221615 creator_multiplayer_cancellation`. Read-only hosted verification

@@ -10,7 +10,7 @@ preserve their original history.
 | --- | --- | --- |
 | Template and template tooling | Deferred | Custom templates; Template favourites; Manual slot allocation and ordering controls; Template visibility rules |
 | Game modes and lifecycle | Deferred | CPU-participant games; 3-player games; Live synchronous play; Partial or timeout reveal; Participant replacement; Post-submission correction requests |
-| Multiplayer and social graph | Nudge timeout foundation promoted to test; most social scope deferred | Signed-in 2-player asynchronous game; Pending invite expiry duration; One-way following; Friend relationships; Manual pokes; Android app and push notifications |
+| Multiplayer and social graph | Nudge timeout foundation promoted through production; most social scope deferred | Signed-in 2-player asynchronous game; Pending invite expiry duration; One-way following; Friend relationships; Manual pokes; Android app and push notifications |
 | Account, profile, and auth | Profile-management MVP completed; other scope mixed deferred/completed | Signed-in Account Profile management surface; Anonymous solo import to signed-in state; Email OTP code entry; Branded Supabase Auth domain; Uploaded profile pictures; Multiple gamer profiles; Social profile URLs; Auth-gated favourites DOM loading |
 | Favourites and saved-output UI | Mixed completed/deferred | Private phrase and batch favourites follow-up slice; Icon-first favourite and copy actions; Dedicated favourites page |
 | Sharing, discovery, reactions, and ranking | Deferred | Batch ratings; Friend-only leaderboards; Public feed and leaderboards; Phrase reactions; Leaderboard timezone rule; Phrase image generation; Public share links; Web Share API |

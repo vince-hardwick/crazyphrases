@@ -44,7 +44,7 @@ For large documents, search for the relevant heading first and then read that se
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
 | Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
 | Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
-| Pending Game foundation and lifecycle slices | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, `docs/decisions/0011-account-profile-handle-directory.md`, `docs/decisions/0012-pending-game-invite-response-authority.md`, `docs/decisions/0013-pending-game-start-conversion-authority.md`, `docs/decisions/0016-creator-controlled-multiplayer-cancellation.md`, `docs/decisions/0017-pending-game-invite-expiry.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
+| Pending Game foundation and lifecycle slices | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, `docs/decisions/0011-account-profile-handle-directory.md`, `docs/decisions/0012-pending-game-invite-response-authority.md`, `docs/decisions/0013-pending-game-start-conversion-authority.md`, `docs/decisions/0016-creator-controlled-multiplayer-cancellation.md`, `docs/decisions/0017-pending-game-invite-expiry.md`, `docs/decisions/0018-dashboard-triggered-nudge-generation.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase project operations | `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase hosted migration, deployment, or smoke evidence | `docs/planning/supabase-state-ledger.md` |
 | Supabase schema migrations | `supabase/migrations/`, `docs/runbooks/supabase-auth-and-postgres.md` |

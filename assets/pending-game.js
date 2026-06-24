@@ -1,5 +1,6 @@
 export const DEFAULT_TEMPLATE_ID = "default-adjective-noun-noun";
 const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
+const ALLOWED_NUDGE_TIMEOUT_HOURS = new Set([24, 48, 72, 168]);
 const COMPLETED_HISTORY_FIRST_PAGE_LIMIT = 20;
 const PENDING_GAME_INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -46,10 +47,14 @@ export function createTestPendingGameRepository({
     async createPendingGameFromHandle({
       creatorAccountId,
       inviteeHandle,
+      nudgeTimeoutHours,
       rowCount = 20,
     }) {
       assertAccountId(creatorAccountId);
       assertRowCount(rowCount);
+      if (nudgeTimeoutHours !== undefined) {
+        assertNudgeTimeoutHours(nudgeTimeoutHours);
+      }
 
       const creatorProfile = profilesByAccountId.get(creatorAccountId);
       if (!creatorProfile) {
@@ -67,6 +72,7 @@ export function createTestPendingGameRepository({
 
       const pendingGame = createPendingGameDto({
         id: createPendingGameId(),
+        nudgeTimeoutHours,
         rowCount,
         status: "pending",
         templateId: DEFAULT_TEMPLATE_ID,
@@ -164,6 +170,7 @@ export function createTestPendingGameRepository({
       const pendingGame = pendingGames[pendingGameIndex];
       const updatedPendingGame = createPendingGameDto({
         id: pendingGame.id,
+        nudgeTimeoutHours: pendingGame.nudgeTimeoutHours,
         rowCount: pendingGame.rowCount,
         status: pendingGame.status,
         templateId: pendingGame.templateId,
@@ -197,6 +204,7 @@ export function createTestPendingGameRepository({
       const pendingGame = pendingGames[pendingGameIndex];
       const updatedPendingGame = createPendingGameDto({
         id: pendingGame.id,
+        nudgeTimeoutHours: pendingGame.nudgeTimeoutHours,
         rowCount: pendingGame.rowCount,
         status: "cancelled",
         templateId: pendingGame.templateId,
@@ -247,6 +255,7 @@ export function createTestPendingGameRepository({
 
       pendingGames[pendingGameIndex] = createPendingGameDto({
         id: pendingGame.id,
+        nudgeTimeoutHours: pendingGame.nudgeTimeoutHours,
         rowCount: pendingGame.rowCount,
         startedGameId: startedGame.id,
         status: "started",
@@ -256,7 +265,7 @@ export function createTestPendingGameRepository({
 
       startedTurns.push(...createStartedGameTurns({ pendingGame, startedGame }));
       assignedSections.push(
-        ...createStartedGameAssignedSections({ pendingGame, startedGame }),
+        ...createStartedGameAssignedSections({ now, pendingGame, startedGame }),
       );
       inAppNotifications.push(
         ...createGameStartedNotifications({
@@ -298,6 +307,7 @@ export function createTestPendingGameRepository({
       const pendingGame = pendingGames[pendingGameIndex];
       const updatedPendingGame = createPendingGameDto({
         id: pendingGame.id,
+        nudgeTimeoutHours: pendingGame.nudgeTimeoutHours,
         rowCount: pendingGame.rowCount,
         startedGameId: pendingGame.startedGameId,
         status: "cancelled",
@@ -306,7 +316,7 @@ export function createTestPendingGameRepository({
       });
       pendingGames[pendingGameIndex] = updatedPendingGame;
 
-      markEntriesNeededNotificationsRead({
+      markActiveGamePromptNotificationsRead({
         inAppNotifications,
         targetGameId: pendingGame.startedGameId,
       });
@@ -331,6 +341,16 @@ export function createTestPendingGameRepository({
       if (!profile) {
         return createEmptyMultiplayerDashboard();
       }
+
+      createOverdueNudgeNotifications({
+        accountIdsByProfileId,
+        assignedSections,
+        createNotificationId,
+        inAppNotifications,
+        now,
+        pendingGames,
+        profile,
+      });
 
       return createMultiplayerDashboard({
         assignedSections,
@@ -407,6 +427,14 @@ export function createTestPendingGameRepository({
         rowCount: section.rowCount,
       });
       section.status = "submitted";
+      const nextSection = findCurrentAssignedSection({
+        assignedSections,
+        gameId: section.gameId,
+        participantProfileId: section.participantProfileId,
+      });
+      if (nextSection && !nextSection.activeAt) {
+        nextSection.activeAt = now().toISOString();
+      }
 
       if (
         isGameComplete({ assignedSections, gameId: section.gameId }) &&
@@ -547,10 +575,14 @@ export function createSupabasePendingGameRepository({
     async createPendingGameFromHandle({
       creatorAccountId,
       inviteeHandle,
+      nudgeTimeoutHours,
       rowCount = 20,
     }) {
       assertAccountId(creatorAccountId);
       assertRowCount(rowCount);
+      if (nudgeTimeoutHours !== undefined) {
+        assertNudgeTimeoutHours(nudgeTimeoutHours);
+      }
 
       const creatorResponse = await supabase
         .from("account_profiles")
@@ -589,10 +621,11 @@ export function createSupabasePendingGameRepository({
           creator_account_id: creatorAccountId,
           creator_profile_id: creatorProfile.profileId,
           invitee_profile_id: inviteeProfile.profileId,
+          ...(nudgeTimeoutHours ? { nudge_timeout_hours: nudgeTimeoutHours } : {}),
           row_count: rowCount,
           template_id: DEFAULT_TEMPLATE_ID,
         })
-        .select("id, template_id, row_count, status, expires_at")
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
         .single();
       assertNoSupabaseError(pendingGameResponse, "Could not create Pending Game");
 
@@ -619,7 +652,7 @@ export function createSupabasePendingGameRepository({
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status, expires_at")
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
         .eq("creator_account_id", accountId);
       assertNoSupabaseError(
         pendingGameResponse,
@@ -674,7 +707,7 @@ export function createSupabasePendingGameRepository({
       const inviteeProfile = recoverProfile(inviteeResponse.data);
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status, expires_at")
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
         .eq("invitee_profile_id", inviteeProfile.profileId)
         .in("status", ["pending", "started"]);
       assertNoSupabaseError(
@@ -748,7 +781,7 @@ export function createSupabasePendingGameRepository({
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status, expires_at")
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
         .eq("id", pendingGameId)
         .single();
       assertNoSupabaseError(
@@ -812,7 +845,7 @@ export function createSupabasePendingGameRepository({
 
       const pendingGameResponse = await supabase
         .from("pending_games")
-        .select("id, template_id, row_count, status, expires_at")
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
         .eq("id", pendingGameId)
         .single();
       assertNoSupabaseError(
@@ -847,7 +880,7 @@ export function createSupabasePendingGameRepository({
         .insert({
           pending_game_id: pendingGameId,
         })
-        .select("id, pending_game_id, template_id, row_count, status")
+        .select("id, pending_game_id, template_id, row_count, nudge_timeout_hours, status")
         .single();
       assertNoSupabaseError(startedGameResponse, "Could not start Pending Game");
 
@@ -1048,6 +1081,7 @@ export function createSupabasePendingGameRepository({
 
 function createPendingGameDto({
   id,
+  nudgeTimeoutHours,
   participants,
   rowCount,
   startedGameId,
@@ -1059,6 +1093,7 @@ function createPendingGameDto({
     status,
     templateId,
     rowCount,
+    ...(nudgeTimeoutHours ? { nudgeTimeoutHours } : {}),
     participants,
     ...(startedGameId ? { startedGameId } : {}),
   };
@@ -1104,6 +1139,9 @@ function createStartedGameDto({ id, pendingGame }) {
     status: "started",
     templateId: pendingGame.templateId,
     rowCount: pendingGame.rowCount,
+    ...(pendingGame.nudgeTimeoutHours
+      ? { nudgeTimeoutHours: pendingGame.nudgeTimeoutHours }
+      : {}),
     participants: pendingGame.participants.map(createStartedParticipantDto),
     setup: {
       slotAllocation: "resolved",
@@ -1167,16 +1205,18 @@ function createStartedGameTurns({ pendingGame, startedGame }) {
   ];
 }
 
-function createStartedGameAssignedSections({ pendingGame, startedGame }) {
+function createStartedGameAssignedSections({ now = () => new Date(), pendingGame, startedGame }) {
   const creator = pendingGame.participants.find(
     (participant) => participant.role === "creator",
   );
   const invitee = pendingGame.participants.find(
     (participant) => participant.role === "invitee",
   );
+  const startedAt = now().toISOString();
 
   return [
     createAssignedSection({
+      activeAt: startedAt,
       id: `${startedGame.id}-section-creator-1`,
       entryKind: "adjective",
       gameId: startedGame.id,
@@ -1186,6 +1226,7 @@ function createStartedGameAssignedSections({ pendingGame, startedGame }) {
       slotId: "adjective",
     }),
     createAssignedSection({
+      activeAt: startedAt,
       id: `${startedGame.id}-section-invitee-1`,
       entryKind: "noun",
       gameId: startedGame.id,
@@ -1195,6 +1236,7 @@ function createStartedGameAssignedSections({ pendingGame, startedGame }) {
       slotId: "noun-1",
     }),
     createAssignedSection({
+      activeAt: null,
       id: `${startedGame.id}-section-invitee-2`,
       entryKind: "noun",
       gameId: startedGame.id,
@@ -1207,6 +1249,7 @@ function createStartedGameAssignedSections({ pendingGame, startedGame }) {
 }
 
 function createAssignedSection({
+  activeAt,
   entryKind,
   gameId,
   id,
@@ -1217,6 +1260,7 @@ function createAssignedSection({
 }) {
   return {
     id,
+    activeAt,
     entryKind,
     gameId,
     participantProfileId,
@@ -1356,7 +1400,7 @@ function createGameCancelledNotifications({
   }));
 }
 
-function markEntriesNeededNotificationsRead({
+function markActiveGamePromptNotificationsRead({
   inAppNotifications,
   targetGameId,
 }) {
@@ -1367,10 +1411,68 @@ function markEntriesNeededNotificationsRead({
   for (const notification of inAppNotifications) {
     if (
       notification.targetGameId === targetGameId &&
-      notification.type === "entries_needed"
+      ["entries_needed", "nudge"].includes(notification.type)
     ) {
       notification.status = "read";
     }
+  }
+}
+
+function createOverdueNudgeNotifications({
+  accountIdsByProfileId,
+  assignedSections,
+  createNotificationId,
+  inAppNotifications,
+  now,
+  pendingGames,
+  profile,
+}) {
+  const currentTime = now().getTime();
+  for (const pendingGame of pendingGames) {
+    if (pendingGame.status !== "started" || !pendingGame.nudgeTimeoutHours) {
+      continue;
+    }
+
+    const participant = pendingGame.participants.find(
+      (candidate) => candidate.profileId === profile.profileId,
+    );
+    const currentSection = findCurrentAssignedSection({
+      assignedSections,
+      gameId: pendingGame.startedGameId,
+      participantProfileId: profile.profileId,
+    });
+    if (!participant || !currentSection?.activeAt) {
+      continue;
+    }
+
+    const overdueAt =
+      Date.parse(currentSection.activeAt) +
+      pendingGame.nudgeTimeoutHours * 60 * 60 * 1000;
+    const accountId = accountIdsByProfileId.get(profile.profileId);
+    const alreadyNudged = inAppNotifications.some(
+      (notification) =>
+        notification.accountId === accountId &&
+        notification.targetGameId === pendingGame.startedGameId &&
+        notification.targetSectionId === currentSection.id &&
+        notification.type === "nudge",
+    );
+    if (currentTime < overdueAt || alreadyNudged) {
+      continue;
+    }
+
+    inAppNotifications.push({
+      id: createNotificationId(),
+      accountId,
+      createdAt: now().toISOString(),
+      message: createParticipantNotificationMessage({
+        participants: pendingGame.participants,
+        text: "A batch is waiting for your entries with",
+      }),
+      status: "unread",
+      targetGameId: pendingGame.startedGameId,
+      targetSectionId: currentSection.id,
+      type: "nudge",
+    });
   }
 }
 
@@ -1851,6 +1953,12 @@ function assertRowCount(rowCount) {
   }
 }
 
+function assertNudgeTimeoutHours(nudgeTimeoutHours) {
+  if (!ALLOWED_NUDGE_TIMEOUT_HOURS.has(nudgeTimeoutHours)) {
+    throw new Error("A supported Nudge Timeout is required.");
+  }
+}
+
 function normaliseSubmittedEntries(entries, { rowCount }) {
   if (!Array.isArray(entries) || entries.length !== rowCount) {
     throw new Error("Submit one Entry for every row.");
@@ -1944,6 +2052,7 @@ function recoverPendingGame({
       : pendingGameRow.status,
     templateId: pendingGameRow.template_id,
     rowCount: pendingGameRow.row_count,
+    nudgeTimeoutHours: pendingGameRow.nudge_timeout_hours,
     startedGameId,
     participants,
   });
@@ -1992,6 +2101,9 @@ function recoverStartedGame({ participantRows, startedGameRow }) {
     status: startedGameRow.status,
     templateId: startedGameRow.template_id,
     rowCount: startedGameRow.row_count,
+    ...(startedGameRow.nudge_timeout_hours
+      ? { nudgeTimeoutHours: startedGameRow.nudge_timeout_hours }
+      : {}),
     participants,
     setup: {
       slotAllocation: "resolved",

@@ -380,6 +380,33 @@ describe("Pending Game repository", () => {
     assert.equal(Array.isArray(startedGame.setup.slotOrder), false);
   });
 
+  it("carries a configured Nudge Timeout into the Started Game", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      nudgeTimeoutHours: 48,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    assert.equal(startedGame.nudgeTimeoutHours, 48);
+    assert.equal(JSON.stringify(startedGame).includes("auth-account"), false);
+  });
+
   it("rejects starting an accepted Pending Game after expiry", async () => {
     let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
     const repository = createTestPendingGameRepository({
@@ -503,6 +530,64 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+      ],
+    );
+  });
+
+  it("creates one in-app nudge notification for an overdue current section", async () => {
+    let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      createNotificationId: createSequenceId("notification"),
+      now: () => new Date(currentTime),
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromHandle({
+      creatorAccountId: creatorProfile.accountId,
+      inviteeHandle: inviteeProfile.handle,
+      nudgeTimeoutHours: 24,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    currentTime = Date.parse("2026-06-02T13:00:00.000Z");
+    await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+    await repository.listMultiplayerDashboard({
+      accountId: inviteeProfile.accountId,
+    });
+
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-2",
+          type: "entries_needed",
+          status: "unread",
+          message:
+            "You can submit entries to a batch with @creator-one and @invitee-two.",
+          targetGameId: "started-game-1",
+        },
+        {
+          id: "notification-3",
+          type: "nudge",
+          status: "unread",
+          message:
+            "A batch is waiting for your entries with @creator-one and @invitee-two.",
           targetGameId: "started-game-1",
         },
       ],
@@ -1515,6 +1600,7 @@ describe("Pending Game repository", () => {
     const pendingGame = await repository.createPendingGameFromHandle({
       creatorAccountId: creatorProfile.accountId,
       inviteeHandle: inviteeProfile.handle.toUpperCase(),
+      nudgeTimeoutHours: 48,
       rowCount: 15,
     });
 
@@ -1523,6 +1609,7 @@ describe("Pending Game repository", () => {
       status: "pending",
       templateId: "default-adjective-noun-noun",
       rowCount: 15,
+      nudgeTimeoutHours: 48,
       participants: [
         {
           role: "creator",
@@ -1772,6 +1859,7 @@ describe("Pending Game repository", () => {
     await repository.createPendingGameFromHandle({
       creatorAccountId: creatorProfile.accountId,
       inviteeHandle: inviteeProfile.handle,
+      nudgeTimeoutHours: 48,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -1790,6 +1878,7 @@ describe("Pending Game repository", () => {
       status: "started",
       templateId: "default-adjective-noun-noun",
       rowCount: 15,
+      nudgeTimeoutHours: 48,
       participants: [
         {
           role: "creator",
@@ -2653,6 +2742,9 @@ class FakePendingGameQuery {
         creator_profile_id: this.insertedRow.creator_profile_id,
         expires_at: this.state.pendingGameExpiresAt,
         invitee_profile_id: this.insertedRow.invitee_profile_id,
+        ...(this.insertedRow.nudge_timeout_hours
+          ? { nudge_timeout_hours: this.insertedRow.nudge_timeout_hours }
+          : {}),
         row_count: this.insertedRow.row_count,
         status: "pending",
         template_id: "default-adjective-noun-noun",
@@ -2716,6 +2808,9 @@ class FakePendingGameQuery {
         pending_game_id: pendingGame.id,
         template_id: pendingGame.template_id,
         row_count: pendingGame.row_count,
+        ...(pendingGame.nudge_timeout_hours
+          ? { nudge_timeout_hours: pendingGame.nudge_timeout_hours }
+          : {}),
         status: "started",
         slot_allocation: createFakeSlotAllocation({
           creatorProfile: this.state.creatorProfile,

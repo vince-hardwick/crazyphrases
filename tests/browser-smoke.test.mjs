@@ -535,6 +535,7 @@ describe("solo browser smoke", () => {
 
     await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await assertTextVisible(
@@ -546,6 +547,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "@invitee-two");
     await assertTextVisible(page, "Invited");
     await assertTextVisible(page, "15 phrases");
+    await assertTextVisible(page, "Nudge after 3 days");
     await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Sign out" }).click();
@@ -1586,6 +1588,7 @@ async function assertProfileManagementSurfaceMounted(page) {
 async function assertNoPendingGameDom(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 0);
+  assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-summary]").count(), 0);
 }
 
@@ -1593,6 +1596,7 @@ async function assertPendingGameSurfaceMounted(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-row-count]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);
 }
 

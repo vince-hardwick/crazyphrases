@@ -1,0 +1,185 @@
+# 0019: Uploaded Avatar Storage Authority
+
+## Status
+
+Accepted. Source-controlled implementation and hosted storage configuration do
+not exist yet.
+
+## Context
+
+The current Account Profile implementation stores only a transitional built-in
+Avatar key. The next profile personalisation slice will replace that with the
+accepted Built-in Avatar key set and allow an account holder to use an Uploaded
+Avatar, which introduces user-supplied media storage, serving, deletion, and
+access control concerns that are not covered by the existing Account Profile /
+Handle Directory decision.
+
+The main alternatives are:
+
+- storing image bytes in Postgres;
+- committing uploaded assets into the static site deployment;
+- using a separate media service;
+- using Supabase Storage alongside the existing Supabase Auth and Postgres
+  signed-in boundary.
+
+## Decision
+
+Uploaded Avatar image bytes belong in Supabase Storage. Supabase Postgres remains
+the Account Profile and Handle Directory source of truth, storing only the
+avatar choice and the invite-safe reference or metadata needed to render an
+Avatar.
+
+Account Profile data should represent the current Avatar as an explicit Avatar
+descriptor rather than overloading the current built-in `avatar_key` string. The
+descriptor distinguishes Built-in Avatars from Uploaded Avatars. Built-in Avatar
+descriptors carry a project-provided avatar key; Uploaded Avatar descriptors
+carry an opaque Storage object path or equivalent opaque reference. The Handle
+Directory may expose the Avatar descriptor only while it remains invite-safe.
+Completed-game participant snapshots must preserve the Avatar descriptor used at
+play time rather than reading the latest live Account Profile when history is
+rendered.
+
+Browser-facing profile data must continue to avoid raw Supabase Auth user ids,
+email addresses, provider identities, service keys, secret storage details, and
+any storage authority value that would allow mutation outside the signed-in
+account holder's permitted path.
+
+Uploaded Avatars should be served from a public-read Supabase Storage bucket
+using opaque object paths that do not encode raw account ids, email addresses,
+provider identities, Handles, Gamer Names, or other account-identifying values.
+Read access is public because Avatars are game-facing display assets, while
+upload, replacement, and deletion authority remains restricted to the owning
+signed-in Account through Storage policies or an equivalent approved
+server-owned path.
+
+The accepted bucket name is `avatars`. First-slice Uploaded Avatar originals
+should use opaque object paths under the `uploaded/` prefix, such as
+`uploaded/{uuid}.{ext}`. The extension should match the accepted raster format
+after validation. The object path must not encode account identity; the Postgres
+ownership row is the authority for owner and lifecycle state.
+
+The first Uploaded Avatar slice accepts only raster JPEG, PNG, and WebP files.
+It rejects SVG, GIF, HEIC/HEIF, video, animated formats, and non-image uploads.
+Uploads are capped at 1 MiB, decoded image dimensions must be no larger than
+1024 x 1024 pixels, and decoded image dimensions must be at least 128 x 128
+pixels.
+
+The first slice uses stable user-facing validation and save messages:
+"Choose a JPEG, PNG, or WebP image.", "Choose an image smaller than 1 MB.",
+"Choose an image at least 128 by 128 pixels.", "Choose an image no larger than
+1024 by 1024 pixels.", "This image could not be read. Choose another file.",
+"Avatar could not be uploaded. Try again.", "Profile could not be saved. Your
+previous avatar is still active.", and "Profile saved."
+
+The first slice does not include image-content moderation, automated safety
+scanning, human review queues, report queues, or public-discovery safety
+workflows. Uploaded Avatars remain account-bound game-facing identity assets in
+existing signed-in profile and participant contexts.
+
+The first slice stores the original validated file bytes. It does not resize,
+crop, strip metadata, or transcode Uploaded Avatar files. Image processing,
+derivative generation, and metadata stripping remain separate future work.
+
+Selecting an Uploaded Avatar file is a local validation and preview action only.
+The browser must not upload the file to hosted Storage until the signed-in
+participant activates the explicit Save profile action. If upload or profile
+save fails, the previously saved Avatar remains active and the UI shows a clear
+failure state.
+
+If file upload succeeds but saving the Account Profile Avatar descriptor fails,
+the app should attempt best-effort cleanup of the newly uploaded object and any
+matching ownership metadata. Cleanup failure must not switch the active Avatar
+or falsely show success; it should leave the object marked or discoverable as
+abandoned for later lifecycle cleanup.
+
+#63 requires hosted Supabase validation before merge or promotion because it
+creates or depends on real Storage bucket, Storage policy, ownership metadata,
+and direct browser upload behaviour. Hosted validation remains approval-gated
+and should run in dev or test first. Production uploaded-avatar write smoke
+requires separate explicit approval.
+
+The first Uploaded Avatar slice does not store crop coordinates, generate
+derived cropped images, or add a crop-positioning UI. Uploaded Avatars may use a
+simple default fit within the Avatar frame until circular mask cropping is
+designed and implemented under #64.
+
+The first slice must render a basic Avatar preview in the existing Profile
+editor for both Built-in Avatars and Uploaded Avatars. Existing participant or
+profile identity surfaces should consume the Avatar descriptor where they
+already show avatar identity. The slice must not add new public profile pages,
+friend cards, leaderboard identity, or broader social surfaces.
+
+Anonymous users must not receive Uploaded Avatar controls, hidden file inputs,
+upload preview DOM, upload event wiring, or browser storage-upload paths.
+Uploaded Avatar controls belong only inside the signed-in Profile editor
+surface.
+
+Replacing the live Account Profile's Uploaded Avatar must not delete older
+uploaded objects that may still be referenced by completed-game participant
+snapshots. The first slice should upload the new object, save the new Avatar
+descriptor, and clean up only clearly unreferenced abandoned objects from failed
+or retried uploads where practical. Account-deletion media retention and broader
+garbage collection for historical Uploaded Avatars remain separate lifecycle
+decisions.
+
+Participants may remove the live Uploaded Avatar from their Account Profile by
+choosing and saving a Built-in Avatar. That changes the live Account Profile
+descriptor back to the selected Built-in Avatar but does not delete older
+uploaded objects that may still be referenced by completed-game participant
+snapshots.
+
+The first Uploaded Avatar slice should use direct authenticated browser uploads
+to Supabase Storage rather than adding an Edge Function or custom server upload
+path. The static browser client validates the file, uploads it as the signed-in
+Account, and then saves the Avatar descriptor to Postgres. Implementation must
+verify current Supabase Storage policy support before committing to exact policy
+SQL. If owner-scoped upload, replacement, and deletion cannot be enforced
+cleanly with opaque object paths, the slice must use a narrow approved fallback
+such as a server-owned upload path or companion ownership metadata instead of
+encoding account-identifying values in object paths.
+
+The uploaded-avatar schema should include a Postgres ownership row for each
+uploaded object. That row records the owning Account Profile, the opaque Storage
+object path or reference, and enough lifecycle metadata to distinguish current
+live-profile references, historical snapshot references, and clearly abandoned
+objects from failed or retried uploads. This ownership table is not a public
+directory surface; browser-facing Account Profile and Handle Directory data
+must expose only the invite-safe Avatar descriptor.
+
+No Supabase Storage bucket exists for uploaded avatars at decision time. Creating
+the bucket, changing Storage policies, or running hosted upload/write/cleanup
+smokes is a live hosted mutation and requires explicit owner approval or an
+accepted task-specific plan. Prefer authenticated Supabase MCP tooling for
+hosted bucket and policy work when it exposes the required operation; use the
+Supabase CLI as the fallback when MCP is unavailable for that operation.
+
+## Consequences
+
+- Postgres schema changes should model avatar representation and references,
+  not image bytes.
+- Built-in Avatars and Uploaded Avatars must coexist in Account Profile data and
+  in completed-game participant snapshots.
+- Code that still reads `avatar_key` is a transitional built-in Avatar
+  representation and should not become the long-term uploaded-media contract.
+- Uploaded Avatar URLs can be cached and rendered by static browser clients
+  without signed-URL refresh handling, but object paths must stay opaque and
+  mutation authority must remain owner-scoped.
+- The `avatars` bucket and `uploaded/{uuid}.{ext}` object path convention are
+  part of the first-slice storage contract.
+- #63 stores original validated files; later image processing must be introduced
+  through a separate decision or issue.
+- Image moderation and abuse handling are not solved by #63 and must be
+  revisited before Uploaded Avatars are used in public discovery surfaces.
+- Replacing a live profile Avatar must not break completed-game history that
+  snapshots an older Uploaded Avatar descriptor.
+- The default upload path is direct authenticated browser upload; adding a
+  server-owned upload path requires a concrete policy limitation or other
+  approved need.
+- Opaque Storage object paths should be paired with owner-scoped Postgres
+  metadata rather than encoding account identity into the path.
+- Storage policy design must be part of the uploaded-avatar slice, not a later
+  afterthought.
+- Local and fake Storage tests are necessary but insufficient; hosted validation
+  evidence must be recorded before claiming #63 complete.
+- Exact Supabase Storage commands and API calls must be verified against current
+  Supabase documentation during implementation.

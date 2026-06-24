@@ -323,13 +323,41 @@ Any human participant in the original game can unshare a shared phrase, removing
 
 Accounts have a globally unique handle for discovery, mentions, profile URLs, and disambiguation. Gamer names are changeable display names used in games and social surfaces.
 
-MVP profiles use gamer name, handle, and a generated/default avatar or a modest gallery of preset avatar assets. Uploaded profile pictures are not part of the first product shape.
+MVP profiles use gamer name, handle, and a built-in Avatar selected from a generated/default or modest project-provided visual set. The first shipped profile surface may store only a built-in Avatar key until avatar images are rendered, but the accepted Avatar model distinguishes Built-in Avatars from Uploaded Avatars. Uploaded Avatars are a follow-up profile-personalisation slice, not part of the first profile-management implementation.
+
+Uploaded Avatars accept only raster JPEG, PNG, and WebP image files. SVG, GIF, HEIC/HEIF, video, animated formats, and non-image uploads are out of scope for the first Uploaded Avatar slice. The first slice caps uploads at 1 MiB, requires decoded image dimensions no larger than 1024 x 1024 pixels, and rejects images smaller than 128 x 128 pixels.
+
+Uploaded Avatar validation and save states use these user-facing messages: invalid file type says "Choose a JPEG, PNG, or WebP image."; oversized file says "Choose an image smaller than 1 MB."; undersized image says "Choose an image at least 128 by 128 pixels."; oversized dimensions say "Choose an image no larger than 1024 by 1024 pixels."; unreadable or corrupt image says "This image could not be read. Choose another file."; upload failure says "Avatar could not be uploaded. Try again."; profile-save failure after upload says "Profile could not be saved. Your previous avatar is still active."; successful save says "Profile saved."
+
+The first Uploaded Avatar slice does not include image-content moderation, automated safety scanning, human review queues, report queues, or public-discovery safety workflows. Uploaded Avatars remain account-bound game-facing identity assets in existing signed-in profile and participant contexts.
+
+The first Uploaded Avatar slice stores the original validated image file under the accepted opaque Storage object path. It does not resize, crop, strip metadata, or transcode uploaded files. Later image-processing, derivative generation, and metadata-stripping work is separate from #63.
+
+Selecting an Uploaded Avatar file validates it and shows a local preview only. The app must not upload the file to hosted Storage until the participant activates the explicit Save profile action. If upload or profile save fails, the previously saved Avatar remains active and the UI shows a clear failure state.
+
+If the file upload succeeds but saving the Account Profile Avatar descriptor fails, the app should attempt best-effort cleanup of the newly uploaded object and any matching ownership metadata. Cleanup failure must not switch the active Avatar or falsely show success; it leaves an abandoned-object cleanup concern for later lifecycle work.
+
+The first Uploaded Avatar slice requires hosted Supabase validation before merge or promotion, because it creates or depends on real Storage bucket, Storage policy, ownership metadata, and direct browser upload behaviour. Hosted validation remains approval-gated and should run in dev or test first; production uploaded-avatar write smoke requires separate explicit approval.
+
+The first Uploaded Avatar slice does not include crop positioning, crop metadata, or derived cropped-image generation. Uploaded Avatars may use a simple default fit within the Avatar frame until circular mask cropping is designed and implemented under #64.
+
+The first Uploaded Avatar slice must render a basic Avatar preview in the existing Profile editor for both Built-in Avatars and Uploaded Avatars, and existing participant or profile identity surfaces should consume the Avatar descriptor where they already show avatar identity. It must not add new public profile pages, friend cards, leaderboard identity, or broader social surfaces.
+
+Anonymous users must not receive Uploaded Avatar controls, hidden file inputs, upload preview DOM, upload event wiring, or browser storage-upload paths. Uploaded Avatar controls belong only inside the signed-in Profile editor surface.
+
+The first Uploaded Avatar slice should introduce visible Built-in Avatar images using the owner-managed Font Awesome Kit `613901cfcc`. The accepted Built-in Avatar product keys are `dice`, `hat-wizard`, `gamepad`, `ghost`, `puzzle-piece`, `biohazard`, `dragon`, `hurricane`, `jedi`, `pizza-slice`, `spaghetti-monster-flying`, `user-astronaut`, and `yin-yang`; each maps to the Classic Font Awesome icon with the same name, using Classic Solid when available and Classic Regular only as a per-icon fallback when Solid is unavailable. Crazy Phrases Avatar keys remain stable product/storage keys, while Font Awesome family/style/icon classes are rendering metadata. The slice should subset the Kit where practical and verify that Built-in Avatar previews render in local, dev, and test environments.
+
+The first Uploaded Avatar slice treats the old transitional built-in keys `spark`, `paper`, `moon`, `star`, `comet`, and `kite` as legacy-only. Migrating to the accepted Built-in Avatar set maps `spark` to `dice`, `paper` to `puzzle-piece`, `moon` to `yin-yang`, `star` to `user-astronaut`, `comet` to `hurricane`, and `kite` to `dragon`; unknown or invalid built-in keys fall back to `dice`.
 
 MVP accounts have one active gamer profile. Multiple personas or profiles per account are deferred.
 
-The Account Profile / Handle Directory is a signed-in discovery surface. Handle lookup must not be available to anonymous visitors, and it must not expose email addresses, provider identities, or raw authentication user ids. Browser-facing lookup returns invite-safe profile data such as directory profile id, handle, gamer name, and avatar.
+The Account Profile / Handle Directory is a signed-in discovery surface. Handle lookup must not be available to anonymous visitors, and it must not expose email addresses, provider identities, raw authentication user ids, or non-opaque uploaded-avatar storage identifiers. Browser-facing lookup returns invite-safe profile data such as directory profile id, handle, gamer name, and Avatar descriptor.
 
-Completed games snapshot the participant gamer name and avatar display used at the time of play. Current profiles and new games use the latest gamer name and avatar. Handles remain the stable disambiguator while the account exists.
+Completed games snapshot the participant gamer name and Avatar descriptor used at the time of play. Current profiles and new games use the latest gamer name and Avatar. Handles remain the stable disambiguator while the account exists.
+
+Replacing the current Uploaded Avatar must not break completed-game history that already snapshots an older Uploaded Avatar descriptor. The first Uploaded Avatar slice should clean up clearly abandoned objects from failed or retried uploads where practical, but it must not delete older uploaded objects merely because the live Account Profile now points at a different Avatar. Account-deletion media retention and broader uploaded-avatar garbage collection remain separate lifecycle decisions.
+
+Participants may remove the live Uploaded Avatar from their Account Profile by choosing and saving a Built-in Avatar. This switches the live Account Profile descriptor back to the selected Built-in Avatar without deleting older uploaded objects that may still be referenced by completed-game snapshots.
 
 ### Friends
 

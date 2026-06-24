@@ -1,11 +1,11 @@
-# Supabase Auth and Postgres Runbook
+# Supabase Auth, Storage, and Postgres Runbook
 
 ## Purpose
 
 This runbook owns operational details for the Supabase project selected by ADR
-0010. Use it when configuring Supabase Auth, applying database migrations,
-generating types, deploying Edge Functions, or validating hosted signed-in
-behaviour.
+0010. Use it when configuring Supabase Auth, creating or changing Supabase
+Storage buckets and policies, applying database migrations, generating types,
+deploying Edge Functions, or validating hosted signed-in behaviour.
 
 Hosted migration application records, schema verification evidence, deployment
 smoke notes, and historical hosted-state observations live in
@@ -65,6 +65,8 @@ Requires explicit user approval or a task-specific accepted plan:
 
 - applying database migrations;
 - executing SQL that writes data or changes schema;
+- creating or changing Supabase Storage buckets or Storage policies;
+- uploading, replacing, deleting, or cleaning up hosted Storage objects;
 - creating, rebasing, merging, resetting, or deleting Supabase branches;
 - deploying or modifying Edge Functions;
 - changing Auth configuration;
@@ -383,6 +385,76 @@ The hosted Google provider is configured and has been validated in `dev`; see
 `docs/planning/supabase-state-ledger.md` for the dated provider and smoke
 evidence.
 
+## Uploaded Avatar Storage
+
+ADR 0019 selects Supabase Storage as the media authority for Uploaded Avatar
+image bytes. Supabase Postgres remains the Account Profile and Handle Directory
+source of truth and should store only the avatar choice plus the invite-safe
+reference or metadata needed to render an Avatar.
+
+No uploaded-avatar Storage bucket exists at the time ADR 0019 is accepted.
+Creating the bucket, changing Storage policies, uploading hosted avatar
+fixtures, or cleaning up hosted avatar objects is a live hosted mutation and
+requires explicit owner approval or an accepted task-specific plan.
+
+The uploaded-avatar bucket should be public-read, with owner-scoped upload,
+replacement, and deletion authority. Object paths must be opaque and must not
+encode raw Supabase Auth user ids, email addresses, provider identities,
+Handles, Gamer Names, or other account-identifying values.
+
+The accepted bucket name is `avatars`. First-slice Uploaded Avatar originals
+should use opaque object paths under `uploaded/`, with the shape
+`uploaded/{uuid}.{ext}`. The file extension should match the accepted raster
+format after validation. Ownership and lifecycle state belong in the private
+Postgres ownership row, not in the object path.
+
+#63 stores the original validated file bytes. It does not resize, crop, strip
+metadata, or transcode Uploaded Avatar files before storage. If later work adds
+image processing, verify the processing service, metadata policy, and hosted
+mutation path before changing this runbook.
+
+Selecting an Uploaded Avatar file in the browser must remain local validation
+and preview only. Hosted Storage upload should happen only after the signed-in
+participant activates Save profile. A failed upload or profile save must leave
+the previously saved Avatar active.
+
+If upload succeeds but the Account Profile Avatar descriptor save fails, the app
+should attempt best-effort cleanup of the newly uploaded object and matching
+ownership metadata. Cleanup failure must not report profile-save success; it
+should leave the object marked or discoverable as abandoned for a later cleanup
+path.
+
+The first Uploaded Avatar implementation should use direct authenticated browser
+uploads to Supabase Storage. Add an Edge Function or custom server upload path
+only when current Supabase Storage policy support cannot enforce the accepted
+owner-scoped mutation model with opaque object paths, or when another
+task-specific approved requirement justifies the extra backend surface.
+
+Uploaded Avatar object paths should be paired with a private Postgres ownership
+row that records the owning Account Profile and object lifecycle metadata. Do
+not expose that ownership table as a browser-facing directory surface; signed-in
+browser profile and Handle Directory reads should still receive only the
+invite-safe Avatar descriptor.
+
+For hosted Storage bucket and policy work, prefer authenticated Supabase MCP
+tooling when it exposes the required operation. Use or install/invoke the
+Supabase CLI only when MCP is unavailable for that Storage operation or when the
+task needs CLI-only local repository work. Verify exact Supabase Storage command
+and API shapes against current Supabase documentation during implementation
+instead of relying on remembered syntax.
+
+Hosted uploaded-avatar smoke evidence and cleanup records belong in
+`docs/planning/supabase-state-ledger.md`.
+
+Before merging or promoting #63, run an explicitly approved hosted dev/test
+validation that creates or verifies the `avatars` bucket and policies, signs in
+as a test account, uploads a valid small avatar, saves the Avatar descriptor,
+reloads and verifies rendering, switches back to a Built-in Avatar, verifies
+the previous uploaded object/history rule is not violated, and cleans up test
+account/profile/object rows where safe. Record evidence and cleanup results in
+`docs/planning/supabase-state-ledger.md`. Production uploaded-avatar write smoke
+requires separate explicit approval.
+
 For email sign-in, the current hosted app sends Supabase email magic links. It
 does not yet implement an in-app six-digit OTP entry flow.
 
@@ -469,6 +541,13 @@ table grants, signed-in profile lookup, and owner-only create/update policies.
 Browser-facing handle lookup should select only invite-safe profile columns such
 as `profile_id`, `handle`, `gamer_name`, and `avatar_key`; it must not expose
 email addresses or raw Supabase Auth user ids.
+
+The #63 Uploaded Avatar migration treats existing `avatar_key` values as a
+transitional built-in Avatar representation. Legacy keys map into the accepted
+Font Awesome Built-in Avatar set as follows: `spark` to `dice`, `paper` to
+`puzzle-piece`, `moon` to `yin-yang`, `star` to `user-astronaut`, `comet` to
+`hurricane`, and `kite` to `dragon`; unknown or invalid built-in keys fall back
+to `dice`.
 
 Hosted application and verification evidence for this migration is recorded in
 `docs/planning/supabase-state-ledger.md`.

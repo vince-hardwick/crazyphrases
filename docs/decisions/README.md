@@ -22,6 +22,8 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0016-creator-controlled-multiplayer-cancellation.md` - creator-only Pending/Started Game cancellation authority, notification targets, and cancelled-game inactivity boundary.
 - `0017-pending-game-invite-expiry.md` - seven-day Pending Game invite expiry, effective expired status, and stale-action authority boundary.
 - `0018-dashboard-triggered-nudge-generation.md` - database-owned in-app nudge generation during dashboard refresh.
+- `0019-uploaded-avatar-storage-authority.md` - Supabase Storage authority for Uploaded Avatar image bytes and hosted storage mutation boundaries.
+- `0020-font-awesome-kit-for-built-in-avatars.md` - Font Awesome Kit integration boundary for Built-in Avatar visuals.
 
 ## Status Values
 

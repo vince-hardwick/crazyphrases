@@ -221,8 +221,16 @@ A human participant's game-facing display name, kept separate from account ident
 _Avoid_: Real name, email, username
 
 **Avatar**:
-A generated or default visual marker for an account holder in games and social surfaces.
-_Avoid_: Uploaded profile picture, social profile photo
+A game-facing visual marker for an account holder in games and social surfaces.
+_Avoid_: Profile picture, social profile photo
+
+**Built-in Avatar**:
+An Avatar selected from the Crazy Phrases-provided visual set.
+_Avoid_: Preset key, icon name, emoji name
+
+**Uploaded Avatar**:
+An Avatar supplied by the account holder as an uploaded image.
+_Avoid_: Profile picture, social profile photo
 
 **Handle**:
 A globally unique account-facing identifier used for discovery, mentions, profile URLs, and disambiguation.

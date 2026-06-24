@@ -68,6 +68,9 @@ const completedMultiplayerHistoryPaginationMigrationUrl = findMigrationUrl(
 const pendingGameInviteExpiryMigrationUrl = findMigrationUrl(
   "pending_game_invite_expiry",
 );
+const nudgeTimeoutFoundationMigrationUrl = findMigrationUrl(
+  "nudge_timeout_foundation",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1314,6 +1317,127 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /target_pending_game\.expires_at <= pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant update .* on table public\.pending_games to authenticated/i,
+    );
+  });
+
+  it("adds dashboard-triggered nudge timeout generation without browser insert authority", () => {
+    assert.equal(existsSync(nudgeTimeoutFoundationMigrationUrl), true);
+
+    const migration = readFileSync(
+      nudgeTimeoutFoundationMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /alter table public\.pending_games\s+add column if not exists nudge_timeout_hours integer/,
+    );
+    assert.match(
+      migration,
+      /alter table public\.pending_games\s+alter column nudge_timeout_hours set default 48/,
+    );
+    assert.match(
+      migration,
+      /nudge_timeout_hours in \(24, 48, 72, 168\)/,
+    );
+    assert.match(
+      migration,
+      /alter table public\.games\s+add column if not exists nudge_timeout_hours integer/,
+    );
+    assert.match(
+      migration,
+      /new\.nudge_timeout_hours = pending_game\.nudge_timeout_hours/,
+    );
+    assert.match(
+      migration,
+      /grant select \(id, pending_game_id, creator_account_id, creator_profile_id, invitee_profile_id, template_id, row_count, nudge_timeout_hours, status, created_at, updated_at\)\s+on table public\.games\s+to authenticated/,
+    );
+
+    assert.match(
+      migration,
+      /alter table public\.game_section_assignments\s+add column if not exists available_at timestamp with time zone/,
+    );
+    assert.match(
+      migration,
+      /create index if not exists game_section_assignments_available_nudge_idx\s+on public\.game_section_assignments \(available_at\)\s+where status = 'active'\s+and available_at is not null/,
+    );
+    assert.match(
+      migration,
+      /case\s+when assigned_section\.participant_section_index = 0 then pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)\s+else null\s+end/,
+    );
+    assert.match(
+      migration,
+      /set available_at = coalesce\(next_assignment\.available_at, pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)\)/,
+    );
+
+    assert.match(
+      migration,
+      /alter table public\.in_app_notifications\s+add column if not exists target_assignment_id uuid/,
+    );
+    assert.match(
+      migration,
+      /foreign key \(target_assignment_id, target_game_id\)\s+references public\.game_section_assignments \(id, game_id\)/,
+    );
+    assert.match(
+      migration,
+      /notification_type in \('entries_needed', 'batch_complete', 'game_cancelled', 'nudge'\)/,
+    );
+    assert.match(
+      migration,
+      /notification_type <> 'nudge'/,
+    );
+    assert.match(
+      migration,
+      /create unique index if not exists in_app_notifications_nudge_assignment_unique\s+on public\.in_app_notifications \(target_game_id, target_assignment_id, account_id, notification_type\)\s+where target_game_id is not null\s+and target_assignment_id is not null\s+and notification_type = 'nudge'/,
+    );
+
+    assert.match(
+      migration,
+      /create or replace function private\.create_overdue_nudge_notifications\(\s*target_account_id uuid\s*\)/,
+    );
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(
+      migration,
+      /assignment\.available_at \+ pg_catalog\.make_interval\(hours => pending_game\.nudge_timeout_hours\)\s+<= pg_catalog\.timezone\('utc', pg_catalog\.now\(\)\)/,
+    );
+    assert.match(
+      migration,
+      /private\.current_game_section_assignment\(\s*assignment\.game_id,\s*assignment\.participant_profile_id\s*\)/,
+    );
+    assert.match(
+      migration,
+      /'nudge',\s+'unread'/,
+    );
+    assert.match(
+      migration,
+      /private\.multiplayer_participant_message\(\s*assignment\.game_id,\s*'A batch is waiting for your entries with'\s*\)/,
+    );
+    assert.match(migration, /on conflict do nothing/);
+    for (const role of ["public", "anon", "authenticated"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.create_overdue_nudge_notifications\\(uuid\\)\\s+from ${role}`,
+        ),
+      );
+    }
+
+    assert.match(
+      migration,
+      /perform private\.create_overdue_nudge_notifications\(dashboard_account_id\)/,
+    );
+    assert.match(
+      migration,
+      /notification_type in \('entries_needed', 'nudge'\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant insert .*on table public\.in_app_notifications to authenticated/i,
     );
     assert.doesNotMatch(
       migration,

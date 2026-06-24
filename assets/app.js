@@ -158,6 +158,7 @@ let saveBatchButton = null;
 let pendingGamePanel = null;
 let pendingGameHandleInput = null;
 let pendingGameRowCountSelect = null;
+let pendingGameNudgeTimeoutSelect = null;
 let pendingGameStatus = null;
 let pendingGameSummary = null;
 let pendingGameIncomingList = null;
@@ -910,6 +911,20 @@ function ensurePendingGamePanel() {
     pendingGameRowCountSelect.append(option);
   }
 
+  const nudgeTimeoutLabel = document.createElement("label");
+  nudgeTimeoutLabel.className = "pending-game-field";
+  nudgeTimeoutLabel.textContent = "Nudge after";
+
+  pendingGameNudgeTimeoutSelect = document.createElement("select");
+  pendingGameNudgeTimeoutSelect.dataset.pendingGameNudgeTimeout = "";
+  for (const nudgeTimeoutHours of [24, 48, 72, 168]) {
+    const option = document.createElement("option");
+    option.value = String(nudgeTimeoutHours);
+    option.textContent = formatNudgeTimeoutHours(nudgeTimeoutHours);
+    option.selected = nudgeTimeoutHours === 48;
+    pendingGameNudgeTimeoutSelect.append(option);
+  }
+
   const submitButton = document.createElement("button");
   submitButton.className = "primary-button pending-game-submit";
   submitButton.type = "submit";
@@ -941,7 +956,8 @@ function ensurePendingGamePanel() {
   heading.append(kicker, title);
   handleLabel.append(pendingGameHandleInput);
   rowCountLabel.append(pendingGameRowCountSelect);
-  form.append(handleLabel, rowCountLabel, submitButton);
+  nudgeTimeoutLabel.append(pendingGameNudgeTimeoutSelect);
+  form.append(handleLabel, rowCountLabel, nudgeTimeoutLabel, submitButton);
   pendingGamePanel.append(
     heading,
     form,
@@ -960,6 +976,7 @@ function removePendingGamePanel() {
   pendingGamePanel = null;
   pendingGameHandleInput = null;
   pendingGameRowCountSelect = null;
+  pendingGameNudgeTimeoutSelect = null;
   pendingGameStatus = null;
   pendingGameSummary = null;
   pendingGameIncomingList = null;
@@ -984,6 +1001,7 @@ async function createPendingGameInvite(event) {
     const pendingGame = await pendingGameRepository.createPendingGameFromHandle({
       creatorAccountId: accountShell.accountId,
       inviteeHandle: pendingGameHandleInput.value,
+      nudgeTimeoutHours: Number(pendingGameNudgeTimeoutSelect.value),
       rowCount: Number(pendingGameRowCountSelect.value),
     });
     const invitee = pendingGame.participants.find(
@@ -1076,13 +1094,24 @@ function renderPendingGameCard(
   state.className = "pending-game-row-count";
   state.textContent = getPendingGameStateLabel(pendingGame);
 
+  const nudgeTimeout = document.createElement("p");
+  nudgeTimeout.className = "pending-game-row-count";
+  nudgeTimeout.textContent = pendingGame.nudgeTimeoutHours
+    ? `Nudge after ${formatNudgeTimeoutHours(pendingGame.nudgeTimeoutHours)}`
+    : "";
+
   const participantList = document.createElement("ul");
   participantList.className = "pending-game-participants";
   participantList.replaceChildren(
     ...pendingGame.participants.map(renderPendingGameParticipant),
   );
 
-  card.append(rowCount, state, participantList);
+  card.append(
+    rowCount,
+    state,
+    ...(pendingGame.nudgeTimeoutHours ? [nudgeTimeout] : []),
+    participantList,
+  );
 
   const invitee = pendingGame.participants.find(
     (participant) => participant.role === "invitee",
@@ -1141,6 +1170,18 @@ function getPendingGameStateLabel(pendingGame) {
   }
 
   return "Waiting for responses";
+}
+
+function formatNudgeTimeoutHours(nudgeTimeoutHours) {
+  if (nudgeTimeoutHours === 24) {
+    return "1 day";
+  }
+
+  if (nudgeTimeoutHours % 24 === 0) {
+    return `${nudgeTimeoutHours / 24} days`;
+  }
+
+  return `${nudgeTimeoutHours} hours`;
 }
 
 function renderPendingGameCancelActions(pendingGame) {

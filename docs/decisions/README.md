@@ -21,6 +21,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0015-participant-section-multiplayer-execution.md` - participant-section multiplayer execution, participant-scoped Reveal, and in-app notification lifecycle boundary.
 - `0016-creator-controlled-multiplayer-cancellation.md` - creator-only Pending/Started Game cancellation authority, notification targets, and cancelled-game inactivity boundary.
 - `0017-pending-game-invite-expiry.md` - seven-day Pending Game invite expiry, effective expired status, and stale-action authority boundary.
+- `0018-dashboard-triggered-nudge-generation.md` - database-owned in-app nudge generation during dashboard refresh.
 
 ## Status Values
 

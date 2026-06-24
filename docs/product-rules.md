@@ -352,19 +352,26 @@ for ADR 0015 lets signed-in participants submit their own assigned sections,
 wait for other participant entries, receive in-app notifications, and reveal a
 completed multiplayer batch for themselves after all sections are submitted.
 The current MVP invite UI includes creator cancellation for Pending Games
-before start and unrevealed Started Games, plus seven-day Pending Game invite
-expiry. It still does not add Share Consent, friends, nudges, or public
-discovery. The historical first Started Game turn-submission slice added global
+before start and unrevealed Started Games, seven-day Pending Game invite
+expiry, and configurable in-app nudge timeouts. It still does not add Share
+Consent, friends, manual pokes, or public discovery. The historical first
+Started Game turn-submission slice added global
 active Turn storage and submission only; current multiplayer execution is
 governed by the participant-section model in ADR 0015.
 
 ### Nudges
 
-A nudge is an automatic reminder based on a game's configured inactivity timeout. Manual participant-triggered pokes are not part of the first notification model.
+A nudge is an automatic reminder based on a game's configured inactivity
+timeout. The MVP creates nudges only for the assigned participant whose current
+incomplete section is overdue. Manual participant-triggered pokes are not part
+of the first notification model.
 
 ### Nudge timeout
 
-Nudge timeout is configured per game during setup from a small set of allowed values. Each account may mute its own notifications without changing the game's shared inactivity timeout.
+Nudge timeout is configured per game during setup from 1 day, 2 days, 3 days,
+or 7 days. The configured timeout is copied from Pending Game setup into the
+Started Game. Each account may later mute its own notifications without
+changing the game's shared inactivity timeout.
 
 ### Notification delivery
 
@@ -381,8 +388,14 @@ the completed batch and Reveal action; other participants receive it unread.
 When the Game Creator cancels a Pending Game or unrevealed Started Game,
 accepted participants other than the creator receive an unread cancellation
 notification. If the cancelled Game had earlier entry-needed notifications,
-those notifications are marked read so stale entry prompts do not remain
-unread.
+or nudge notifications, those notifications are marked read so stale prompts do
+not remain unread.
+
+Nudge notifications are durable in-app notification rows. The MVP generates
+overdue nudges opportunistically during authenticated Multiplayer dashboard
+refresh, using database-owned logic for participant scoping, timeout checks,
+and de-duplication by Started Game, Account, and assigned section. Browser
+clients do not receive direct insert authority for nudge notifications.
 
 Viewing notification items in the top-bar notification dropdown marks them
 read. Read notifications remain listed. No notification is created for a
@@ -443,7 +456,7 @@ Reveal is blocked.
 Cancellation notifies accepted participants other than the creator. Pre-start
 Pending Game cancellation notifications target the Pending Game; Started Game
 cancellation notifications target the Started Game and supersede earlier
-entry-needed notifications by marking those older prompts read.
+entry-needed and nudge notifications by marking those older prompts read.
 
 ### Entry validation
 

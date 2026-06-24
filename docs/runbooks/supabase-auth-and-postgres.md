@@ -642,6 +642,32 @@ of requiring a cron job or read-time database mutation. Hosted application of
 this migration remains a live backend mutation requiring explicit owner
 approval or the documented deployment workflow gate.
 
+The dashboard-triggered nudge timeout foundation migration is:
+
+```text
+supabase/migrations/20260624103000_nudge_timeout_foundation.sql
+```
+
+The nudge migration adds `nudge_timeout_hours` to `public.pending_games` and
+`public.games`, constrained to 24, 48, 72, or 168 hours, with 48 hours as the
+default. It adds `available_at` to `public.game_section_assignments` so the
+database can measure inactivity for the current participant-local section,
+adds `target_assignment_id` to `public.in_app_notifications`, and introduces
+`nudge` as a notification type with de-duplication by Started Game, Account,
+and assigned section.
+
+Nudge creation is database-owned. The private
+`private.create_overdue_nudge_notifications(uuid)` helper checks the current
+assigned section, timeout, participant Account, and existing notification rows,
+then inserts at most one in-app nudge for that section. The public
+`public.list_multiplayer_dashboard()` RPC invokes that private helper before
+returning the dashboard, so it is intentionally a mutating dashboard refresh
+path rather than a read-only/stable function. Browser clients do not receive
+direct insert authority for notifications or update authority on
+`public.pending_games`. Hosted application of this migration remains a live
+backend mutation requiring explicit owner approval or the documented deployment
+workflow gate.
+
 The completed multiplayer history migration is:
 
 ```text
@@ -744,8 +770,8 @@ assets/pending-game.js
 `createSupabasePendingGameRepository({ supabase })` accepts an already created
 Supabase browser client. The browser-facing repository can:
 
-- create a Pending Game from a creator Account id, invitee Handle, and row
-  count;
+- create a Pending Game from a creator Account id, invitee Handle, row count,
+  and nudge timeout;
 - list Pending Games created by the signed-in Account;
 - list incoming Pending Game invites for the signed-in Account Profile;
 - accept an incoming Pending Game invite;
@@ -758,8 +784,9 @@ Supabase browser client. The browser-facing repository can:
 
 Creation resolves the creator through `public.account_profiles`, resolves the
 invitee through `public.account_profile_directory`, inserts one
-`public.pending_games` row, and loads trigger-created
-`public.pending_game_participants` rows for the browser-safe DTO.
+`public.pending_games` row with the selected `nudge_timeout_hours`, and loads
+trigger-created `public.pending_game_participants` rows for the browser-safe
+DTO.
 
 Invitee response mutation updates only the invitee participant row's
 `account_id` and `invite_status` under Row Level Security and column-level
@@ -775,7 +802,8 @@ Game-start conversion inserts one `public.games` row with only
 `pending_game_id`. The database owns eligibility checks, Pending Game terminal
 status, participant snapshot creation, and resolved random setup storage. The
 repository returns a browser-safe Started Game shell that confirms setup is
-resolved without exposing hidden Slot Allocation or Slot Order details.
+resolved and carries the copied nudge timeout without exposing hidden Slot
+Allocation or Slot Order details.
 
 Creator cancellation calls `public.cancel_created_game(uuid)` and returns a
 browser-safe cancelled Pending Game DTO. Cancellation preserves records, hides
@@ -796,8 +824,9 @@ unexpired Pending Game, and renders ADR 0015 participant-section Multiplayer
 buckets for signed-in participants. The browser calls the repository methods
 for dashboard reads, participant-section submission, participant-scoped Reveal,
 notification listing, notification read-status updates, and creator
-cancellation. It does not request Share Consent, manage friends, send nudges,
-or publish to discovery surfaces.
+cancellation. Dashboard reads may create overdue in-app nudge notifications
+through the database-owned RPC path. The browser does not request Share
+Consent, manage friends, send manual pokes, or publish to discovery surfaces.
 
 As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
 for multiplayer work. The source-controlled `game_turns` and

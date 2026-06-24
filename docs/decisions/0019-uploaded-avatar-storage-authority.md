@@ -4,10 +4,10 @@
 
 Accepted. Source-controlled #63 implementation exists on the Uploaded Avatar
 branch, and the hosted `avatars` Storage bucket, ownership metadata, and
-Storage policies have been applied after explicit owner approval. Hosted
-browser upload/write/cleanup smoke in `dev` or `test` is still required before
-merge or promotion, and production uploaded-avatar write smoke remains
-separately approval-gated.
+Storage policies have been applied after explicit owner approval. The branch
+deployment to `dev` has passed hosted browser upload/write/reload/restore
+validation through the real Storage bucket. Production uploaded-avatar write
+smoke remains separately approval-gated.
 
 ## Context
 

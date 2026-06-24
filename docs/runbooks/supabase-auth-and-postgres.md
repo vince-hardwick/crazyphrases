@@ -825,8 +825,15 @@ buckets for signed-in participants. The browser calls the repository methods
 for dashboard reads, participant-section submission, participant-scoped Reveal,
 notification listing, notification read-status updates, and creator
 cancellation. Dashboard reads may create overdue in-app nudge notifications
-through the database-owned RPC path. The browser does not request Share
-Consent, manage friends, send manual pokes, or publish to discovery surfaces.
+through the database-owned RPC path. The source-controlled nudge timeout
+surface is
+`supabase/migrations/20260624103000_nudge_timeout_foundation.sql`, followed by
+`supabase/migrations/20260624104500_fix_nudge_notification_assignment_fk_index.sql`.
+Fresh environments should apply both in order; the corrective migration replaces
+the initial single-column `target_assignment_id` notification index with the
+`(target_assignment_id, target_game_id)` index required by the composite
+assigned-section FK. The browser does not request Share Consent, manage
+friends, send manual pokes, or publish to discovery surfaces.
 
 As of 2026-06-18, ADR 0015 supersedes the global active-Turn sequencing model
 for multiplayer work. The source-controlled `game_turns` and

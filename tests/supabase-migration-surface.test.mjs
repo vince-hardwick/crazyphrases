@@ -71,6 +71,9 @@ const pendingGameInviteExpiryMigrationUrl = findMigrationUrl(
 const nudgeTimeoutFoundationMigrationUrl = findMigrationUrl(
   "nudge_timeout_foundation",
 );
+const fixNudgeNotificationAssignmentFkIndexMigrationUrl = findMigrationUrl(
+  "fix_nudge_notification_assignment_fk_index",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1442,6 +1445,27 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       migration,
       /grant update .* on table public\.pending_games to authenticated/i,
+    );
+  });
+
+  it("covers the nudge notification assignment foreign key in column order", () => {
+    assert.equal(
+      existsSync(fixNudgeNotificationAssignmentFkIndexMigrationUrl),
+      true,
+    );
+
+    const migration = readFileSync(
+      fixNudgeNotificationAssignmentFkIndexMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /create index if not exists in_app_notifications_target_assignment_game_idx\s+on public\.in_app_notifications \(target_assignment_id, target_game_id\)\s+where target_assignment_id is not null\s+and target_game_id is not null/,
+    );
+    assert.match(
+      migration,
+      /drop index if exists public\.in_app_notifications_target_assignment_id_idx/,
     );
   });
 

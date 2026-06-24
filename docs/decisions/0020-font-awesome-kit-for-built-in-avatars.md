@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted. Source-controlled implementation does not exist yet.
+Accepted. Source-controlled #63 implementation renders Built-in Avatar previews
+with the Font Awesome Kit-compatible Classic Solid icon classes. The app loads
+the hosted Kit dynamically on non-localhost origins; local browser smoke tests
+verify stable markup and Avatar behaviour without requiring the owner-managed
+Kit to allow every local test origin.
 
 ## Context
 
@@ -28,7 +32,9 @@ The first Uploaded Avatar slice should introduce Built-in Avatar visuals through
 the owner's Font Awesome Kit `613901cfcc`.
 
 Use the hosted SVG+JS Kit script in the static app rather than adding Font
-Awesome npm packages or downloading/self-hosting the Kit in this slice:
+Awesome npm packages or downloading/self-hosting the Kit in this slice. The
+source implementation may inject this script dynamically so local automated
+tests do not fail when the owner-managed Kit blocks a local origin:
 
 ```html
 <script src="https://kit.fontawesome.com/613901cfcc.js" crossorigin="anonymous"></script>
@@ -94,8 +100,9 @@ preview must expose the selected Avatar label to assistive technology.
 
 - The static app gains a hosted third-party runtime dependency on
   `kit.fontawesome.com` for Built-in Avatar rendering.
-- Browser smoke tests for #63 must verify that the Kit loads and Built-in
-  Avatar previews render in local/dev/test where practical.
+- Browser smoke tests for #63 must verify stable Built-in Avatar markup and
+  behaviour locally, and must verify that the Kit loads and icons render in
+  hosted `dev`/`test` where practical.
 - Built-in Avatar visuals should remain stable across routine deployments; Font
   Awesome version upgrades must be intentional rather than automatic.
 - If a strict Content Security Policy is introduced later, it must explicitly

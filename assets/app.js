@@ -1,5 +1,8 @@
 import {
+  BUILT_IN_AVATAR_KEYS,
+  DEFAULT_BUILT_IN_AVATAR_KEY,
   createAccountShell,
+  createBuiltInAvatarDescriptor,
   createSignedOutShell,
 } from "./account-shell.js?v=__ASSET_VERSION__";
 import {
@@ -31,6 +34,11 @@ import {
   createSupabaseAccountProfileRepository,
 } from "./account-profile.js?v=__ASSET_VERSION__";
 import {
+  createLocalTestAvatarStorageRepository,
+  createSupabaseAvatarStorageRepository,
+  createUploadedAvatarObjectPath,
+} from "./avatar-storage.js?v=__ASSET_VERSION__";
+import {
   createLocalTestSignedInSoloGameRepository,
   createSupabaseSignedInSoloGameRepository,
 } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
@@ -48,7 +56,26 @@ import {
 } from "./pending-game.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
+const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
 const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
+const AVATAR_UPLOAD_MAX_BYTES = 1024 * 1024;
+const AVATAR_UPLOAD_MIN_DIMENSION = 128;
+const AVATAR_UPLOAD_MAX_DIMENSION = 1024;
+const AVATAR_UPLOAD_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const AVATAR_UPLOAD_COPY = {
+  invalidType: "Choose a JPEG, PNG, or WebP image.",
+  oversizedFile: "Choose an image smaller than 1 MB.",
+  undersizedImage: "Choose an image at least 128 by 128 pixels.",
+  oversizedDimensions: "Choose an image no larger than 1024 by 1024 pixels.",
+  unreadableImage: "This image could not be read. Choose another file.",
+  uploadFailure: "Avatar could not be uploaded. Try again.",
+  saveFailureAfterUpload:
+    "Profile could not be saved. Your previous avatar is still active.",
+};
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
@@ -116,6 +143,12 @@ const localTestPrivateFavouritesRepository =
   createLocalTestPrivateFavouritesRepository(window.localStorage, {
     failureMode: getLocalTestPrivateFavouritesFailureMode(),
   });
+const localTestAvatarStorageRepository = createLocalTestAvatarStorageRepository(
+  window.localStorage,
+  {
+    failureMode: getLocalTestAvatarStorageFailureMode(),
+  },
+);
 let signedInGameSession = localTestSignedInGameSession;
 let privateFavouritesRepository = localTestPrivateFavouritesRepository;
 const localTestProfiles = [
@@ -152,6 +185,7 @@ const localTestPendingGameRepository = createLocalTestPendingGameRepository({
 });
 let pendingGameRepository = localTestPendingGameRepository;
 let accountProfileRepository = localTestAccountProfileRepository;
+let avatarStorageRepository = localTestAvatarStorageRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
 let saveBatchButton = null;
@@ -171,10 +205,13 @@ let multiplayerDashboard = createEmptyMultiplayerDashboard();
 let completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
 let inAppNotifications = [];
 let accountProfilePanel = null;
+let accountProfileDraftAvatar = null;
+let accountProfilePreviewRequestId = 0;
 let favouritesPanel = null;
 let favouritesStatus = null;
 let phraseFavouritesList = null;
 
+loadFontAwesomeKit();
 loadWordBank();
 renderAccountShell(accountShell);
 void initialiseHostedAuth();
@@ -192,6 +229,7 @@ async function applyLocalTestAccountShell(profile) {
   privateFavouritesRepository = localTestPrivateFavouritesRepository;
   pendingGameRepository = localTestPendingGameRepository;
   accountProfileRepository = localTestAccountProfileRepository;
+  avatarStorageRepository = localTestAvatarStorageRepository;
   const currentProfile = await accountProfileRepository.ensureOwnProfile({
     accountId: profile.accountId,
   });
@@ -485,10 +523,19 @@ function renderAccountProfilePanel(shell) {
   const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
   const handle = panel.querySelector("[data-account-profile-handle]");
   const avatar = panel.querySelector("[data-account-profile-avatar]");
+  const activeAvatar = shell.profile.avatar ?? createBuiltInAvatarDescriptor(
+    shell.profile.avatarKey,
+  );
 
   gamerName.value = shell.profile.gamerName;
   handle.value = shell.profile.handle;
-  avatar.value = shell.profile.avatarKey;
+  avatar.value =
+    activeAvatar.type === "built-in"
+      ? activeAvatar.key
+      : DEFAULT_BUILT_IN_AVATAR_KEY;
+  clearDraftAvatarPreviewUrl();
+  accountProfileDraftAvatar = null;
+  void renderAccountProfileAvatarPreview(panel, activeAvatar);
 }
 
 function ensureAccountProfilePanel() {
@@ -557,24 +604,53 @@ function createProfileInputField({ datasetKey, label, required = true }) {
 }
 
 function createProfileAvatarField() {
-  const field = document.createElement("label");
+  const field = document.createElement("div");
+  const selectLabel = document.createElement("label");
   const select = document.createElement("select");
-  const avatarKeys = ["spark", "paper", "moon", "star", "comet", "kite"];
+  const preview = document.createElement("div");
+  const uploadLabel = document.createElement("label");
+  const uploadInput = document.createElement("input");
 
-  field.className = "account-profile-field";
-  field.textContent = "Avatar";
+  field.className = "account-profile-avatar-field";
+  selectLabel.className = "account-profile-field";
+  selectLabel.textContent = "Avatar";
   select.dataset.accountProfileAvatar = "";
-  for (const avatarKey of avatarKeys) {
+  select.addEventListener("change", () => {
+    const panel = ensureAccountProfilePanel();
+    clearAccountProfileUploadInput(panel);
+    accountProfileDraftAvatar = createBuiltInAvatarDescriptor(select.value);
+    setAccountProfileStatus("");
+    void renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
+  });
+  for (const avatarKey of BUILT_IN_AVATAR_KEYS) {
     const option = document.createElement("option");
     option.value = avatarKey;
     option.textContent = formatProfileLabel(avatarKey);
     select.append(option);
   }
-  field.append(select);
+  selectLabel.append(select);
+
+  preview.className = "account-profile-avatar-preview";
+  preview.dataset.accountProfileAvatarPreview = "";
+  preview.setAttribute("aria-live", "polite");
+
+  uploadLabel.className = "account-profile-upload-field";
+  uploadLabel.textContent = "Upload image";
+  uploadInput.type = "file";
+  uploadInput.accept = "image/jpeg,image/png,image/webp";
+  uploadInput.dataset.accountProfileUploadedAvatarInput = "";
+  uploadInput.addEventListener("change", () => {
+    void selectUploadedAvatarFile(uploadInput.files?.[0] ?? null);
+  });
+  uploadLabel.append(uploadInput);
+
+  field.append(selectLabel, preview, uploadLabel);
   return field;
 }
 
 function removeAccountProfilePanel() {
+  clearDraftAvatarPreviewUrl();
+  accountProfileDraftAvatar = null;
   accountProfilePanel?.remove();
   accountProfilePanel = null;
 }
@@ -583,6 +659,231 @@ function formatProfileLabel(value) {
   return String(value ?? "")
     .replace(/-/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+async function renderAccountProfileAvatarPreview(panel, avatarDescriptor) {
+  const preview = panel.querySelector("[data-account-profile-avatar-preview]");
+  if (!preview) {
+    return;
+  }
+
+  const requestId = (accountProfilePreviewRequestId += 1);
+  preview.replaceChildren();
+  preview.removeAttribute("role");
+  preview.removeAttribute("aria-label");
+
+  if (avatarDescriptor?.type === "uploaded-draft") {
+    renderUploadedAvatarPreview(preview, avatarDescriptor.previewUrl);
+    return;
+  }
+
+  if (avatarDescriptor?.type === "uploaded") {
+    const publicUrl = await avatarStorageRepository.getPublicUrl({
+      objectPath: avatarDescriptor.objectPath,
+    });
+    if (requestId !== accountProfilePreviewRequestId || !publicUrl) {
+      return;
+    }
+
+    renderUploadedAvatarPreview(preview, publicUrl);
+    return;
+  }
+
+  const builtInAvatar = createBuiltInAvatarDescriptor(avatarDescriptor?.key);
+  const icon = document.createElement("i");
+  icon.className = `fa-solid fa-${builtInAvatar.key}`;
+  icon.dataset.accountProfileBuiltInAvatarIcon = "";
+  icon.dataset.avatarKey = builtInAvatar.key;
+  icon.setAttribute("aria-hidden", "true");
+  preview.setAttribute("role", "img");
+  preview.setAttribute(
+    "aria-label",
+    `Selected ${formatProfileLabel(builtInAvatar.key)}`,
+  );
+  preview.append(icon);
+}
+
+function renderUploadedAvatarPreview(preview, imageUrl) {
+  const image = document.createElement("img");
+  image.alt = "Uploaded image";
+  image.dataset.accountProfileUploadedAvatarImage = "";
+  image.src = imageUrl;
+  preview.setAttribute("role", "img");
+  preview.setAttribute("aria-label", "Selected uploaded image");
+  preview.append(image);
+}
+
+async function selectUploadedAvatarFile(file) {
+  const panel = ensureAccountProfilePanel();
+  setAccountProfileStatus("");
+
+  if (!file) {
+    return;
+  }
+
+  const validation = await validateUploadedAvatarFile(file);
+  if (!validation.valid) {
+    clearDraftAvatarPreviewUrl();
+    accountProfileDraftAvatar = null;
+    setAccountProfileStatus(validation.message);
+    await renderAccountProfileAvatarPreview(panel, accountShell.profile.avatar);
+    return;
+  }
+
+  clearDraftAvatarPreviewUrl();
+  accountProfileDraftAvatar = {
+    type: "uploaded-draft",
+    byteSize: file.size,
+    contentType: file.type,
+    file,
+    height: validation.height,
+    previewUrl: URL.createObjectURL(file),
+    width: validation.width,
+  };
+  await renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
+}
+
+async function validateUploadedAvatarFile(file) {
+  if (!AVATAR_UPLOAD_CONTENT_TYPES.has(file.type)) {
+    return {
+      valid: false,
+      message: AVATAR_UPLOAD_COPY.invalidType,
+    };
+  }
+
+  if (file.size > AVATAR_UPLOAD_MAX_BYTES) {
+    return {
+      valid: false,
+      message: AVATAR_UPLOAD_COPY.oversizedFile,
+    };
+  }
+
+  try {
+    const dimensions = await decodeImageDimensions(file);
+    if (
+      dimensions.width < AVATAR_UPLOAD_MIN_DIMENSION ||
+      dimensions.height < AVATAR_UPLOAD_MIN_DIMENSION
+    ) {
+      return {
+        valid: false,
+        message: AVATAR_UPLOAD_COPY.undersizedImage,
+      };
+    }
+
+    if (
+      dimensions.width > AVATAR_UPLOAD_MAX_DIMENSION ||
+      dimensions.height > AVATAR_UPLOAD_MAX_DIMENSION
+    ) {
+      return {
+        valid: false,
+        message: AVATAR_UPLOAD_COPY.oversizedDimensions,
+      };
+    }
+
+    return {
+      valid: true,
+      ...dimensions,
+    };
+  } catch {
+    return {
+      valid: false,
+      message: AVATAR_UPLOAD_COPY.unreadableImage,
+    };
+  }
+}
+
+async function decodeImageDimensions(file) {
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file);
+    const dimensions = {
+      height: bitmap.height,
+      width: bitmap.width,
+    };
+    bitmap.close?.();
+    return dimensions;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", reject, { once: true });
+      image.src = objectUrl;
+    });
+    return {
+      height: image.naturalHeight,
+      width: image.naturalWidth,
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function uploadDraftAvatar({ draft }) {
+  let objectPath = null;
+
+  try {
+    objectPath = createUploadedAvatarObjectPath({
+      contentType: draft.contentType,
+    });
+    await avatarStorageRepository.registerPendingUpload({
+      accountId: accountShell.accountId,
+      byteSize: draft.byteSize,
+      contentType: draft.contentType,
+      height: draft.height,
+      objectPath,
+      profileId: accountShell.profile.profileId,
+      width: draft.width,
+    });
+    await avatarStorageRepository.uploadAvatarObject({
+      contentType: draft.contentType,
+      file: draft.file,
+      objectPath,
+    });
+
+    return {
+      type: "uploaded",
+      objectPath,
+    };
+  } catch {
+    if (objectPath) {
+      await cleanupUploadedAvatar(objectPath);
+    }
+
+    throw new Error(AVATAR_UPLOAD_COPY.uploadFailure);
+  }
+}
+
+async function cleanupUploadedAvatar(objectPath) {
+  try {
+    await avatarStorageRepository.cleanupPendingUpload({ objectPath });
+  } catch {
+    // Cleanup is best-effort; the save path still reports failure.
+  }
+}
+
+function clearAccountProfileUploadInput(panel) {
+  const uploadInput = panel.querySelector(
+    "[data-account-profile-uploaded-avatar-input]",
+  );
+  if (uploadInput) {
+    uploadInput.value = "";
+  }
+  clearDraftAvatarPreviewUrl();
+}
+
+function clearDraftAvatarPreviewUrl() {
+  if (accountProfileDraftAvatar?.type === "uploaded-draft") {
+    URL.revokeObjectURL(accountProfileDraftAvatar.previewUrl);
+  }
+}
+
+function setAccountProfileStatus(message) {
+  const status = accountProfilePanel?.querySelector("[data-account-profile-status]");
+  if (status) {
+    status.textContent = message;
+  }
 }
 
 async function saveAccountProfile(event) {
@@ -597,14 +898,25 @@ async function saveAccountProfile(event) {
   const handle = panel.querySelector("[data-account-profile-handle]");
   const avatar = panel.querySelector("[data-account-profile-avatar]");
   const status = panel.querySelector("[data-account-profile-status]");
+  let uploadedObjectPath = null;
 
   status.textContent = "";
 
   try {
+    const avatarDescriptor =
+      accountProfileDraftAvatar?.type === "uploaded-draft"
+        ? await uploadDraftAvatar({ draft: accountProfileDraftAvatar })
+        : accountProfileDraftAvatar?.type === "built-in"
+          ? accountProfileDraftAvatar
+          : createBuiltInAvatarDescriptor(avatar.value);
+    if (avatarDescriptor.type === "uploaded") {
+      uploadedObjectPath = avatarDescriptor.objectPath;
+    }
+
     const profile = await accountProfileRepository.updateOwnProfile({
       accountId: accountShell.accountId,
       profile: {
-        avatarKey: avatar.value,
+        avatar: avatarDescriptor,
         gamerName: gamerName.value,
         handle: handle.value,
       },
@@ -617,11 +929,20 @@ async function saveAccountProfile(event) {
     panel.querySelector("[data-account-profile-status]").textContent =
       "Profile saved.";
   } catch (error) {
-    status.textContent = getProfileSaveFailureMessage(error);
+    if (uploadedObjectPath) {
+      await cleanupUploadedAvatar(uploadedObjectPath);
+      status.textContent = AVATAR_UPLOAD_COPY.saveFailureAfterUpload;
+    } else {
+      status.textContent = getProfileSaveFailureMessage(error);
+    }
   }
 }
 
 function getProfileSaveFailureMessage(error) {
+  if (error instanceof Error && error.message === AVATAR_UPLOAD_COPY.uploadFailure) {
+    return AVATAR_UPLOAD_COPY.uploadFailure;
+  }
+
   if (error instanceof Error && /already in use/i.test(error.message)) {
     return "Handle is already in use.";
   }
@@ -635,6 +956,17 @@ function getProfileSaveFailureMessage(error) {
 
 function isLocalTestAuthAvailable() {
   return ["127.0.0.1", "localhost"].includes(window.location.hostname);
+}
+
+function loadFontAwesomeKit() {
+  if (isLocalTestAuthAvailable()) {
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = FONT_AWESOME_KIT_SCRIPT_URL;
+  script.crossOrigin = "anonymous";
+  document.head.append(script);
 }
 
 function getLocalTestPersistenceFailureMode() {
@@ -679,6 +1011,22 @@ function getLocalTestAccountProfileFailureMode() {
   );
 
   if (failureMode === "save-fails") {
+    return failureMode;
+  }
+
+  return null;
+}
+
+function getLocalTestAvatarStorageFailureMode() {
+  if (!isLocalTestAuthAvailable()) {
+    return null;
+  }
+
+  const failureMode = new URLSearchParams(window.location.search).get(
+    "testAvatarStorage",
+  );
+
+  if (["upload-fails", "cleanup-fails"].includes(failureMode)) {
     return failureMode;
   }
 
@@ -2384,12 +2732,15 @@ async function initialiseHostedAuth() {
 
     const hostedAccountProfileRepository =
       createSupabaseAccountProfileRepository({ supabase });
+    const hostedAvatarStorageRepository =
+      createSupabaseAvatarStorageRepository({ supabase });
 
     hostedAuthSession = createSupabaseAuthSession({
       profileRepository: hostedAccountProfileRepository,
       supabase,
     });
     accountProfileRepository = hostedAccountProfileRepository;
+    avatarStorageRepository = hostedAvatarStorageRepository;
     hostedAuthAvailable = true;
     signedInGameSession = createSignedInGameSession({
       repository: createSupabaseSignedInSoloGameRepository({ supabase }),
@@ -2407,6 +2758,7 @@ async function initialiseHostedAuth() {
     privateFavouritesRepository = localTestPrivateFavouritesRepository;
     pendingGameRepository = localTestPendingGameRepository;
     accountProfileRepository = localTestAccountProfileRepository;
+    avatarStorageRepository = localTestAvatarStorageRepository;
     authMessage.textContent = "Sign in unavailable.";
     renderAccountShell(accountShell);
   }

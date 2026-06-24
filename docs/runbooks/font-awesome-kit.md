@@ -14,11 +14,18 @@ This runbook owns operational guidance for the Font Awesome Kit selected by ADR
 | Integration method | Hosted SVG+JS Kit |
 | Project config | `.font-awesome.md` |
 
-Use this script in the static app pages that render Built-in Avatars:
+Use this script for hosted static app pages that render Built-in Avatars:
 
 ```html
 <script src="https://kit.fontawesome.com/613901cfcc.js" crossorigin="anonymous"></script>
 ```
+
+The source implementation injects the Kit dynamically on non-localhost origins
+and skips the external Kit on `localhost` and `127.0.0.1`. Local browser smoke
+tests therefore verify stable `fa-solid fa-{avatar-key}` markup and Avatar
+behaviour without depending on the owner-managed Kit accepting every local test
+origin. Hosted `dev` and `test` verification must still check that the Kit loads
+and the icons render visibly.
 
 ## Agent Tooling
 
@@ -87,9 +94,10 @@ For the Uploaded Avatar / Built-in Avatar slice:
 - configure Font Awesome domain limiting for `crazyphrases.com`,
   `www.crazyphrases.com`, `dev.crazyphrases.com`, and
   `test.crazyphrases.com`;
-- verify local development origins during implementation. Font Awesome docs say
-  `localhost` is allowed by default, but agents should still verify
-  `localhost` and `127.0.0.1` browser smoke paths used by this repo;
+- verify local development origins during implementation. If the owner-managed
+  Kit blocks a local origin, keep local automated tests focused on markup and
+  Avatar behaviour, then verify actual Kit rendering in hosted `dev` and
+  `test`;
 - do not commit Font Awesome account tokens, API tokens, package manager tokens,
   downloaded Pro assets, or Kit package credentials.
 
@@ -104,7 +112,9 @@ assistive technology.
 
 For #63, browser smoke tests should verify:
 
-- the hosted Kit script loads in local/dev/test paths where practical;
+- the hosted Kit script loads in hosted `dev` and `test` paths where practical;
+- local tests produce stable Font Awesome-compatible markup even when the
+  external Kit is intentionally skipped;
 - the 13 Built-in Avatar previews render visibly;
 - each Built-in Avatar uses the verified Classic Solid style, or the recorded
   Classic Regular fallback where Solid is unavailable;

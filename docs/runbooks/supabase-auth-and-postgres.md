@@ -119,6 +119,14 @@ operations:
 - use `generate_typescript_types` after schema changes that affect app-facing
   types.
 
+For hosted write/cleanup smoke fixtures, avoid chaining setup steps that depend
+on trigger-created rows inside one data-modifying CTE statement. Use explicit
+sequential SQL statements when a later step depends on trigger side effects,
+such as Pending Game participant rows, Started Game participant snapshots,
+section assignments, or notification rows. This keeps fixture setup auditable
+and avoids Postgres statement-visibility surprises during live cleanup-sensitive
+verification.
+
 The 2026-06-19 MCP capability check behind the fast path verified that the
 authenticated Supabase MCP can see the `crazyphrases` project and exposes hosted
 migration tools, including `apply_migration` and `list_migrations`.

@@ -455,11 +455,14 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Avatar").selectOption("dragon");
+    await profileRegion.locator("[data-account-profile-avatar]").selectOption("dragon");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dragon");
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+      "dragon",
+    );
     assert.equal(
       await profileRegion
         .locator("[data-account-profile-built-in-avatar-icon]")
@@ -473,7 +476,7 @@ describe("solo browser smoke", () => {
     assert.equal(
       await page
         .getByRole("region", { name: "Profile" })
-        .getByLabel("Avatar")
+        .locator("[data-account-profile-avatar]")
         .inputValue(),
       "dragon",
     );
@@ -498,7 +501,9 @@ describe("solo browser smoke", () => {
 
     await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
     await profileRegion.getByLabel("Handle").fill("Captain Spoon");
-    await profileRegion.getByLabel("Avatar").selectOption("yin-yang");
+    await profileRegion
+      .locator("[data-account-profile-avatar]")
+      .selectOption("yin-yang");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await assertTextVisible(profileRegion, "Profile saved.");
 
@@ -515,14 +520,17 @@ describe("solo browser smoke", () => {
       await profileRegion.getByLabel("Handle").inputValue(),
       "captain-spoon",
     );
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "yin-yang");
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+      "yin-yang",
+    );
     await assertTextVisible(page, "@captain-spoon");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
   });
 
-  it("previews, saves, reloads, and removes an Uploaded Avatar in local test mode", async () => {
+  it("previews, crops, saves, reloads, and removes an Uploaded Avatar in local test mode", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -554,17 +562,22 @@ describe("solo browser smoke", () => {
 
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
-      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+      .setInputFiles(createPngFilePayload({ height: 180, width: 300 }));
 
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
+    await profileRegion.getByLabel("Avatar scale").fill("1.4");
+    await profileRegion.getByLabel("Avatar horizontal position").fill("18");
+    await profileRegion.getByLabel("Avatar vertical position").fill("-12");
     const draftPreviewUrl = await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .getAttribute("src");
     assert.match(draftPreviewUrl, /^blob:/);
 
-    await profileRegion.getByLabel("Avatar").selectOption("gamepad");
+    await profileRegion
+      .locator("[data-account-profile-avatar]")
+      .selectOption("gamepad");
     assert.equal(
       await profileRegion
         .locator("[data-account-profile-built-in-avatar-icon]")
@@ -581,11 +594,14 @@ describe("solo browser smoke", () => {
 
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
-      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+      .setInputFiles(createPngFilePayload({ height: 180, width: 300 }));
 
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
+    await profileRegion.getByLabel("Avatar scale").fill("1.5");
+    await profileRegion.getByLabel("Avatar horizontal position").fill("20");
+    await profileRegion.getByLabel("Avatar vertical position").fill("-10");
     assert.match(
       await profileRegion
         .locator("[data-account-profile-uploaded-avatar-image]")
@@ -601,6 +617,49 @@ describe("solo browser smoke", () => {
         .getAttribute("src"),
       /^data:image\/png;base64,/,
     );
+    assert.deepEqual(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .evaluate((image) => ({
+          naturalHeight: image.naturalHeight,
+          naturalWidth: image.naturalWidth,
+        })),
+      {
+        naturalHeight: 256,
+        naturalWidth: 256,
+      },
+    );
+    const uploadedMetadata = await page.evaluate(() => {
+      const uploads = JSON.parse(
+        localStorage.getItem("crazyphrases.localTest.uploadedAvatars.v1"),
+      );
+      const uploaded = Object.values(uploads).find(
+        (entry) => entry?.metadata?.lifecycleStatus === "pending",
+      );
+
+      return {
+        contentType: uploaded?.metadata?.contentType,
+        height: uploaded?.metadata?.height,
+        objectPath: uploaded?.metadata?.objectPath,
+        width: uploaded?.metadata?.width,
+      };
+    });
+    assert.deepEqual(
+      {
+        contentType: uploadedMetadata.contentType,
+        height: uploadedMetadata.height,
+        width: uploadedMetadata.width,
+      },
+      {
+        contentType: "image/png",
+        height: 256,
+        width: 256,
+      },
+    );
+    assert.match(
+      uploadedMetadata.objectPath,
+      /^uploaded\/[0-9a-f-]{36}\.png$/,
+    );
 
     await page.reload();
     await page.getByRole("button", { name: "Test sign in" }).click();
@@ -611,15 +670,30 @@ describe("solo browser smoke", () => {
         .getAttribute("src"),
       /^data:image\/png;base64,/,
     );
+    assert.deepEqual(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .evaluate((image) => ({
+          naturalHeight: image.naturalHeight,
+          naturalWidth: image.naturalWidth,
+        })),
+      {
+        naturalHeight: 256,
+        naturalWidth: 256,
+      },
+    );
 
-    await profileRegion.getByLabel("Avatar").selectOption("dice");
+    await profileRegion.locator("[data-account-profile-avatar]").selectOption("dice");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
     assert.equal(
       await profileRegion.locator("[data-account-profile-uploaded-avatar-image]").count(),
       0,
     );
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+      "dice",
+    );
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -712,7 +786,10 @@ describe("solo browser smoke", () => {
     await uploadFailurePage.getByRole("button", { name: "Sign out" }).click();
     await uploadFailurePage.getByRole("button", { name: "Test sign in" }).click();
     profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+      "dice",
+    );
     assertNoUploadFailureConsoleErrors();
     await uploadFailureContext.close();
 
@@ -739,7 +816,10 @@ describe("solo browser smoke", () => {
     await saveFailurePage.getByRole("button", { name: "Sign out" }).click();
     await saveFailurePage.getByRole("button", { name: "Test sign in" }).click();
     profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+      "dice",
+    );
     assertNoSaveFailureConsoleErrors();
     await saveFailureContext.close();
   });
@@ -1866,6 +1946,10 @@ async function assertNoProfileEditorDom(page) {
     await page.locator("[data-account-profile-avatar-preview]").count(),
     0,
   );
+  assert.equal(await page.locator("[data-account-profile-crop-controls]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-scale]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-x]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-y]").count(), 0);
 }
 
 async function assertProfileManagementSurfaceMounted(page) {
@@ -1883,7 +1967,10 @@ async function assertProfileManagementSurfaceMounted(page) {
     "player-test-account",
   );
   await assertTextVisible(profileRegion, "Avatar");
-  assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+  assert.equal(
+    await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
+    "dice",
+  );
   assert.equal(
     await profileRegion
       .locator("[data-account-profile-built-in-avatar-icon]")

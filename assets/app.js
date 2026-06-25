@@ -39,6 +39,12 @@ import {
   createUploadedAvatarObjectPath,
 } from "./avatar-storage.js?v=__ASSET_VERSION__";
 import {
+  AVATAR_CROP_OUTPUT_SIZE,
+  DEFAULT_AVATAR_CROP,
+  createDerivedAvatarFile,
+  normaliseAvatarCrop,
+} from "./avatar-crop.js?v=__ASSET_VERSION__";
+import {
   createLocalTestSignedInSoloGameRepository,
   createSupabaseSignedInSoloGameRepository,
 } from "./signed-in-game-storage.js?v=__ASSET_VERSION__";
@@ -72,6 +78,7 @@ const AVATAR_UPLOAD_COPY = {
   undersizedImage: "Choose an image at least 128 by 128 pixels.",
   oversizedDimensions: "Choose an image no larger than 1024 by 1024 pixels.",
   unreadableImage: "This image could not be read. Choose another file.",
+  cropFailure: "Avatar could not be cropped. Try again.",
   uploadFailure: "Avatar could not be uploaded. Try again.",
   saveFailureAfterUpload:
     "Profile could not be saved. Your previous avatar is still active.",
@@ -610,6 +617,7 @@ function createProfileAvatarField() {
   const preview = document.createElement("div");
   const uploadLabel = document.createElement("label");
   const uploadInput = document.createElement("input");
+  const cropControls = createAvatarCropControls();
 
   field.className = "account-profile-avatar-field";
   selectLabel.className = "account-profile-field";
@@ -644,8 +652,60 @@ function createProfileAvatarField() {
   });
   uploadLabel.append(uploadInput);
 
-  field.append(selectLabel, preview, uploadLabel);
+  field.append(selectLabel, preview, uploadLabel, cropControls);
   return field;
+}
+
+function createAvatarCropControls() {
+  const controls = document.createElement("div");
+  controls.className = "account-profile-crop-controls";
+  controls.dataset.accountProfileCropControls = "";
+  controls.hidden = true;
+
+  for (const control of [
+    {
+      datasetKey: "accountProfileCropScale",
+      label: "Avatar scale",
+      max: "3",
+      min: "1",
+      step: "0.1",
+      value: String(DEFAULT_AVATAR_CROP.scale),
+    },
+    {
+      datasetKey: "accountProfileCropX",
+      label: "Avatar horizontal position",
+      max: "100",
+      min: "-100",
+      step: "1",
+      value: String(DEFAULT_AVATAR_CROP.x),
+    },
+    {
+      datasetKey: "accountProfileCropY",
+      label: "Avatar vertical position",
+      max: "100",
+      min: "-100",
+      step: "1",
+      value: String(DEFAULT_AVATAR_CROP.y),
+    },
+  ]) {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    label.className = "account-profile-field";
+    label.textContent = control.label;
+    input.type = "number";
+    input.min = control.min;
+    input.max = control.max;
+    input.step = control.step;
+    input.value = control.value;
+    input.dataset[control.datasetKey] = "";
+    input.addEventListener("input", () => {
+      updateAccountProfileDraftCropFromControls();
+    });
+    label.append(input);
+    controls.append(label);
+  }
+
+  return controls;
 }
 
 function removeAccountProfilePanel() {
@@ -668,12 +728,15 @@ async function renderAccountProfileAvatarPreview(panel, avatarDescriptor) {
   }
 
   const requestId = (accountProfilePreviewRequestId += 1);
+  renderAvatarCropControls(panel, avatarDescriptor);
   preview.replaceChildren();
   preview.removeAttribute("role");
   preview.removeAttribute("aria-label");
 
   if (avatarDescriptor?.type === "uploaded-draft") {
-    renderUploadedAvatarPreview(preview, avatarDescriptor.previewUrl);
+    renderUploadedAvatarPreview(preview, avatarDescriptor.previewUrl, {
+      crop: avatarDescriptor.crop,
+    });
     return;
   }
 
@@ -703,14 +766,60 @@ async function renderAccountProfileAvatarPreview(panel, avatarDescriptor) {
   preview.append(icon);
 }
 
-function renderUploadedAvatarPreview(preview, imageUrl) {
+function renderUploadedAvatarPreview(preview, imageUrl, { crop = null } = {}) {
   const image = document.createElement("img");
   image.alt = "Uploaded image";
   image.dataset.accountProfileUploadedAvatarImage = "";
   image.src = imageUrl;
+  if (crop) {
+    image.style.transform = `translate(${crop.x}%, ${crop.y}%) scale(${crop.scale})`;
+  }
   preview.setAttribute("role", "img");
   preview.setAttribute("aria-label", "Selected uploaded image");
   preview.append(image);
+}
+
+function renderAvatarCropControls(panel, avatarDescriptor) {
+  const controls = panel.querySelector("[data-account-profile-crop-controls]");
+  if (!controls) {
+    return;
+  }
+
+  const isDraftUpload = avatarDescriptor?.type === "uploaded-draft";
+  controls.hidden = !isDraftUpload;
+  if (!isDraftUpload) {
+    return;
+  }
+
+  const crop = normaliseAvatarCrop(avatarDescriptor.crop);
+  panel.querySelector("[data-account-profile-crop-scale]").value = String(
+    crop.scale,
+  );
+  panel.querySelector("[data-account-profile-crop-x]").value = String(crop.x);
+  panel.querySelector("[data-account-profile-crop-y]").value = String(crop.y);
+}
+
+function updateAccountProfileDraftCropFromControls() {
+  if (accountProfileDraftAvatar?.type !== "uploaded-draft") {
+    return;
+  }
+
+  const panel = ensureAccountProfilePanel();
+  accountProfileDraftAvatar = {
+    ...accountProfileDraftAvatar,
+    crop: readAvatarCropFromControls(panel),
+  };
+  void renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
+}
+
+function readAvatarCropFromControls(panel) {
+  return normaliseAvatarCrop({
+    scale: Number(
+      panel.querySelector("[data-account-profile-crop-scale]")?.value,
+    ),
+    x: Number(panel.querySelector("[data-account-profile-crop-x]")?.value),
+    y: Number(panel.querySelector("[data-account-profile-crop-y]")?.value),
+  });
 }
 
 async function selectUploadedAvatarFile(file) {
@@ -735,6 +844,7 @@ async function selectUploadedAvatarFile(file) {
     type: "uploaded-draft",
     byteSize: file.size,
     contentType: file.type,
+    crop: DEFAULT_AVATAR_CROP,
     file,
     height: validation.height,
     previewUrl: URL.createObjectURL(file),
@@ -823,22 +933,32 @@ async function decodeImageDimensions(file) {
 async function uploadDraftAvatar({ draft }) {
   let objectPath = null;
 
+  let derivedFile;
+  try {
+    derivedFile = await createDerivedAvatarFile({
+      crop: draft.crop,
+      file: draft.file,
+    });
+  } catch {
+    throw new Error(AVATAR_UPLOAD_COPY.cropFailure);
+  }
+
   try {
     objectPath = createUploadedAvatarObjectPath({
-      contentType: draft.contentType,
+      contentType: derivedFile.type,
     });
     await avatarStorageRepository.registerPendingUpload({
       accountId: accountShell.accountId,
-      byteSize: draft.byteSize,
-      contentType: draft.contentType,
-      height: draft.height,
+      byteSize: derivedFile.size,
+      contentType: derivedFile.type,
+      height: AVATAR_CROP_OUTPUT_SIZE,
       objectPath,
       profileId: accountShell.profile.profileId,
-      width: draft.width,
+      width: AVATAR_CROP_OUTPUT_SIZE,
     });
     await avatarStorageRepository.uploadAvatarObject({
-      contentType: draft.contentType,
-      file: draft.file,
+      contentType: derivedFile.type,
+      file: derivedFile,
       objectPath,
     });
 
@@ -939,6 +1059,10 @@ async function saveAccountProfile(event) {
 }
 
 function getProfileSaveFailureMessage(error) {
+  if (error instanceof Error && error.message === AVATAR_UPLOAD_COPY.cropFailure) {
+    return AVATAR_UPLOAD_COPY.cropFailure;
+  }
+
   if (error instanceof Error && error.message === AVATAR_UPLOAD_COPY.uploadFailure) {
     return AVATAR_UPLOAD_COPY.uploadFailure;
   }

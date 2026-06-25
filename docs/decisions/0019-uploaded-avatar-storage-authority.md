@@ -110,7 +110,8 @@ requires separate explicit approval.
 The #63 Uploaded Avatar slice did not store crop coordinates, generate derived
 cropped images, or add a crop-positioning UI. ADR 0021 owns the #64
 crop-storage model, which is now implemented with browser-generated derived
-cropped PNG objects. A richer visual cropper remains separate post-MVP scope.
+cropped PNG objects. The richer #79 visual cropper is now implemented on top of
+that storage model without changing Storage authority.
 
 The first slice must render a basic Avatar preview in the existing Profile
 editor for both Built-in Avatars and Uploaded Avatars. Existing participant or

@@ -355,13 +355,11 @@ preserve their original history.
 
 ### Branded Supabase Auth domain
 
-- **Selected route**: ADR `0022` selects a first-party Supabase custom domain,
-  `auth.crazyphrases.com`, to replace the generic `<project-ref>.supabase.co`
-  Google OAuth consent/sign-in destination.
-- **Why originally deferred**: The first hosted sign-in slice could validate Supabase Auth and signed-in persistence using the default Supabase callback domain, while a branded Auth domain requires Supabase custom-domain setup, DNS changes, certificate validation, and plan/cost checks.
-- **Revisit trigger**: Satisfied on 2026-06-25 after hosted Google sign-in worked end-to-end and production verification showed that the generic Supabase domain materially reduces trust during testing.
-- **Status**: Hosted Google sign-in has worked end-to-end in `dev`, and the signed-in foundation has been promoted through `test` and `production` as of 2026-06-15. Production verification on 2026-06-25 reproduced the trust issue: Google displayed `egnudphshvqdhrotxrfs.supabase.co` after `Sign in with Google` from Crazy Phrases. Parent PRD #83 and route-selection issue #84 are published; preparation is tracked by #85 and activation/verification by #86.
-- **Remaining risk**: Users may be confused or mistrust the Google prompt saying "continue to `<project-ref>.supabase.co`" even though the request was initiated from `crazyphrases.com`.
+- **Deferred with accepted risk**: Replacing the generic `<project-ref>.supabase.co` Google OAuth consent/sign-in destination with a branded Crazy Phrases domain or equivalent trusted presentation.
+- **Why deferred**: The first hosted sign-in slice validated Supabase Auth and signed-in persistence using the default Supabase callback domain. A first-party Supabase custom domain such as `auth.crazyphrases.com` would provide the strongest trust signal, but the owner reviewed the Supabase custom-domain cost implications in more detail on 2026-06-25 and decided the cost is not suitable for the current project stage.
+- **Revisit when**: The project approaches broader public user onboarding, sign-in hesitation caused by the Supabase project domain becomes a repeated tester or user blocker, Supabase custom-domain pricing or project budget constraints change, a lower-cost provider or branding option becomes available, or commercial/public-discovery features raise the trust bar.
+- **Status**: Hosted Google sign-in has worked end-to-end in `dev`, and the signed-in foundation has been promoted through `test` and `production` as of 2026-06-15. Production verification on 2026-06-25 reproduced the trust issue: Google displayed `egnudphshvqdhrotxrfs.supabase.co` after `Sign in with Google` from Crazy Phrases. Parent PRD #83 and route-selection issue #84 are published. ADR `0022` records documented deferral with explicit accepted risk; custom-domain preparation issue #85 and activation/verification issue #86 are superseded.
+- **Remaining risk**: Users may be confused or mistrust the Google prompt saying "continue to `<project-ref>.supabase.co`" even though the request was initiated from `crazyphrases.com`. This risk is accepted for the current pre-public-onboarding scope and must be revisited before broader public onboarding or if it becomes a repeated blocker.
 
 ### Expanded word-bank source selection
 

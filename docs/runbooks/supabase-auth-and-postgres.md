@@ -385,59 +385,43 @@ The hosted Google provider is configured and has been validated in `dev`; see
 `docs/planning/supabase-state-ledger.md` for the dated provider and smoke
 evidence.
 
-### Branded Hosted Auth Custom Domain
+### Branded Hosted Auth Deferral
 
-ADR 0022 selects a first-party Supabase custom domain for hosted Auth:
+ADR 0022 records documented deferral with explicit accepted risk for the
+branded hosted Auth domain. The owner reviewed Supabase custom-domain cost
+implications in more detail on 2026-06-25 and decided not to create or activate
+`auth.crazyphrases.com`, a Supabase custom domain, or a Supabase vanity
+subdomain for the current project stage.
 
-```text
-auth.crazyphrases.com
-```
-
-This route is selected for the #83 branded hosted auth trust-readiness PRD and
-the #84 route-selection issue. Preparation is tracked by #85 and
-activation/verification by #86.
-
-Selecting the route does not authorise any live mutation. The following remain
-separate approval boundaries:
+The following remain separate approval boundaries and are not authorised by
+this deferral:
 
 - Supabase custom-domain creation, verification, and activation;
 - Google OAuth authorised redirect URI and consent/app branding changes;
-- Cloudflare DNS changes for `auth.crazyphrases.com`;
+- Cloudflare DNS changes for any hosted Auth domain;
 - certificate validation;
 - GitHub Environment variable changes;
 - static deployment approval;
 - hosted data writes or cleanup.
 
-Before activating the Supabase custom domain:
-
-1. Confirm the Supabase custom-domain plan, add-on, and cost requirements.
-2. Create or prepare the custom-domain configuration in Supabase, but do not
-   activate it until provider callbacks and DNS are ready.
-3. Add the new Google OAuth authorised redirect URI alongside the current
-   Supabase project callback:
-   - `https://auth.crazyphrases.com/auth/v1/callback`
-   - `https://egnudphshvqdhrotxrfs.supabase.co/auth/v1/callback`
-4. Apply only the DNS records required by Supabase for
-   `auth.crazyphrases.com`; see `docs/runbooks/cloudflare-dns-and-access.md`
-   for DNS authority boundaries.
-5. Verify certificate readiness and callback readiness before activation.
-6. Decide explicitly whether `SUPABASE_URL` in GitHub Environments should stay
-   on the project URL or move to the custom domain after activation. Do not
-   infer this from hostname detection.
-
-Supabase documentation says custom domains and vanity subdomains are mutually
-exclusive, and Auth will use the custom domain for OAuth flows after
-activation. Supabase CLI documentation for custom-domain activation also warns
-that third-party Auth providers no longer function on the Supabase-provisioned
-subdomain after activation. Treat activation as a sign-in-impacting operation
-and verify the visible auth boundary immediately afterwards.
-
-The expected visible seam after completion is:
+The current visible seam remains:
 
 ```text
-crazyphrases.com signed-out UI -> Sign in with Google -> branded
-Google/Supabase auth screen -> Crazy Phrases Account-backed mode
+crazyphrases.com signed-out UI -> Sign in with Google -> Google/Supabase auth
+screen showing egnudphshvqdhrotxrfs.supabase.co -> Crazy Phrases Account-backed
+mode after successful sign-in
 ```
+
+That visible Supabase project domain is an accepted risk for the current
+pre-public-onboarding scope. Do not create `auth.crazyphrases.com`, configure a
+Supabase custom domain, add a vanity subdomain, or change Google OAuth callback
+settings for branded Auth unless ADR 0022 is amended or superseded.
+
+Revisit this deferral before broader public user onboarding, if sign-in
+hesitation becomes a repeated blocker, if Supabase custom-domain pricing or
+project budget constraints change, if a lower-cost provider or branding option
+becomes available, or if commercial/public-discovery features raise the trust
+bar.
 
 ## Uploaded Avatar Storage
 

@@ -1,10 +1,11 @@
-# 0022: Branded Supabase Auth Custom Domain
+# 0022: Branded Supabase Auth Deferral
 
 ## Status
 
-Accepted. The owner selected the Supabase custom-domain route on 2026-06-25
-for GitHub issue #84, under parent PRD #83. Preparation is tracked by #85 and
-activation/verification by #86.
+Accepted. The owner selected documented deferral with explicit accepted risk on
+2026-06-25 for GitHub issue #84, under parent PRD #83. The earlier
+`auth.crazyphrases.com` custom-domain route was reversed after reviewing
+Supabase custom-domain cost implications in more detail.
 
 ## Context
 
@@ -38,61 +39,54 @@ activation also warns that third-party Auth providers no longer function on the
 Supabase-provisioned subdomain after activation. OAuth provider callback
 configuration must therefore be prepared before activation.
 
+After reviewing cost implications in more detail, the owner decided that the
+custom-domain route is not suitable for the current project stage.
+
 ## Decision
 
-Crazy Phrases will use a first-party Supabase custom domain for hosted Auth.
-The accepted target hostname is:
+Crazy Phrases will defer branded hosted Auth domain work and explicitly accept
+the current trust risk for the current launch-readiness scope.
 
-```text
-auth.crazyphrases.com
-```
+The hosted Google sign-in flow may continue to show the raw Supabase project
+domain, `egnudphshvqdhrotxrfs.supabase.co`, while the project remains in the
+current pre-public-onboarding stage.
 
-The custom domain is selected over Google-only branding because the observed
-trust issue is the destination domain shown at the hosted Auth boundary, not
-only the app logo or display name. It is selected over a Supabase vanity
-subdomain because a first-party `crazyphrases.com` hostname gives the clearest
-relationship between the game and the Auth hand-off.
+The project will not create or activate `auth.crazyphrases.com`, a Supabase
+custom domain, or a Supabase vanity subdomain as part of #84. The follow-up
+custom-domain preparation and activation issues are superseded by this decision.
 
-This decision selects the route only. It does not activate the custom domain,
-change Google OAuth configuration, change Cloudflare DNS, change GitHub
-Environment variables, mutate production, or authorise hosted data writes.
+This decision does not authorise any Supabase Auth, Google OAuth, Cloudflare
+DNS, GitHub Environment, production deployment, or hosted data mutation.
 
-Preparation must happen before activation:
+The deferral should be revisited when one of these triggers occurs:
 
-- confirm Supabase plan, add-on, and cost implications for the custom domain;
-- prepare the Google OAuth callback URL for
-  `https://auth.crazyphrases.com/auth/v1/callback` alongside the current
-  Supabase project callback until the migration is complete;
-- create and verify the Supabase custom-domain configuration;
-- apply only the DNS records Supabase requires for this custom domain;
-- verify certificate readiness before any activation step;
-- decide explicitly whether deployment `SUPABASE_URL` values should remain on
-  the project URL or move to the custom domain after activation.
-
-Activation must be handled as a separate, approval-gated operation because
-Supabase Auth provider flows may switch to the custom domain immediately once
-the custom hostname is activated.
+- the project is ready for broader public user onboarding;
+- sign-in hesitation caused by the Supabase project domain becomes a repeated
+  tester or user blocker;
+- Supabase custom-domain pricing, plan, or project budget constraints change;
+- a lower-cost provider or branding option becomes available;
+- the project introduces paid, commercial, or public-discovery features that
+  make the current trust risk unacceptable.
 
 ## Consequences
 
 - The player-visible sign-in seam is:
   `crazyphrases.com` signed-out UI -> `Sign in with Google` -> Google/Supabase
   auth screen -> return to Crazy Phrases signed in.
-- The branded Auth work is complete only when that seam no longer presents the
-  raw Supabase project ref as the confusing primary destination.
+- The seam remains known to show the raw Supabase project ref as the external
+  destination, and that is an accepted risk for the current scope.
 - Google OAuth settings, Supabase Auth settings, Cloudflare DNS, certificate
   validation, GitHub Environment variable changes, deployment approval, and
   hosted data mutation remain separate authorities.
-- If Supabase custom-domain plan, cost, verification, or provider constraints
-  make this route unsuitable, the route must be revisited with a new ADR or an
-  explicit amendment to this one. Do not silently substitute a vanity subdomain
-  or Google-only branding as equivalent.
+- Future work must not silently create `auth.crazyphrases.com`, enable a
+  Supabase custom domain, or switch to a vanity subdomain without first
+  amending or superseding this ADR.
 - No game mechanics, Account Profile fields, Handle rules, Avatar storage,
   Multiplayer lifecycle, Favourites storage, or public discovery behaviour
   changes as part of this decision.
-- The Supabase Auth runbook owns preparation and activation procedure. The
-  Cloudflare runbook owns DNS authority boundaries for the
-  `auth.crazyphrases.com` hostname.
+- The Supabase Auth and Cloudflare runbooks should continue to make clear that
+  branded Auth domain mutation is not authorised by environment detection or
+  by the presence of the backlog item.
 
 ## References
 

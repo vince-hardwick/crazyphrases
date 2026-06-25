@@ -161,11 +161,11 @@ Feature slices move through environments in order:
 4. Approve the `dev` GitHub Environment deployment when that branch is ready for engineering inspection.
 5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication. For user-observed Codex smoke tests, use the visible in-app browser path in `docs/runbooks/in-app-browser-verification.md`.
 6. Open or update the pull request into `main`.
-7. Merge the pull request after review and dev inspection.
+7. Merge the pull request only after `CI / Verify static site` passes, review threads are resolved, and any required dev inspection is complete. The active `Protect main` repository ruleset blocks direct `main` pushes, force-pushes, deletion, and PR merges that do not satisfy that required check.
 8. `promote.yml` deploys the merged `main` commit to `test` when the merge includes hosted runtime changes.
 9. Complete formal/human testing at `https://test.crazyphrases.com/`.
 10. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
-11. After production deployment and post-promotion verification succeed, delete the merged feature branch from GitHub and prune stale local tracking refs.
+11. After the required closeout for the merged PR is complete, delete the merged feature branch from GitHub and prune stale local tracking refs. For runtime changes, closeout includes production deployment and post-promotion verification. For source-only or docs-only changes that do not request promotion, closeout is the successful `main` CI run plus any required issue/documentation updates.
 
 The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
@@ -179,7 +179,13 @@ FTPS deployments must exclude source-only repository paths, including `.github/`
 
 ### Branch Lifecycle
 
-Feature branches are short-lived scaffolding for one implementation slice, documentation slice, or operational change. The durable history is the issue, pull request, merge commit, deployment run, and environment deployment record, not the branch name itself.
+Feature branches are short-lived scaffolding for one implementation slice, documentation slice, or operational change. The durable history is the issue, pull request, merge commit, deployment run, ruleset/audit record where applicable, and environment deployment record, not the branch name itself.
+
+The `Protect main` repository ruleset makes the pull request path mandatory for
+`main`. Do not plan pending work around direct pushes to `main`, force-push
+repair, deleting and recreating `main`, or routine bypass. If a future emergency
+requires bypassing this source-review boundary, document the authority and
+reason as a separate operational decision before mutating repository settings.
 
 Use this branch lifecycle:
 
@@ -187,9 +193,9 @@ Use this branch lifecycle:
 2. Create a focused branch such as `codex/issue-4-local-recovery` or `codex/document-branch-lifecycle`.
 3. Push the branch and open a pull request.
 4. Use the branch deployment to `dev` when runtime files change and the implementation needs engineering inspection.
-5. Merge the pull request to `main` only after review and required verification.
-6. Let the `main` merge commit promote through `test` and then `production` using the gated workflow.
-7. Delete the feature branch after production verification succeeds, unless there is an explicit rollback, audit, or follow-up reason to keep it temporarily.
+5. Merge the pull request to `main` only after review, required verification, resolved review threads, and the required `CI / Verify static site` check.
+6. Let the `main` merge commit promote through `test` and then `production` using the gated workflow when hosted runtime paths changed.
+7. Delete the feature branch after the applicable closeout succeeds, unless there is an explicit rollback, audit, or follow-up reason to keep it temporarily. Runtime changes wait for production verification; source-only and docs-only changes can be cleaned up after the merge, successful `main` CI, and issue/documentation closeout.
 
 Do not keep old issue branches until the whole MVP is complete. Keeping merged or superseded branches makes the repository harder to read and increases the chance that future work starts from a stale ref.
 
@@ -261,7 +267,7 @@ Manually request production promotion from `main` after test acceptance:
 gh workflow run promote.yml --ref main -f promote_production=true
 ```
 
-The normal path is the automatic `promote.yml` run created by a push to `main`. The manual commands are for re-running or recovering a known commit path, not for bypassing review.
+The normal path is the automatic `promote.yml` run created by the pull-request merge commit on `main`. Direct pushes to `main` are blocked by the `Protect main` ruleset. The manual commands are for re-running or recovering a known reviewed commit path, not for bypassing review.
 
 ### Approval Boundaries
 

@@ -74,6 +74,7 @@ Do not create ADRs for every product preference. Product behaviour normally belo
 
 - Development review happens in `dev`; formal testing happens in `test`; production promotion happens only after automated tests pass and human acceptance is completed in `test`.
 - Feature-branch pushes may request gated deployment to the shared `dev` environment. Merged `main` commits promote through `test` before any gated `production` deployment. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md` and `docs/runbooks/cloudflare-dns-and-access.md`.
+- `main` is protected by the active GitHub repository ruleset `Protect main`: work must reach `main` through a pull request with `CI / Verify static site` passing, resolved review threads, and no direct push, force-push, deletion, or routine bypass path. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md`.
 - If a Codex action triggers a deployment workflow that waits for GitHub Environment approval, Codex must pause and wait for the user to confirm that approval has been granted before continuing deployment-dependent work.
 - Detecting a hostname, branch, GitHub Environment, deployment target, or runtime context does not authorize mutation.
 - GitHub Environment approval authorizes deployment; Cloudflare Access authorizes browser access; cPanel access authorizes origin hosting changes. These authorities are separate.

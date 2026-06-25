@@ -385,6 +385,21 @@ The hosted Google provider is configured and has been validated in `dev`; see
 `docs/planning/supabase-state-ledger.md` for the dated provider and smoke
 evidence.
 
+### Additional Hosted Auth Providers Deferral
+
+GitHub issue #89 and `docs/backlog.md` track the post-MVP enhancement to add
+X/Twitter, Facebook, Azure/Microsoft, and Apple hosted Auth providers. This is
+not current MVP scope and does not authorise live Supabase Auth configuration,
+provider-console app creation, callback URL changes, secret entry, deployment,
+or hosted data mutation.
+
+Future implementation must verify current Supabase and provider documentation
+before planning exact setup. Provider-specific constraints already identified
+from current Supabase docs include Azure email-scope and verified-email review,
+and Apple web OAuth client-secret rotation every six months. Do not store OAuth
+client secrets, Apple signing keys, Supabase access tokens, or provider
+credentials in the repo, issues, screenshots, or chat.
+
 ### Branded Hosted Auth Deferral
 
 ADR 0022 records documented deferral with explicit accepted risk for the

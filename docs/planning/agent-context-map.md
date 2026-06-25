@@ -44,6 +44,7 @@ For large documents, search for the relevant heading first and then read that se
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
 | Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
 | Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
+| Additional hosted Auth providers | `docs/backlog.md` section `Additional hosted Auth providers`, `docs/runbooks/supabase-auth-and-postgres.md`; GitHub issue #89 |
 | Branded hosted Auth domain | `docs/decisions/0022-branded-supabase-auth-deferral.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/runbooks/cloudflare-dns-and-access.md`, `docs/backlog.md` section `Branded Supabase Auth domain`; completed GitHub issues #83 and #84 |
 | Uploaded Avatar storage | `docs/decisions/0019-uploaded-avatar-storage-authority.md`, `docs/decisions/0021-derived-cropped-images-for-uploaded-avatars.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/backlog.md` section `Uploaded Avatars` |
 | Built-in Avatar icons | `docs/decisions/0020-font-awesome-kit-for-built-in-avatars.md`, `.font-awesome.md`, `docs/runbooks/font-awesome-kit.md`, `docs/product-rules.md` |

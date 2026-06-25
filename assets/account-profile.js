@@ -5,6 +5,8 @@ import {
 
 const ACCOUNT_PROFILES_TABLE = "account_profiles";
 const ACCOUNT_PROFILE_DIRECTORY_TABLE = "account_profile_directory";
+const PROFILE_SELECT_COLUMNS =
+  "profile_id, handle, gamer_name, avatar_type, avatar_key, avatar_object_path";
 
 export function createMemoryAccountProfileRepository({
   createProfileId = defaultCreateProfileId,
@@ -34,8 +36,8 @@ export function createMemoryAccountProfileRepository({
       });
       const row = {
         accountId,
-        profileId,
         ...normaliseProfile({ accountId, profile }),
+        profileId,
       };
 
       rowsByAccountId.set(accountId, row);
@@ -71,6 +73,7 @@ export function createMemoryAccountProfileRepository({
       const row = {
         ...existing,
         ...updatedProfile,
+        profileId: existing.profileId,
       };
       rowsByAccountId.set(accountId, row);
       accountIdByHandle.set(row.handle, accountId);
@@ -98,8 +101,8 @@ export function createMemoryAccountProfileRepository({
     const profileId = profile.profileId ?? createProfileId();
     const row = {
       accountId,
-      profileId,
       ...normaliseProfile({ accountId, profile }),
+      profileId,
     };
 
     if (accountIdByHandle.has(row.handle)) {
@@ -157,7 +160,7 @@ export function createSupabaseAccountProfileRepository({
 
     const response = await supabase
       .from(ACCOUNT_PROFILES_TABLE)
-      .select("profile_id, handle, gamer_name, avatar_key")
+      .select(PROFILE_SELECT_COLUMNS)
       .eq("account_id", accountId)
       .maybeSingle();
 
@@ -194,12 +197,14 @@ export function createSupabaseAccountProfileRepository({
           .from(ACCOUNT_PROFILES_TABLE)
           .insert({
             account_id: accountId,
+            avatar_object_path: null,
             avatar_key: profile.avatarKey,
+            avatar_type: profile.avatar.type,
             gamer_name: profile.gamerName,
             handle: profile.handle,
             profile_id: profileId,
           })
-          .select("profile_id, handle, gamer_name, avatar_key")
+          .select(PROFILE_SELECT_COLUMNS)
           .maybeSingle();
 
         if (!isUniqueConstraintError(response?.error)) {
@@ -225,12 +230,17 @@ export function createSupabaseAccountProfileRepository({
       const response = await supabase
         .from(ACCOUNT_PROFILES_TABLE)
         .update({
+          avatar_object_path:
+            normalisedProfile.avatar.type === "uploaded"
+              ? normalisedProfile.avatar.objectPath
+              : null,
           avatar_key: normalisedProfile.avatarKey,
+          avatar_type: normalisedProfile.avatar.type,
           gamer_name: normalisedProfile.gamerName,
           handle: normalisedProfile.handle,
         })
         .eq("account_id", accountId)
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select(PROFILE_SELECT_COLUMNS)
         .maybeSingle();
 
       if (isUniqueConstraintError(response?.error)) {
@@ -249,7 +259,7 @@ export function createSupabaseAccountProfileRepository({
     async lookupProfileByHandle({ handle }) {
       const response = await supabase
         .from(ACCOUNT_PROFILE_DIRECTORY_TABLE)
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select(PROFILE_SELECT_COLUMNS)
         .eq("handle", normaliseHandle(handle))
         .maybeSingle();
 
@@ -288,6 +298,7 @@ function toOwnProfile(row) {
     profileId: row.profileId,
     handle: row.handle,
     gamerName: row.gamerName,
+    avatar: row.avatar,
     avatarKey: row.avatarKey,
   };
 }
@@ -297,6 +308,7 @@ function toDirectoryProfile(row) {
     profileId: row.profileId,
     handle: row.handle,
     gamerName: row.gamerName,
+    avatar: row.avatar,
     avatarKey: row.avatarKey,
   };
 }
@@ -307,16 +319,34 @@ function toStoredProfile(row) {
     profileId: row.profileId,
     handle: row.handle,
     gamerName: row.gamerName,
+    avatar: row.avatar,
     avatarKey: row.avatarKey,
   };
 }
 
 function recoverSupabaseProfile(row) {
+  const avatar =
+    row?.avatar_type === "uploaded"
+      ? {
+          type: "uploaded",
+          objectPath: row?.avatar_object_path,
+        }
+      : {
+          type: "built-in",
+          key: row?.avatar_key,
+        };
   const profile = {
+    ...normaliseProfile({
+      accountId: "recovered-profile-row",
+      profile: {
+        avatar,
+        avatarKey: row?.avatar_key,
+        gamerName: row?.gamer_name,
+        handle: row?.handle,
+        profileId: row?.profile_id,
+      },
+    }),
     profileId: row?.profile_id,
-    handle: row?.handle,
-    gamerName: row?.gamer_name,
-    avatarKey: row?.avatar_key,
   };
 
   if (
@@ -326,6 +356,8 @@ function recoverSupabaseProfile(row) {
     profile.handle.trim() === "" ||
     typeof profile.gamerName !== "string" ||
     profile.gamerName.trim() === "" ||
+    !profile.avatar ||
+    typeof profile.avatar.type !== "string" ||
     typeof profile.avatarKey !== "string" ||
     profile.avatarKey.trim() === ""
   ) {
@@ -361,19 +393,23 @@ function recoverStoredProfile(profile) {
     typeof profile?.handle !== "string" ||
     profile.handle.trim() === "" ||
     typeof profile?.gamerName !== "string" ||
-    profile.gamerName.trim() === "" ||
-    typeof profile?.avatarKey !== "string" ||
-    profile.avatarKey.trim() === ""
+    profile.gamerName.trim() === ""
   ) {
     throw new Error("A valid stored Account Profile is required.");
   }
 
+  const normalisedProfile = normaliseProfile({
+    accountId: profile.accountId,
+    profile,
+  });
+
   return {
     accountId: profile.accountId,
     profileId: profile.profileId,
-    handle: profile.handle,
-    gamerName: profile.gamerName,
-    avatarKey: profile.avatarKey,
+    handle: normalisedProfile.handle,
+    gamerName: normalisedProfile.gamerName,
+    avatar: normalisedProfile.avatar,
+    avatarKey: normalisedProfile.avatarKey,
   };
 }
 

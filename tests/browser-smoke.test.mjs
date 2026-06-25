@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { deflateSync } from "node:zlib";
 
 import { chromium } from "playwright";
 
@@ -454,11 +455,17 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Avatar").selectOption("moon");
+    await profileRegion.getByLabel("Avatar").selectOption("dragon");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "moon");
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dragon");
+    assert.equal(
+      await profileRegion
+        .locator("[data-account-profile-built-in-avatar-icon]")
+        .getAttribute("data-avatar-key"),
+      "dragon",
+    );
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
@@ -468,7 +475,7 @@ describe("solo browser smoke", () => {
         .getByRole("region", { name: "Profile" })
         .getByLabel("Avatar")
         .inputValue(),
-      "moon",
+      "dragon",
     );
     await assertNoHorizontalOverflow(page);
 
@@ -491,7 +498,7 @@ describe("solo browser smoke", () => {
 
     await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
     await profileRegion.getByLabel("Handle").fill("Captain Spoon");
-    await profileRegion.getByLabel("Avatar").selectOption("moon");
+    await profileRegion.getByLabel("Avatar").selectOption("yin-yang");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await assertTextVisible(profileRegion, "Profile saved.");
 
@@ -508,11 +515,233 @@ describe("solo browser smoke", () => {
       await profileRegion.getByLabel("Handle").inputValue(),
       "captain-spoon",
     );
-    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "moon");
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "yin-yang");
     await assertTextVisible(page, "@captain-spoon");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
+  });
+
+  it("previews, saves, reloads, and removes an Uploaded Avatar in local test mode", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    await page.addInitScript(() => {
+      const created = [];
+      const revoked = [];
+      const createObjectURL = URL.createObjectURL.bind(URL);
+      const revokeObjectURL = URL.revokeObjectURL.bind(URL);
+      URL.createObjectURL = (value) => {
+        const url = createObjectURL(value);
+        created.push(url);
+        return url;
+      };
+      URL.revokeObjectURL = (url) => {
+        revoked.push(url);
+        return revokeObjectURL(url);
+      };
+      window.__avatarObjectUrlLedger = { created, revoked };
+    });
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    let profileRegion = page.getByRole("region", { name: "Profile" });
+
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-input]")
+      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-image]")
+      .waitFor({ state: "visible" });
+    const draftPreviewUrl = await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-image]")
+      .getAttribute("src");
+    assert.match(draftPreviewUrl, /^blob:/);
+
+    await profileRegion.getByLabel("Avatar").selectOption("gamepad");
+    assert.equal(
+      await profileRegion
+        .locator("[data-account-profile-built-in-avatar-icon]")
+        .getAttribute("data-avatar-key"),
+      "gamepad",
+    );
+    assert.equal(
+      await page.evaluate(
+        (url) => window.__avatarObjectUrlLedger.revoked.includes(url),
+        draftPreviewUrl,
+      ),
+      true,
+    );
+
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-input]")
+      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-image]")
+      .waitFor({ state: "visible" });
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("src"),
+      /^blob:/,
+    );
+
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+    await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("src"),
+      /^data:image\/png;base64,/,
+    );
+
+    await page.reload();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    profileRegion = page.getByRole("region", { name: "Profile" });
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("src"),
+      /^data:image\/png;base64,/,
+    );
+
+    await profileRegion.getByLabel("Avatar").selectOption("dice");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+    await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-uploaded-avatar-image]").count(),
+      0,
+    );
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("rejects invalid Uploaded Avatar files before profile save", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    const profileRegion = page.getByRole("region", { name: "Profile" });
+    const uploadInput = profileRegion.locator(
+      "[data-account-profile-uploaded-avatar-input]",
+    );
+
+    await uploadInput.setInputFiles({
+      buffer: Buffer.from("plain text"),
+      mimeType: "text/plain",
+      name: "avatar.txt",
+    });
+    await profileRegion
+      .getByText("Choose a JPEG, PNG, or WebP image.")
+      .waitFor({ state: "visible" });
+
+    await uploadInput.setInputFiles({
+      buffer: Buffer.alloc(1024 * 1024 + 1),
+      mimeType: "image/png",
+      name: "large.png",
+    });
+    await profileRegion
+      .getByText("Choose an image smaller than 1 MB.")
+      .waitFor({ state: "visible" });
+
+    await uploadInput.setInputFiles(createPngFilePayload({ height: 128, width: 64 }));
+    await profileRegion
+      .getByText("Choose an image at least 128 by 128 pixels.")
+      .waitFor({ state: "visible" });
+
+    await uploadInput.setInputFiles(createPngFilePayload({ height: 128, width: 1025 }));
+    await profileRegion
+      .getByText("Choose an image no larger than 1024 by 1024 pixels.")
+      .waitFor({ state: "visible" });
+
+    await uploadInput.setInputFiles({
+      buffer: Buffer.from("not a png"),
+      mimeType: "image/png",
+      name: "corrupt.png",
+    });
+    await profileRegion
+      .getByText("This image could not be read. Choose another file.")
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-uploaded-avatar-image]").count(),
+      0,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps the previous Avatar active when upload or post-upload save fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const uploadFailureContext = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const uploadFailurePage = await uploadFailureContext.newPage();
+    const assertNoUploadFailureConsoleErrors =
+      trackConsoleErrors(uploadFailurePage);
+
+    await uploadFailurePage.goto(`${staticServer.origin}/?testAvatarStorage=upload-fails`);
+    await uploadFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    let profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-input]")
+      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await profileRegion
+      .getByText("Avatar could not be uploaded. Try again.")
+      .waitFor({ state: "visible" });
+    await assertTextHidden(profileRegion, "Profile saved.");
+    await uploadFailurePage.getByRole("button", { name: "Sign out" }).click();
+    await uploadFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    assertNoUploadFailureConsoleErrors();
+    await uploadFailureContext.close();
+
+    const saveFailureContext = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const saveFailurePage = await saveFailureContext.newPage();
+    const assertNoSaveFailureConsoleErrors = trackConsoleErrors(saveFailurePage);
+
+    await saveFailurePage.goto(
+      `${staticServer.origin}/?testAccountProfile=save-fails`,
+    );
+    await saveFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
+    await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-input]")
+      .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
+
+    await profileRegion
+      .getByText("Profile could not be saved. Your previous avatar is still active.")
+      .waitFor({ state: "visible" });
+    await assertTextHidden(profileRegion, "Profile saved.");
+    await saveFailurePage.getByRole("button", { name: "Sign out" }).click();
+    await saveFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
+    assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+    assertNoSaveFailureConsoleErrors();
+    await saveFailureContext.close();
   });
 
   it("creates a signed-in Pending Game invite by Handle in local test mode", async () => {
@@ -1446,6 +1675,70 @@ function createFillState(rowCount) {
   };
 }
 
+function createPngFilePayload({ height, width }) {
+  return {
+    buffer: createPngBuffer({ height, width }),
+    mimeType: "image/png",
+    name: `avatar-${width}x${height}.png`,
+  };
+}
+
+function createPngBuffer({ height, width }) {
+  const signature = Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  ]);
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  header[10] = 0;
+  header[11] = 0;
+  header[12] = 0;
+
+  const rowLength = 1 + width * 4;
+  const pixels = Buffer.alloc(rowLength * height);
+  for (let rowIndex = 0; rowIndex < height; rowIndex += 1) {
+    const rowOffset = rowIndex * rowLength;
+    pixels[rowOffset] = 0;
+    for (let columnIndex = 0; columnIndex < width; columnIndex += 1) {
+      const pixelOffset = rowOffset + 1 + columnIndex * 4;
+      pixels[pixelOffset] = 0x23;
+      pixels[pixelOffset + 1] = 0x7a;
+      pixels[pixelOffset + 2] = 0x5d;
+      pixels[pixelOffset + 3] = 0xff;
+    }
+  }
+
+  return Buffer.concat([
+    signature,
+    createPngChunk("IHDR", header),
+    createPngChunk("IDAT", deflateSync(pixels)),
+    createPngChunk("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+function createPngChunk(type, data) {
+  const typeBytes = Buffer.from(type, "ascii");
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length, 0);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])), 0);
+  return Buffer.concat([length, typeBytes, data, crc]);
+}
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+    }
+  }
+
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 async function fillActiveSection(
   page,
   fillState,
@@ -1565,6 +1858,14 @@ async function assertNoProfileEditorDom(page) {
   assert.equal(await page.locator("[data-account-profile-gamer-name]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-handle]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-avatar]").count(), 0);
+  assert.equal(
+    await page.locator("[data-account-profile-uploaded-avatar-input]").count(),
+    0,
+  );
+  assert.equal(
+    await page.locator("[data-account-profile-avatar-preview]").count(),
+    0,
+  );
 }
 
 async function assertProfileManagementSurfaceMounted(page) {
@@ -1582,7 +1883,17 @@ async function assertProfileManagementSurfaceMounted(page) {
     "player-test-account",
   );
   await assertTextVisible(profileRegion, "Avatar");
-  assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "spark");
+  assert.equal(await profileRegion.getByLabel("Avatar").inputValue(), "dice");
+  assert.equal(
+    await profileRegion
+      .locator("[data-account-profile-built-in-avatar-icon]")
+      .getAttribute("data-avatar-key"),
+    "dice",
+  );
+  assert.equal(
+    await profileRegion.locator("[data-account-profile-uploaded-avatar-input]").count(),
+    1,
+  );
 }
 
 async function assertNoPendingGameDom(page) {

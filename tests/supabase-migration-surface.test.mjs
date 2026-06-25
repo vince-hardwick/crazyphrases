@@ -74,6 +74,9 @@ const nudgeTimeoutFoundationMigrationUrl = findMigrationUrl(
 const fixNudgeNotificationAssignmentFkIndexMigrationUrl = findMigrationUrl(
   "fix_nudge_notification_assignment_fk_index",
 );
+const uploadedAvatarProfileMigrationUrl = findMigrationUrl(
+  "uploaded_avatar_profile",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1466,6 +1469,105 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /drop index if exists public\.in_app_notifications_target_assignment_id_idx/,
+    );
+  });
+
+  it("adds Uploaded Avatar storage, descriptor, and snapshot authority", () => {
+    assert.equal(existsSync(uploadedAvatarProfileMigrationUrl), true);
+
+    const migration = readFileSync(uploadedAvatarProfileMigrationUrl, "utf8");
+
+    assert.match(
+      migration,
+      /insert into storage\.buckets \(\s*id,\s*name,\s*public,\s*file_size_limit,\s*allowed_mime_types\s*\)/,
+    );
+    assert.match(migration, /'avatars',\s*'avatars',\s*true,\s*1048576/);
+    assert.match(
+      migration,
+      /array\['image\/jpeg', 'image\/png', 'image\/webp'\]::text\[\]/,
+    );
+
+    assert.match(
+      migration,
+      /create table if not exists public\.uploaded_avatar_objects/,
+    );
+    assert.match(
+      migration,
+      /object_path text primary key/,
+    );
+    assert.match(
+      migration,
+      /account_id uuid not null references auth\.users \(id\) on delete cascade/,
+    );
+    assert.match(
+      migration,
+      /profile_id uuid not null references public\.account_profiles \(profile_id\) on delete cascade/,
+    );
+    assert.match(
+      migration,
+      /lifecycle_status in \('pending', 'live', 'historical', 'abandoned'\)/,
+    );
+    assert.match(
+      migration,
+      /object_path ~ '\^uploaded\/\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[1-5\]\[0-9a-f\]\{3\}-\[89ab\]\[0-9a-f\]\{3\}-\[0-9a-f\]\{12\}\\\.\(jpg\|jpeg\|png\|webp\)\$'/,
+    );
+    assert.doesNotMatch(migration, /email/i);
+
+    for (const tableName of [
+      "account_profiles",
+      "account_profile_directory",
+      "pending_game_participants",
+      "game_participants",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `alter table public\\.${tableName}\\s+add column if not exists avatar_type text not null default 'built-in'`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `alter table public\\.${tableName}[\\s\\S]*add column if not exists avatar_object_path text`,
+        ),
+      );
+    }
+
+    assert.match(migration, /avatar_key in \('dice', 'hat-wizard', 'gamepad', 'ghost', 'puzzle-piece', 'biohazard', 'dragon', 'hurricane', 'jedi', 'pizza-slice', 'spaghetti-monster-flying', 'user-astronaut', 'yin-yang'\)/);
+    assert.match(
+      migration,
+      /create or replace function private\.sync_uploaded_avatar_lifecycle\(\)/,
+    );
+    assert.match(migration, /lifecycle_status = 'live'/);
+    assert.match(migration, /lifecycle_status = 'historical'/);
+
+    assert.match(
+      migration,
+      /create policy "Account holders can create Uploaded Avatar metadata"/,
+    );
+    assert.match(
+      migration,
+      /create policy "Account holders can upload registered Uploaded Avatar objects"/,
+    );
+    assert.match(
+      migration,
+      /exists \(\s*select 1\s+from public\.uploaded_avatar_objects as avatar_object/,
+    );
+    assert.match(migration, /avatar_object\.object_path = storage\.objects\.name/);
+    assert.match(migration, /avatar_object\.account_id = \(select auth\.uid\(\)\)/);
+    assert.match(migration, /avatar_object\.lifecycle_status = 'pending'/);
+
+    assert.match(
+      migration,
+      /grant select \(account_id, profile_id, handle, gamer_name, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant update \(handle, gamer_name, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select .*uploaded_avatar_objects.*to anon/i,
     );
   });
 

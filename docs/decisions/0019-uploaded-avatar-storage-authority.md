@@ -2,8 +2,12 @@
 
 ## Status
 
-Accepted. Source-controlled implementation and hosted storage configuration do
-not exist yet.
+Accepted. Source-controlled #63 implementation exists on the Uploaded Avatar
+branch, and the hosted `avatars` Storage bucket, ownership metadata, and
+Storage policies have been applied after explicit owner approval. The branch
+deployment to `dev` has passed hosted browser upload/write/reload/restore
+validation through the real Storage bucket. Production uploaded-avatar write
+smoke remains separately approval-gated.
 
 ## Context
 
@@ -146,12 +150,15 @@ objects from failed or retried uploads. This ownership table is not a public
 directory surface; browser-facing Account Profile and Handle Directory data
 must expose only the invite-safe Avatar descriptor.
 
-No Supabase Storage bucket exists for uploaded avatars at decision time. Creating
-the bucket, changing Storage policies, or running hosted upload/write/cleanup
-smokes is a live hosted mutation and requires explicit owner approval or an
-accepted task-specific plan. Prefer authenticated Supabase MCP tooling for
-hosted bucket and policy work when it exposes the required operation; use the
-Supabase CLI as the fallback when MCP is unavailable for that operation.
+No Supabase Storage bucket existed for uploaded avatars at decision time. The
+#63 branch creates the public-read `avatars` bucket, ownership metadata table,
+and owner-scoped Storage policies through a source-controlled migration, and
+that migration was applied to hosted Supabase on 2026-06-24 after explicit
+owner approval. Further hosted upload/write/cleanup smokes remain live hosted
+mutations and require explicit owner approval or an accepted task-specific plan.
+Prefer authenticated Supabase MCP tooling for hosted bucket and policy work when
+it exposes the required operation; use the Supabase CLI as the fallback when MCP
+is unavailable for that operation.
 
 ## Consequences
 

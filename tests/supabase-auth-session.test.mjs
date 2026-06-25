@@ -61,9 +61,14 @@ describe("Supabase Auth session", () => {
     ]);
     assert.equal(shell.accountId, "auth-user-456");
     assert.deepEqual(shell.profile, {
+      profileId: "profile-directory-1",
       handle: "captain-spoon",
       gamerName: "Captain Spoon",
-      avatarKey: "moon",
+      avatar: {
+        type: "built-in",
+        key: "yin-yang",
+      },
+      avatarKey: "yin-yang",
     });
     assert.equal(JSON.stringify(shell).includes("private@example.com"), false);
   });

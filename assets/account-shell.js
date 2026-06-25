@@ -1,12 +1,29 @@
 const DEFAULT_GAMER_NAME = "Player";
-const DEFAULT_AVATAR_KEYS = [
-  "spark",
-  "paper",
-  "moon",
-  "star",
-  "comet",
-  "kite",
+export const DEFAULT_BUILT_IN_AVATAR_KEY = "dice";
+export const BUILT_IN_AVATAR_KEYS = [
+  "dice",
+  "hat-wizard",
+  "gamepad",
+  "ghost",
+  "puzzle-piece",
+  "biohazard",
+  "dragon",
+  "hurricane",
+  "jedi",
+  "pizza-slice",
+  "spaghetti-monster-flying",
+  "user-astronaut",
+  "yin-yang",
 ];
+
+const LEGACY_BUILT_IN_AVATAR_KEYS = new Map([
+  ["spark", "dice"],
+  ["paper", "puzzle-piece"],
+  ["moon", "yin-yang"],
+  ["star", "user-astronaut"],
+  ["comet", "hurricane"],
+  ["kite", "dragon"],
+]);
 
 export function createAccountShell({ account, profile, existingHandles = [] } = {}) {
   assertAccount(account);
@@ -35,7 +52,11 @@ export function createDefaultProfile({ accountId, existingHandles = [] }) {
   return {
     handle,
     gamerName: DEFAULT_GAMER_NAME,
-    avatarKey: DEFAULT_AVATAR_KEYS[stableIndex(accountId, DEFAULT_AVATAR_KEYS.length)],
+    avatar: createBuiltInAvatarDescriptor(
+      BUILT_IN_AVATAR_KEYS[stableIndex(accountId, BUILT_IN_AVATAR_KEYS.length)],
+    ),
+    avatarKey:
+      BUILT_IN_AVATAR_KEYS[stableIndex(accountId, BUILT_IN_AVATAR_KEYS.length)],
   };
 }
 
@@ -58,11 +79,21 @@ function assertAccount(account) {
 }
 
 function normaliseProfile(profile) {
+  const avatar = normaliseAvatarDescriptor(profile);
+
   return {
+    profileId: normaliseProfileId(profile.profileId),
     handle: normaliseHandle(profile.handle),
     gamerName: normaliseGamerName(profile.gamerName),
-    avatarKey: normaliseAvatarKey(profile.avatarKey),
+    avatar,
+    avatarKey:
+      avatar.type === "built-in" ? avatar.key : DEFAULT_BUILT_IN_AVATAR_KEY,
   };
+}
+
+function normaliseProfileId(profileId) {
+  const normalised = String(profileId ?? "").trim();
+  return normalised === "" ? null : normalised;
 }
 
 function normaliseHandle(handle) {
@@ -80,9 +111,58 @@ function normaliseGamerName(gamerName) {
   return normalised === "" ? DEFAULT_GAMER_NAME : normalised.slice(0, 40);
 }
 
-function normaliseAvatarKey(avatarKey) {
+export function normaliseBuiltInAvatarKey(avatarKey) {
   const normalised = slugify(avatarKey);
-  return DEFAULT_AVATAR_KEYS.includes(normalised) ? normalised : DEFAULT_AVATAR_KEYS[0];
+  const migrated = LEGACY_BUILT_IN_AVATAR_KEYS.get(normalised) ?? normalised;
+
+  return BUILT_IN_AVATAR_KEYS.includes(migrated)
+    ? migrated
+    : DEFAULT_BUILT_IN_AVATAR_KEY;
+}
+
+export function createBuiltInAvatarDescriptor(avatarKey) {
+  return {
+    type: "built-in",
+    key: normaliseBuiltInAvatarKey(avatarKey),
+  };
+}
+
+export function createUploadedAvatarDescriptor({ objectPath } = {}) {
+  const normalisedObjectPath = String(objectPath ?? "").trim();
+  if (!isUploadedAvatarObjectPath(normalisedObjectPath)) {
+    throw new Error("A valid Uploaded Avatar object path is required.");
+  }
+
+  return {
+    type: "uploaded",
+    objectPath: normalisedObjectPath,
+  };
+}
+
+export function normaliseAvatarDescriptor(profile = {}) {
+  if (profile.avatar?.type === "uploaded") {
+    return createUploadedAvatarDescriptor({
+      objectPath: profile.avatar.objectPath,
+    });
+  }
+
+  if (profile.avatar?.type === "built-in") {
+    return createBuiltInAvatarDescriptor(profile.avatar.key);
+  }
+
+  if (profile.avatarType === "uploaded") {
+    return createUploadedAvatarDescriptor({
+      objectPath: profile.avatarObjectPath,
+    });
+  }
+
+  return createBuiltInAvatarDescriptor(profile.avatarKey);
+}
+
+function isUploadedAvatarObjectPath(objectPath) {
+  return /^uploaded\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|jpeg|png|webp)$/i.test(
+    objectPath,
+  );
 }
 
 function createUniqueHandle(baseHandle, { existingHandles }) {

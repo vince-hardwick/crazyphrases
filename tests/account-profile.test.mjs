@@ -28,6 +28,10 @@ describe("Account Profile repository", () => {
       profileId: "profile-directory-1",
       handle: profile.handle,
       gamerName: "Player",
+      avatar: {
+        type: "built-in",
+        key: profile.avatarKey,
+      },
       avatarKey: profile.avatarKey,
     });
     assert.equal("accountId" in lookup, false);
@@ -56,6 +60,10 @@ describe("Account Profile repository", () => {
       profileId: "profile-directory-2",
       handle: profile.handle,
       gamerName: "Player",
+      avatar: {
+        type: "built-in",
+        key: profile.avatarKey,
+      },
       avatarKey: profile.avatarKey,
     });
     assert.equal("accountId" in lookup, false);
@@ -82,6 +90,10 @@ describe("Account Profile repository", () => {
       profileId: "profile-directory-3",
       handle: profile.handle,
       gamerName: "Player",
+      avatar: {
+        type: "built-in",
+        key: profile.avatarKey,
+      },
       avatarKey: profile.avatarKey,
     });
     assert.deepEqual(supabase.tableCalls.slice(-1), ["account_profile_directory"]);
@@ -126,7 +138,11 @@ describe("Account Profile repository", () => {
         profileId: first.profileId,
         handle: "captain-spoon",
         gamerName: "Captain Spoon",
-        avatarKey: "moon",
+        avatar: {
+          type: "built-in",
+          key: "yin-yang",
+        },
+        avatarKey: "yin-yang",
       });
       assert.equal(await repository.lookupProfileByHandle({ handle: first.handle }), null);
       assert.deepEqual(
@@ -145,6 +161,39 @@ describe("Account Profile repository", () => {
           }),
         /handle/i,
       );
+    });
+
+    it(`persists Uploaded Avatar descriptors through the ${repositoryName} profile surface`, async () => {
+      const repository = createRepository();
+      const first = await repository.ensureOwnProfile({
+        accountId: `${repositoryName}-uploaded-account`,
+      });
+      const uploadedAvatar = {
+        type: "uploaded",
+        objectPath: "uploaded/00000000-0000-4000-8000-000000000063.png",
+      };
+
+      const updated = await repository.updateOwnProfile({
+        accountId: `${repositoryName}-uploaded-account`,
+        profile: {
+          handle: "Uploaded Avatar",
+          gamerName: "Uploaded Avatar",
+          avatar: uploadedAvatar,
+        },
+      });
+
+      assert.deepEqual(updated, {
+        profileId: first.profileId,
+        handle: "uploaded-avatar",
+        gamerName: "Uploaded Avatar",
+        avatar: uploadedAvatar,
+        avatarKey: "dice",
+      });
+      assert.deepEqual(
+        await repository.lookupProfileByHandle({ handle: "UPLOADED AVATAR" }),
+        updated,
+      );
+      assert.equal(JSON.stringify(updated).includes(`${repositoryName}-uploaded-account`), false);
     });
   }
 

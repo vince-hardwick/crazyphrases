@@ -3,7 +3,8 @@
 ## Status
 
 Accepted. The owner selected documented deferral with explicit accepted risk on
-2026-06-25 for GitHub issue #84, under parent PRD #83. The earlier
+2026-06-25 for GitHub issue #84, under parent PRD #83. PR #87 merged the
+deferral record and closed #83 and #84 as completed. The earlier
 `auth.crazyphrases.com` custom-domain route was reversed after reviewing
 Supabase custom-domain cost implications in more detail.
 
@@ -53,7 +54,8 @@ current pre-public-onboarding stage.
 
 The project will not create or activate `auth.crazyphrases.com`, a Supabase
 custom domain, or a Supabase vanity subdomain as part of #84. The follow-up
-custom-domain preparation and activation issues are superseded by this decision.
+custom-domain preparation and activation issues #85 and #86 are superseded by
+this decision and were closed as not planned.
 
 This decision does not authorise any Supabase Auth, Google OAuth, Cloudflare
 DNS, GitHub Environment, production deployment, or hosted data mutation.

@@ -3,8 +3,9 @@
 ## Status
 
 Accepted. The owner selected the derived cropped image model for circular
-Uploaded Avatar cropping on 2026-06-25. GitHub issue #64 is the implementation
-route.
+Uploaded Avatar cropping on 2026-06-25. GitHub issue #64 was implemented through
+PR #78 and promoted through production on 2026-06-25. The post-MVP visual
+cropper UX follow-up is tracked by GitHub issue #79.
 
 ## Context
 
@@ -26,10 +27,10 @@ cleanup, and future image-processing authority.
 
 ## Decision
 
-Crazy Phrases will save a browser-generated derived cropped image for #64.
+Crazy Phrases saves a browser-generated derived cropped image for #64.
 
 The selected source file is used for local validation, crop preview, and
-browser-side image generation only. The #64 implementation should not upload or
+browser-side image generation only. The #64 implementation does not upload or
 retain the uncropped original source file as a live Avatar object.
 
 The saved Uploaded Avatar object should be a fixed square raster image that
@@ -54,6 +55,11 @@ and the previous live object becomes historical rather than being deleted.
 Completed-game participant snapshots continue to preserve the Avatar descriptor
 object path used at play time.
 
+The MVP #64 crop UI uses labelled numeric controls for scale, horizontal
+position, and vertical position. A visual crop tool with guidelines and direct
+manipulation can replace that editor later without changing this storage
+authority decision.
+
 If future work needs to retain originals, store crop metadata, regenerate
 derivatives server-side, strip metadata through a formal media pipeline, or
 transcode on the server, that work needs a separate issue and ADR or an explicit
@@ -61,16 +67,19 @@ amendment to this decision.
 
 ## Consequences
 
-- The #64 implementation should not need new Account Profile descriptor columns
-  if the derived image uses the existing Uploaded Avatar object path contract.
+- The #64 implementation did not need new Account Profile descriptor columns
+  because the derived image uses the existing Uploaded Avatar object path
+  contract.
 - The Storage row for a cropped Avatar records metadata about the derived image,
   not the original selected file.
 - Browser crop generation failure is part of the save path and must not upload
   partial or original media or falsely report profile-save success.
 - The existing direct authenticated browser upload path remains acceptable for
-  #64 as long as generated derived objects still satisfy the bucket, path,
-  content type, byte-size, and dimension constraints.
+  derived-crop work as long as generated derived objects still satisfy the
+  bucket, path, content type, byte-size, and dimension constraints.
 - Tests should focus on the externally visible behaviour: circular crop preview,
   save, reload, Built-in Avatar restore, failure states, anonymous-mode DOM
   cleanup, and hosted dev/test Storage verification when implementation changes
   touch live Storage behaviour.
+- Post-MVP crop-editor UX work should preserve the derived-image storage
+  contract unless a future ADR explicitly changes it.

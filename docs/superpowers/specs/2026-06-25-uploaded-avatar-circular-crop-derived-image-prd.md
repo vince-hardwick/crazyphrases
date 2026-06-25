@@ -1,6 +1,8 @@
 # PRD: Circular Crop for Uploaded Avatars
 
-Status: Published PRD for GitHub issue #64.
+Status: Published PRD provenance. Implemented through GitHub issue #64 and PR
+#78, promoted through production on 2026-06-25. Post-MVP visual cropper UX is
+tracked by GitHub issue #79.
 Date: 2026-06-25
 Issue: https://github.com/vince-hardwick/crazyphrases/issues/64
 
@@ -183,8 +185,12 @@ Storage upload path.
 The owner confirmed on 2026-06-25 that Crazy Phrases should save a derived
 cropped image for #64.
 
+The #64 MVP shipped with labelled numerical controls for scale, horizontal
+position, and vertical position. The owner accepted that implementation for MVP
+after manual file upload and crop-control testing, while deferring a visual crop
+tool with guidelines and direct manipulation to #79.
+
 This PRD depends on the shipped #63 Uploaded Avatar infrastructure and the
 accepted ADRs for Uploaded Avatar Storage authority and Built-in Avatar visuals.
-The #64 implementation should update durable project documentation with any
-new validation messages, output-size constants, Storage assumptions, or
-deferrals discovered during implementation.
+Current authority for future changes lives in `docs/product-rules.md`, ADRs
+0019 and 0021, `docs/backlog.md`, and the issue tracker.

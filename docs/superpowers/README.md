@@ -53,10 +53,10 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-11-anonymous-solo-mvp-prd.md` | Published historical PRD. | GitHub issue #1, `docs/product-rules.md`, ADRs 0004 and 0008 |
 | `specs/2026-06-12-signed-in-foundation-solo-persistence-prd.md` | Published historical PRD. | GitHub issue #22, ADR 0010, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-15-private-phrase-and-batch-favourites-prd.md` | Published PRD provenance. Current child-ticket status belongs to GitHub Issues and backlog. | GitHub issue #33 and child issues, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
-| `specs/2026-06-16-durable-account-profile-handle-directory-prd.md` | Published PRD provenance. Durable profile, MVP profile-management, and avatar-upload personalisation are complete; circular avatar masking remains separate. | GitHub issues #43, #47, and #63; ADRs 0011, 0019, and 0020; `docs/backlog.md`; follow-up #64 |
+| `specs/2026-06-16-durable-account-profile-handle-directory-prd.md` | Published PRD provenance. Durable profile, MVP profile-management, avatar-upload personalisation, and circular crop derivatives are complete; post-MVP visual cropper UX remains separate. | GitHub issues #43, #47, #63, #64, and #79; ADRs 0011, 0019, 0020, and 0021; `docs/backlog.md` |
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
-| `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD for #64. Implementation is pending. | GitHub issue #64; ADRs 0019 and 0021; `docs/product-rules.md`; `docs/backlog.md` |
+| `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD provenance. #64 shipped through PR #78 and production promotion; #79 owns the deferred post-MVP visual cropper UX. | GitHub issues #64 and #79; ADRs 0019 and 0021; `docs/product-rules.md`; `docs/backlog.md`; `docs/planning/supabase-state-ledger.md` |
 
 ## Adding Future Plans Or Specs
 

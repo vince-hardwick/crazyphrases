@@ -56,6 +56,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-16-durable-account-profile-handle-directory-prd.md` | Published PRD provenance. Durable profile, MVP profile-management, and avatar-upload personalisation are complete; circular avatar masking remains separate. | GitHub issues #43, #47, and #63; ADRs 0011, 0019, and 0020; `docs/backlog.md`; follow-up #64 |
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
+| `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD for #64. Implementation is pending. | GitHub issue #64; ADRs 0019 and 0021; `docs/product-rules.md`; `docs/backlog.md` |
 
 ## Adding Future Plans Or Specs
 

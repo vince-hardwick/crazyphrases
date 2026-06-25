@@ -225,6 +225,131 @@ body {
   display: none;
 }
 
+.account-profile-crop-editor {
+  display: grid;
+  place-items: center;
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(238, 246, 243, 0.72);
+  cursor: grab;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.account-profile-crop-editor:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.account-profile-crop-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 0 2px rgba(35, 122, 93, 0.84);
+  overflow: hidden;
+}
+
+.account-profile-crop-editor-image {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  transform-origin: top left;
+  user-select: none;
+}
+
+.account-profile-crop-guide {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, transparent calc(33.333% - 1px), rgba(35, 122, 93, 0.5) calc(33.333% - 1px), rgba(35, 122, 93, 0.5) calc(33.333% + 1px), transparent calc(33.333% + 1px)),
+    linear-gradient(to right, transparent calc(66.666% - 1px), rgba(35, 122, 93, 0.5) calc(66.666% - 1px), rgba(35, 122, 93, 0.5) calc(66.666% + 1px), transparent calc(66.666% + 1px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 1px), rgba(35, 122, 93, 0.5) calc(33.333% - 1px), rgba(35, 122, 93, 0.5) calc(33.333% + 1px), transparent calc(33.333% + 1px)),
+    linear-gradient(to bottom, transparent calc(66.666% - 1px), rgba(35, 122, 93, 0.5) calc(66.666% - 1px), rgba(35, 122, 93, 0.5) calc(66.666% + 1px), transparent calc(66.666% + 1px)),
+    linear-gradient(to right, transparent calc(50% - 1px), rgba(22, 84, 66, 0.62) calc(50% - 1px), rgba(22, 84, 66, 0.62) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(to bottom, transparent calc(50% - 1px), rgba(22, 84, 66, 0.62) calc(50% - 1px), rgba(22, 84, 66, 0.62) calc(50% + 1px), transparent calc(50% + 1px));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.account-profile-crop-guide.is-active {
+  opacity: 1;
+}
+
+.account-profile-crop-marker {
+  position: absolute;
+  z-index: 2;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--accent-strong);
+  pointer-events: none;
+}
+
+.account-profile-crop-marker.is-top-left {
+  left: 4px;
+  top: 4px;
+  border-bottom: 0;
+  border-right: 0;
+}
+
+.account-profile-crop-marker.is-top {
+  left: calc(50% - 6px);
+  top: 4px;
+  height: 8px;
+  border-bottom: 0;
+}
+
+.account-profile-crop-marker.is-top-right {
+  right: 4px;
+  top: 4px;
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.account-profile-crop-marker.is-right {
+  right: 4px;
+  top: calc(50% - 6px);
+  width: 8px;
+  border-left: 0;
+}
+
+.account-profile-crop-marker.is-bottom-right {
+  right: 4px;
+  bottom: 4px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.account-profile-crop-marker.is-bottom {
+  left: calc(50% - 6px);
+  bottom: 4px;
+  height: 8px;
+  border-top: 0;
+}
+
+.account-profile-crop-marker.is-bottom-left {
+  left: 4px;
+  bottom: 4px;
+  border-right: 0;
+  border-top: 0;
+}
+
+.account-profile-crop-marker.is-left {
+  left: 4px;
+  top: calc(50% - 6px);
+  width: 8px;
+  border-right: 0;
+}
+
+.account-profile-crop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .account-profile-status {
   min-height: 1.2em;
   margin: 0;

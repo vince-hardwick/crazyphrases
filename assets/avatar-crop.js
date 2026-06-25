@@ -20,22 +20,14 @@ export async function createDerivedAvatarFile({
       throw new Error("Canvas unavailable.");
     }
 
-    const normalisedCrop = normaliseAvatarCrop(crop);
-    const baseScale = Math.max(
-      outputSize / source.width,
-      outputSize / source.height,
-    );
-    const scale = baseScale * normalisedCrop.scale;
-    const drawWidth = source.width * scale;
-    const drawHeight = source.height * scale;
-    const maxOffsetX = Math.max(0, (drawWidth - outputSize) / 2);
-    const maxOffsetY = Math.max(0, (drawHeight - outputSize) / 2);
-    const drawX =
-      (outputSize - drawWidth) / 2 + (normalisedCrop.x / 100) * maxOffsetX;
-    const drawY =
-      (outputSize - drawHeight) / 2 + (normalisedCrop.y / 100) * maxOffsetY;
+    const layout = calculateAvatarCropLayout({
+      crop,
+      cropBoxSize: outputSize,
+      sourceHeight: source.height,
+      sourceWidth: source.width,
+    });
 
-    context.drawImage(source.image, drawX, drawY, drawWidth, drawHeight);
+    context.drawImage(source.image, layout.x, layout.y, layout.width, layout.height);
     const blob = await new Promise((resolve) => {
       canvas.toBlob(resolve, "image/png");
     });
@@ -55,6 +47,39 @@ export function normaliseAvatarCrop(crop = {}) {
     x: clampNumber(crop.x, -100, 100, DEFAULT_AVATAR_CROP.x),
     y: clampNumber(crop.y, -100, 100, DEFAULT_AVATAR_CROP.y),
   };
+}
+
+export function calculateAvatarCropLayout({
+  crop = DEFAULT_AVATAR_CROP,
+  cropBoxSize = AVATAR_CROP_OUTPUT_SIZE,
+  sourceHeight,
+  sourceWidth,
+} = {}) {
+  const normalisedCrop = normaliseAvatarCrop(crop);
+  const baseScale = Math.max(cropBoxSize / sourceWidth, cropBoxSize / sourceHeight);
+  const width = sourceWidth * baseScale * normalisedCrop.scale;
+  const height = sourceHeight * baseScale * normalisedCrop.scale;
+  const maxOffsetX = Math.max(0, (width - cropBoxSize) / 2);
+  const maxOffsetY = Math.max(0, (height - cropBoxSize) / 2);
+
+  return {
+    height,
+    width,
+    x: (cropBoxSize - width) / 2 + (normalisedCrop.x / 100) * maxOffsetX,
+    y: (cropBoxSize - height) / 2 + (normalisedCrop.y / 100) * maxOffsetY,
+  };
+}
+
+export function adjustAvatarCrop(
+  crop = DEFAULT_AVATAR_CROP,
+  { scaleDelta = 0, xDelta = 0, yDelta = 0 } = {},
+) {
+  const normalisedCrop = normaliseAvatarCrop(crop);
+  return normaliseAvatarCrop({
+    scale: normalisedCrop.scale + scaleDelta,
+    x: normalisedCrop.x + xDelta,
+    y: normalisedCrop.y + yDelta,
+  });
 }
 
 function clampNumber(value, min, max, fallback) {

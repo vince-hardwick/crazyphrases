@@ -16,7 +16,7 @@ preserve their original history.
 | Sharing, discovery, reactions, and ranking | Deferred | Batch ratings; Friend-only leaderboards; Public feed and leaderboards; Phrase reactions; Leaderboard timezone rule; Phrase image generation; Public share links; Web Share API |
 | Word bank and entry assistance | Deferred | Full automatic batch population; User-defined entry kinds; Shareable word packs; Personal word lists; Expanded word-bank source selection; Word-bank family-friendly setting; Production word-bank delivery |
 | UI polish | Deferred | Celebratory reveal effects; Custom keyboard shortcuts |
-| Operations and platform | Deferred | Cloudflare Access allow-list documentation; Privacy-preserving telemetry; Frontend framework; Cloudflare deployment cache purge |
+| Operations and platform | Deferred | Main branch protection ruleset; Cloudflare Access allow-list documentation; Privacy-preserving telemetry; Frontend framework; Cloudflare deployment cache purge |
 
 ## Deferred Product Decisions
 
@@ -204,6 +204,13 @@ preserve their original history.
 - **Why deferred**: Dev/test environments have been created, configured, and tested, but the exact allow-list was not provided in this thread.
 - **Revisit when**: The configured Cloudflare Access allow policies are available for documentation.
 - **Remaining risk**: Runtime access reviewers and GitHub Environment deployment approvers may be confused if the Access allow-list remains undocumented.
+
+### Main branch protection ruleset
+
+- **Deferred**: Creating an active GitHub repository ruleset that targets `main` and blocks direct, unchecked mutation of the default branch.
+- **Why deferred**: The repository warning was investigated on 2026-06-25 and GitHub reported no repository rulesets plus `Branch not protected` for `main`. Enabling protection changes the source-review boundary and should be applied deliberately after the required status-check name is made unambiguous.
+- **Revisit when**: The owner approves branch protection implementation, before inviting additional collaborators, or before relying on `main` as the sole promotion source for wider public production use.
+- **Remaining risk**: Until protection is enabled, a write-capable account or token can push directly to `main`, force-push or delete history, or merge without the intended pull-request and CI boundary. The `production` GitHub Environment gate still protects live production deployment, but unreviewed `main` commits can enter the source of truth and deploy to `test`.
 
 ### Privacy-preserving telemetry
 

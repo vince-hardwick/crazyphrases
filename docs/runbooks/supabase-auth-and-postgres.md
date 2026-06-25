@@ -418,9 +418,8 @@ ADR 0021 selects the derived cropped-image model for #64 circular mask
 cropping. Under that model, the selected source file remains local draft input
 for validation, crop preview, and browser-side crop generation. The hosted
 object saved as the active Uploaded Avatar is the generated cropped image, not
-the uncropped original. The expected #64 derived object is a 256 x 256 PNG under
-the existing `uploaded/{uuid}.png` path convention unless implementation
-evidence establishes a different documented project-owned size.
+the uncropped original. The #64 derived object is a 256 x 256 PNG under the
+existing `uploaded/{uuid}.png` path convention.
 
 Selecting an Uploaded Avatar file in the browser must remain local validation
 and preview only. Hosted Storage upload should happen only after the signed-in
@@ -461,9 +460,9 @@ policies, signs in as a test account, uploads a valid small avatar when the
 change requires write coverage, saves the Avatar descriptor, reloads and
 verifies rendering, switches back to a Built-in Avatar, verifies the previous
 uploaded object/history rule is not violated, and cleans up test
-account/profile/object rows where safe. For #64, verification should also check
-that the Storage metadata describes the derived cropped object rather than the
-source file. Record evidence and cleanup results in
+account/profile/object rows where safe. For derived-crop changes, verification
+should also check that the Storage metadata describes the derived cropped object
+rather than the source file. Record evidence and cleanup results in
 `docs/planning/supabase-state-ledger.md`. Production uploaded-avatar write smoke
 requires separate explicit approval.
 

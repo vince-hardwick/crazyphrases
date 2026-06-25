@@ -339,13 +339,13 @@ If the file upload succeeds but saving the Account Profile Avatar descriptor fai
 
 The first Uploaded Avatar slice requires hosted Supabase validation before merge or promotion, because it creates or depends on real Storage bucket, Storage policy, ownership metadata, and direct browser upload behaviour. Hosted validation remains approval-gated and should run in dev or test first; production uploaded-avatar write smoke requires separate explicit approval.
 
-The first Uploaded Avatar slice does not include crop positioning, crop metadata, or derived cropped-image generation. Uploaded Avatars may use a simple default fit within the Avatar frame until circular mask cropping is implemented under #64.
+The #63 Uploaded Avatar slice did not include crop positioning, crop metadata, or derived cropped-image generation. That deferred scope is now implemented under #64 using a browser-generated derived cropped image. A richer visual crop tool with guidelines and direct manipulation is deferred under #79 and is not part of the MVP completion bar.
 
 Circular mask cropping under #64 saves a derived cropped image as the active Uploaded Avatar object. The selected source file is local draft input for validation, crop preview, and browser-side crop generation only; #64 does not upload or retain the uncropped original as the live Avatar object.
 
-The #64 derived cropped image should be a fixed square PNG, with a 256 x 256 target unless implementation evidence establishes a better project-owned size. It uses the existing `avatars` bucket, opaque `uploaded/{uuid}.png` object path convention, owner-scoped metadata, and Uploaded Avatar descriptor. Circular display remains a rendering rule around the saved square crop.
+The #64 derived cropped image is a fixed square PNG with a 256 x 256 target. It uses the existing `avatars` bucket, opaque `uploaded/{uuid}.png` object path convention, owner-scoped metadata, and Uploaded Avatar descriptor. Circular display remains a rendering rule around the saved square crop.
 
-Crop position and scale are draft Profile-editor state only in #64. Save/reload correctness comes from the derived image bytes, not from persisted crop metadata. Crop generation failure should use the message "Avatar could not be cropped. Try again."
+Crop position and scale are draft Profile-editor state only in #64. Save/reload correctness comes from the derived image bytes, not from persisted crop metadata. The MVP crop controls are labelled numeric controls for scale, horizontal position, and vertical position. Crop generation failure uses the message "Avatar could not be cropped. Try again."
 
 The first Uploaded Avatar slice must render a basic Avatar preview in the existing Profile editor for both Built-in Avatars and Uploaded Avatars, and existing participant or profile identity surfaces should consume the Avatar descriptor where they already show avatar identity. It must not add new public profile pages, friend cards, leaderboard identity, or broader social surfaces.
 

@@ -10,7 +10,9 @@ validation passed through the real Storage bucket, and production passed a
 non-write browser smoke. Production uploaded-avatar write smoke remains
 separately approval-gated. ADR 0021 extends this decision for #64 by selecting
 derived cropped images, rather than persistent crop metadata or retained
-originals, as the storage authority for circular Uploaded Avatar cropping.
+originals, as the storage authority for circular Uploaded Avatar cropping. The
+#64 implementation merged to `main` through PR #78 and has been promoted through
+production.
 
 ## Context
 
@@ -105,10 +107,10 @@ and direct browser upload behaviour. Hosted validation remains approval-gated
 and should run in dev or test first. Production uploaded-avatar write smoke
 requires separate explicit approval.
 
-The first Uploaded Avatar slice does not store crop coordinates, generate
-derived cropped images, or add a crop-positioning UI. Uploaded Avatars may use a
-simple default fit within the Avatar frame until circular mask cropping is
-implemented under #64. ADR 0021 owns the #64 crop-storage model.
+The #63 Uploaded Avatar slice did not store crop coordinates, generate derived
+cropped images, or add a crop-positioning UI. ADR 0021 owns the #64
+crop-storage model, which is now implemented with browser-generated derived
+cropped PNG objects. A richer visual cropper remains separate post-MVP scope.
 
 The first slice must render a basic Avatar preview in the existing Profile
 editor for both Built-in Avatars and Uploaded Avatars. Existing participant or
@@ -176,8 +178,8 @@ is unavailable for that operation.
   mutation authority must remain owner-scoped.
 - The `avatars` bucket and `uploaded/{uuid}.{ext}` object path convention are
   part of the first-slice storage contract.
-- #63 stores original validated files; later image processing must be introduced
-  through a separate decision or issue.
+- #63 stores original validated files. #64 stores browser-generated derived
+  cropped PNG files as the active Uploaded Avatar object.
 - ADR 0021 introduces the #64 derived cropped-image model while preserving the
   existing Avatar descriptor, bucket, and opaque object-path authority.
 - Image moderation and abuse handling are not solved by #63 and must be

@@ -2,7 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const workflowPaths = [
+const ciWorkflowPath = new URL("../.github/workflows/ci.yml", import.meta.url);
+const deploymentWorkflowPaths = [
   new URL("../.github/workflows/deploy-dev.yml", import.meta.url),
   new URL("../.github/workflows/promote.yml", import.meta.url),
 ];
@@ -10,6 +11,7 @@ const ftpsPreflightWorkflowPath = new URL(
   "../.github/workflows/ftps-preflight.yml",
   import.meta.url,
 );
+const allWorkflowPaths = [ciWorkflowPath, ...deploymentWorkflowPaths, ftpsPreflightWorkflowPath];
 
 const ftpsPreflightActionPath = new URL(
   "../.github/actions/verify-ftps-deploy-target/action.yml",
@@ -36,12 +38,12 @@ const requiredSourceOnlyExcludes = [
 const automaticDevDeploymentPaths = [".htaccess", "index.html", "assets/**"];
 
 function getDeployDevPushPaths() {
-  const workflow = readFileSync(workflowPaths[0], "utf8");
+  const workflow = readFileSync(deploymentWorkflowPaths[0], "utf8");
   const match = workflow.match(
     /\n  push:\r?\n(?:.*\r?\n)*?    paths:\r?\n((?:      - .+(?:\r?\n|$))+)/,
   );
 
-  assert.ok(match, `${workflowPaths[0].pathname} must declare push path filters`);
+  assert.ok(match, `${deploymentWorkflowPaths[0].pathname} must declare push path filters`);
 
   return match[1]
     .split(/\r?\n/)
@@ -51,12 +53,12 @@ function getDeployDevPushPaths() {
 }
 
 function getPromotePushPathsIgnore() {
-  const workflow = readFileSync(workflowPaths[1], "utf8");
+  const workflow = readFileSync(deploymentWorkflowPaths[1], "utf8");
   const match = workflow.match(
     /\n  push:\r?\n(?:.*\r?\n)*?    paths-ignore:\r?\n((?:      - .+(?:\r?\n|$))+)/,
   );
 
-  assert.ok(match, `${workflowPaths[1].pathname} must declare push paths-ignore filters`);
+  assert.ok(match, `${deploymentWorkflowPaths[1].pathname} must declare push paths-ignore filters`);
 
   return match[1]
     .split(/\r?\n/)
@@ -84,9 +86,28 @@ function getFtpDeployExcludeLists(workflowUrl) {
   });
 }
 
+function getWorkflowJobNames(workflowUrl) {
+  const workflow = readFileSync(workflowUrl, "utf8");
+  return [...workflow.matchAll(/^ {4}name: (.+)$/gm)].map((match) => match[1].trim());
+}
+
 describe("workflow deployment surface", () => {
+  it("keeps GitHub Actions job names unique for branch protection", () => {
+    const jobNames = allWorkflowPaths.flatMap(getWorkflowJobNames);
+    const verifyJobNames = jobNames
+      .filter((name) => name.includes("Verify static site"))
+      .sort();
+
+    assert.deepEqual(verifyJobNames, [
+      "CI / Verify static site",
+      "Deploy dev / Verify static site",
+      "Promote website / Verify static site",
+    ]);
+    assert.equal(new Set(jobNames).size, jobNames.length);
+  });
+
   it("only requests automatic dev deployments for hosted static runtime changes", () => {
-    const deployDevWorkflow = readFileSync(workflowPaths[0], "utf8");
+    const deployDevWorkflow = readFileSync(deploymentWorkflowPaths[0], "utf8");
     const pushPaths = getDeployDevPushPaths();
 
     assert.deepEqual(pushPaths, automaticDevDeploymentPaths);
@@ -94,7 +115,7 @@ describe("workflow deployment surface", () => {
     for (const sourceOnlyPath of requiredSourceOnlyExcludes) {
       assert.ok(
         !pushPaths.includes(sourceOnlyPath),
-        `${workflowPaths[0].pathname} automatic dev push paths must not include ${sourceOnlyPath}`,
+        `${deploymentWorkflowPaths[0].pathname} automatic dev push paths must not include ${sourceOnlyPath}`,
       );
     }
 
@@ -108,7 +129,7 @@ describe("workflow deployment surface", () => {
   });
 
   it("does not request automatic main promotion for source-only pushes", () => {
-    const promoteWorkflow = readFileSync(workflowPaths[1], "utf8");
+    const promoteWorkflow = readFileSync(deploymentWorkflowPaths[1], "utf8");
     const ignoredPaths = getPromotePushPathsIgnore();
 
     assert.deepEqual(ignoredPaths, requiredSourceOnlyExcludes);
@@ -116,7 +137,7 @@ describe("workflow deployment surface", () => {
     assert.doesNotMatch(promoteWorkflow, /ftps_preflight_target/);
   });
 
-  for (const workflowPath of workflowPaths) {
+  for (const workflowPath of deploymentWorkflowPaths) {
     it(`${workflowPath.pathname} excludes source-only paths from each FTPS upload`, () => {
       const excludeLists = getFtpDeployExcludeLists(workflowPath);
 
@@ -141,7 +162,7 @@ describe("workflow deployment surface", () => {
     assert.match(preflightAction, /--quote "CWD \$\{server_dir\}"/);
     assert.match(preflightAction, /--list-only/);
 
-    for (const workflowPath of workflowPaths) {
+    for (const workflowPath of deploymentWorkflowPaths) {
       const workflow = readFileSync(workflowPath, "utf8");
       const ftpDeployCount = workflow.split("uses: SamKirkland/FTP-Deploy-Action@v4.4.0").length - 1;
       const preflightCount =
@@ -155,8 +176,8 @@ describe("workflow deployment surface", () => {
   });
 
   it("provides read-only strict FTPS preflight modes for environment secrets", () => {
-    const deployDevWorkflow = readFileSync(workflowPaths[0], "utf8");
-    const promoteWorkflow = readFileSync(workflowPaths[1], "utf8");
+    const deployDevWorkflow = readFileSync(deploymentWorkflowPaths[0], "utf8");
+    const promoteWorkflow = readFileSync(deploymentWorkflowPaths[1], "utf8");
     const ftpsPreflightWorkflow = readFileSync(ftpsPreflightWorkflowPath, "utf8");
 
     assert.match(deployDevWorkflow, /ftps_preflight_only/);
@@ -183,7 +204,7 @@ describe("workflow deployment surface", () => {
     assert.match(configAction, /read_text/);
     assert.doesNotMatch(configAction, /sb_secret_/);
 
-    for (const workflowPath of workflowPaths) {
+    for (const workflowPath of deploymentWorkflowPaths) {
       const workflow = readFileSync(workflowPath, "utf8");
       const ftpDeployIndexes = matchIndexes(
         workflow,

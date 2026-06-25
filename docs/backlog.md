@@ -16,7 +16,7 @@ preserve their original history.
 | Sharing, discovery, reactions, and ranking | Deferred | Batch ratings; Friend-only leaderboards; Public feed and leaderboards; Phrase reactions; Leaderboard timezone rule; Phrase image generation; Public share links; Web Share API |
 | Word bank and entry assistance | Deferred | Full automatic batch population; User-defined entry kinds; Shareable word packs; Personal word lists; Expanded word-bank source selection; Word-bank family-friendly setting; Production word-bank delivery |
 | UI polish | Deferred | Celebratory reveal effects; Custom keyboard shortcuts |
-| Operations and platform | Deferred | Cloudflare Access allow-list documentation; Privacy-preserving telemetry; Frontend framework; Cloudflare deployment cache purge |
+| Operations and platform | Mixed completed/deferred | Main branch protection ruleset; Cloudflare Access allow-list documentation; Privacy-preserving telemetry; Frontend framework; Cloudflare deployment cache purge |
 
 ## Deferred Product Decisions
 
@@ -204,6 +204,13 @@ preserve their original history.
 - **Why deferred**: Dev/test environments have been created, configured, and tested, but the exact allow-list was not provided in this thread.
 - **Revisit when**: The configured Cloudflare Access allow policies are available for documentation.
 - **Remaining risk**: Runtime access reviewers and GitHub Environment deployment approvers may be confused if the Access allow-list remains undocumented.
+
+### Main branch protection ruleset
+
+- **No longer deferred**: Creating an active GitHub repository ruleset that targets `main` and blocks direct, unchecked mutation of the default branch.
+- **Why it was deferred**: The repository warning was investigated on 2026-06-25 and GitHub reported no repository rulesets plus `Branch not protected` for `main`. Enabling protection changes the source-review boundary and needed an explicit owner approval plus an unambiguous required status-check name.
+- **Status**: Implemented on 2026-06-25. ADR `0009` records the durable boundary: `main` is protected by the `Protect main` repository ruleset, deletion and non-fast-forward pushes are blocked, updates must arrive through pull requests, review threads must be resolved, and `CI / Verify static site` must pass with latest-code policy before `main` can be updated.
+- **Remaining risk**: The first ruleset intentionally requires zero approving reviews because this is currently a user-owned solo repository. Before adding maintainers or relying on human code review as a control, revisit the ruleset to require at least one approval and add CODEOWNERS where useful.
 
 ### Privacy-preserving telemetry
 

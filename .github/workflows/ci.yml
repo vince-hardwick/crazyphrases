@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   verify:
-    name: Verify static site
+    name: CI / Verify static site
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository

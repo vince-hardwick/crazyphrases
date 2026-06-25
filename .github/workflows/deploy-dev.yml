@@ -60,7 +60,7 @@ jobs:
           fi
 
   verify:
-    name: Verify static site
+    name: Deploy dev / Verify static site
     needs: detect-deployment-surface
     if: ${{ needs.detect-deployment-surface.outputs.should_deploy == 'true' && (github.event_name != 'workflow_dispatch' || inputs.ftps_preflight_only != true) }}
     runs-on: ubuntu-latest

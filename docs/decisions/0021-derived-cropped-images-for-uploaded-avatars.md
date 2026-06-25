@@ -5,7 +5,8 @@
 Accepted. The owner selected the derived cropped image model for circular
 Uploaded Avatar cropping on 2026-06-25. GitHub issue #64 was implemented through
 PR #78 and promoted through production on 2026-06-25. The post-MVP visual
-cropper UX follow-up is tracked by GitHub issue #79.
+cropper UX follow-up was implemented through GitHub issue #79 and PR #92, then
+promoted through production on 2026-06-25.
 
 ## Context
 
@@ -55,15 +56,14 @@ and the previous live object becomes historical rather than being deleted.
 Completed-game participant snapshots continue to preserve the Avatar descriptor
 object path used at play time.
 
-The MVP #64 crop UI uses labelled numeric controls for scale, horizontal
-position, and vertical position. A visual avatar cropper can replace that editor
-later without changing this storage authority decision; the preferred post-MVP
-interaction is an inline Profile-panel editor with a fixed square crop box,
-drag-to-reposition image movement, explicit zoom controls, edge and corner
-crop-box markers, and a crop guide overlay with a rule-of-thirds grid and centre
-guides. The crop box should remain fully covered by image pixels; the editor
-should clamp zoom and panning so blank or transparent space cannot be saved into
-the derived Avatar.
+The MVP #64 crop UI used labelled numeric controls for scale, horizontal
+position, and vertical position. The #79 visual avatar cropper replaced that
+editor without changing this storage authority decision. It is an inline
+Profile-panel editor with a fixed square crop box, drag-to-reposition image
+movement, explicit zoom controls, crop-box markers, and a transient crop guide
+overlay with a rule-of-thirds grid and centre guides. The crop box remains fully
+covered by image pixels; the editor clamps zoom and panning so blank or
+transparent space cannot be saved into the derived Avatar.
 
 If future work needs to retain originals, store crop metadata, regenerate
 derivatives server-side, strip metadata through a formal media pipeline, or

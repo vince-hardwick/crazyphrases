@@ -385,6 +385,44 @@ The hosted Google provider is configured and has been validated in `dev`; see
 `docs/planning/supabase-state-ledger.md` for the dated provider and smoke
 evidence.
 
+### Branded Hosted Auth Deferral
+
+ADR 0022 records documented deferral with explicit accepted risk for the
+branded hosted Auth domain. The owner reviewed Supabase custom-domain cost
+implications in more detail on 2026-06-25 and decided not to create or activate
+`auth.crazyphrases.com`, a Supabase custom domain, or a Supabase vanity
+subdomain for the current project stage.
+
+The following remain separate approval boundaries and are not authorised by
+this deferral:
+
+- Supabase custom-domain creation, verification, and activation;
+- Google OAuth authorised redirect URI and consent/app branding changes;
+- Cloudflare DNS changes for any hosted Auth domain;
+- certificate validation;
+- GitHub Environment variable changes;
+- static deployment approval;
+- hosted data writes or cleanup.
+
+The current visible seam remains:
+
+```text
+crazyphrases.com signed-out UI -> Sign in with Google -> Google/Supabase auth
+screen showing egnudphshvqdhrotxrfs.supabase.co -> Crazy Phrases Account-backed
+mode after successful sign-in
+```
+
+That visible Supabase project domain is an accepted risk for the current
+pre-public-onboarding scope. Do not create `auth.crazyphrases.com`, configure a
+Supabase custom domain, add a vanity subdomain, or change Google OAuth callback
+settings for branded Auth unless ADR 0022 is amended or superseded.
+
+Revisit this deferral before broader public user onboarding, if sign-in
+hesitation becomes a repeated blocker, if Supabase custom-domain pricing or
+project budget constraints change, if a lower-cost provider or branding option
+becomes available, or if commercial/public-discovery features raise the trust
+bar.
+
 ## Uploaded Avatar Storage
 
 ADR 0019 selects Supabase Storage as the media authority for Uploaded Avatar

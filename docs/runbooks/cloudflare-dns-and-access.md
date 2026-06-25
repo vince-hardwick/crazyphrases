@@ -39,6 +39,13 @@ Before changing nameservers:
 | `cpanel` | DNS only |
 | `webmail` | DNS only |
 
+ADR `0022` defers branded hosted Auth domain work with explicit accepted risk.
+Do not create or update DNS for `auth.crazyphrases.com`, a Supabase custom
+domain, or a Supabase vanity subdomain unless ADR `0022` is amended or
+superseded. Do not infer proxy status from the web hostnames above, and do not
+treat a Cloudflare DNS change as approval to activate Supabase Auth or mutate
+Google OAuth settings.
+
 6. Change the domain's authoritative nameservers at the registrar to the Cloudflare-provided nameservers.
 7. Wait for propagation and Cloudflare zone activation.
 

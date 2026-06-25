@@ -11,7 +11,7 @@ preserve their original history.
 | Template and template tooling | Deferred | Custom templates; Template favourites; Manual slot allocation and ordering controls; Template visibility rules |
 | Game modes and lifecycle | Deferred | CPU-participant games; 3-player games; Live synchronous play; Partial or timeout reveal; Participant replacement; Post-submission correction requests |
 | Multiplayer and social graph | Nudge timeout foundation promoted through production; test overdue-nudge smoke passed; most social scope deferred | Signed-in 2-player asynchronous game; Pending invite expiry duration; One-way following; Friend relationships; Manual pokes; Android app and push notifications |
-| Account, profile, and auth | Profile-management MVP completed; other scope mixed deferred/completed | Signed-in Account Profile management surface; Anonymous solo import to signed-in state; Email OTP code entry; Branded Supabase Auth domain; Uploaded Avatars; Multiple gamer profiles; Social profile URLs; Auth-gated favourites DOM loading |
+| Account, profile, and auth | Profile-management MVP completed; other scope mixed deferred/completed | Signed-in Account Profile management surface; Anonymous solo import to signed-in state; Email OTP code entry; Additional hosted Auth providers; Branded Supabase Auth domain; Uploaded Avatars; Multiple gamer profiles; Social profile URLs; Auth-gated favourites DOM loading |
 | Favourites and saved-output UI | Mixed completed/deferred | Private phrase and batch favourites follow-up slice; Icon-first favourite and copy actions; Dedicated favourites page |
 | Sharing, discovery, reactions, and ranking | Deferred | Batch ratings; Friend-only leaderboards; Public feed and leaderboards; Phrase reactions; Leaderboard timezone rule; Phrase image generation; Public share links; Web Share API |
 | Word bank and entry assistance | Deferred | Full automatic batch population; User-defined entry kinds; Shareable word packs; Personal word lists; Expanded word-bank source selection; Word-bank family-friendly setting; Production word-bank delivery |
@@ -352,6 +352,14 @@ preserve their original history.
 - **Why deferred**: The first hosted email sign-in path uses Supabase magic links, which are enabled by default and avoid extra verification UI. OTP code entry requires email-template handling and an additional in-app verification form; Supabase free-tier email template customisation changed on 2026-06-03.
 - **Revisit when**: Magic-link usability is poor, template customisation is available and approved, or production sign-in needs an in-app code-entry fallback.
 - **Remaining risk**: Some users prefer typing a code instead of clicking a link, so the Auth adapter should keep email sign-in isolated from game persistence to allow an OTP path later.
+
+### Additional hosted Auth providers
+
+- **Deferred**: Adding X/Twitter, Facebook, Azure/Microsoft, and Apple as hosted Supabase Auth sign-in providers alongside the current Google and email magic-link paths.
+- **Why deferred**: More providers increase sign-in choice, but each one adds provider-console setup, callback/redirect configuration, consent-screen review, secret handling, sign-in button design, browser verification, and provider-specific maintenance. The MVP should finish deployment and gather sign-in friction evidence before expanding the Auth surface.
+- **Revisit when**: MVP has deployed and broader onboarding is being prepared, testers or users ask for one of these providers, account onboarding friction becomes a blocker, or a target audience clearly benefits from a specific provider such as Apple for iOS users or Microsoft/Azure for work accounts.
+- **Status**: Enhancement issue #89 tracks the post-MVP request. Current Supabase documentation lists native social providers for Twitter, Facebook, Azure, and Apple. Future implementation must verify current provider docs before planning because provider setup, scopes, and dashboard requirements change.
+- **Remaining risk**: Until this ships, users who prefer X/Twitter, Facebook, Azure/Microsoft, or Apple must use Google or email magic link instead, which may reduce account conversion for users who avoid Google or prefer platform-specific account identity.
 
 ### Branded Supabase Auth domain
 

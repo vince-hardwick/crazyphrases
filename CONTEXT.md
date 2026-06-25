@@ -232,6 +232,14 @@ _Avoid_: Preset key, icon name, emoji name
 An Avatar supplied by the account holder as an uploaded image.
 _Avoid_: Profile picture, social profile photo
 
+**Avatar Crop Box**:
+The fixed square target used to choose which part of an Uploaded Avatar source image becomes the saved Avatar.
+_Avoid_: Resize frame, selection area
+
+**Avatar Crop Guide Overlay**:
+Temporary alignment guides shown inside the Avatar crop editor while a participant is positioning or zooming an Uploaded Avatar.
+_Avoid_: Decoration, permanent grid
+
 **Handle**:
 A globally unique account-facing identifier used for discovery, mentions, profile URLs, and disambiguation.
 _Avoid_: Gamer name, email

@@ -187,8 +187,10 @@ cropped image for #64.
 
 The #64 MVP shipped with labelled numerical controls for scale, horizontal
 position, and vertical position. The owner accepted that implementation for MVP
-after manual file upload and crop-control testing, while deferring a visual crop
-tool with guidelines and direct manipulation to #79.
+after manual file upload and crop-control testing, while deferring a visual
+avatar cropper to #79. The preferred post-MVP interaction uses a crop box with
+edge and corner crop handles, plus a crop guide overlay with a rule-of-thirds
+grid and centre guides.
 
 This PRD depends on the shipped #63 Uploaded Avatar infrastructure and the
 accepted ADRs for Uploaded Avatar Storage authority and Built-in Avatar visuals.

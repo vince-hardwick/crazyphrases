@@ -2,21 +2,22 @@
 
 ## Status
 
-Accepted. Source-controlled #63 implementation exists on the Uploaded Avatar
-branch, and the hosted `avatars` Storage bucket, ownership metadata, and
-Storage policies have been applied after explicit owner approval. The branch
-deployment to `dev` has passed hosted browser upload/write/reload/restore
-validation through the real Storage bucket. Production uploaded-avatar write
-smoke remains separately approval-gated.
+Accepted. Source-controlled #63 implementation merged to `main` through PR #74
+and has been promoted through production. The hosted `avatars` Storage bucket,
+ownership metadata, and Storage policies have been applied after explicit owner
+approval. Hosted `dev` and `test` browser upload/write/reload/restore
+validation passed through the real Storage bucket, and production passed a
+non-write browser smoke. Production uploaded-avatar write smoke remains
+separately approval-gated.
 
 ## Context
 
-The current Account Profile implementation stores only a transitional built-in
-Avatar key. The next profile personalisation slice will replace that with the
-accepted Built-in Avatar key set and allow an account holder to use an Uploaded
-Avatar, which introduces user-supplied media storage, serving, deletion, and
-access control concerns that are not covered by the existing Account Profile /
-Handle Directory decision.
+At decision time, the Account Profile implementation stored only a transitional
+built-in Avatar key. The profile personalisation slice replaced that with the
+accepted Built-in Avatar key set and allowed an account holder to use an
+Uploaded Avatar, which introduced user-supplied media storage, serving,
+deletion, and access control concerns that were not covered by the existing
+Account Profile / Handle Directory decision.
 
 The main alternatives are:
 

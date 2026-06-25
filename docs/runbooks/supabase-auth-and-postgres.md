@@ -392,10 +392,11 @@ image bytes. Supabase Postgres remains the Account Profile and Handle Directory
 source of truth and should store only the avatar choice plus the invite-safe
 reference or metadata needed to render an Avatar.
 
-No uploaded-avatar Storage bucket exists at the time ADR 0019 is accepted.
-Creating the bucket, changing Storage policies, uploading hosted avatar
-fixtures, or cleaning up hosted avatar objects is a live hosted mutation and
-requires explicit owner approval or an accepted task-specific plan.
+The hosted `avatars` Storage bucket was created for #63 after explicit owner
+approval. Creating a replacement bucket, changing Storage policies, uploading
+hosted avatar fixtures, or cleaning up hosted avatar objects remains a live
+hosted mutation and requires explicit owner approval or an accepted
+task-specific plan.
 
 The uploaded-avatar bucket should be public-read, with owner-scoped upload,
 replacement, and deletion authority. Object paths must be opaque and must not
@@ -446,11 +447,12 @@ instead of relying on remembered syntax.
 Hosted uploaded-avatar smoke evidence and cleanup records belong in
 `docs/planning/supabase-state-ledger.md`.
 
-Before merging or promoting #63, run an explicitly approved hosted dev/test
-validation that creates or verifies the `avatars` bucket and policies, signs in
-as a test account, uploads a valid small avatar, saves the Avatar descriptor,
-reloads and verifies rendering, switches back to a Built-in Avatar, verifies
-the previous uploaded object/history rule is not violated, and cleans up test
+For future changes that touch Uploaded Avatar Storage, run an explicitly
+approved hosted dev/test validation that verifies the `avatars` bucket and
+policies, signs in as a test account, uploads a valid small avatar when the
+change requires write coverage, saves the Avatar descriptor, reloads and
+verifies rendering, switches back to a Built-in Avatar, verifies the previous
+uploaded object/history rule is not violated, and cleans up test
 account/profile/object rows where safe. Record evidence and cleanup results in
 `docs/planning/supabase-state-ledger.md`. Production uploaded-avatar write smoke
 requires separate explicit approval.

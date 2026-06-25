@@ -140,7 +140,7 @@ preserve their original history.
 - **Why previously deferred**: The shipped Account shell created and loaded a durable Account Profile and showed the game-facing Handle, while the broader profile/account surface design depended on signed-in navigation choices that were not needed to prove the Account Profile, Handle Directory, signed-in solo, private-favourites, or first multiplayer foundations.
 - **Revisit trigger**: Satisfied on 2026-06-22 when the owner explicitly brought the slice forward for comprehensive PRD specification before TDD implementation.
 - **Status**: Completed on 2026-06-22. PR #62 merged #47 to `main` as `586bcb2eb093dc95c49f5a59ccf1e92329df4876`, then promoted through `dev`, `test`, and production after owner approvals. Visible browser smoke on `dev` and `test` confirmed the signed-in Profile editor, stamped assets, no mobile overflow, clean console logs, and no hosted profile-save mutation. Production smoke confirmed stamped assets, anonymous-mode absence of profile editor DOM, hosted sign-in controls, no mobile overflow, and clean console logs. GitHub issues #47 and parent #43 are closed as completed.
-- **Remaining risk**: The MVP profile-management surface still uses preset Avatar keys only. Uploaded avatar images and circular mask cropping are intentionally deferred to #63 and #64.
+- **Remaining risk**: Uploaded avatar images are now implemented through #63 / PR #74. Circular mask cropping remains intentionally deferred to #64, and broader account-navigation or profile-surface redesign still needs a separate owning slice.
 
 ### Phrase reactions
 

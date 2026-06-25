@@ -110,7 +110,8 @@ assistive technology.
 
 ## Validation
 
-For #63, browser smoke tests should verify:
+For the shipped #63 surface and future Built-in Avatar rendering changes,
+browser smoke tests should verify:
 
 - the hosted Kit script loads in hosted `dev` and `test` paths where practical;
 - local tests produce stable Font Awesome-compatible markup even when the

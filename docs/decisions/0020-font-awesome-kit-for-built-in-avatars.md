@@ -88,7 +88,7 @@ during implementation. Do not commit Font Awesome account tokens or package
 manager tokens.
 
 The Kit version should be pinned to the current Font Awesome 7 version available
-when #63 is implemented, rather than using Font Awesome's default `Latest`
+when #63 was implemented, rather than using Font Awesome's default `Latest`
 auto-update setting. Future Font Awesome upgrades are deliberate maintenance
 work and require visual/browser smoke coverage for Built-in Avatars.
 

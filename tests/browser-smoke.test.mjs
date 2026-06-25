@@ -567,9 +567,72 @@ describe("solo browser smoke", () => {
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
-    await profileRegion.getByLabel("Avatar scale").fill("1.4");
-    await profileRegion.getByLabel("Avatar horizontal position").fill("18");
-    await profileRegion.getByLabel("Avatar vertical position").fill("-12");
+    await profileRegion
+      .locator("[data-account-profile-crop-editor]")
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-crop-box]").count(),
+      1,
+    );
+    assert.equal(
+      await profileRegion.locator("[data-account-profile-crop-marker]").count(),
+      8,
+    );
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-crop-editor-image]")
+        .getAttribute("src"),
+      /^blob:/,
+    );
+    const cropGuide = profileRegion.locator("[data-account-profile-crop-guide]");
+    assert.equal(
+      await cropGuide.evaluate((element) => element.classList.contains("is-active")),
+      false,
+    );
+    assert.equal(
+      await profileRegion.getByRole("button", { name: "Zoom in" }).count(),
+      1,
+    );
+    assert.equal(
+      await profileRegion.getByRole("button", { name: "Reset crop" }).count(),
+      1,
+    );
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-scale]").count(), 0);
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-x]").count(), 0);
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-y]").count(), 0);
+    const initialDraftStyle = await profileRegion
+      .locator("[data-account-profile-uploaded-avatar-image]")
+      .getAttribute("style");
+    const cropEditorBox = await profileRegion
+      .locator("[data-account-profile-crop-editor]")
+      .boundingBox();
+    await page.mouse.move(
+      cropEditorBox.x + cropEditorBox.width / 2,
+      cropEditorBox.y + cropEditorBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      cropEditorBox.x + cropEditorBox.width / 2 + 30,
+      cropEditorBox.y + cropEditorBox.height / 2,
+    );
+    await page.mouse.up();
+    assert.notEqual(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("style"),
+      initialDraftStyle,
+    );
+    assert.equal(
+      await cropGuide.evaluate((element) => element.classList.contains("is-active")),
+      true,
+    );
+    await profileRegion.getByRole("button", { name: "Reset crop" }).click();
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("style"),
+      /translate\(0%, 0%\) scale\(1\)/,
+    );
     const draftPreviewUrl = await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .getAttribute("src");
@@ -599,9 +662,24 @@ describe("solo browser smoke", () => {
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
-    await profileRegion.getByLabel("Avatar scale").fill("1.5");
-    await profileRegion.getByLabel("Avatar horizontal position").fill("20");
-    await profileRegion.getByLabel("Avatar vertical position").fill("-10");
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-scale]").count(), 0);
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-x]").count(), 0);
+    assert.equal(await profileRegion.locator("[data-account-profile-crop-y]").count(), 0);
+    await profileRegion.getByRole("button", { name: "Zoom in" }).click();
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("style"),
+      /scale\(1\.1\)/,
+    );
+    await profileRegion.locator("[data-account-profile-crop-editor]").focus();
+    await page.keyboard.press("ArrowRight");
+    assert.match(
+      await profileRegion
+        .locator("[data-account-profile-uploaded-avatar-image]")
+        .getAttribute("style"),
+      /translate\(5%, 0%\) scale\(1\.1\)/,
+    );
     assert.match(
       await profileRegion
         .locator("[data-account-profile-uploaded-avatar-image]")
@@ -1947,6 +2025,11 @@ async function assertNoProfileEditorDom(page) {
     0,
   );
   assert.equal(await page.locator("[data-account-profile-crop-controls]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-editor]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-box]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-editor-image]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-guide]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-crop-marker]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-crop-scale]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-crop-x]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-crop-y]").count(), 0);

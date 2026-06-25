@@ -41,6 +41,8 @@ import {
 import {
   AVATAR_CROP_OUTPUT_SIZE,
   DEFAULT_AVATAR_CROP,
+  adjustAvatarCrop,
+  calculateAvatarCropLayout,
   createDerivedAvatarFile,
   normaliseAvatarCrop,
 } from "./avatar-crop.js?v=__ASSET_VERSION__";
@@ -213,6 +215,7 @@ let completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
 let inAppNotifications = [];
 let accountProfilePanel = null;
 let accountProfileDraftAvatar = null;
+let accountProfileCropGuideTimer = null;
 let accountProfilePreviewRequestId = 0;
 let favouritesPanel = null;
 let favouritesStatus = null;
@@ -658,52 +661,108 @@ function createProfileAvatarField() {
 
 function createAvatarCropControls() {
   const controls = document.createElement("div");
+  const editor = document.createElement("div");
+  const cropBox = document.createElement("div");
+  const cropGuide = document.createElement("div");
+  const actions = document.createElement("div");
+  const zoomOutButton = document.createElement("button");
+  const zoomInButton = document.createElement("button");
+  const resetButton = document.createElement("button");
+
   controls.className = "account-profile-crop-controls";
   controls.dataset.accountProfileCropControls = "";
   controls.hidden = true;
 
-  for (const control of [
-    {
-      datasetKey: "accountProfileCropScale",
-      label: "Avatar scale",
-      max: "3",
-      min: "1",
-      step: "0.1",
-      value: String(DEFAULT_AVATAR_CROP.scale),
-    },
-    {
-      datasetKey: "accountProfileCropX",
-      label: "Avatar horizontal position",
-      max: "100",
-      min: "-100",
-      step: "1",
-      value: String(DEFAULT_AVATAR_CROP.x),
-    },
-    {
-      datasetKey: "accountProfileCropY",
-      label: "Avatar vertical position",
-      max: "100",
-      min: "-100",
-      step: "1",
-      value: String(DEFAULT_AVATAR_CROP.y),
-    },
-  ]) {
-    const label = document.createElement("label");
-    const input = document.createElement("input");
-    label.className = "account-profile-field";
-    label.textContent = control.label;
-    input.type = "number";
-    input.min = control.min;
-    input.max = control.max;
-    input.step = control.step;
-    input.value = control.value;
-    input.dataset[control.datasetKey] = "";
-    input.addEventListener("input", () => {
-      updateAccountProfileDraftCropFromControls();
+  editor.className = "account-profile-crop-editor";
+  editor.dataset.accountProfileCropEditor = "";
+  editor.tabIndex = 0;
+  editor.setAttribute("aria-label", "Avatar crop editor");
+  editor.addEventListener("keydown", handleAvatarCropEditorKeydown);
+  let dragPoint = null;
+  editor.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    dragPoint = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    editor.setPointerCapture?.(event.pointerId);
+  });
+  editor.addEventListener("pointermove", (event) => {
+    if (!dragPoint) {
+      return;
+    }
+
+    const deltaX = event.clientX - dragPoint.x;
+    const deltaY = event.clientY - dragPoint.y;
+    dragPoint = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    updateAccountProfileDraftCrop({
+      xDelta: deltaX / 4,
+      yDelta: deltaY / 4,
     });
-    label.append(input);
-    controls.append(label);
+  });
+  for (const eventName of ["pointercancel", "pointerup"]) {
+    editor.addEventListener(eventName, (event) => {
+      dragPoint = null;
+      editor.releasePointerCapture?.(event.pointerId);
+    });
   }
+
+  cropBox.className = "account-profile-crop-box";
+  cropBox.dataset.accountProfileCropBox = "";
+
+  cropGuide.className = "account-profile-crop-guide";
+  cropGuide.dataset.accountProfileCropGuide = "";
+  cropGuide.setAttribute("aria-hidden", "true");
+  cropBox.append(cropGuide);
+  for (const marker of [
+    "top-left",
+    "top",
+    "top-right",
+    "right",
+    "bottom-right",
+    "bottom",
+    "bottom-left",
+    "left",
+  ]) {
+    const element = document.createElement("span");
+    element.className = `account-profile-crop-marker is-${marker}`;
+    element.dataset.accountProfileCropMarker = marker;
+    element.setAttribute("aria-hidden", "true");
+    cropBox.append(element);
+  }
+
+  zoomOutButton.type = "button";
+  zoomOutButton.textContent = "Zoom out";
+  zoomOutButton.dataset.accountProfileCropZoomOut = "";
+  zoomOutButton.addEventListener("click", () => {
+    updateAccountProfileDraftCrop({ scaleDelta: -0.1 });
+  });
+
+  zoomInButton.type = "button";
+  zoomInButton.textContent = "Zoom in";
+  zoomInButton.dataset.accountProfileCropZoomIn = "";
+  zoomInButton.addEventListener("click", () => {
+    updateAccountProfileDraftCrop({ scaleDelta: 0.1 });
+  });
+
+  resetButton.type = "button";
+  resetButton.textContent = "Reset crop";
+  resetButton.dataset.accountProfileCropReset = "";
+  resetButton.addEventListener("click", () => {
+    setAccountProfileDraftCrop(DEFAULT_AVATAR_CROP);
+  });
+
+  actions.className = "account-profile-crop-actions";
+  actions.append(zoomOutButton, zoomInButton, resetButton);
+  editor.append(cropBox);
+  controls.append(editor, actions);
 
   return controls;
 }
@@ -788,18 +847,59 @@ function renderAvatarCropControls(panel, avatarDescriptor) {
   const isDraftUpload = avatarDescriptor?.type === "uploaded-draft";
   controls.hidden = !isDraftUpload;
   if (!isDraftUpload) {
+    controls
+      .querySelector("[data-account-profile-crop-editor-image]")
+      ?.remove();
     return;
   }
 
   const crop = normaliseAvatarCrop(avatarDescriptor.crop);
-  panel.querySelector("[data-account-profile-crop-scale]").value = String(
-    crop.scale,
-  );
-  panel.querySelector("[data-account-profile-crop-x]").value = String(crop.x);
-  panel.querySelector("[data-account-profile-crop-y]").value = String(crop.y);
+  renderAvatarCropEditor(panel, avatarDescriptor, crop);
+  const editor = controls.querySelector("[data-account-profile-crop-editor]");
+  if (editor) {
+    editor.dataset.cropScale = String(crop.scale);
+    editor.dataset.cropX = String(crop.x);
+    editor.dataset.cropY = String(crop.y);
+  }
 }
 
-function updateAccountProfileDraftCropFromControls() {
+function renderAvatarCropEditor(panel, avatarDescriptor, crop) {
+  const cropBox = panel.querySelector("[data-account-profile-crop-box]");
+  if (!cropBox) {
+    return;
+  }
+
+  cropBox.querySelector("[data-account-profile-crop-editor-image]")?.remove();
+  const image = document.createElement("img");
+  const cropBoxSize = cropBox.clientWidth || 220;
+  const layout = calculateAvatarCropLayout({
+    crop,
+    cropBoxSize,
+    sourceHeight: avatarDescriptor.height,
+    sourceWidth: avatarDescriptor.width,
+  });
+
+  image.alt = "Uploaded image crop editor";
+  image.className = "account-profile-crop-editor-image";
+  image.dataset.accountProfileCropEditorImage = "";
+  image.src = avatarDescriptor.previewUrl;
+  image.style.height = `${layout.height}px`;
+  image.style.transform = `translate(${layout.x}px, ${layout.y}px)`;
+  image.style.width = `${layout.width}px`;
+  cropBox.prepend(image);
+}
+
+function updateAccountProfileDraftCrop(adjustment) {
+  if (accountProfileDraftAvatar?.type !== "uploaded-draft") {
+    return;
+  }
+
+  setAccountProfileDraftCrop(
+    adjustAvatarCrop(accountProfileDraftAvatar.crop, adjustment),
+  );
+}
+
+function setAccountProfileDraftCrop(crop) {
   if (accountProfileDraftAvatar?.type !== "uploaded-draft") {
     return;
   }
@@ -807,19 +907,44 @@ function updateAccountProfileDraftCropFromControls() {
   const panel = ensureAccountProfilePanel();
   accountProfileDraftAvatar = {
     ...accountProfileDraftAvatar,
-    crop: readAvatarCropFromControls(panel),
+    crop: normaliseAvatarCrop(crop),
   };
   void renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
+  showAvatarCropGuide(panel);
 }
 
-function readAvatarCropFromControls(panel) {
-  return normaliseAvatarCrop({
-    scale: Number(
-      panel.querySelector("[data-account-profile-crop-scale]")?.value,
-    ),
-    x: Number(panel.querySelector("[data-account-profile-crop-x]")?.value),
-    y: Number(panel.querySelector("[data-account-profile-crop-y]")?.value),
-  });
+function handleAvatarCropEditorKeydown(event) {
+  const nudge = event.shiftKey ? 15 : 5;
+  const keyActions = {
+    ArrowDown: { yDelta: nudge },
+    ArrowLeft: { xDelta: -nudge },
+    ArrowRight: { xDelta: nudge },
+    ArrowUp: { yDelta: -nudge },
+    "+": { scaleDelta: 0.1 },
+    "=": { scaleDelta: 0.1 },
+    "-": { scaleDelta: -0.1 },
+    _: { scaleDelta: -0.1 },
+  };
+  const adjustment = keyActions[event.key];
+  if (!adjustment) {
+    return;
+  }
+
+  event.preventDefault();
+  updateAccountProfileDraftCrop(adjustment);
+}
+
+function showAvatarCropGuide(panel) {
+  const guide = panel.querySelector("[data-account-profile-crop-guide]");
+  if (!guide) {
+    return;
+  }
+
+  guide.classList.add("is-active");
+  clearTimeout(accountProfileCropGuideTimer);
+  accountProfileCropGuideTimer = setTimeout(() => {
+    guide.classList.remove("is-active");
+  }, 1200);
 }
 
 async function selectUploadedAvatarFile(file) {

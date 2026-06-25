@@ -339,7 +339,7 @@ If the file upload succeeds but saving the Account Profile Avatar descriptor fai
 
 The first Uploaded Avatar slice requires hosted Supabase validation before merge or promotion, because it creates or depends on real Storage bucket, Storage policy, ownership metadata, and direct browser upload behaviour. Hosted validation remains approval-gated and should run in dev or test first; production uploaded-avatar write smoke requires separate explicit approval.
 
-The #63 Uploaded Avatar slice did not include crop positioning, crop metadata, or derived cropped-image generation. That deferred scope is now implemented under #64 using a browser-generated derived cropped image. A richer visual crop tool with guidelines and direct manipulation is deferred under #79 and is not part of the MVP completion bar.
+The #63 Uploaded Avatar slice did not include crop positioning, crop metadata, or derived cropped-image generation. That deferred scope is now implemented under #64 using a browser-generated derived cropped image. A richer visual avatar cropper is deferred under #79 and is not part of the MVP completion bar; the preferred post-MVP interaction uses a crop box with edge and corner crop handles, plus a crop guide overlay with a rule-of-thirds grid and centre guides.
 
 Circular mask cropping under #64 saves a derived cropped image as the active Uploaded Avatar object. The selected source file is local draft input for validation, crop preview, and browser-side crop generation only; #64 does not upload or retain the uncropped original as the live Avatar object.
 

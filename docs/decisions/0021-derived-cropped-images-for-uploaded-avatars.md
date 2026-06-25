@@ -56,9 +56,10 @@ Completed-game participant snapshots continue to preserve the Avatar descriptor
 object path used at play time.
 
 The MVP #64 crop UI uses labelled numeric controls for scale, horizontal
-position, and vertical position. A visual crop tool with guidelines and direct
-manipulation can replace that editor later without changing this storage
-authority decision.
+position, and vertical position. A visual avatar cropper can replace that editor
+later without changing this storage authority decision; the preferred post-MVP
+interaction uses a crop box with edge and corner crop handles, plus a crop guide
+overlay with a rule-of-thirds grid and centre guides.
 
 If future work needs to retain originals, store crop metadata, regenerate
 derivatives server-side, strip metadata through a formal media pipeline, or

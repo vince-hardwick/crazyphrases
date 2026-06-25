@@ -1,8 +1,9 @@
 # PRD: Circular Crop for Uploaded Avatars
 
 Status: Published PRD provenance. Implemented through GitHub issue #64 and PR
-#78, promoted through production on 2026-06-25. Post-MVP visual cropper UX is
-tracked by GitHub issue #79.
+#78, promoted through production on 2026-06-25. Post-MVP visual cropper UX was
+implemented through GitHub issue #79 and PR #92, then promoted through
+production on 2026-06-25.
 Date: 2026-06-25
 Issue: https://github.com/vince-hardwick/crazyphrases/issues/64
 

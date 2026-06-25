@@ -355,10 +355,12 @@ preserve their original history.
 
 ### Branded Supabase Auth domain
 
-- **Deferred**: Replacing the generic `<project-ref>.supabase.co` Google OAuth consent/sign-in destination with a branded Crazy Phrases domain such as `auth.crazyphrases.com` or a Google-presented app name/domain that clearly reads as Crazy Phrases.
-- **Why deferred**: The first hosted sign-in slice can validate Supabase Auth and signed-in persistence using the default Supabase callback domain, while a branded Auth domain may require Supabase custom-domain setup, DNS changes, certificate validation, and possibly plan/cost checks.
-- **Revisit when**: Hosted Google sign-in works end-to-end in dev/test, before production sign-in is promoted for general users, or sooner if the generic Supabase domain materially reduces trust during testing.
-- **Status**: Hosted Google sign-in has worked end-to-end in `dev`, and the signed-in foundation has been promoted through `test` and `production` as of 2026-06-15. Review this before broader public user onboarding, because the generic Supabase domain is still visible during Google sign-in.
+- **Selected route**: ADR `0022` selects a first-party Supabase custom domain,
+  `auth.crazyphrases.com`, to replace the generic `<project-ref>.supabase.co`
+  Google OAuth consent/sign-in destination.
+- **Why originally deferred**: The first hosted sign-in slice could validate Supabase Auth and signed-in persistence using the default Supabase callback domain, while a branded Auth domain requires Supabase custom-domain setup, DNS changes, certificate validation, and plan/cost checks.
+- **Revisit trigger**: Satisfied on 2026-06-25 after hosted Google sign-in worked end-to-end and production verification showed that the generic Supabase domain materially reduces trust during testing.
+- **Status**: Hosted Google sign-in has worked end-to-end in `dev`, and the signed-in foundation has been promoted through `test` and `production` as of 2026-06-15. Production verification on 2026-06-25 reproduced the trust issue: Google displayed `egnudphshvqdhrotxrfs.supabase.co` after `Sign in with Google` from Crazy Phrases. Parent PRD #83 and route-selection issue #84 are published; preparation is tracked by #85 and activation/verification by #86.
 - **Remaining risk**: Users may be confused or mistrust the Google prompt saying "continue to `<project-ref>.supabase.co`" even though the request was initiated from `crazyphrases.com`.
 
 ### Expanded word-bank source selection

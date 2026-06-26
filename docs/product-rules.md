@@ -295,7 +295,9 @@ treatment, not a selected-row highlight; the row must not look selected, pinned,
 specially marked after focus moves away. Their accessible label should summarise the
 row, such as `Phrase favourite, saved 26 Jun 2026, Solo` or `Batch favourite, 6 phrases,
 saved 26 Jun 2026, You + @alex + 2`; copy, share, remove, and view controls remain the
-normal tab stops.
+normal tab stops. Pressing `Tab` from a programmatically focused saved-item row
+container moves to that row's first normal action, usually copy, so keyboard flow stays
+local to the row focus landed on.
 
 If confirmed removal fails while the source row is still mounted and active, keep the
 row visible and the confirmation open, show `Could not remove phrase favourite.` or

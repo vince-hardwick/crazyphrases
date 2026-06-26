@@ -1148,6 +1148,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await openFavouritesRoute(page);
     assert.equal(
       await page
         .getByRole("button", { name: "Notifications, 2 unread" })
@@ -1160,6 +1161,7 @@ describe("solo browser smoke", () => {
       "Batch with @player-test-account and @invitee-two is now complete and available to reveal.",
     );
     await assertTextVisible(page, "Read");
+    await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Your crazy phrases");
 
@@ -1529,6 +1531,83 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Anonymous solo");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoFavouriteDom(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("does not restore a stale signed-in route after anonymous route changes", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/favourites`);
+    await assertTextVisible(page, "Sign in to view Favourites");
+
+    await page.evaluate(() => {
+      window.location.hash = "#/play/solo";
+    });
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    await assertNoFavouritesPanelDom(page);
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), false);
+
+    assertNoConsoleErrors();
+  });
+
+  it("gates and restores the Multiplayer route without dropping pending state", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/play/multiplayer`);
+    await assertTextVisible(page, "Sign in to play Multiplayer");
+    await assertNoPendingGameDom(page);
+    await assertNoFavouriteDom(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    await assertPendingGameSurfaceMounted(page);
+    await assertNoFavouritesPanelDom(page);
+
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
+    await page.getByRole("button", { name: "Create invite" }).click();
+
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "15 phrases");
+
+    await openFavouritesRoute(page);
+    await assertFavouriteSurfaceMounted(page);
+    await assertNoPendingGameDom(page);
+
+    await openMultiplayerRoute(page);
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
+    assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+    await assertNoFavouritesPanelDom(page);
+    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "15 phrases");
+    await assertTextVisible(page, "Nudge after 3 days");
 
     assertNoConsoleErrors();
   });
@@ -2102,6 +2181,18 @@ async function openPlayRoute(page) {
       document.querySelector("[data-game-panel]")?.hidden === false,
   );
   assert.equal(new URL(page.url()).hash, "#/play/solo");
+}
+
+async function openMultiplayerRoute(page) {
+  await page.evaluate(() => {
+    window.location.hash = "#/play/multiplayer";
+  });
+  await page.waitForFunction(
+    () =>
+      window.location.hash === "#/play/multiplayer" &&
+      document.querySelectorAll("[data-pending-game-panel]").length === 1,
+  );
+  assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
 }
 
 async function assertFavouriteSurfaceMounted(page) {

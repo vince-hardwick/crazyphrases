@@ -456,11 +456,10 @@ revealPanel.addEventListener("click", (event) => {
 
 window.addEventListener("hashchange", () => {
   currentRoute = normaliseRoute(window.location.hash);
-  if (
-    accountShell.persistenceAuthority.type !== "account" &&
-    signedInOnlyRoutes.has(currentRoute)
-  ) {
-    requestedSignedInRoute = currentRoute;
+  if (accountShell.persistenceAuthority.type !== "account") {
+    requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
+      ? currentRoute
+      : null;
   }
   renderRoute();
 });
@@ -1694,7 +1693,12 @@ function removePendingGamePanel() {
   pendingGameIncomingList = null;
   multiplayerDashboardMount = null;
   completedMultiplayerHistoryPanel = null;
+}
+
+function resetPendingGameState() {
   currentPendingGame = null;
+  createdPendingGames = [];
+  incomingPendingGameInvites = [];
   multiplayerDashboard = createEmptyMultiplayerDashboard();
   completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
   inAppNotifications = [];
@@ -2586,11 +2590,7 @@ function getNotificationMessage(notification) {
 
 async function loadPendingGameLists() {
   if (accountShell.persistenceAuthority.type !== "account") {
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
-    inAppNotifications = [];
+    resetPendingGameState();
     return;
   }
 
@@ -2605,11 +2605,7 @@ async function loadPendingGameLists() {
     ]);
     await loadMultiplayerDashboard();
   } catch {
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
-    inAppNotifications = [];
+    resetPendingGameState();
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
 }
@@ -3143,20 +3139,20 @@ async function applyAccountShell(shell) {
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
     batchFavourites = [];
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    inAppNotifications = [];
+    resetPendingGameState();
     hidePersistenceRecovery();
   }
 
   if (
     accountShell.persistenceAuthority.type === "account" &&
-    requestedSignedInRoute
+    requestedSignedInRoute &&
+    signedInOnlyRoutes.has(currentRoute)
   ) {
     currentRoute = requestedSignedInRoute;
     requestedSignedInRoute = null;
     ensureHashRoute(currentRoute);
+  } else if (accountShell.persistenceAuthority.type === "account") {
+    requestedSignedInRoute = null;
   }
 
   renderAccountShell(accountShell);
@@ -3188,8 +3184,7 @@ function applySignedOutShell() {
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
   batchFavourites = [];
-  createdPendingGames = [];
-  incomingPendingGameInvites = [];
+  resetPendingGameState();
   hidePersistenceRecovery();
   requestedSignedInRoute = null;
   if (signedInOnlyRoutes.has(currentRoute)) {

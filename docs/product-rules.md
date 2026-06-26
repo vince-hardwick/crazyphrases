@@ -269,11 +269,12 @@ cluster without a stale confirmation, status message, or focus movement. When th
 participant returns to the tab, the row being absent or present is the state signal.
 
 On confirmed removal success in the active tab, remove the row and report status in the
-active tab with `Phrase favourite removed.` or `Batch favourite removed.`. If the
-removed item is an expanded Batch Favourite, remove the row and its expanded phrase
-group together with no separate collapse animation or intermediate collapsed state. If
-removal leaves the active tab empty, immediately show that tab's normal empty state and
-keep the removal success message as active-tab polite status; do not refetch the list,
+active tab with `Phrase favourite removed.` or `Batch favourite removed.`. Removal
+success status auto-clears after 2 seconds. If the removed item is an expanded Batch
+Favourite, remove the row and its expanded phrase group together with no separate
+collapse animation or intermediate collapsed state. If removal leaves the active tab
+empty, immediately show that tab's normal empty state and keep the removal success
+message as active-tab polite status until it auto-clears; do not refetch the list,
 reload both lists, switch tabs, or navigate away from `#/favourites`. Do not offer undo
 in the first slice.
 

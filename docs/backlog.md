@@ -309,11 +309,11 @@ preserve their original history.
 - **Implementation risk**: The implementation plan still needs to translate those rules
   into accessible names, hover/focus tooltips for icon-only row actions, direct touch
   activation without tap-to-preview tooltips, mobile-safe hit areas, narrow-row action
-  wrapping without overflow menus, row-local live regions, 2-second success status
-  auto-clear, one copy/share status per visible tab, persistent failure status while the
-  failed row remains visible, tab-switch and remove-confirmation status clearing,
-  pending-disabled state, failure state, share-action visibility, and regression coverage
-  for anonymous DOM absence and signed-in saved-state behaviour.
+  wrapping without overflow menus, row-local live regions, 2-second copy/share and
+  removal success status auto-clear, one copy/share status per visible tab, persistent
+  failure status while the failed row remains visible, tab-switch and remove-confirmation
+  status clearing, pending-disabled state, failure state, share-action visibility, and
+  regression coverage for anonymous DOM absence and signed-in saved-state behaviour.
 
 ### Dedicated favourites destination
 

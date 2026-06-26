@@ -237,12 +237,14 @@ or game remains intact.
 
 Only one remove confirmation can be open at a time. While it is open, the affected row
 action cluster contains only the confirmation controls; hide copy, share, and `View
-phrases` / `Hide phrases` for that row. Other rows may remain interactive. If the
-participant opens remove on another row, cancel the existing confirmation silently,
-restore that row's normal action cluster and previous expanded or collapsed state, then
-open the new confirmation with `Cancel` focused. `Cancel` or `Escape` returns focus to
-the row's remove action, restores the normal action cluster, and preserves the previous
-expanded or collapsed state.
+phrases` / `Hide phrases` for that row. Opening a remove confirmation clears any visible
+copy/share status in the current tab; cancelling the confirmation must not restore the
+old copy/share status. Other rows may remain interactive. If the participant opens
+remove on another row, cancel the existing confirmation silently, restore that row's
+normal action cluster and previous expanded or collapsed state, then open the new
+confirmation with `Cancel` focused. `Cancel` or `Escape` returns focus to the row's
+remove action, restores the normal action cluster, and preserves the previous expanded
+or collapsed state.
 
 If the participant switches tabs, leaves `#/favourites`, retries or reloads the list, or
 signs out while a non-pending remove confirmation is open, silently cancel the

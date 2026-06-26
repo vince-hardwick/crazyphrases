@@ -175,10 +175,13 @@ reveal date, relative date labels, or per-phrase controls before expansion.
 Phrase and Batch Favourite rows use the same utility action icons: Font Awesome `copy`
 for copy, `share-nodes` for share, and `heart-circle-minus` for remove. Accessible
 labels include the item type, such as `Copy phrase`, `Share batch`, or `Remove phrase
-favourite`. Copy is always available. Show the `share-nodes` action only when an
-existing supported share delivery path is available and Share Consent rules allow it;
-otherwise omit share rather than showing a disabled control. Do not add Web Share API or
-public share links in the first dedicated Favourites slice.
+favourite`. Icon-only row actions should show a lightweight visible tooltip on hover and
+focus when their text label is not already visible. Tooltip text must match the control's
+accessible name in meaning and should not add extra state, metadata, or explanatory
+copy. Copy is always available. Show the `share-nodes` action only when an existing
+supported share delivery path is available and Share Consent rules allow it; otherwise
+omit share rather than showing a disabled control. Do not add Web Share API or public
+share links in the first dedicated Favourites slice.
 
 Copy/share payloads use the immutable saved snapshot. Phrase Favourite copy/share sends
 only the saved phrase text. Batch Favourite copy/share sends the saved phrase list in
@@ -352,8 +355,10 @@ Contextual favourite, copy, share, and remove actions should use accessible icon
 controls in the signed-in navigation and Favourites design slice. The first icon-first
 pass is limited to familiar utility actions: save or remove favourite state, copy
 plaintext, invoke an already-supported share path, and remove saved favourites. Each
-icon-first action needs an accessible label, tooltip or equivalent name, mobile-safe hit
-area, and explicit pressed/saved or failure state where applicable.
+icon-first action needs an accessible label, mobile-safe hit area, and explicit
+pressed/saved or failure state where applicable. In `#/favourites`, icon-only row
+actions also need a visible hover/focus tooltip whose meaning matches the accessible
+label and does not add hidden state or metadata.
 
 Use Font Awesome `copy` for copy actions, `share-nodes` for share actions, and
 `heart-circle-minus` for remove-favourite actions in the dedicated Favourites

@@ -302,13 +302,14 @@ preserve their original history.
   designed on 2026-06-25 and 2026-06-26, including a dedicated `#/favourites`
   destination and account-scoped saved-output management.
 - **Status**: Accepted. Canonical icon, action-availability, status-copy, confirmation,
-  focus, and pending-settlement rules live in [Signed-in Favourites product
-  rules](product-rules.md#signed-in-favourites) and [Icon-first actions product
-  rules](product-rules.md#icon-first-actions).
+  focus, visible-tooltip, and pending-settlement rules live in
+  [Signed-in Favourites product rules](product-rules.md#signed-in-favourites) and
+  [Icon-first actions product rules](product-rules.md#icon-first-actions).
 - **Implementation risk**: The implementation plan still needs to translate those rules
-  into accessible names/tooltips, mobile-safe hit areas, row-local live regions,
-  pending-disabled state, failure state, share-action visibility, and regression
-  coverage for anonymous DOM absence and signed-in saved-state behaviour.
+  into accessible names, hover/focus tooltips for icon-only row actions, mobile-safe hit
+  areas, row-local live regions, pending-disabled state, failure state, share-action
+  visibility, and regression coverage for anonymous DOM absence and signed-in saved-state
+  behaviour.
 
 ### Dedicated favourites destination
 

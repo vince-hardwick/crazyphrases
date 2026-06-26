@@ -768,6 +768,15 @@ h1 {
   cursor: pointer;
 }
 
+.icon-action-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .danger-button {
   min-height: 44px;
   border: 1px solid rgba(221, 95, 62, 0.34);
@@ -1069,6 +1078,10 @@ h1 {
 .phrase-copy-button {
   min-height: 38px;
   padding: 0 12px;
+}
+
+.phrase-copy-button.icon-action-button {
+  min-height: 44px;
 }
 
 .reveal-details {

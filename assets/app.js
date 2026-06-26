@@ -425,15 +425,19 @@ entryForm.addEventListener("submit", (event) => {
 });
 
 revealPanel.addEventListener("click", (event) => {
-  if (event.target.closest("[data-save-batch-button]")) {
-    void saveBatchFavourite();
+  if (event.target.closest("[data-toggle-batch-favourite]")) {
+    void toggleBatchFavourite();
     return;
   }
 
-  const phraseSaveButton = event.target.closest("[data-save-phrase-index]");
+  const phraseFavouriteButton = event.target.closest(
+    "[data-toggle-phrase-favourite-index]",
+  );
 
-  if (phraseSaveButton) {
-    void savePhraseFavourite(Number(phraseSaveButton.dataset.savePhraseIndex));
+  if (phraseFavouriteButton) {
+    void togglePhraseFavourite(
+      Number(phraseFavouriteButton.dataset.togglePhraseFavouriteIndex),
+    );
     return;
   }
 
@@ -576,10 +580,21 @@ function renderGame() {
     revealPanel.hidden = false;
     if (accountShell.persistenceAuthority.type === "account") {
       const currentSaveBatchButton = ensureSaveBatchButton();
-      currentSaveBatchButton.disabled = isBatchFavouriteSaved();
-      currentSaveBatchButton.textContent = currentSaveBatchButton.disabled
-        ? "Saved"
-        : "Save batch";
+      const savedBatch = findBatchFavouriteRecordForCurrentReveal();
+      currentSaveBatchButton.disabled = false;
+      currentSaveBatchButton.className = "secondary-button icon-action-button";
+      currentSaveBatchButton.dataset.toggleBatchFavourite = "";
+      currentSaveBatchButton.ariaLabel = savedBatch
+        ? "Remove batch from favourites"
+        : "Save batch as favourite";
+      currentSaveBatchButton.setAttribute(
+        "aria-pressed",
+        String(Boolean(savedBatch)),
+      );
+      currentSaveBatchButton.replaceChildren(
+        createFontAwesomeIcon(savedBatch ? "solid" : "regular", "heart"),
+        createScreenReaderText(currentSaveBatchButton.ariaLabel),
+      );
     } else {
       removeSaveBatchButton();
     }
@@ -1494,17 +1509,21 @@ function renderPhraseItem(phrase, phraseIndex) {
   actions.append(copyButton);
 
   if (accountShell.persistenceAuthority.type === "account") {
-    const isSaved = isPhraseFavouriteSaved(phraseIndex);
-    const saveButton = document.createElement("button");
-    saveButton.type = "button";
-    saveButton.className = "secondary-button phrase-copy-button";
-    saveButton.dataset.savePhraseIndex = String(phraseIndex);
-    saveButton.textContent = isSaved ? "Saved" : "Save";
-    saveButton.disabled = isSaved;
-    saveButton.ariaLabel = isSaved
-      ? `Phrase ${phraseIndex + 1} saved`
-      : `Save phrase ${phraseIndex + 1}`;
-    actions.append(saveButton);
+    const savedRecord = findPhraseFavouriteRecordForCurrentReveal(phraseIndex);
+    const favouriteButton = document.createElement("button");
+    favouriteButton.type = "button";
+    favouriteButton.className =
+      "secondary-button phrase-copy-button icon-action-button";
+    favouriteButton.dataset.togglePhraseFavouriteIndex = String(phraseIndex);
+    favouriteButton.ariaLabel = savedRecord
+      ? `Remove phrase ${phraseIndex + 1} from favourites`
+      : `Save phrase ${phraseIndex + 1} as favourite`;
+    favouriteButton.setAttribute("aria-pressed", String(Boolean(savedRecord)));
+    favouriteButton.append(
+      createFontAwesomeIcon(savedRecord ? "solid" : "regular", "heart"),
+      createScreenReaderText(favouriteButton.ariaLabel),
+    );
+    actions.append(favouriteButton);
   }
 
   item.append(phraseText, actions);
@@ -1556,7 +1575,6 @@ function ensureSaveBatchButton() {
   saveBatchButton = document.createElement("button");
   saveBatchButton.type = "button";
   saveBatchButton.className = "secondary-button";
-  saveBatchButton.dataset.saveBatchButton = "";
   copyStatus.before(saveBatchButton);
   return saveBatchButton;
 }
@@ -1564,6 +1582,20 @@ function ensureSaveBatchButton() {
 function removeSaveBatchButton() {
   saveBatchButton?.remove();
   saveBatchButton = null;
+}
+
+function createFontAwesomeIcon(style, name) {
+  const icon = document.createElement("i");
+  icon.className = `fa-${style} fa-${name}`;
+  icon.setAttribute("aria-hidden", "true");
+  return icon;
+}
+
+function createScreenReaderText(text) {
+  const element = document.createElement("span");
+  element.className = "sr-only";
+  element.textContent = text;
+  return element;
 }
 
 function clearRevealSurface() {
@@ -2936,7 +2968,7 @@ async function savePhraseFavourite(rowIndex) {
     renderFavourites();
     copyStatus.textContent = "Phrase favourite saved.";
   } catch {
-    copyStatus.textContent = "Phrase favourite could not be saved. Try again.";
+    copyStatus.textContent = "Could not update phrase favourite.";
   }
 }
 
@@ -2958,7 +2990,67 @@ async function saveBatchFavourite() {
     renderFavourites();
     copyStatus.textContent = "Batch favourite saved.";
   } catch {
-    copyStatus.textContent = "Batch favourite could not be saved. Try again.";
+    copyStatus.textContent = "Could not update batch favourite.";
+  }
+}
+
+async function togglePhraseFavourite(rowIndex) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const savedRecord = findPhraseFavouriteRecordForCurrentReveal(rowIndex);
+
+  if (savedRecord) {
+    await removeCurrentPhraseFavourite(savedRecord.id);
+    return;
+  }
+
+  await savePhraseFavourite(rowIndex);
+}
+
+async function toggleBatchFavourite() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const savedRecord = findBatchFavouriteRecordForCurrentReveal();
+
+  if (savedRecord) {
+    await removeCurrentBatchFavourite(savedRecord.id);
+    return;
+  }
+
+  await saveBatchFavourite();
+}
+
+async function removeCurrentPhraseFavourite(favouriteId) {
+  try {
+    await privateFavouritesRepository.removePhraseFavourite({
+      accountId: accountShell.accountId,
+      favouriteId,
+    });
+    phraseFavourites = phraseFavourites.filter(
+      (record) => record.id !== favouriteId,
+    );
+    renderGame();
+    copyStatus.textContent = "Phrase favourite removed.";
+  } catch {
+    copyStatus.textContent = "Could not update phrase favourite.";
+  }
+}
+
+async function removeCurrentBatchFavourite(favouriteId) {
+  try {
+    await privateFavouritesRepository.removeBatchFavourite({
+      accountId: accountShell.accountId,
+      favouriteId,
+    });
+    batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
+    renderGame();
+    copyStatus.textContent = "Batch favourite removed.";
+  } catch {
+    copyStatus.textContent = "Could not update batch favourite.";
   }
 }
 
@@ -3024,9 +3116,9 @@ function upsertFavouriteRecord(records, record) {
   );
 }
 
-function isPhraseFavouriteSaved(phraseIndex) {
+function findPhraseFavouriteRecordForCurrentReveal(phraseIndex) {
   if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
-    return false;
+    return null;
   }
 
   const favourite = createPhraseFavouriteSnapshot(game, {
@@ -3034,22 +3126,26 @@ function isPhraseFavouriteSaved(phraseIndex) {
     wordBank,
   });
 
-  return phraseFavourites.some((record) =>
-    areFavouriteSnapshotsEqual(record.favourite, favourite),
+  return (
+    phraseFavourites.find((record) =>
+      areFavouriteSnapshotsEqual(record.favourite, favourite),
+    ) ?? null
   );
 }
 
-function isBatchFavouriteSaved() {
+function findBatchFavouriteRecordForCurrentReveal() {
   if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
-    return false;
+    return null;
   }
 
   const favourite = createBatchFavouriteSnapshot(game, {
     wordBank,
   });
 
-  return batchFavourites.some((record) =>
-    areFavouriteSnapshotsEqual(record.favourite, favourite),
+  return (
+    batchFavourites.find((record) =>
+      areFavouriteSnapshotsEqual(record.favourite, favourite),
+    ) ?? null
   );
 }
 

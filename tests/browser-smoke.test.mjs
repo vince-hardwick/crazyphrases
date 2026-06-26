@@ -1484,6 +1484,37 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("gates the signed-in Favourites route and restores it after sign-in", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/favourites`);
+    await assertTextVisible(page, "Sign in to view Favourites");
+    await assertNoFavouriteDom(page);
+    assert.equal(await page.locator("[data-favourites-route]").count(), 0);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    await assertTextVisible(page, "Favourites");
+    await assertTextVisible(page, "No phrase favourites yet.");
+    await assertTextVisible(page, "No batch favourites yet.");
+    await assertNoHorizontalOverflow(page);
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await assertTextVisible(page, "Anonymous solo");
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    await assertNoFavouriteDom(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

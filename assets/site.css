@@ -51,6 +51,43 @@ body {
   gap: 10px;
 }
 
+.primary-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primary-nav[hidden] {
+  display: none;
+}
+
+.primary-nav-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--accent-strong);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(23, 33, 31, 0.08);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.primary-nav-icon-link {
+  position: relative;
+  width: 44px;
+  padding: 0;
+}
+
+.primary-nav-link[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+}
+
 .account-shell {
   min-width: 132px;
   border: 1px solid var(--line);
@@ -484,6 +521,25 @@ h1 {
 .help-panel ol {
   margin: 0;
   padding-left: 22px;
+}
+
+.route-gate {
+  margin: 0 0 16px;
+  border-radius: 8px;
+  padding: clamp(18px, 4vw, 28px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.route-gate h2,
+.route-gate p {
+  margin: 0;
+}
+
+.route-gate p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .game-panel {

@@ -101,6 +101,8 @@ const helpPanel = document.querySelector("#help-panel");
 const notificationShell = document.querySelector("[data-notification-shell]");
 const notificationToggle = document.querySelector("[data-notification-toggle]");
 const notificationPanel = document.querySelector("[data-notification-panel]");
+const primaryNav = document.querySelector("[data-primary-nav]");
+const routeGate = document.querySelector("[data-route-gate]");
 const gamePanel = document.querySelector("[data-game-panel]");
 const progress = document.querySelector("[data-progress]");
 const sectionProgress = document.querySelector("[data-section-progress]");
@@ -135,10 +137,20 @@ const startNewCurrentGameButton = document.querySelector(
 
 const loadFailureMessage =
   "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.";
+const ROUTES = {
+  playSolo: "#/play/solo",
+  playMultiplayer: "#/play/multiplayer",
+  favourites: "#/favourites",
+};
+const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
   createAnonymousSoloGame({ rowCount: 20 });
+let currentRoute = normaliseRoute(window.location.hash);
+let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
+  ? currentRoute
+  : null;
 let wordBank = null;
 let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
@@ -442,9 +454,111 @@ revealPanel.addEventListener("click", (event) => {
   }
 });
 
-renderGame();
-renderPendingGamePanel();
-renderFavourites();
+window.addEventListener("hashchange", () => {
+  currentRoute = normaliseRoute(window.location.hash);
+  if (
+    accountShell.persistenceAuthority.type !== "account" &&
+    signedInOnlyRoutes.has(currentRoute)
+  ) {
+    requestedSignedInRoute = currentRoute;
+  }
+  renderRoute();
+});
+
+renderRoute();
+
+function normaliseRoute(hash) {
+  if (
+    hash === ROUTES.playSolo ||
+    hash === ROUTES.playMultiplayer ||
+    hash === ROUTES.favourites
+  ) {
+    return hash;
+  }
+
+  return ROUTES.playSolo;
+}
+
+function ensureHashRoute(route) {
+  if (window.location.hash === route) {
+    return;
+  }
+
+  window.location.hash = route;
+}
+
+function renderRoute() {
+  const isSignedIn = accountShell.persistenceAuthority.type === "account";
+  const routeNeedsAccount = signedInOnlyRoutes.has(currentRoute);
+
+  primaryNav.hidden = accountShell.mode !== "signed-in";
+  updatePrimaryNavState();
+
+  if (routeNeedsAccount && !isSignedIn) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    removeFavouritesPanel();
+    renderSignInRequiredGate(currentRoute);
+    return;
+  }
+
+  routeGate.hidden = true;
+  routeGate.replaceChildren();
+
+  if (currentRoute === ROUTES.favourites) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    renderFavourites();
+    return;
+  }
+
+  if (currentRoute === ROUTES.playMultiplayer) {
+    gamePanel.hidden = true;
+    removeFavouritesPanel();
+    renderPendingGamePanel();
+    return;
+  }
+
+  gamePanel.hidden = false;
+  removeFavouritesPanel();
+  renderGame();
+  if (accountShell.persistenceAuthority.type === "account") {
+    renderPendingGamePanel();
+    renderFavourites();
+  } else {
+    removePendingGamePanel();
+  }
+}
+
+function renderSignInRequiredGate(route) {
+  const heading = document.createElement("h2");
+  heading.textContent =
+    route === ROUTES.favourites
+      ? "Sign in to view Favourites"
+      : "Sign in to play Multiplayer";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    "Use an Account-backed session to open this private destination.";
+
+  routeGate.replaceChildren(heading, copy);
+  routeGate.hidden = false;
+}
+
+function updatePrimaryNavState() {
+  primaryNav.querySelectorAll("[data-route-link]").forEach((link) => {
+    const linkRoute = link.getAttribute("href");
+    if (
+      linkRoute === currentRoute ||
+      (link.dataset.routeLink === "play" && currentRoute.startsWith("#/play/"))
+    ) {
+      link.setAttribute("aria-current", "page");
+      return;
+    }
+
+    link.removeAttribute("aria-current");
+  });
+}
 
 function renderGame() {
   hideStartAgainConfirmation();
@@ -1415,7 +1529,9 @@ function renderFavourites() {
   ];
 
   favouritesStatus.textContent =
-    favouriteItems.length === 0 ? "No favourites yet." : "";
+    favouriteItems.length === 0
+      ? "No favourites yet. No phrase favourites yet. No batch favourites yet."
+      : "";
   phraseFavouritesList.replaceChildren(...favouriteItems);
 }
 
@@ -3035,10 +3151,17 @@ async function applyAccountShell(shell) {
     hidePersistenceRecovery();
   }
 
+  if (
+    accountShell.persistenceAuthority.type === "account" &&
+    requestedSignedInRoute
+  ) {
+    currentRoute = requestedSignedInRoute;
+    requestedSignedInRoute = null;
+    ensureHashRoute(currentRoute);
+  }
+
   renderAccountShell(accountShell);
-  renderGame();
-  renderPendingGamePanel();
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadSignedInCurrentGame() {
@@ -3069,10 +3192,13 @@ function applySignedOutShell() {
   createdPendingGames = [];
   incomingPendingGameInvites = [];
   hidePersistenceRecovery();
+  requestedSignedInRoute = null;
+  if (signedInOnlyRoutes.has(currentRoute)) {
+    currentRoute = ROUTES.playSolo;
+    ensureHashRoute(ROUTES.playSolo);
+  }
   renderAccountShell(accountShell);
-  renderGame();
-  renderPendingGamePanel();
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadPhraseFavourites() {

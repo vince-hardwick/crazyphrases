@@ -289,10 +289,11 @@ saved-item row container if there is no next row, or the active tab's empty-stat
 heading if no rows remain. Do not move focus to the active-tab status message and do
 not focus another `Remove` button by default; the status message is announced through
 the polite status area while focus stays in the list context. Saved-item row containers
-are programmatic focus recovery targets only, not normal tab stops. Their accessible
-label should summarise the row, such as `Phrase favourite, saved 26 Jun 2026, Solo` or
-`Batch favourite, 6 phrases, saved 26 Jun 2026, You + @alex + 2`; copy, share, remove,
-and view controls remain the normal tab stops.
+are programmatic focus recovery targets only, not normal tab stops, but they must show a
+standard visible focus indicator while focused. Their accessible label should summarise
+the row, such as `Phrase favourite, saved 26 Jun 2026, Solo` or `Batch favourite, 6
+phrases, saved 26 Jun 2026, You + @alex + 2`; copy, share, remove, and view controls
+remain the normal tab stops.
 
 If confirmed removal fails while the source row is still mounted and active, keep the
 row visible and the confirmation open, show `Could not remove phrase favourite.` or

@@ -312,12 +312,12 @@ preserve their original history.
   wrapping without overflow menus, row-local live regions, 2-second copy/share and
   removal success status auto-clear, active-tab removal success status placement without
   reserved blank space, tab-switch clearing for removal success status, removal-success
-  focus recovery that does not focus the status message, one copy/share status per
-  visible tab, persistent copy/share failure status while the failed row remains visible,
-  remove-failure status while the confirmation remains open, tab-switch and
-  remove-confirmation status clearing, pending-disabled state, failure state,
-  share-action visibility, and regression coverage for anonymous DOM absence and
-  signed-in saved-state behaviour.
+  focus recovery that does not focus the status message, visible focus indicators for
+  programmatic row focus targets, one copy/share status per visible tab, persistent
+  copy/share failure status while the failed row remains visible, remove-failure status
+  while the confirmation remains open, tab-switch and remove-confirmation status
+  clearing, pending-disabled state, failure state, share-action visibility, and
+  regression coverage for anonymous DOM absence and signed-in saved-state behaviour.
 
 ### Dedicated favourites destination
 

@@ -297,9 +297,12 @@ row, such as `Phrase favourite, saved 26 Jun 2026, Solo` or `Batch favourite, 6 
 saved 26 Jun 2026, You + @alex + 2`; copy, share, remove, and view controls remain the
 normal tab stops. Pressing `Tab` from a programmatically focused saved-item row
 container moves to that row's first normal action, usually copy, so keyboard flow stays
-local to the row focus landed on. Pressing `Enter` or `Space` on a programmatically
-focused saved-item row container must not copy, share, remove, expand, open, or otherwise
-activate anything; keyboard activation belongs only to the row's normal controls.
+local to the row focus landed on. Pressing `Shift+Tab` from a programmatically focused
+saved-item row container follows the normal reverse tab order; do not trap focus, jump
+to the removed row, or create a special reverse path. Pressing `Enter` or `Space` on a
+programmatically focused saved-item row container must not copy, share, remove, expand,
+open, or otherwise activate anything; keyboard activation belongs only to the row's
+normal controls.
 
 If confirmed removal fails while the source row is still mounted and active, keep the
 row visible and the confirmation open, show `Could not remove phrase favourite.` or

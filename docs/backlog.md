@@ -314,12 +314,13 @@ preserve their original history.
   reserved blank space, tab-switch clearing for removal success status, removal-success
   focus recovery that does not focus the status message, visible focus indicators for
   programmatic row focus targets that do not imply selection, `Tab` flow from row focus
-  to the row's first normal action, no activation from `Enter` or `Space` on
-  programmatic row focus targets, one copy/share status per visible tab, persistent
-  copy/share failure status while the failed row remains visible, remove-failure status
-  while the confirmation remains open, tab-switch and remove-confirmation status
-  clearing, pending-disabled state, failure state, share-action visibility, and
-  regression coverage for anonymous DOM absence and signed-in saved-state behaviour.
+  to the row's first normal action, normal reverse order for `Shift+Tab` from row focus,
+  no activation from `Enter` or `Space` on programmatic row focus targets, one copy/share
+  status per visible tab, persistent copy/share failure status while the failed row
+  remains visible, remove-failure status while the confirmation remains open, tab-switch
+  and remove-confirmation status clearing, pending-disabled state, failure state,
+  share-action visibility, and regression coverage for anonymous DOM absence and
+  signed-in saved-state behaviour.
 
 ### Dedicated favourites destination
 

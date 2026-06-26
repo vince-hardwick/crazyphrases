@@ -199,7 +199,7 @@ through row-local polite live status. Only the running copy or share action is
 pending-disabled. Use fixed row-action status copy `Phrase copied.`, `Batch copied.`,
 `Could not copy phrase.`, `Could not copy batch.`, `Phrase shared.`, `Batch shared.`,
 `Could not share phrase.`, and `Could not share batch.`. Success status messages
-auto-clear after a short delay. Failure status messages stay visible until the
+auto-clear after 2 seconds. Failure status messages stay visible until the
 participant retries, triggers another row action, or leaves `#/favourites`.
 
 A `View phrases` text action expands the selected Batch Favourite inline under the row

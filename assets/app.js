@@ -2939,6 +2939,16 @@ function handleFavouritesPanelClick(event) {
     return;
   }
 
+  const batchDisclosure = event.target.closest(
+    "[data-toggle-batch-favourite-phrases]",
+  );
+  if (batchDisclosure) {
+    toggleExpandedBatchFavourite(
+      batchDisclosure.dataset.toggleBatchFavouritePhrases,
+    );
+    return;
+  }
+
   const phraseCopyButton = event.target.closest(
     "[data-copy-phrase-favourite-id]",
   );
@@ -2998,6 +3008,17 @@ function switchFavouritesTab(tab) {
   activeFavouritesTab = tab;
   clearFavouritesTransientState();
   renderFavourites();
+}
+
+function toggleExpandedBatchFavourite(favouriteId) {
+  expandedBatchFavouriteId =
+    expandedBatchFavouriteId === favouriteId ? null : favouriteId;
+  renderFavourites();
+  favouritesPanel
+    ?.querySelector(
+      `[data-toggle-batch-favourite-phrases="${CSS.escape(favouriteId)}"]`,
+    )
+    ?.focus();
 }
 
 function retryFavouritesTab(tab) {
@@ -3128,8 +3149,32 @@ function renderBatchFavourite(record) {
   content.append(title, detail, renderFavouriteMeta(model));
   actions.append(disclosureButton, copyButton, removeButton);
   item.append(icon, content, actions);
+  if (expandedBatchFavouriteId === record.id) {
+    item.append(renderExpandedBatchFavourite(record));
+  }
   appendRowActionStatus(item, "batches", record.id);
   return item;
+}
+
+function renderExpandedBatchFavourite(record) {
+  const group = document.createElement("div");
+  group.className = "expanded-batch-favourite";
+  group.dataset.expandedBatchFavourite = record.id;
+  group.setAttribute("role", "group");
+  group.ariaLabel = "Phrases in this batch favourite";
+
+  const list = document.createElement("ul");
+  list.className = "expanded-batch-favourite-list";
+  list.replaceChildren(
+    ...record.favourite.phrases.map((phrase) => {
+      const item = document.createElement("li");
+      item.textContent = phrase;
+      return item;
+    }),
+  );
+
+  group.append(list);
+  return group;
 }
 
 function renderFavouriteMeta(model) {
@@ -3174,12 +3219,13 @@ function createFavouriteIconActionButton({
 }
 
 function createBatchFavouriteDisclosureButton(recordId) {
-  const label = "View phrases";
+  const isExpanded = expandedBatchFavouriteId === recordId;
+  const label = isExpanded ? "Hide phrases" : "View phrases";
   const button = document.createElement("button");
   button.type = "button";
   button.className = "secondary-button favourite-disclosure-button";
   button.dataset.toggleBatchFavouritePhrases = recordId;
-  button.setAttribute("aria-expanded", "false");
+  button.setAttribute("aria-expanded", String(isExpanded));
   button.textContent = label;
   button.ariaLabel = label;
   return button;

@@ -1866,6 +1866,28 @@ describe("solo browser smoke", () => {
     assert.equal(await readClipboard(page), copiedPhrase);
     const batchFavouriteRow = await assertBatchFavouriteVisible(page, batchCopy);
     await assertFavouriteRowParticipantVisible(batchFavouriteRow, "Solo");
+    await page.getByRole("button", { name: "View phrases" }).click();
+    const expandedBatch = page.locator("[data-expanded-batch-favourite]");
+    assert.equal(await expandedBatch.isVisible(), true);
+    assert.equal(await expandedBatch.locator("li").count(), 10);
+    assert.equal(
+      await expandedBatch.locator("li").first().innerText(),
+      batchCopy.split("\n")[1],
+    );
+    assert.deepEqual(
+      await expandedBatch.locator("li").allInnerTexts(),
+      batchCopy.split("\n").slice(1),
+    );
+    assert.equal(
+      await expandedBatch.locator("ul").evaluate((list) =>
+        getComputedStyle(list).listStyleType,
+      ),
+      "none",
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Hide phrases" }).isVisible(),
+      true,
+    );
     await page.getByRole("button", { name: "Copy batch" }).click();
     await waitForTextVisible(page, "Batch copied.");
     await assertActiveElementMatches(page, {

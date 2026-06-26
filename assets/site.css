@@ -1211,6 +1211,23 @@ h1 {
   font-weight: 800;
 }
 
+.expanded-batch-favourite {
+  grid-column: 2 / -1;
+}
+
+.expanded-batch-favourite-list {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+}
+
+.expanded-batch-favourite-list li {
+  overflow-wrap: anywhere;
+}
+
 .phrase-copy-button {
   min-height: 38px;
   padding: 0 12px;
@@ -1381,7 +1398,8 @@ h1 {
   }
 
   .favourite-actions,
-  .favourite-row-status {
+  .favourite-row-status,
+  .expanded-batch-favourite {
     grid-column: 2 / -1;
   }
 

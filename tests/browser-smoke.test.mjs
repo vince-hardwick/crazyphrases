@@ -1855,7 +1855,49 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Batch favourite saved.");
     await assertNoFavouritesPanelDom(page);
     await openFavouritesRoute(page);
-    await assertBatchFavouriteVisible(page, batchCopy);
+    const phraseFavouriteRow = await assertFavouriteVisible(page, copiedPhrase);
+    await assertFavouriteRowParticipantVisible(phraseFavouriteRow, "Solo");
+    await page.getByRole("button", { name: "Copy phrase" }).click();
+    await waitForTextVisible(page, "Phrase copied.");
+    await assertActiveElementMatches(page, {
+      selector: "[data-copy-phrase-favourite-id]",
+      accessibleName: "Copy phrase",
+    });
+    assert.equal(await readClipboard(page), copiedPhrase);
+    const batchFavouriteRow = await assertBatchFavouriteVisible(page, batchCopy);
+    await assertFavouriteRowParticipantVisible(batchFavouriteRow, "Solo");
+    await page.getByRole("button", { name: "Copy batch" }).click();
+    await waitForTextVisible(page, "Batch copied.");
+    await assertActiveElementMatches(page, {
+      selector: "[data-copy-batch-favourite-id]",
+      accessibleName: "Copy batch",
+    });
+    assert.equal(normalizeLineEndings(await readClipboard(page)), batchCopy);
+    await page.waitForTimeout(2100);
+    await assertTextHidden(page, "Batch copied.");
+
+    await page.getByRole("tab", { name: "Phrases" }).click();
+    await installFallbackClipboardWrite(page);
+    await page.getByRole("button", { name: "Copy phrase" }).click();
+    await waitForTextVisible(page, "Phrase copied.");
+    await assertActiveElementMatches(page, {
+      selector: "[data-copy-phrase-favourite-id]",
+      accessibleName: "Copy phrase",
+    });
+    await restoreClipboardWrite(page);
+
+    await installDelayedClipboardWrite(page);
+    await page.getByRole("button", { name: "Copy phrase" }).click();
+    await waitForRouteCopyButtonsDisabled(page);
+    await page.getByRole("tab", { name: "Batches" }).click();
+    assert.equal(
+      await page.getByRole("button", { name: "Copy batch" }).isDisabled(),
+      true,
+    );
+    assert.deepEqual(await getClipboardWriteTexts(page), [copiedPhrase]);
+    await releaseDelayedClipboardWrite(page);
+    await waitForRouteCopyButtonsEnabled(page);
+    await restoreClipboardWrite(page);
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
@@ -2467,6 +2509,111 @@ async function assertTextAbsent(page, text) {
   assert.equal(await page.getByText(text).count(), 0);
 }
 
+async function assertActiveElementMatches(page, { selector, accessibleName }) {
+  const activeElement = await page.evaluate((expectedSelector) => {
+    const active = document.activeElement;
+
+    return {
+      accessibleName:
+        active?.getAttribute("aria-label") ?? active?.textContent?.trim() ?? "",
+      matches: Boolean(active?.matches(expectedSelector)),
+      tagName: active?.tagName ?? "",
+    };
+  }, selector);
+
+  assert.equal(
+    activeElement.matches,
+    true,
+    `Expected active element to match ${selector}, got ${activeElement.tagName} ${activeElement.accessibleName}`,
+  );
+  assert.equal(activeElement.accessibleName, accessibleName);
+}
+
+async function installFallbackClipboardWrite(page) {
+  await page.evaluate(() => {
+    const clipboard = navigator.clipboard;
+    window.__testClipboardWriteOriginal = clipboard.writeText.bind(clipboard);
+    window.__testClipboardExecCommandOriginal = document.execCommand?.bind(document);
+    Object.defineProperty(clipboard, "writeText", {
+      configurable: true,
+      value: async () => {
+        throw new Error("Forced clipboard fallback");
+      },
+    });
+    document.execCommand = () => true;
+  });
+}
+
+async function installDelayedClipboardWrite(page) {
+  await page.evaluate(() => {
+    const clipboard = navigator.clipboard;
+    window.__testClipboardWriteOriginal = clipboard.writeText.bind(clipboard);
+    let releaseFirstWrite;
+    const firstWrite = new Promise((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    window.__testClipboardWriteState = {
+      releaseFirstWrite,
+      texts: [],
+    };
+    Object.defineProperty(clipboard, "writeText", {
+      configurable: true,
+      value: async (text) => {
+        window.__testClipboardWriteState.texts.push(text);
+        if (window.__testClipboardWriteState.texts.length === 1) {
+          await firstWrite;
+        }
+      },
+    });
+  });
+}
+
+async function restoreClipboardWrite(page) {
+  await page.evaluate(() => {
+    const clipboard = navigator.clipboard;
+    if (window.__testClipboardWriteOriginal) {
+      Object.defineProperty(clipboard, "writeText", {
+        configurable: true,
+        value: window.__testClipboardWriteOriginal,
+      });
+    }
+    if (window.__testClipboardExecCommandOriginal) {
+      document.execCommand = window.__testClipboardExecCommandOriginal;
+    }
+    delete window.__testClipboardWriteOriginal;
+    delete window.__testClipboardExecCommandOriginal;
+    delete window.__testClipboardWriteState;
+  });
+}
+
+async function releaseDelayedClipboardWrite(page) {
+  await page.evaluate(() => {
+    window.__testClipboardWriteState?.releaseFirstWrite();
+  });
+}
+
+async function getClipboardWriteTexts(page) {
+  return page.evaluate(() => window.__testClipboardWriteState?.texts ?? []);
+}
+
+async function waitForRouteCopyButtonsDisabled(page) {
+  await page.waitForFunction(() => {
+    const buttons = [...document.querySelectorAll(
+      "[data-copy-phrase-favourite-id], [data-copy-batch-favourite-id]",
+    )];
+    return buttons.length > 0 && buttons.every((button) => button.disabled);
+  });
+}
+
+async function waitForRouteCopyButtonsEnabled(page) {
+  await page.waitForFunction(() => {
+    const buttons = [...document.querySelectorAll(
+      "[data-copy-phrase-favourite-id], [data-copy-batch-favourite-id]",
+    )];
+    return buttons.length > 0 && buttons.every((button) => !button.disabled);
+  });
+}
+
 async function assertNoFavouriteDom(page) {
   assert.equal(await page.locator("[data-favourites-panel]").count(), 0);
   assert.equal(await page.locator("[data-favourites-route]").count(), 0);
@@ -2650,18 +2797,33 @@ async function assertProgressEmpty(page) {
 }
 
 async function assertFavouriteVisible(page, phrase) {
-  assert.equal(
-    await page.locator("[data-phrase-favourites-list] > li").evaluateAll(
-      (items, expectedPhrase) =>
-        items.some(
-          (item) =>
-            item.querySelector("[data-favourite-phrase-text]")?.textContent?.trim() ===
-            expectedPhrase,
-        ),
-      phrase,
-    ),
-    true,
+  const phraseRows = page.locator(
+    "[data-phrase-favourites-list] [data-favourite-kind=\"phrase\"]",
   );
+  const phraseRowCount = await phraseRows.count();
+
+  for (let index = 0; index < phraseRowCount; index += 1) {
+    const row = phraseRows.nth(index);
+    const phraseText = row.locator("[data-favourite-phrase-text]");
+    if (
+      (await phraseText.innerText()).trim() === phrase &&
+      (await phraseText.isVisible())
+    ) {
+      return row;
+    }
+  }
+
+  assert.equal(
+    false,
+    true,
+    `Expected visible phrase favourite: ${phrase}`,
+  );
+}
+
+async function assertFavouriteRowParticipantVisible(row, participantText) {
+  const participant = row.locator(".favourite-row-participants");
+  assert.equal(await participant.isVisible(), true);
+  assert.equal(await participant.innerText(), participantText);
 }
 
 async function waitForFavouriteVisible(page, phrase) {
@@ -2680,12 +2842,29 @@ async function assertBatchFavouriteVisible(page, batchCopy) {
   const batchLines = batchCopy.split("\n").slice(1);
   await page.getByRole("tab", { name: "Batches" }).click();
   const favouritesList = page.locator("[data-phrase-favourites-list]");
+  const batchRow = favouritesList.locator("[data-favourite-kind=\"batch\"]").first();
+  const batchTitle = batchRow.locator(".favourite-row-title");
+  const batchDetail = batchRow.locator(".favourite-row-detail");
+  const disclosureButton = batchRow.locator(
+    "[data-toggle-batch-favourite-phrases]",
+  );
 
-  assert.equal(await favouritesList.getByText("Batch Favourite").isVisible(), true);
+  assert.equal(await batchRow.isVisible(), true);
+  assert.equal(await batchTitle.isVisible(), true);
 
-  for (const phrase of batchLines) {
-    assert.equal(await favouritesList.getByText(phrase).first().isVisible(), true);
-  }
+  assert.equal(
+    await batchTitle.innerText(),
+    "Batch favourite",
+  );
+  assert.equal(await batchDetail.isVisible(), true);
+  assert.equal(
+    await batchDetail.innerText(),
+    `${batchLines.length} phrases`,
+  );
+  assert.equal(await disclosureButton.count(), 1);
+  assert.equal(await disclosureButton.isVisible(), true);
+  assert.equal(await disclosureButton.innerText(), "View phrases");
+  return batchRow;
 }
 
 function assertDefaultTemplatePhrase(phrase) {

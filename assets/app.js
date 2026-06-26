@@ -59,6 +59,11 @@ import {
   createSupabasePrivateFavouritesRepository,
 } from "./private-favourites.js?v=__ASSET_VERSION__";
 import {
+  createFavouriteRowModel,
+  getBatchFavouriteCopyText,
+  getPhraseFavouriteCopyText,
+} from "./favourites-view-model.js?v=__ASSET_VERSION__";
+import {
   createLocalTestPendingGameRepository,
   createSupabasePendingGameRepository,
 } from "./pending-game.js?v=__ASSET_VERSION__";
@@ -223,6 +228,13 @@ let rowActionStatus = {
   phrases: null,
   batches: null,
 };
+let rowActionStatusTimer = null;
+let favouriteCopyRequestIds = {
+  phrases: 0,
+  batches: 0,
+};
+let favouriteRouteCopyLock = null;
+let favouriteRouteCopyLockId = 0;
 let openRemoveConfirmation = null;
 let batchFavouriteToggleButton = null;
 let favouriteToggleRequestId = 0;
@@ -2927,6 +2939,28 @@ function handleFavouritesPanelClick(event) {
     return;
   }
 
+  const phraseCopyButton = event.target.closest(
+    "[data-copy-phrase-favourite-id]",
+  );
+
+  if (phraseCopyButton) {
+    void copyPhraseFavourite(
+      phraseCopyButton.dataset.copyPhraseFavouriteId,
+      phraseCopyButton,
+    );
+    return;
+  }
+
+  const batchCopyButton = event.target.closest("[data-copy-batch-favourite-id]");
+
+  if (batchCopyButton) {
+    void copyBatchFavourite(
+      batchCopyButton.dataset.copyBatchFavouriteId,
+      batchCopyButton,
+    );
+    return;
+  }
+
   const phraseRemoveButton = event.target.closest(
     "[data-remove-phrase-favourite-id]",
   );
@@ -2986,10 +3020,13 @@ function clearFavouritesTransientState() {
   }
 
   activeFavouritesStatus = "";
+  clearRowActionStatusTimer();
   rowActionStatus = {
     phrases: null,
     batches: null,
   };
+  invalidateFavouriteCopyRequests();
+  removeVisibleRowActionStatuses();
 
   if (openRemoveConfirmation?.status !== "pending") {
     openRemoveConfirmation = null;
@@ -2997,63 +3034,395 @@ function clearFavouritesTransientState() {
 }
 
 function renderPhraseFavourite(record) {
+  const model = createFavouriteRowModel({
+    kind: "phrase",
+    record,
+    currentHandle: accountShell.profile?.handle,
+  });
   const item = document.createElement("li");
+  item.className = "favourite-row";
+  item.dataset.favouriteRow = record.id;
+  item.dataset.favouriteKind = "phrase";
+  item.tabIndex = -1;
+  item.ariaLabel = model.accessibleLabel;
 
-  const phraseText = document.createElement("span");
-  phraseText.dataset.favouritePhraseText = "";
-  phraseText.textContent = record.favourite.phraseText;
+  const icon = createFontAwesomeIcon("solid", "quote-right");
+  icon.classList.add("favourite-row-type-icon");
+
+  const content = document.createElement("div");
+  content.className = "favourite-row-content";
+
+  const title = document.createElement("p");
+  title.className = "favourite-row-title";
+  title.dataset.favouritePhraseText = "";
+  title.textContent = model.primaryText;
+  title.title = model.primaryText;
 
   const actions = document.createElement("div");
   actions.className = "favourite-actions";
 
-  const removeButton = document.createElement("button");
-  removeButton.type = "button";
-  removeButton.className = "secondary-button favourite-remove-button";
-  removeButton.dataset.removePhraseFavouriteId = record.id;
-  removeButton.textContent = "Remove";
-  removeButton.ariaLabel = `Remove phrase favourite: ${record.favourite.phraseText}`;
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy phrase",
+    iconName: "copy",
+    datasetName: "copyPhraseFavouriteId",
+    datasetValue: record.id,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove phrase favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "removePhraseFavouriteId",
+    datasetValue: record.id,
+  });
 
-  actions.append(removeButton);
-  item.append(phraseText, actions);
+  content.append(title, renderFavouriteMeta(model));
+  actions.append(copyButton, removeButton);
+  item.append(icon, content, actions);
+  appendRowActionStatus(item, "phrases", record.id);
   return item;
 }
 
 function renderBatchFavourite(record) {
+  const model = createFavouriteRowModel({
+    kind: "batch",
+    record,
+    currentHandle: accountShell.profile?.handle,
+  });
   const item = document.createElement("li");
-  const content = document.createElement("div");
+  item.className = "favourite-row";
+  item.dataset.favouriteRow = record.id;
+  item.dataset.favouriteKind = "batch";
+  item.tabIndex = -1;
+  item.ariaLabel = model.accessibleLabel;
 
-  const title = document.createElement("h3");
-  title.className = "batch-favourite-title";
-  title.textContent = "Batch Favourite";
+  const icon = createFontAwesomeIcon("solid", "file-lines");
+  icon.classList.add("favourite-row-type-icon");
+
+  const content = document.createElement("div");
+  content.className = "favourite-row-content";
+
+  const title = document.createElement("p");
+  title.className = "favourite-row-title";
+  title.textContent = model.primaryText;
 
   const detail = document.createElement("p");
-  detail.className = "batch-favourite-detail";
-  detail.textContent = `${record.favourite.rowCount} phrases`;
-
-  const list = document.createElement("ol");
-  list.className = "batch-favourite-phrases";
-  list.replaceChildren(
-    ...record.favourite.phrases.map((phrase) => {
-      const phraseItem = document.createElement("li");
-      phraseItem.textContent = phrase;
-      return phraseItem;
-    }),
-  );
+  detail.className = "favourite-row-detail";
+  detail.textContent = model.detailText;
 
   const actions = document.createElement("div");
   actions.className = "favourite-actions";
 
-  const removeButton = document.createElement("button");
-  removeButton.type = "button";
-  removeButton.className = "secondary-button favourite-remove-button";
-  removeButton.dataset.removeBatchFavouriteId = record.id;
-  removeButton.textContent = "Remove";
-  removeButton.ariaLabel = "Remove batch favourite";
+  const disclosureButton = createBatchFavouriteDisclosureButton(record.id);
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy batch",
+    iconName: "copy",
+    datasetName: "copyBatchFavouriteId",
+    datasetValue: record.id,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove batch favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "removeBatchFavouriteId",
+    datasetValue: record.id,
+  });
 
-  content.append(title, detail, list);
-  actions.append(removeButton);
-  item.append(content, actions);
+  content.append(title, detail, renderFavouriteMeta(model));
+  actions.append(disclosureButton, copyButton, removeButton);
+  item.append(icon, content, actions);
+  appendRowActionStatus(item, "batches", record.id);
   return item;
+}
+
+function renderFavouriteMeta(model) {
+  const meta = document.createElement("p");
+  meta.className = "favourite-row-meta";
+
+  const savedDate = document.createElement("span");
+  savedDate.className = "favourite-row-date";
+  savedDate.ariaLabel = model.savedDateAccessibleText;
+  savedDate.textContent = model.savedDateText || "Saved date unavailable";
+
+  const participant = document.createElement("span");
+  participant.className = "favourite-row-participants";
+  participant.textContent = model.participantIndicator;
+
+  meta.append(savedDate, participant);
+  return meta;
+}
+
+function createFavouriteIconActionButton({
+  label,
+  iconName,
+  datasetName,
+  datasetValue,
+}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className =
+    "secondary-button icon-action-button tooltip-action favourite-action-button";
+  button.dataset[datasetName] = datasetValue;
+  button.dataset.tooltip = label;
+  button.ariaLabel = label;
+  button.title = label;
+  if (isFavouriteRouteCopyDataset(datasetName)) {
+    button.disabled = isFavouriteRouteCopyLocked();
+  }
+  button.replaceChildren(
+    createFontAwesomeIcon("solid", iconName),
+    createScreenReaderText(label),
+  );
+  return button;
+}
+
+function createBatchFavouriteDisclosureButton(recordId) {
+  const label = "View phrases";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "secondary-button favourite-disclosure-button";
+  button.dataset.toggleBatchFavouritePhrases = recordId;
+  button.setAttribute("aria-expanded", "false");
+  button.textContent = label;
+  button.ariaLabel = label;
+  return button;
+}
+
+function appendRowActionStatus(item, tab, recordId) {
+  const status = rowActionStatus[tab];
+  if (!status || status.recordId !== recordId) {
+    return;
+  }
+
+  const statusElement = document.createElement("p");
+  statusElement.className = "favourite-row-status";
+  statusElement.dataset.favouriteRowStatus = "";
+  statusElement.setAttribute("aria-live", "polite");
+  statusElement.textContent = status.message;
+  item.append(statusElement);
+}
+
+function setRowActionStatus(tab, recordId, message, { autoClear = false } = {}) {
+  clearRowActionStatusTimer();
+  rowActionStatus[tab] = { recordId, message };
+  renderRowActionStatus(tab, recordId);
+
+  if (!autoClear) {
+    return;
+  }
+
+  rowActionStatusTimer = window.setTimeout(() => {
+    const status = rowActionStatus[tab];
+    if (status?.recordId === recordId && status?.message === message) {
+      rowActionStatus[tab] = null;
+      removeVisibleRowActionStatuses(tab);
+    }
+    rowActionStatusTimer = null;
+  }, 2000);
+}
+
+function clearRowActionStatus(tab) {
+  clearRowActionStatusTimer();
+  rowActionStatus[tab] = null;
+  removeVisibleRowActionStatuses(tab);
+}
+
+function renderRowActionStatus(tab, recordId) {
+  if (currentRoute !== ROUTES.favourites || activeFavouritesTab !== tab) {
+    return;
+  }
+
+  removeVisibleRowActionStatuses(tab);
+
+  const row = findVisibleFavouriteRow(tab, recordId);
+  const status = rowActionStatus[tab];
+  if (!row || !status || status.recordId !== recordId) {
+    return;
+  }
+
+  const statusElement = document.createElement("p");
+  statusElement.className = "favourite-row-status";
+  statusElement.dataset.favouriteRowStatus = "";
+  statusElement.setAttribute("aria-live", "polite");
+  statusElement.textContent = status.message;
+  row.append(statusElement);
+}
+
+function removeVisibleRowActionStatuses(tab = activeFavouritesTab) {
+  if (!favouritesPanel || currentRoute !== ROUTES.favourites) {
+    return;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  favouritesPanel
+    .querySelectorAll(
+      `[data-favourite-kind="${kind}"] [data-favourite-row-status]`,
+    )
+    .forEach((status) => status.remove());
+}
+
+function findVisibleFavouriteRow(tab, recordId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  return (
+    [...favouritesPanel.querySelectorAll(`[data-favourite-kind="${kind}"]`)].find(
+      (row) => row.dataset.favouriteRow === recordId,
+    ) ?? null
+  );
+}
+
+function clearRowActionStatusTimer() {
+  if (rowActionStatusTimer === null) {
+    return;
+  }
+
+  window.clearTimeout(rowActionStatusTimer);
+  rowActionStatusTimer = null;
+}
+
+function createFavouriteCopyRequest(tab, favouriteId, initiatingButton) {
+  if (
+    currentRoute !== ROUTES.favourites ||
+    activeFavouritesTab !== tab ||
+    accountShell.persistenceAuthority.type !== "account" ||
+    isFavouriteRouteCopyLocked()
+  ) {
+    return null;
+  }
+
+  const record = getFavouriteRecordForTab(tab, favouriteId);
+  if (!record) {
+    return null;
+  }
+
+  const lockId = (favouriteRouteCopyLockId += 1);
+  const request = {
+    accountId: accountShell.accountId,
+    favouriteId,
+    focusTarget: createFavouriteCopyFocusTarget({
+      favouriteId,
+      initiatingButton,
+      tab,
+    }),
+    lockId,
+    requestId: (favouriteCopyRequestIds[tab] += 1),
+    tab,
+  };
+  favouriteRouteCopyLock = {
+    favouriteId,
+    lockId,
+    tab,
+  };
+  setFavouriteRouteCopyButtonsDisabled(true);
+  return request;
+}
+
+function isCurrentFavouriteCopyRequest(request) {
+  return (
+    request &&
+    currentRoute === ROUTES.favourites &&
+    activeFavouritesTab === request.tab &&
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === request.accountId &&
+    favouriteCopyRequestIds[request.tab] === request.requestId &&
+    Boolean(getFavouriteRecordForTab(request.tab, request.favouriteId))
+  );
+}
+
+function isFavouriteRouteCopyDataset(datasetName) {
+  return (
+    datasetName === "copyPhraseFavouriteId" ||
+    datasetName === "copyBatchFavouriteId"
+  );
+}
+
+function isFavouriteRouteCopyLocked() {
+  return favouriteRouteCopyLock !== null;
+}
+
+function releaseFavouriteRouteCopyLock(request) {
+  if (favouriteRouteCopyLock?.lockId !== request.lockId) {
+    return;
+  }
+
+  favouriteRouteCopyLock = null;
+  setFavouriteRouteCopyButtonsDisabled(false);
+}
+
+function setFavouriteRouteCopyButtonsDisabled(disabled) {
+  favouritesPanel
+    ?.querySelectorAll(
+      "[data-copy-phrase-favourite-id], [data-copy-batch-favourite-id]",
+    )
+    .forEach((button) => {
+      button.disabled = disabled;
+    });
+}
+
+function createFavouriteCopyFocusTarget({ favouriteId, initiatingButton, tab }) {
+  return {
+    favouriteId,
+    restoreIfFocusLost: document.activeElement === initiatingButton,
+    tab,
+  };
+}
+
+function restoreFavouriteCopyFocus(focusTarget) {
+  if (!focusTarget?.restoreIfFocusLost) {
+    return;
+  }
+
+  const activeElement = document.activeElement;
+  if (
+    activeElement &&
+    activeElement !== document.body &&
+    activeElement.isConnected
+  ) {
+    return;
+  }
+
+  const button = findFavouriteCopyButton(
+    focusTarget.tab,
+    focusTarget.favouriteId,
+  );
+  if (!button || button.disabled) {
+    return;
+  }
+
+  button.focus();
+}
+
+function findFavouriteCopyButton(tab, favouriteId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const datasetName =
+    tab === "phrases" ? "copyPhraseFavouriteId" : "copyBatchFavouriteId";
+  const selector =
+    tab === "phrases"
+      ? "[data-copy-phrase-favourite-id]"
+      : "[data-copy-batch-favourite-id]";
+  return (
+    [...favouritesPanel.querySelectorAll(selector)].find(
+      (button) => button.dataset[datasetName] === favouriteId,
+    ) ?? null
+  );
+}
+
+function getFavouriteRecordForTab(tab, favouriteId) {
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+  return records.find((candidate) => candidate.id === favouriteId) ?? null;
+}
+
+function invalidateFavouriteCopyRequests(tab) {
+  if (tab) {
+    favouriteCopyRequestIds[tab] += 1;
+    return;
+  }
+
+  favouriteCopyRequestIds.phrases += 1;
+  favouriteCopyRequestIds.batches += 1;
 }
 
 function renderDetailGroup(group, groupIndex) {
@@ -3476,6 +3845,94 @@ function assertLocalTestPrivateFavouriteSaveAllowed() {
   if (getLocalTestPrivateFavouritesMode() === "save-fails") {
     throw new Error("Local test private favourite save failed.");
   }
+}
+
+async function copyPhraseFavourite(favouriteId, initiatingButton) {
+  const record = getFavouriteRecordForTab("phrases", favouriteId);
+  if (!record) {
+    return;
+  }
+
+  const request = createFavouriteCopyRequest(
+    "phrases",
+    favouriteId,
+    initiatingButton,
+  );
+  if (!request) {
+    return;
+  }
+
+  clearRowActionStatus("phrases");
+  let copied = false;
+  let shouldPublishStatus = false;
+
+  try {
+    copied = await writePlainText(getPhraseFavouriteCopyText(record));
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } catch {
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } finally {
+    releaseFavouriteRouteCopyLock(request);
+  }
+
+  if (!shouldPublishStatus) {
+    return;
+  }
+
+  if (copied) {
+    setRowActionStatus("phrases", favouriteId, "Phrase copied.", {
+      autoClear: true,
+    });
+    restoreFavouriteCopyFocus(request.focusTarget);
+    return;
+  }
+
+  setRowActionStatus("phrases", favouriteId, "Could not copy phrase.");
+  restoreFavouriteCopyFocus(request.focusTarget);
+}
+
+async function copyBatchFavourite(favouriteId, initiatingButton) {
+  const record = getFavouriteRecordForTab("batches", favouriteId);
+  if (!record) {
+    return;
+  }
+
+  const request = createFavouriteCopyRequest(
+    "batches",
+    favouriteId,
+    initiatingButton,
+  );
+  if (!request) {
+    return;
+  }
+
+  clearRowActionStatus("batches");
+  let copied = false;
+  let shouldPublishStatus = false;
+
+  try {
+    copied = await writePlainText(getBatchFavouriteCopyText(record));
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } catch {
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } finally {
+    releaseFavouriteRouteCopyLock(request);
+  }
+
+  if (!shouldPublishStatus) {
+    return;
+  }
+
+  if (copied) {
+    setRowActionStatus("batches", favouriteId, "Batch copied.", {
+      autoClear: true,
+    });
+    restoreFavouriteCopyFocus(request.focusTarget);
+    return;
+  }
+
+  setRowActionStatus("batches", favouriteId, "Could not copy batch.");
+  restoreFavouriteCopyFocus(request.focusTarget);
 }
 
 async function removePhraseFavourite(favouriteId) {

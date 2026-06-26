@@ -57,6 +57,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
 | `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD provenance. #64 shipped through PR #78 and production promotion; #79 shipped through PR #92 and production promotion. | GitHub issues #64 and #79; ADRs 0019 and 0021; `docs/product-rules.md`; `docs/backlog.md`; `docs/planning/supabase-state-ledger.md` |
+| `specs/2026-06-26-signed-in-favourites-design.md` | Active design spec awaiting written-spec review. Next action is user review, then `$superpowers:writing-plans` creates the implementation plan. | `docs/product-rules.md`, `docs/backlog.md` |
 
 ## Adding Future Plans Or Specs
 

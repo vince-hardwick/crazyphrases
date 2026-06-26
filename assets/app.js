@@ -213,6 +213,8 @@ let favouritesListState = {
   phrases: "idle",
   batches: "idle",
 };
+let phraseFavouritesLoadRequestId = 0;
+let batchFavouritesLoadRequestId = 0;
 let activeFavouritesTab = "phrases";
 let expandedBatchFavouriteId = null;
 let activeFavouritesStatus = "";
@@ -1380,7 +1382,11 @@ function getLocalTestPersistenceFailureMode() {
 function getLocalTestPrivateFavouritesFailureMode() {
   const failureMode = getLocalTestPrivateFavouritesMode();
 
-  if (["remove-fails", "load-fails"].includes(failureMode)) {
+  if (
+    ["remove-fails", "load-fails", "load-fails-once", "load-race"].includes(
+      failureMode,
+    )
+  ) {
     return failureMode;
   }
 
@@ -1397,9 +1403,14 @@ function getLocalTestPrivateFavouritesMode() {
   );
 
   if (
-    ["mutation-delays", "remove-fails", "save-fails", "load-fails"].includes(
-      testMode,
-    )
+    [
+      "mutation-delays",
+      "remove-fails",
+      "save-fails",
+      "load-fails",
+      "load-fails-once",
+      "load-race",
+    ].includes(testMode)
   ) {
     return testMode;
   }
@@ -3651,6 +3662,7 @@ async function applyAccountShell(shell) {
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
     batchFavourites = [];
+    invalidateFavouritesListLoads();
     favouritesListState.phrases = "idle";
     favouritesListState.batches = "idle";
     activeFavouritesTab = "phrases";
@@ -3701,6 +3713,7 @@ function applySignedOutShell() {
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
   batchFavourites = [];
+  invalidateFavouritesListLoads();
   favouritesListState.phrases = "idle";
   favouritesListState.batches = "idle";
   activeFavouritesTab = "phrases";
@@ -3718,6 +3731,8 @@ function applySignedOutShell() {
 }
 
 async function loadPhraseFavourites() {
+  const requestId = ++phraseFavouritesLoadRequestId;
+
   if (accountShell.persistenceAuthority.type !== "account") {
     phraseFavourites = [];
     favouritesListState.phrases = "idle";
@@ -3725,15 +3740,25 @@ async function loadPhraseFavourites() {
     return;
   }
 
+  const accountId = accountShell.accountId;
   favouritesListState.phrases = "loading";
   renderRoute();
 
   try {
-    phraseFavourites = await privateFavouritesRepository.listPhraseFavourites({
-      accountId: accountShell.accountId,
+    const records = await privateFavouritesRepository.listPhraseFavourites({
+      accountId,
     });
+    if (!isCurrentFavouritesListLoad("phrases", { accountId, requestId })) {
+      return;
+    }
+
+    phraseFavourites = records;
     favouritesListState.phrases = "loaded";
   } catch {
+    if (!isCurrentFavouritesListLoad("phrases", { accountId, requestId })) {
+      return;
+    }
+
     phraseFavourites = [];
     favouritesListState.phrases = "error";
   }
@@ -3742,6 +3767,8 @@ async function loadPhraseFavourites() {
 }
 
 async function loadBatchFavourites() {
+  const requestId = ++batchFavouritesLoadRequestId;
+
   if (accountShell.persistenceAuthority.type !== "account") {
     batchFavourites = [];
     favouritesListState.batches = "idle";
@@ -3749,20 +3776,48 @@ async function loadBatchFavourites() {
     return;
   }
 
+  const accountId = accountShell.accountId;
   favouritesListState.batches = "loading";
   renderRoute();
 
   try {
-    batchFavourites = await privateFavouritesRepository.listBatchFavourites({
-      accountId: accountShell.accountId,
+    const records = await privateFavouritesRepository.listBatchFavourites({
+      accountId,
     });
+    if (!isCurrentFavouritesListLoad("batches", { accountId, requestId })) {
+      return;
+    }
+
+    batchFavourites = records;
     favouritesListState.batches = "loaded";
   } catch {
+    if (!isCurrentFavouritesListLoad("batches", { accountId, requestId })) {
+      return;
+    }
+
     batchFavourites = [];
     favouritesListState.batches = "error";
   }
 
   renderRoute();
+}
+
+function invalidateFavouritesListLoads() {
+  phraseFavouritesLoadRequestId += 1;
+  batchFavouritesLoadRequestId += 1;
+}
+
+function isCurrentFavouritesListLoad(tab, { accountId, requestId }) {
+  const currentRequestId =
+    tab === "phrases"
+      ? phraseFavouritesLoadRequestId
+      : batchFavouritesLoadRequestId;
+
+  return (
+    requestId === currentRequestId &&
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === accountId
+  );
 }
 
 function showPersistenceRecovery(message) {

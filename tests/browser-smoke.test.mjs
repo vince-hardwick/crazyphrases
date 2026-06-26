@@ -1549,7 +1549,7 @@ describe("solo browser smoke", () => {
     const page = await context.newPage();
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
-    await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails#/favourites`);
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails-once#/favourites`);
     await page.getByRole("button", { name: "Test sign in" }).click();
 
     await assertTextVisible(page, "Could not load phrase favourites.");
@@ -1558,12 +1558,54 @@ describe("solo browser smoke", () => {
       true,
     );
 
+    await page
+      .getByRole("button", { name: "Try loading phrase favourites again" })
+      .click();
+    await assertTextVisible(page, "No phrase favourites yet.");
+    await assertTextVisible(page, "Favourite revealed phrases from Play Solo.");
+    await assertTextHidden(page, "Could not load phrase favourites.");
+
     await page.getByRole("tab", { name: "Batches" }).click();
     await assertTextVisible(page, "Could not load batch favourites.");
     assert.equal(
       await page.getByRole("button", { name: "Try loading batch favourites again" }).isVisible(),
       true,
     );
+
+    assertNoConsoleErrors();
+  });
+
+  it("ignores stale Favourites list loads after account changes", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const stalePhrase = "Primary account stale favourite";
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-race#/favourites`);
+    await seedLocalTestPhraseFavourite(page, {
+      accountId: "test-account",
+      favouriteId: "primary-stale-phrase",
+      phraseText: stalePhrase,
+    });
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+
+    await assertTextVisible(page, "@invitee-two");
+    await openFavouritesRoute(page);
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    await assertFavouriteSurfaceMounted(page);
+    await assertTextVisible(page, "No phrase favourites yet.");
+
+    await page.waitForTimeout(700);
+    await assertTextVisible(page, "No phrase favourites yet.");
+    await assertTextAbsent(page, stalePhrase);
 
     assertNoConsoleErrors();
   });
@@ -2448,6 +2490,53 @@ async function assertFavouriteSurfaceMounted(page) {
   assert.equal(await page.locator("[data-favourites-route]").count(), 1);
   assert.equal(await page.getByRole("tab", { name: "Phrases" }).count(), 1);
   assert.equal(await page.getByRole("tab", { name: "Batches" }).count(), 1);
+}
+
+async function seedLocalTestPhraseFavourite(
+  page,
+  { accountId, favouriteId, phraseText },
+) {
+  await page.evaluate(
+    ({ accountId: seedAccountId, favouriteId: seedFavouriteId, phraseText: seedPhraseText }) => {
+      const favourite = {
+        type: "phrase",
+        sourceMode: "signed-in-solo",
+        templateId: "default-adjective-noun-noun",
+        rowIndex: 0,
+        phraseText: seedPhraseText,
+        entries: [
+          {
+            entryKind: "adjective",
+            value: seedPhraseText,
+            displayValue: seedPhraseText,
+          },
+        ],
+      };
+      const record = {
+        id: seedFavouriteId,
+        accountId: seedAccountId,
+        favourite,
+        createdAt: "2026-06-26T00:00:00.000Z",
+      };
+      const payload = {
+        schemaVersion: 1,
+        accountId: seedAccountId,
+        favourites: [
+          {
+            fingerprint: JSON.stringify(favourite),
+            record,
+          },
+        ],
+      };
+      window.localStorage.setItem(
+        `crazyphrases.localTest.privatePhraseFavourites.v1.${encodeURIComponent(
+          seedAccountId,
+        )}`,
+        JSON.stringify(payload),
+      );
+    },
+    { accountId, favouriteId, phraseText },
+  );
 }
 
 async function assertNoProfileEditorDom(page) {

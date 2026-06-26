@@ -1669,24 +1669,36 @@ describe("solo browser smoke", () => {
     const phraseFavouriteButton = page.getByRole("button", {
       name: "Save phrase 2 as favourite",
     });
+    await expectFavouriteToggleState(phraseFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
     await phraseFavouriteButton.click();
-    await assertTextVisible(page, "Phrase favourite saved.");
+    await waitForTextVisible(page, "Phrase favourite saved.");
     const removePhraseFavouriteButton = page.getByRole("button", {
       name: "Remove phrase 2 from favourites",
     });
-    await expectFontAwesomeClass(removePhraseFavouriteButton, "fa-solid", "fa-heart");
+    await expectFavouriteToggleState(removePhraseFavouriteButton, {
+      pressed: true,
+      style: "solid",
+    });
     assert.equal(await removePhraseFavouriteButton.isEnabled(), true);
     await removePhraseFavouriteButton.click();
     await assertTextVisible(page, "Phrase favourite removed.");
+    const savePhraseFavouriteButton = page.getByRole("button", {
+      name: "Save phrase 2 as favourite",
+    });
+    await expectFavouriteToggleState(savePhraseFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
     assert.equal(
-      await page
-        .getByRole("button", { name: "Save phrase 2 as favourite" })
-        .isEnabled(),
+      await savePhraseFavouriteButton.isEnabled(),
       true,
     );
 
     await page.getByRole("button", { name: "Save phrase 2 as favourite" }).click();
-    await assertTextVisible(page, "Phrase favourite saved.");
+    await waitForTextVisible(page, "Phrase favourite saved.");
     await assertNoFavouritesPanelDom(page);
     await openFavouritesRoute(page);
     await assertTextVisible(page, "Saved favourites");
@@ -1700,19 +1712,38 @@ describe("solo browser smoke", () => {
       true,
     );
 
-    await page.getByRole("button", { name: "Save batch as favourite" }).click();
+    const batchFavouriteButton = page.getByRole("button", {
+      name: "Save batch as favourite",
+    });
+    await expectFavouriteToggleState(batchFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
+    await batchFavouriteButton.click();
     await assertTextVisible(page, "Batch favourite saved.");
     await assertNoFavouritesPanelDom(page);
+    const removeBatchFavouriteButton = page.getByRole("button", {
+      name: "Remove batch from favourites",
+    });
+    await expectFavouriteToggleState(removeBatchFavouriteButton, {
+      pressed: true,
+      style: "solid",
+    });
     assert.equal(
-      await page
-        .getByRole("button", { name: "Remove batch from favourites" })
-        .isEnabled(),
+      await removeBatchFavouriteButton.isEnabled(),
       true,
     );
-    await page.getByRole("button", { name: "Remove batch from favourites" }).click();
+    await removeBatchFavouriteButton.click();
     await assertTextVisible(page, "Batch favourite removed.");
+    const saveBatchFavouriteButton = page.getByRole("button", {
+      name: "Save batch as favourite",
+    });
+    await expectFavouriteToggleState(saveBatchFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
     assert.equal(
-      await page.getByRole("button", { name: "Save batch as favourite" }).isEnabled(),
+      await saveBatchFavouriteButton.isEnabled(),
       true,
     );
 
@@ -1803,6 +1834,102 @@ describe("solo browser smoke", () => {
       page,
       "Account-backed progress could not be saved. Keep this tab open and try again.",
     );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps current-output favourite hearts stable while mutations are pending", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
+    const copiedPhrase = await copiedPhraseItem.locator("span").first().innerText();
+
+    const phraseFavouriteButton = page.getByRole("button", {
+      name: "Save phrase 2 as favourite",
+    });
+    await expectFavouriteToggleState(phraseFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
+    await phraseFavouriteButton.click();
+    await expectFavouriteToggleState(phraseFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
+    assert.equal(await phraseFavouriteButton.isDisabled(), true);
+
+    await waitForTextVisible(page, "Phrase favourite saved.");
+    const removePhraseFavouriteButton = page.getByRole("button", {
+      name: "Remove phrase 2 from favourites",
+    });
+    await expectFavouriteToggleState(removePhraseFavouriteButton, {
+      pressed: true,
+      style: "solid",
+    });
+
+    await removePhraseFavouriteButton.click();
+    await expectFavouriteToggleState(removePhraseFavouriteButton, {
+      pressed: true,
+      style: "solid",
+    });
+    assert.equal(await removePhraseFavouriteButton.isDisabled(), true);
+    await openFavouritesRoute(page);
+    await waitForTextVisible(page, "No favourites yet.");
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps current-output favourite hearts regular when save fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=save-fails`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    const phraseFavouriteButton = page.getByRole("button", {
+      name: "Save phrase 2 as favourite",
+    });
+    await phraseFavouriteButton.click();
+    await assertTextVisible(page, "Could not update phrase favourite.");
+    await expectFavouriteToggleState(phraseFavouriteButton, {
+      pressed: false,
+      style: "regular",
+    });
+    assert.equal(await phraseFavouriteButton.isEnabled(), true);
 
     assertNoConsoleErrors();
   });
@@ -2163,12 +2290,21 @@ async function assertTextVisible(page, text) {
   assert.fail(`Expected visible text: ${text}`);
 }
 
+async function waitForTextVisible(page, text) {
+  await page.getByText(text).first().waitFor({ state: "visible" });
+}
+
 async function expectFontAwesomeClass(locator, ...classNames) {
   const icon = locator.locator("i").first();
   const className = await icon.getAttribute("class");
   for (const expectedClass of classNames) {
     assert.equal(className.includes(expectedClass), true);
   }
+}
+
+async function expectFavouriteToggleState(locator, { pressed, style }) {
+  assert.equal(await locator.getAttribute("aria-pressed"), String(pressed));
+  await expectFontAwesomeClass(locator, `fa-${style}`, "fa-heart");
 }
 
 async function assertTextHidden(page, text) {

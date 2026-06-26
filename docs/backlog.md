@@ -56,7 +56,8 @@ preserve their original history.
   [Favourites duplicate grouping](#favourites-duplicate-grouping);
   [Favourites source-game links](#favourites-source-game-links);
   [Favourites date localisation](#favourites-date-localisation);
-  [Favourites saved-count badge](#favourites-saved-count-badge).
+  [Favourites saved-count badge](#favourites-saved-count-badge);
+  [Favourites remove undo](#favourites-remove-undo).
 - **Sharing, discovery, reactions, and ranking**: deferred. Start with:
   [Batch ratings](#batch-ratings);
   [Friend-only leaderboards](#friend-only-leaderboards);
@@ -462,6 +463,20 @@ preserve their original history.
 - **Remaining risk**: Participants cannot see their saved-output volume from the global
   header in the first slice; the dedicated destination tabs remain the place where
   loading, empty, and error states explain the collection.
+
+### Favourites remove undo
+
+- **Deferred for first dedicated Favourites slice**: Offering undo after a participant
+  removes a Phrase Favourite or Batch Favourite from `#/favourites`.
+- **Why deferred**: Removal is already protected by row-local confirmation. Undo would
+  add restore semantics for both Phrase Favourites and Batch Favourites, including saved
+  snapshot identity, row ordering, focus recovery, and status interaction questions.
+- **Revisit when**: User feedback shows confirmed removals still feel too costly or
+  accidental, or when source-game/reveal links make re-saving from the original reveal a
+  designed navigation path.
+- **Remaining risk**: In the first slice, a successfully removed favourite leaves the
+  list immediately and cannot be restored from `#/favourites`; the participant can only
+  save it again from a future reveal context if the content is presented again.
 
 ### Signed-in Account Profile management surface
 

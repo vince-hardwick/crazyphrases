@@ -291,7 +291,9 @@ If confirmed removal fails while the source row is still mounted and active, kee
 row visible and the confirmation open, show `Could not remove phrase favourite.` or
 `Could not remove batch favourite.` as row-local polite status, re-enable `Remove` and
 `Cancel`, and focus `Cancel` again so retrying removal requires another explicit move to
-`Remove`.
+`Remove`. Keep the failure message visible while that remove confirmation remains open.
+Clear it when the participant retries `Remove`, cancels, opens remove on another row,
+switches tabs, leaves `#/favourites`, retries or reloads the list, or signs out.
 
 Favourite row dates show when the output was saved as a favourite, not when the original
 batch was revealed. Store the saved timestamp canonically, then render the visible row

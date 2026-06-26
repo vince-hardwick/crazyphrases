@@ -524,7 +524,6 @@ function renderRoute() {
   renderGame();
   if (accountShell.persistenceAuthority.type === "account") {
     renderPendingGamePanel();
-    renderFavourites();
   } else {
     removePendingGamePanel();
   }
@@ -1516,7 +1515,7 @@ function renderPhraseItem(phrase, phraseIndex) {
 function renderFavourites() {
   const isSignedIn = accountShell.persistenceAuthority.type === "account";
 
-  if (!isSignedIn) {
+  if (!isSignedIn || currentRoute !== ROUTES.favourites) {
     removeFavouritesPanel();
     return;
   }

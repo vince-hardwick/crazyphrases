@@ -1549,6 +1549,35 @@ describe("solo browser smoke", () => {
     const page = await context.newPage();
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails#/favourites`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    await assertTextVisible(page, "Could not load phrase favourites.");
+    assert.equal(
+      await page.getByRole("button", { name: "Try loading phrase favourites again" }).isVisible(),
+      true,
+    );
+
+    await page.getByRole("tab", { name: "Batches" }).click();
+    await assertTextVisible(page, "Could not load batch favourites.");
+    assert.equal(
+      await page.getByRole("button", { name: "Try loading batch favourites again" }).isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("retries one failed Favourites list without refreshing the other list", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails-once#/favourites`);
     await page.getByRole("button", { name: "Test sign in" }).click();
 

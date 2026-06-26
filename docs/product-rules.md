@@ -183,6 +183,11 @@ supported share delivery path is available and Share Consent rules allow it; oth
 omit share rather than showing a disabled control. Do not add Web Share API or public
 share links in the first dedicated Favourites slice.
 
+On narrow `#/favourites` rows, copy, share, and remove actions remain separate visible
+icon buttons rather than collapsing into an overflow menu. They may wrap into a compact
+action row when horizontal space is constrained, provided the controls keep mobile-safe
+hit areas and the row avoids horizontal overflow.
+
 Copy/share payloads use the immutable saved snapshot. Phrase Favourite copy/share sends
 only the saved phrase text. Batch Favourite copy/share sends the saved phrase list in
 original row order using the existing plaintext batch format. Copied or shared text must

@@ -307,9 +307,10 @@ preserve their original history.
   [Icon-first actions product rules](product-rules.md#icon-first-actions).
 - **Implementation risk**: The implementation plan still needs to translate those rules
   into accessible names, hover/focus tooltips for icon-only row actions, direct touch
-  activation without tap-to-preview tooltips, mobile-safe hit areas, row-local live
-  regions, pending-disabled state, failure state, share-action visibility, and
-  regression coverage for anonymous DOM absence and signed-in saved-state behaviour.
+  activation without tap-to-preview tooltips, mobile-safe hit areas, narrow-row action
+  wrapping without overflow menus, row-local live regions, pending-disabled state,
+  failure state, share-action visibility, and regression coverage for anonymous DOM
+  absence and signed-in saved-state behaviour.
 
 ### Dedicated favourites destination
 

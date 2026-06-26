@@ -2990,15 +2990,15 @@ async function savePhraseFavourite(rowIndex) {
     });
     removePendingFavouriteToggleRequest(pendingRequest);
 
-    if (!isCurrentRevealFavouriteContext(context)) {
+    if (!isSameActiveAccount(context)) {
       return;
     }
 
     phraseFavourites = upsertFavouriteRecord(phraseFavourites, savedFavourite);
-    renderCurrentFavouriteMutationResult(context, "Phrase favourite saved.");
+    renderSuccessfulFavouriteMutationResult(context, "Phrase favourite saved.");
   } catch {
     removePendingFavouriteToggleRequest(pendingRequest);
-    renderCurrentFavouriteMutationResult(
+    renderFailedFavouriteMutationResult(
       context,
       "Could not update phrase favourite.",
     );
@@ -3029,15 +3029,15 @@ async function saveBatchFavourite() {
     });
     removePendingFavouriteToggleRequest(pendingRequest);
 
-    if (!isCurrentRevealFavouriteContext(context)) {
+    if (!isSameActiveAccount(context)) {
       return;
     }
 
     batchFavourites = upsertFavouriteRecord(batchFavourites, savedFavourite);
-    renderCurrentFavouriteMutationResult(context, "Batch favourite saved.");
+    renderSuccessfulFavouriteMutationResult(context, "Batch favourite saved.");
   } catch {
     removePendingFavouriteToggleRequest(pendingRequest);
-    renderCurrentFavouriteMutationResult(
+    renderFailedFavouriteMutationResult(
       context,
       "Could not update batch favourite.",
     );
@@ -3095,17 +3095,17 @@ async function removeCurrentPhraseFavourite(favouriteId, rowIndex) {
     });
     removePendingFavouriteToggleRequest(pendingRequest);
 
-    if (!isCurrentRevealFavouriteContext(context)) {
+    if (!isSameActiveAccount(context)) {
       return;
     }
 
     phraseFavourites = phraseFavourites.filter(
       (record) => record.id !== favouriteId,
     );
-    renderCurrentFavouriteMutationResult(context, "Phrase favourite removed.");
+    renderSuccessfulFavouriteMutationResult(context, "Phrase favourite removed.");
   } catch {
     removePendingFavouriteToggleRequest(pendingRequest);
-    renderCurrentFavouriteMutationResult(
+    renderFailedFavouriteMutationResult(
       context,
       "Could not update phrase favourite.",
     );
@@ -3132,15 +3132,15 @@ async function removeCurrentBatchFavourite(favouriteId) {
     });
     removePendingFavouriteToggleRequest(pendingRequest);
 
-    if (!isCurrentRevealFavouriteContext(context)) {
+    if (!isSameActiveAccount(context)) {
       return;
     }
 
     batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
-    renderCurrentFavouriteMutationResult(context, "Batch favourite removed.");
+    renderSuccessfulFavouriteMutationResult(context, "Batch favourite removed.");
   } catch {
     removePendingFavouriteToggleRequest(pendingRequest);
-    renderCurrentFavouriteMutationResult(
+    renderFailedFavouriteMutationResult(
       context,
       "Could not update batch favourite.",
     );
@@ -3185,8 +3185,7 @@ function isFavouriteTogglePending(target) {
 
 function isCurrentRevealFavouriteContext(context) {
   if (
-    accountShell.persistenceAuthority.type !== "account" ||
-    accountShell.accountId !== context.accountId ||
+    !isSameActiveAccount(context) ||
     !game.revealed
   ) {
     return false;
@@ -3198,6 +3197,13 @@ function isCurrentRevealFavouriteContext(context) {
   );
 }
 
+function isSameActiveAccount(context) {
+  return (
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === context.accountId
+  );
+}
+
 function renderCurrentFavouritePendingSurface(context) {
   if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
     return;
@@ -3206,8 +3212,8 @@ function renderCurrentFavouritePendingSurface(context) {
   renderGame();
 }
 
-function renderCurrentFavouriteMutationResult(context, statusText) {
-  if (!isCurrentRevealFavouriteContext(context)) {
+function renderSuccessfulFavouriteMutationResult(context, statusText) {
+  if (!isSameActiveAccount(context)) {
     return;
   }
 
@@ -3216,7 +3222,16 @@ function renderCurrentFavouriteMutationResult(context, statusText) {
     return;
   }
 
-  if (currentRoute !== ROUTES.playSolo) {
+  if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
+    return;
+  }
+
+  renderGame();
+  copyStatus.textContent = statusText;
+}
+
+function renderFailedFavouriteMutationResult(context, statusText) {
+  if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
     return;
   }
 

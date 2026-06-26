@@ -1898,6 +1898,53 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("shows delayed favourite saves in Favourites after the reveal is replaced", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    const copiedPhraseItem = page.locator("[data-phrase-list] li").nth(1);
+    const copiedPhrase = await copiedPhraseItem.locator("span").first().innerText();
+    const phraseFavouriteButton = page.getByRole("button", {
+      name: "Save phrase 2 as favourite",
+    });
+
+    await phraseFavouriteButton.click();
+    assert.equal(await phraseFavouriteButton.isDisabled(), true);
+
+    await page.getByRole("button", { name: "Start again" }).click();
+    await assertTextVisible(
+      page,
+      "Start a new batch? Your revealed phrases will be cleared from this browser.",
+    );
+    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertRowCountSelected(page, "10");
+    await page.waitForTimeout(700);
+    await assertTextHidden(page, "Phrase favourite saved.");
+
+    await openFavouritesRoute(page);
+    await waitForFavouriteVisible(page, copiedPhrase);
+
+    assertNoConsoleErrors();
+  });
+
   it("keeps current-output favourite hearts regular when save fails", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -2460,6 +2507,18 @@ async function assertFavouriteVisible(page, phrase) {
       phrase,
     ),
     true,
+  );
+}
+
+async function waitForFavouriteVisible(page, phrase) {
+  await page.waitForFunction(
+    (expectedPhrase) =>
+      [...document.querySelectorAll("[data-phrase-favourites-list] > li")].some(
+        (item) =>
+          item.querySelector("[data-favourite-phrase-text]")?.textContent?.trim() ===
+          expectedPhrase,
+      ),
+    phrase,
   );
 }
 

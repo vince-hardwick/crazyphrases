@@ -1895,6 +1895,9 @@ describe("solo browser smoke", () => {
       accessibleName: "Copy batch",
     });
     assert.equal(normalizeLineEndings(await readClipboard(page)), batchCopy);
+    await assertNoHorizontalOverflow(page);
+    await page.setViewportSize({ width: 360, height: 780 });
+    await assertNoHorizontalOverflow(page);
     await page.waitForTimeout(2100);
     await assertTextHidden(page, "Batch copied.");
 
@@ -1966,6 +1969,7 @@ describe("solo browser smoke", () => {
       true,
     );
     await assertTextVisible(page, "Remove phrase favourite?");
+    await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "Remove" }).click();
     await assertTextVisible(page, "Phrase favourite removed.");
     await assertTextVisible(page, "No phrase favourites yet.");
@@ -2807,12 +2811,29 @@ async function waitForRouteCopyButtonsEnabled(page) {
 }
 
 async function assertNoFavouriteDom(page) {
-  assert.equal(await page.locator("[data-favourites-panel]").count(), 0);
-  assert.equal(await page.locator("[data-favourites-route]").count(), 0);
-  assert.equal(await page.locator("[data-favourites-tab-panel]").count(), 0);
-  assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 0);
-  assert.equal(await page.locator("[data-toggle-batch-favourite]").count(), 0);
-  assert.equal(await page.locator("[data-toggle-phrase-favourite-index]").count(), 0);
+  const accountOnlyFavouriteDom = page.locator(
+    [
+      "[data-favourites-panel]",
+      "[data-favourites-route]",
+      "[data-favourites-tab-panel]",
+      "[data-phrase-favourites-list]",
+      "[data-favourite-row]",
+      "[data-favourite-kind]",
+      "[data-favourite-phrase-text]",
+      "[data-copy-phrase-favourite-id]",
+      "[data-copy-batch-favourite-id]",
+      "[data-confirm-remove-phrase-favourite-id]",
+      "[data-confirm-remove-batch-favourite-id]",
+      "[data-remove-confirmed-favourite-id]",
+      "[data-cancel-favourite-remove]",
+      "[data-toggle-batch-favourite]",
+      "[data-toggle-batch-favourite-phrases]",
+      "[data-toggle-phrase-favourite-index]",
+      "[data-expanded-batch-favourite]",
+    ].join(", "),
+  );
+
+  assert.equal(await accountOnlyFavouriteDom.count(), 0);
 }
 
 async function assertNoFavouritesPanelDom(page) {

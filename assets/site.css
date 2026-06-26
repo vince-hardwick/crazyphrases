@@ -1447,3 +1447,23 @@ h1 {
     width: 100%;
   }
 }
+
+@media (max-width: 560px) {
+  .favourite-row {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .favourite-actions {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+
+  .favourite-row-status,
+  .expanded-batch-favourite {
+    grid-column: 1 / -1;
+  }
+
+  .favourite-remove-confirmation {
+    grid-template-columns: 1fr;
+  }
+}

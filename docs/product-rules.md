@@ -198,11 +198,13 @@ Copy and share success or failure in `#/favourites` appears beside the affected 
 through row-local polite live status. Only the running copy or share action is
 pending-disabled. Use fixed row-action status copy `Phrase copied.`, `Batch copied.`,
 `Could not copy phrase.`, `Could not copy batch.`, `Phrase shared.`, `Batch shared.`,
-`Could not share phrase.`, and `Could not share batch.`. Success status messages
-auto-clear after 2 seconds. Failure status messages stay visible until the
-participant retries, triggers another row action, switches between the `Phrases` and
-`Batches` tabs, or leaves `#/favourites`; failure status persists only while the failed
-row remains visible in the current tab.
+`Could not share phrase.`, and `Could not share batch.`. The current tab shows at most
+one copy/share status at a time: starting a new copy/share row action clears existing
+copy/share statuses in that tab before showing the new status beside the affected row.
+Success status messages auto-clear after 2 seconds. Failure status messages stay visible
+until the participant retries, triggers another row action, switches between the
+`Phrases` and `Batches` tabs, or leaves `#/favourites`; failure status persists only
+while the failed row remains visible in the current tab.
 
 A `View phrases` text action expands the selected Batch Favourite inline under the row
 and stays on `#/favourites`. Expanded content is a read-only list of the full saved

@@ -2401,8 +2401,8 @@ async function assertNoFavouriteDom(page) {
   assert.equal(await page.locator("[data-favourites-route]").count(), 0);
   assert.equal(await page.locator("[data-favourites-tab-panel]").count(), 0);
   assert.equal(await page.locator("[data-phrase-favourites-list]").count(), 0);
-  assert.equal(await page.locator("[data-save-batch-button]").count(), 0);
-  assert.equal(await page.locator("[data-save-phrase-index]").count(), 0);
+  assert.equal(await page.locator("[data-toggle-batch-favourite]").count(), 0);
+  assert.equal(await page.locator("[data-toggle-phrase-favourite-index]").count(), 0);
 }
 
 async function assertNoFavouritesPanelDom(page) {

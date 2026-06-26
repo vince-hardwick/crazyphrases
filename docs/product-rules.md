@@ -271,13 +271,15 @@ participant returns to the tab, the row being absent or present is the state sig
 On confirmed removal success in the active tab, remove the row and report status near
 the top of the current Favourites tab in an active-tab polite status area with `Phrase
 favourite removed.` or `Batch favourite removed.`. Do not use a toast or leave a
-placeholder where the removed row used to be. Removal success status auto-clears after 2
-seconds. If the removed item is an expanded Batch Favourite, remove the row and its
-expanded phrase group together with no separate collapse animation or intermediate
-collapsed state. If removal leaves the active tab empty, immediately show that tab's
-normal empty state and keep the removal success message as active-tab polite status
-until it auto-clears; do not refetch the list, reload both lists, switch tabs, or
-navigate away from `#/favourites`. Do not offer undo in the first slice.
+placeholder where the removed row used to be. Render the active-tab status area only
+while it has an active message; do not reserve blank vertical space when no message is
+active. Removal success status auto-clears after 2 seconds. If the removed item is an
+expanded Batch Favourite, remove the row and its expanded phrase group together with no
+separate collapse animation or intermediate collapsed state. If removal leaves the
+active tab empty, immediately show that tab's normal empty state and keep the removal
+success message as active-tab polite status until it auto-clears; do not refetch the
+list, reload both lists, switch tabs, or navigate away from `#/favourites`. Do not offer
+undo in the first slice.
 
 After a successful removal makes a row disappear, move keyboard focus to a
 non-destructive target: the next saved-item row container if one follows, the previous

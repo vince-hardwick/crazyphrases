@@ -874,6 +874,54 @@ h1 {
   font-weight: 700;
 }
 
+.favourites-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.favourites-tab {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--accent-strong);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.favourites-tab[aria-selected="true"] {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+}
+
+.favourites-tab-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.favourites-state-copy,
+.favourites-empty-state p,
+.favourites-error-state p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.favourites-empty-state,
+.favourites-error-state {
+  display: grid;
+  gap: 10px;
+}
+
+.favourites-empty-state h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .pending-game-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 132px 156px auto;

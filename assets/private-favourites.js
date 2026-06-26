@@ -162,6 +162,10 @@ export function createLocalTestPrivateFavouritesRepository(
     async listPhraseFavourites({ accountId }) {
       assertAccountId(accountId);
 
+      if (failureMode === "load-fails") {
+        throw new Error("Local test private favourite load failed.");
+      }
+
       return loadStoredPhraseFavourites(storage, { accountId }).map(
         ({ record }) => cloneFavouriteRecord(record),
       );
@@ -217,6 +221,10 @@ export function createLocalTestPrivateFavouritesRepository(
 
     async listBatchFavourites({ accountId }) {
       assertAccountId(accountId);
+
+      if (failureMode === "load-fails") {
+        throw new Error("Local test private favourite load failed.");
+      }
 
       return loadStoredBatchFavourites(storage, { accountId }).map(
         ({ record }) => cloneFavouriteRecord(record),

@@ -209,6 +209,19 @@ let accountProfileRepository = localTestAccountProfileRepository;
 let avatarStorageRepository = localTestAvatarStorageRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
+let favouritesListState = {
+  phrases: "idle",
+  batches: "idle",
+};
+let activeFavouritesTab = "phrases";
+let expandedBatchFavouriteId = null;
+let activeFavouritesStatus = "";
+let activeFavouritesStatusTimer = null;
+let rowActionStatus = {
+  phrases: null,
+  batches: null,
+};
+let openRemoveConfirmation = null;
 let batchFavouriteToggleButton = null;
 let favouriteToggleRequestId = 0;
 let pendingFavouriteToggleRequests = [];
@@ -232,8 +245,6 @@ let accountProfileDraftAvatar = null;
 let accountProfileCropGuideTimer = null;
 let accountProfilePreviewRequestId = 0;
 let favouritesPanel = null;
-let favouritesStatus = null;
-let phraseFavouritesList = null;
 
 loadFontAwesomeKit();
 loadWordBank();
@@ -1367,9 +1378,13 @@ function getLocalTestPersistenceFailureMode() {
 }
 
 function getLocalTestPrivateFavouritesFailureMode() {
-  return getLocalTestPrivateFavouritesMode() === "remove-fails"
-    ? "remove-fails"
-    : null;
+  const failureMode = getLocalTestPrivateFavouritesMode();
+
+  if (["remove-fails", "load-fails"].includes(failureMode)) {
+    return failureMode;
+  }
+
+  return null;
 }
 
 function getLocalTestPrivateFavouritesMode() {
@@ -1381,7 +1396,11 @@ function getLocalTestPrivateFavouritesMode() {
     "testPrivateFavourites",
   );
 
-  if (["mutation-delays", "remove-fails", "save-fails"].includes(testMode)) {
+  if (
+    ["mutation-delays", "remove-fails", "save-fails", "load-fails"].includes(
+      testMode,
+    )
+  ) {
     return testMode;
   }
 
@@ -1553,18 +1572,166 @@ function renderFavourites() {
     return;
   }
 
-  ensureFavouritesPanel();
+  const panel = ensureFavouritesPanel();
+  const heading = renderFavouritesHeading();
+  const tabs = renderFavouritesTabs();
+  const status = renderActiveFavouritesStatus();
+  const body =
+    activeFavouritesTab === "phrases"
+      ? renderFavouritesTabPanel("phrases")
+      : renderFavouritesTabPanel("batches");
 
-  const favouriteItems = [
-    ...batchFavourites.map(renderBatchFavourite),
-    ...phraseFavourites.map(renderPhraseFavourite),
-  ];
+  panel.replaceChildren(heading, tabs, ...status, body);
+}
 
-  favouritesStatus.textContent =
-    favouriteItems.length === 0
-      ? "No favourites yet. No phrase favourites yet. No batch favourites yet."
-      : "";
-  phraseFavouritesList.replaceChildren(...favouriteItems);
+function renderFavouritesHeading() {
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const kicker = document.createElement("p");
+  kicker.className = "section-kicker";
+  kicker.textContent = "Favourites";
+
+  const title = document.createElement("h2");
+  title.textContent = "Favourites";
+
+  heading.append(kicker, title);
+  return heading;
+}
+
+function renderFavouritesTabs() {
+  const tabs = document.createElement("div");
+  tabs.className = "favourites-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "Favourite type");
+
+  tabs.append(
+    renderFavouritesTabButton("phrases", "Phrases"),
+    renderFavouritesTabButton("batches", "Batches"),
+  );
+  return tabs;
+}
+
+function renderFavouritesTabButton(tab, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "favourites-tab";
+  button.dataset.favouritesTab = tab;
+  button.setAttribute("role", "tab");
+  button.setAttribute("aria-selected", String(activeFavouritesTab === tab));
+  button.textContent = label;
+  return button;
+}
+
+function renderActiveFavouritesStatus() {
+  if (activeFavouritesStatus === "") {
+    return [];
+  }
+
+  const status = document.createElement("p");
+  status.className = "favourites-status";
+  status.dataset.favouritesStatus = "";
+  status.setAttribute("aria-live", "polite");
+  status.textContent = activeFavouritesStatus;
+  return [status];
+}
+
+function renderFavouritesTabPanel(tab) {
+  const panel = document.createElement("div");
+  panel.className = "favourites-tab-panel";
+  panel.dataset.favouritesTabPanel = tab;
+  panel.setAttribute("role", "tabpanel");
+
+  const state = favouritesListState[tab];
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+
+  if (state === "loading") {
+    panel.append(
+      createFavouritesStateCopy(
+        tab === "phrases"
+          ? "Loading phrase favourites..."
+          : "Loading batch favourites...",
+      ),
+    );
+    return panel;
+  }
+
+  if (state === "error") {
+    panel.append(renderFavouritesError(tab));
+    return panel;
+  }
+
+  if (records.length === 0) {
+    panel.append(renderFavouritesEmptyState(tab));
+    return panel;
+  }
+
+  const list = document.createElement("ol");
+  list.className = "favourites-list";
+  list.dataset.phraseFavouritesList = "";
+  list.replaceChildren(
+    ...(tab === "phrases"
+      ? phraseFavourites.map(renderPhraseFavourite)
+      : batchFavourites.map(renderBatchFavourite)),
+  );
+  panel.append(list);
+  return panel;
+}
+
+function createFavouritesStateCopy(text) {
+  const copy = document.createElement("p");
+  copy.className = "favourites-state-copy";
+  copy.textContent = text;
+  return copy;
+}
+
+function renderFavouritesEmptyState(tab) {
+  const empty = document.createElement("div");
+  empty.className = "favourites-empty-state";
+
+  const heading = document.createElement("h3");
+  heading.tabIndex = -1;
+  heading.dataset.favouritesEmptyHeading = tab;
+  heading.textContent =
+    tab === "phrases" ? "No phrase favourites yet." : "No batch favourites yet.";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    tab === "phrases"
+      ? "Favourite revealed phrases from Play Solo."
+      : "Favourite a revealed batch from Play Solo.";
+
+  const action = document.createElement("a");
+  action.className = "secondary-button favourites-empty-action";
+  action.href = ROUTES.playSolo;
+  action.textContent = "Play Solo";
+
+  empty.append(heading, copy, action);
+  return empty;
+}
+
+function renderFavouritesError(tab) {
+  const error = document.createElement("div");
+  error.className = "favourites-error-state";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    tab === "phrases"
+      ? "Could not load phrase favourites."
+      : "Could not load batch favourites.";
+
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.className = "secondary-button";
+  retry.dataset.retryFavouritesTab = tab;
+  retry.ariaLabel =
+    tab === "phrases"
+      ? "Try loading phrase favourites again"
+      : "Try loading batch favourites again";
+  retry.textContent = "Try again";
+
+  error.append(copy, retry);
+  return error;
 }
 
 function renderPendingGamePanel() {
@@ -2718,43 +2885,37 @@ function ensureFavouritesPanel() {
   }
 
   favouritesPanel = document.createElement("section");
-  favouritesPanel.className = "favourites-panel";
+  favouritesPanel.className = "favourites-panel favourites-route";
   favouritesPanel.dataset.favouritesPanel = "";
+  favouritesPanel.dataset.favouritesRoute = "";
   favouritesPanel.addEventListener("click", handleFavouritesPanelClick);
+  favouritesPanel.addEventListener("keydown", handleFavouritesPanelKeydown);
 
-  const heading = document.createElement("div");
-  heading.className = "section-heading";
-
-  const kicker = document.createElement("p");
-  kicker.className = "section-kicker";
-  kicker.textContent = "Favourites";
-
-  const title = document.createElement("h2");
-  title.textContent = "Saved favourites";
-
-  favouritesStatus = document.createElement("p");
-  favouritesStatus.className = "favourites-status";
-  favouritesStatus.dataset.favouritesStatus = "";
-  favouritesStatus.setAttribute("aria-live", "polite");
-
-  phraseFavouritesList = document.createElement("ol");
-  phraseFavouritesList.className = "favourites-list";
-  phraseFavouritesList.dataset.phraseFavouritesList = "";
-
-  heading.append(kicker, title);
-  favouritesPanel.append(heading, favouritesStatus, phraseFavouritesList);
-  (pendingGamePanel ?? gamePanel).after(favouritesPanel);
+  routeGate.after(favouritesPanel);
   return favouritesPanel;
 }
 
 function removeFavouritesPanel() {
   favouritesPanel?.remove();
   favouritesPanel = null;
-  favouritesStatus = null;
-  phraseFavouritesList = null;
+  activeFavouritesTab = "phrases";
+  expandedBatchFavouriteId = null;
+  clearFavouritesTransientState();
 }
 
 function handleFavouritesPanelClick(event) {
+  const tabButton = event.target.closest("[data-favourites-tab]");
+  if (tabButton) {
+    switchFavouritesTab(tabButton.dataset.favouritesTab);
+    return;
+  }
+
+  const retryButton = event.target.closest("[data-retry-favourites-tab]");
+  if (retryButton) {
+    retryFavouritesTab(retryButton.dataset.retryFavouritesTab);
+    return;
+  }
+
   const phraseRemoveButton = event.target.closest(
     "[data-remove-phrase-favourite-id]",
   );
@@ -2770,6 +2931,57 @@ function handleFavouritesPanelClick(event) {
 
   if (batchRemoveButton) {
     void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
+  }
+}
+
+function handleFavouritesPanelKeydown(event) {
+  if (event.key !== "Escape" || !openRemoveConfirmation) {
+    return;
+  }
+
+  if (openRemoveConfirmation.status !== "pending") {
+    openRemoveConfirmation = null;
+    renderFavourites();
+  }
+}
+
+function switchFavouritesTab(tab) {
+  if (!["phrases", "batches"].includes(tab)) {
+    return;
+  }
+
+  activeFavouritesTab = tab;
+  clearFavouritesTransientState();
+  renderFavourites();
+}
+
+function retryFavouritesTab(tab) {
+  clearFavouritesTransientState();
+  if (tab === "phrases") {
+    void loadPhraseFavourites();
+    return;
+  }
+
+  if (tab === "batches") {
+    expandedBatchFavouriteId = null;
+    void loadBatchFavourites();
+  }
+}
+
+function clearFavouritesTransientState() {
+  if (activeFavouritesStatusTimer !== null) {
+    window.clearTimeout(activeFavouritesStatusTimer);
+    activeFavouritesStatusTimer = null;
+  }
+
+  activeFavouritesStatus = "";
+  rowActionStatus = {
+    phrases: null,
+    batches: null,
+  };
+
+  if (openRemoveConfirmation?.status !== "pending") {
+    openRemoveConfirmation = null;
   }
 }
 
@@ -3268,14 +3480,16 @@ async function removePhraseFavourite(favouriteId) {
     phraseFavourites = phraseFavourites.filter(
       (record) => record.id !== favouriteId,
     );
+    if (hasSavedFavourites()) {
+      activeFavouritesStatus = "Phrase favourite removed.";
+    } else {
+      activeFavouritesStatus = "";
+    }
     renderGame();
     renderFavourites();
-    if (hasSavedFavourites()) {
-      favouritesStatus.textContent = "Phrase favourite removed.";
-    }
   } catch {
-    favouritesStatus.textContent =
-      "Phrase favourite could not be removed. Try again.";
+    activeFavouritesStatus = "Phrase favourite could not be removed. Try again.";
+    renderFavourites();
   }
 }
 
@@ -3290,14 +3504,16 @@ async function removeBatchFavourite(favouriteId) {
       favouriteId,
     });
     batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
+    if (hasSavedFavourites()) {
+      activeFavouritesStatus = "Batch favourite removed.";
+    } else {
+      activeFavouritesStatus = "";
+    }
     renderGame();
     renderFavourites();
-    if (hasSavedFavourites()) {
-      favouritesStatus.textContent = "Batch favourite removed.";
-    }
   } catch {
-    favouritesStatus.textContent =
-      "Batch favourite could not be removed. Try again.";
+    activeFavouritesStatus = "Batch favourite could not be removed. Try again.";
+    renderFavourites();
   }
 }
 
@@ -3426,8 +3642,7 @@ async function applyAccountShell(shell) {
 
   if (accountShell.persistenceAuthority.type === "account") {
     await loadSignedInCurrentGame();
-    await loadPhraseFavourites();
-    await loadBatchFavourites();
+    await Promise.all([loadPhraseFavourites(), loadBatchFavourites()]);
     await loadPendingGameLists();
   } else {
     signedInGameSession.reset();
@@ -3436,6 +3651,11 @@ async function applyAccountShell(shell) {
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
     batchFavourites = [];
+    favouritesListState.phrases = "idle";
+    favouritesListState.batches = "idle";
+    activeFavouritesTab = "phrases";
+    expandedBatchFavouriteId = null;
+    clearFavouritesTransientState();
     resetPendingGameState();
     hidePersistenceRecovery();
   }
@@ -3481,6 +3701,11 @@ function applySignedOutShell() {
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
   batchFavourites = [];
+  favouritesListState.phrases = "idle";
+  favouritesListState.batches = "idle";
+  activeFavouritesTab = "phrases";
+  expandedBatchFavouriteId = null;
+  clearFavouritesTransientState();
   resetPendingGameState();
   hidePersistenceRecovery();
   requestedSignedInRoute = null;
@@ -3495,39 +3720,49 @@ function applySignedOutShell() {
 async function loadPhraseFavourites() {
   if (accountShell.persistenceAuthority.type !== "account") {
     phraseFavourites = [];
-    renderFavourites();
+    favouritesListState.phrases = "idle";
+    renderRoute();
     return;
   }
+
+  favouritesListState.phrases = "loading";
+  renderRoute();
 
   try {
     phraseFavourites = await privateFavouritesRepository.listPhraseFavourites({
       accountId: accountShell.accountId,
     });
+    favouritesListState.phrases = "loaded";
   } catch {
     phraseFavourites = [];
-    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+    favouritesListState.phrases = "error";
   }
 
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadBatchFavourites() {
   if (accountShell.persistenceAuthority.type !== "account") {
     batchFavourites = [];
-    renderFavourites();
+    favouritesListState.batches = "idle";
+    renderRoute();
     return;
   }
+
+  favouritesListState.batches = "loading";
+  renderRoute();
 
   try {
     batchFavourites = await privateFavouritesRepository.listBatchFavourites({
       accountId: accountShell.accountId,
     });
+    favouritesListState.batches = "loaded";
   } catch {
     batchFavourites = [];
-    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+    favouritesListState.batches = "error";
   }
 
-  renderFavourites();
+  renderRoute();
 }
 
 function showPersistenceRecovery(message) {

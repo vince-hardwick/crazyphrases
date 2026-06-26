@@ -428,22 +428,23 @@ preserve their original history.
   saved/favourite affordance and lets the destination stay prominent without
   overcrowding the header.
 - **Status**: Accepted on 2026-06-26 as part of signed-in navigation design. The
-  `Favourites` nav heart uses stable icon style; active route state is shown through
-  nav-control styling and `aria-current`, not by switching the nav icon between regular
-  and solid styles. Regular-vs-solid heart changes remain reserved for item-level
-  favourite actions: Font Awesome Classic Regular `heart` means the item is not
-  currently a favourite, and Font Awesome Classic Solid `heart` means it is already a
-  favourite. Do not show a saved-count badge on the `Favourites` nav heart in the first
-  slice; saved counts are not urgent notifications, and the dedicated destination tabs
-  own saved-output loading, empty, and error state after the participant chooses
-  Favourites. The Notifications bell remains a utility control and the account
-  affordance remains the identity control; `Play` and account menus may open as
-  full-width mobile popovers or sheets on narrow screens. Implementation still needs an
-  owning PRD and agent-sized issues before code changes.
-- **Remaining risk**: The implementation plan still needs accessible name and tooltip
-  behaviour, mobile-safe hit areas, active-route styling, full-width mobile menu
-  behaviour, and browser coverage for narrow viewport layout without overlap or
-  horizontal overflow.
+  `Favourites` nav heart keeps accessible name `Favourites`; when icon-only, it shows a
+  lightweight hover/focus tooltip with the text `Favourites`. The nav heart uses stable
+  icon style; active route state is shown through nav-control styling and
+  `aria-current`, not by switching the nav icon between regular and solid styles.
+  Regular-vs-solid heart changes remain reserved for item-level favourite actions: Font
+  Awesome Classic Regular `heart` means the item is not currently a favourite, and Font
+  Awesome Classic Solid `heart` means it is already a favourite. Do not show a
+  saved-count badge on the `Favourites` nav heart in the first slice; saved counts are
+  not urgent notifications, and the dedicated destination tabs own saved-output loading,
+  empty, and error state after the participant chooses Favourites. The Notifications
+  bell remains a utility control and the account affordance remains the identity
+  control; `Play` and account menus may open as full-width mobile popovers or sheets on
+  narrow screens. Implementation still needs an owning PRD and agent-sized issues before
+  code changes.
+- **Remaining risk**: The implementation plan still needs mobile-safe hit areas,
+  active-route styling, full-width mobile menu behaviour, and browser coverage for
+  narrow viewport layout without overlap or horizontal overflow.
 
 ### Favourites saved-count badge
 

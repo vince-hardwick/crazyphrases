@@ -305,9 +305,12 @@ Across viewport sizes, `Play` and `Favourites` remain visible as primary signed-
 navigation controls rather than moving behind a hamburger or generic menu button.
 `Favourites` may be denoted by a Font Awesome Classic Solid `heart` icon instead of
 visible `Favourites` text on any device, provided the control keeps an accessible name
-of `Favourites`, mobile-safe hit area, and active-route state. The `Favourites` nav
-heart uses stable icon style; active route state is shown through nav-control styling
-and `aria-current`, not by switching the nav icon between regular and solid styles.
+of `Favourites`, mobile-safe hit area, and active-route state. When the control is
+icon-only, show a lightweight visible tooltip on hover and focus with the text
+`Favourites`; do not include counts, saved-state wording, or route explanations in that
+tooltip. The `Favourites` nav heart uses stable icon style; active route state is shown
+through nav-control styling and `aria-current`, not by switching the nav icon between
+regular and solid styles.
 Regular-vs-solid heart changes remain reserved for item-level favourite actions. Do not
 show a saved-count badge on the `Favourites` nav heart in the first slice; saved counts
 are not urgent notifications and should not force account-scoped favourite-count loading

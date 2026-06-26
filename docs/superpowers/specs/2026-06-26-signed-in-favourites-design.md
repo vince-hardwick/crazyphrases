@@ -1,10 +1,8 @@
 # Signed-in Favourites Design
 
-**Status:** Approved design provenance. The written spec has been reviewed and
-approved; active implementation planning now lives in
-`docs/superpowers/plans/2026-06-26-signed-in-favourites.md`. Current durable
-product authority lives in `docs/product-rules.md` and deferrals live in
-`docs/backlog.md`.
+**Status:** Approved design provenance. Implementation is complete; current
+product authority lives in `docs/product-rules.md`, deferrals live in
+`docs/backlog.md`, and regression authority lives in the source files and tests.
 
 **Date:** 2026-06-26
 

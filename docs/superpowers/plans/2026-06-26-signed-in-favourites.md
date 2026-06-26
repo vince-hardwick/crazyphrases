@@ -10,7 +10,7 @@
 
 ---
 
-**Status:** Active implementation plan awaiting execution approach selection.
+**Status:** Historical/completed. Implemented with the signed-in Favourites feature branch and superseded by `docs/product-rules.md`, tests, and the shipped source files for future changes.
 
 **Source Spec:** `docs/superpowers/specs/2026-06-26-signed-in-favourites-design.md`
 

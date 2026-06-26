@@ -49,6 +49,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `plans/2026-06-16-pending-game-foundation.md` | Historical/completed. Do not execute as an active plan. | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `plans/2026-06-18-started-game-turn-submission.md` | Historical/completed. Do not execute as an active plan. | `docs/decisions/0014-started-game-turn-submission-authority.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md` |
 | `plans/2026-06-18-participant-section-multiplayer-foundation.md` | Historical/source-controlled complete. Do not execute as an active source plan; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, `docs/backlog.md`, PR #57 |
+| `plans/2026-06-26-signed-in-favourites.md` | Active implementation plan awaiting execution approach selection. Next action is to choose subagent-driven or inline execution and implement task-by-task. | `docs/superpowers/specs/2026-06-26-signed-in-favourites-design.md`, `docs/product-rules.md`, `docs/backlog.md` |
 | `specs/2026-06-08-bare-landing-page-design.md` | Historical. | `README.md`, `docs/runbooks/live-static-hosting.md` |
 | `specs/2026-06-11-anonymous-solo-mvp-prd.md` | Published historical PRD. | GitHub issue #1, `docs/product-rules.md`, ADRs 0004 and 0008 |
 | `specs/2026-06-12-signed-in-foundation-solo-persistence-prd.md` | Published historical PRD. | GitHub issue #22, ADR 0010, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
@@ -57,7 +58,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-16-pending-game-foundation-design.md` | Historical/completed design for the backend foundation slice. | `docs/backlog.md`, `docs/product-rules.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
 | `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
 | `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD provenance. #64 shipped through PR #78 and production promotion; #79 shipped through PR #92 and production promotion. | GitHub issues #64 and #79; ADRs 0019 and 0021; `docs/product-rules.md`; `docs/backlog.md`; `docs/planning/supabase-state-ledger.md` |
-| `specs/2026-06-26-signed-in-favourites-design.md` | Active design spec awaiting written-spec review. Next action is user review, then `$superpowers:writing-plans` creates the implementation plan. | `docs/product-rules.md`, `docs/backlog.md` |
+| `specs/2026-06-26-signed-in-favourites-design.md` | Approved design provenance. Written spec review is complete and active implementation planning has moved to `plans/2026-06-26-signed-in-favourites.md`. | `docs/product-rules.md`, `docs/backlog.md`, `docs/superpowers/plans/2026-06-26-signed-in-favourites.md` |
 
 ## Adding Future Plans Or Specs
 

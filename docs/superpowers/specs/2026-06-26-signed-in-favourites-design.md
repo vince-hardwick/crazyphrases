@@ -1,8 +1,8 @@
 # Signed-in Favourites Design
 
-**Status:** Active design spec awaiting written-spec review. The brainstorming
-design is approved; next action is user review of this written spec, then
-`$superpowers:writing-plans` creates the implementation plan. Current durable
+**Status:** Approved design provenance. The written spec has been reviewed and
+approved; active implementation planning now lives in
+`docs/superpowers/plans/2026-06-26-signed-in-favourites.md`. Current durable
 product authority lives in `docs/product-rules.md` and deferrals live in
 `docs/backlog.md`.
 

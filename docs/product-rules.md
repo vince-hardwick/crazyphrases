@@ -361,7 +361,10 @@ plaintext, invoke an already-supported share path, and remove saved favourites. 
 icon-first action needs an accessible label, mobile-safe hit area, and explicit
 pressed/saved or failure state where applicable. In `#/favourites`, icon-only row
 actions also need a visible hover/focus tooltip whose meaning matches the accessible
-label and does not add hidden state or metadata.
+label and does not add hidden state or metadata. Touch-only devices should not use
+tap-to-preview tooltips for these utility actions; tapping the control performs the
+action directly, with meaning carried by the accessible name, familiar icon, hit area,
+and subsequent state or status feedback.
 
 Use Font Awesome `copy` for copy actions, `share-nodes` for share actions, and
 `heart-circle-minus` for remove-favourite actions in the dedicated Favourites

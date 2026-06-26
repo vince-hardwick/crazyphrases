@@ -236,6 +236,8 @@ let favouriteCopyRequestIds = {
 let favouriteRouteCopyLock = null;
 let favouriteRouteCopyLockId = 0;
 let openRemoveConfirmation = null;
+let favouriteRemoveRequestId = 0;
+let activeFavouriteRemoveRequest = null;
 let batchFavouriteToggleButton = null;
 let favouriteToggleRequestId = 0;
 let pendingFavouriteToggleRequests = [];
@@ -1395,11 +1397,17 @@ function getLocalTestPrivateFavouritesFailureMode() {
   const failureMode = getLocalTestPrivateFavouritesMode();
 
   if (
-    ["remove-fails", "load-fails", "load-fails-once", "load-race"].includes(
-      failureMode,
-    )
+    [
+      "remove-fails",
+      "remove-fails-after-delay",
+      "load-fails",
+      "load-fails-once",
+      "load-race",
+    ].includes(failureMode)
   ) {
-    return failureMode;
+    return failureMode === "remove-fails-after-delay"
+      ? "remove-fails"
+      : failureMode;
   }
 
   return null;
@@ -1418,6 +1426,7 @@ function getLocalTestPrivateFavouritesMode() {
     [
       "mutation-delays",
       "remove-fails",
+      "remove-fails-after-delay",
       "save-fails",
       "load-fails",
       "load-fails-once",
@@ -1599,6 +1608,7 @@ function renderFavourites() {
   const heading = renderFavouritesHeading();
   const tabs = renderFavouritesTabs();
   const status = renderActiveFavouritesStatus();
+  refreshStaleFavouritesTab(activeFavouritesTab);
   const body =
     activeFavouritesTab === "phrases"
       ? renderFavouritesTabPanel("phrases")
@@ -2971,21 +2981,42 @@ function handleFavouritesPanelClick(event) {
     return;
   }
 
-  const phraseRemoveButton = event.target.closest(
-    "[data-remove-phrase-favourite-id]",
+  const phraseRemoveConfirm = event.target.closest(
+    "[data-confirm-remove-phrase-favourite-id]",
   );
 
-  if (phraseRemoveButton) {
-    void removePhraseFavourite(phraseRemoveButton.dataset.removePhraseFavouriteId);
+  if (phraseRemoveConfirm) {
+    openFavouriteRemoveConfirmation(
+      "phrases",
+      phraseRemoveConfirm.dataset.confirmRemovePhraseFavouriteId,
+    );
     return;
   }
 
-  const batchRemoveButton = event.target.closest(
-    "[data-remove-batch-favourite-id]",
+  const batchRemoveConfirm = event.target.closest(
+    "[data-confirm-remove-batch-favourite-id]",
   );
 
-  if (batchRemoveButton) {
-    void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
+  if (batchRemoveConfirm) {
+    openFavouriteRemoveConfirmation(
+      "batches",
+      batchRemoveConfirm.dataset.confirmRemoveBatchFavouriteId,
+    );
+    return;
+  }
+
+  const cancelRemove = event.target.closest("[data-cancel-favourite-remove]");
+  if (cancelRemove) {
+    cancelFavouriteRemoveConfirmation({ restoreFocus: true });
+    return;
+  }
+
+  const remove = event.target.closest("[data-remove-confirmed-favourite-id]");
+  if (remove) {
+    void removeFavouriteFromRoute({
+      tab: remove.dataset.removeConfirmedFavouriteTab,
+      favouriteId: remove.dataset.removeConfirmedFavouriteId,
+    });
   }
 }
 
@@ -2994,10 +3025,12 @@ function handleFavouritesPanelKeydown(event) {
     return;
   }
 
-  if (openRemoveConfirmation.status !== "pending") {
-    openRemoveConfirmation = null;
-    renderFavourites();
+  event.preventDefault();
+  if (openRemoveConfirmation.pending) {
+    return;
   }
+
+  cancelFavouriteRemoveConfirmation({ restoreFocus: true });
 }
 
 function switchFavouritesTab(tab) {
@@ -3047,10 +3080,68 @@ function clearFavouritesTransientState() {
     batches: null,
   };
   invalidateFavouriteCopyRequests();
+  invalidateFavouriteRemoveRequest();
   removeVisibleRowActionStatuses();
 
-  if (openRemoveConfirmation?.status !== "pending") {
-    openRemoveConfirmation = null;
+  openRemoveConfirmation = null;
+}
+
+function refreshStaleFavouritesTab(tab) {
+  if (favouritesListState[tab] !== "stale") {
+    return;
+  }
+
+  favouritesListState[tab] = "loading";
+  window.setTimeout(() => {
+    if (
+      accountShell.persistenceAuthority.type !== "account" ||
+      currentRoute !== ROUTES.favourites
+    ) {
+      favouritesListState[tab] = "stale";
+      return;
+    }
+
+    if (tab === "phrases") {
+      void loadPhraseFavourites();
+      return;
+    }
+
+    if (tab === "batches") {
+      void loadBatchFavourites();
+    }
+  }, 0);
+}
+
+function openFavouriteRemoveConfirmation(tab, favouriteId) {
+  if (openRemoveConfirmation?.pending) {
+    return;
+  }
+
+  clearFavouritesTransientState();
+  openRemoveConfirmation = {
+    tab,
+    favouriteId,
+    status: "",
+    pending: false,
+  };
+  renderFavourites();
+  findFavouriteRemoveCancelButton(favouriteId)?.focus();
+}
+
+function cancelFavouriteRemoveConfirmation({ restoreFocus }) {
+  const confirmation = openRemoveConfirmation;
+  if (confirmation?.pending) {
+    return;
+  }
+
+  openRemoveConfirmation = null;
+  renderFavourites();
+
+  if (restoreFocus && confirmation) {
+    findFavouriteRemoveOpenButton(
+      confirmation.tab,
+      confirmation.favouriteId,
+    )?.focus();
   }
 }
 
@@ -3079,26 +3170,15 @@ function renderPhraseFavourite(record) {
   title.textContent = model.primaryText;
   title.title = model.primaryText;
 
-  const actions = document.createElement("div");
-  actions.className = "favourite-actions";
-
-  const copyButton = createFavouriteIconActionButton({
-    label: "Copy phrase",
-    iconName: "copy",
-    datasetName: "copyPhraseFavouriteId",
-    datasetValue: record.id,
-  });
-  const removeButton = createFavouriteIconActionButton({
-    label: "Remove phrase favourite",
-    iconName: "heart-circle-minus",
-    datasetName: "removePhraseFavouriteId",
-    datasetValue: record.id,
-  });
+  const actions = isFavouriteRemoveConfirmationOpen("phrases", record.id)
+    ? renderFavouriteRemoveConfirmation("phrases", record.id)
+    : renderPhraseFavouriteActions(record.id);
 
   content.append(title, renderFavouriteMeta(model));
-  actions.append(copyButton, removeButton);
   item.append(icon, content, actions);
-  appendRowActionStatus(item, "phrases", record.id);
+  if (!isFavouriteRemoveConfirmationOpen("phrases", record.id)) {
+    appendRowActionStatus(item, "phrases", record.id);
+  }
   return item;
 }
 
@@ -3129,31 +3209,115 @@ function renderBatchFavourite(record) {
   detail.className = "favourite-row-detail";
   detail.textContent = model.detailText;
 
-  const actions = document.createElement("div");
-  actions.className = "favourite-actions";
-
-  const disclosureButton = createBatchFavouriteDisclosureButton(record.id);
-  const copyButton = createFavouriteIconActionButton({
-    label: "Copy batch",
-    iconName: "copy",
-    datasetName: "copyBatchFavouriteId",
-    datasetValue: record.id,
-  });
-  const removeButton = createFavouriteIconActionButton({
-    label: "Remove batch favourite",
-    iconName: "heart-circle-minus",
-    datasetName: "removeBatchFavouriteId",
-    datasetValue: record.id,
-  });
+  const actions = isFavouriteRemoveConfirmationOpen("batches", record.id)
+    ? renderFavouriteRemoveConfirmation("batches", record.id)
+    : renderBatchFavouriteActions(record.id);
 
   content.append(title, detail, renderFavouriteMeta(model));
-  actions.append(disclosureButton, copyButton, removeButton);
   item.append(icon, content, actions);
   if (expandedBatchFavouriteId === record.id) {
     item.append(renderExpandedBatchFavourite(record));
   }
-  appendRowActionStatus(item, "batches", record.id);
+  if (!isFavouriteRemoveConfirmationOpen("batches", record.id)) {
+    appendRowActionStatus(item, "batches", record.id);
+  }
   return item;
+}
+
+function renderPhraseFavouriteActions(recordId) {
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions";
+
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy phrase",
+    iconName: "copy",
+    datasetName: "copyPhraseFavouriteId",
+    datasetValue: recordId,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove phrase favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "confirmRemovePhraseFavouriteId",
+    datasetValue: recordId,
+  });
+
+  actions.append(copyButton, removeButton);
+  return actions;
+}
+
+function renderBatchFavouriteActions(recordId) {
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions";
+
+  const disclosureButton = createBatchFavouriteDisclosureButton(recordId);
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy batch",
+    iconName: "copy",
+    datasetName: "copyBatchFavouriteId",
+    datasetValue: recordId,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove batch favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "confirmRemoveBatchFavouriteId",
+    datasetValue: recordId,
+  });
+
+  actions.append(disclosureButton, copyButton, removeButton);
+  return actions;
+}
+
+function renderFavouriteRemoveConfirmation(tab, recordId) {
+  const confirmation = openRemoveConfirmation;
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions favourite-remove-confirmation";
+  actions.setAttribute("aria-busy", String(Boolean(confirmation?.pending)));
+
+  const question = document.createElement("p");
+  question.className = "favourite-remove-question";
+  question.textContent =
+    tab === "phrases" ? "Remove phrase favourite?" : "Remove batch favourite?";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.className = "secondary-button icon-action-button";
+  cancelButton.dataset.cancelFavouriteRemove = recordId;
+  cancelButton.disabled = Boolean(confirmation?.pending);
+  cancelButton.replaceChildren(
+    createFontAwesomeIcon("solid", "circle-left"),
+    "Cancel",
+  );
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "danger-button icon-action-button";
+  removeButton.dataset.removeConfirmedFavouriteId = recordId;
+  removeButton.dataset.removeConfirmedFavouriteTab = tab;
+  removeButton.disabled = Boolean(confirmation?.pending);
+  removeButton.replaceChildren(
+    createFontAwesomeIcon("solid", "heart-circle-minus"),
+    "Remove",
+  );
+
+  actions.append(question, cancelButton, removeButton);
+
+  if (confirmation?.status) {
+    const status = document.createElement("p");
+    status.className = "favourite-row-status";
+    status.dataset.favouriteRowStatus = "";
+    status.setAttribute("aria-live", "polite");
+    status.textContent = confirmation.status;
+    actions.append(status);
+  }
+
+  return actions;
+}
+
+function isFavouriteRemoveConfirmationOpen(tab, favouriteId) {
+  return (
+    openRemoveConfirmation?.tab === tab &&
+    openRemoveConfirmation.favouriteId === favouriteId
+  );
 }
 
 function renderExpandedBatchFavourite(record) {
@@ -3726,7 +3890,7 @@ async function removeCurrentPhraseFavourite(favouriteId, rowIndex) {
   renderCurrentFavouritePendingSurface(context);
 
   try {
-    await waitForLocalTestPrivateFavouritesMutation();
+    await waitForLocalTestPrivateFavouritesMutation("remove");
     await privateFavouritesRepository.removePhraseFavourite({
       accountId: context.accountId,
       favouriteId,
@@ -3763,7 +3927,7 @@ async function removeCurrentBatchFavourite(favouriteId) {
   renderCurrentFavouritePendingSurface(context);
 
   try {
-    await waitForLocalTestPrivateFavouritesMutation();
+    await waitForLocalTestPrivateFavouritesMutation("remove");
     await privateFavouritesRepository.removeBatchFavourite({
       accountId: context.accountId,
       favouriteId,
@@ -3877,8 +4041,12 @@ function renderFailedFavouriteMutationResult(context, statusText) {
   copyStatus.textContent = statusText;
 }
 
-async function waitForLocalTestPrivateFavouritesMutation() {
-  if (getLocalTestPrivateFavouritesMode() !== "mutation-delays") {
+async function waitForLocalTestPrivateFavouritesMutation(operation = "mutation") {
+  const mode = getLocalTestPrivateFavouritesMode();
+  if (
+    mode !== "mutation-delays" &&
+    (mode !== "remove-fails-after-delay" || operation !== "remove")
+  ) {
     return;
   }
 
@@ -3981,58 +4149,248 @@ async function copyBatchFavourite(favouriteId, initiatingButton) {
   restoreFavouriteCopyFocus(request.focusTarget);
 }
 
-async function removePhraseFavourite(favouriteId) {
-  if (accountShell.persistenceAuthority.type !== "account") {
+async function removeFavouriteFromRoute({ tab, favouriteId }) {
+  const confirmation = openRemoveConfirmation;
+  if (
+    !confirmation ||
+    confirmation.pending ||
+    confirmation.tab !== tab ||
+    confirmation.favouriteId !== favouriteId ||
+    !["phrases", "batches"].includes(tab) ||
+    accountShell.persistenceAuthority.type !== "account"
+  ) {
     return;
   }
 
-  try {
-    await privateFavouritesRepository.removePhraseFavourite({
-      accountId: accountShell.accountId,
-      favouriteId,
-    });
-    phraseFavourites = phraseFavourites.filter(
-      (record) => record.id !== favouriteId,
-    );
-    if (hasSavedFavourites()) {
-      activeFavouritesStatus = "Phrase favourite removed.";
-    } else {
-      activeFavouritesStatus = "";
-    }
-    renderGame();
-    renderFavourites();
-  } catch {
-    activeFavouritesStatus = "Phrase favourite could not be removed. Try again.";
-    renderFavourites();
-  }
-}
-
-async function removeBatchFavourite(favouriteId) {
-  if (accountShell.persistenceAuthority.type !== "account") {
+  const removedIndex = getFavouriteRemovalIndex(tab, favouriteId);
+  if (removedIndex === -1) {
     return;
   }
 
+  const request = createFavouriteRemoveRequest({
+    confirmation,
+    favouriteId,
+    tab,
+  });
+  confirmation.pending = true;
+  confirmation.status =
+    tab === "phrases"
+      ? "Removing phrase favourite..."
+      : "Removing batch favourite...";
+  renderFavourites();
+
   try {
-    await privateFavouritesRepository.removeBatchFavourite({
-      accountId: accountShell.accountId,
-      favouriteId,
-    });
-    batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
-    if (hasSavedFavourites()) {
-      activeFavouritesStatus = "Batch favourite removed.";
+    await waitForLocalTestPrivateFavouritesMutation("remove");
+    if (tab === "phrases") {
+      await privateFavouritesRepository.removePhraseFavourite({
+        accountId: request.accountId,
+        favouriteId,
+      });
+      if (!isCurrentFavouriteRemoveMountedContext(request)) {
+        settleStaleFavouriteRemoveRequest(request);
+        return;
+      }
+
+      phraseFavourites = phraseFavourites.filter(
+        (record) => record.id !== favouriteId,
+      );
     } else {
-      activeFavouritesStatus = "";
+      await privateFavouritesRepository.removeBatchFavourite({
+        accountId: request.accountId,
+        favouriteId,
+      });
+      if (!isCurrentFavouriteRemoveMountedContext(request)) {
+        settleStaleFavouriteRemoveRequest(request);
+        return;
+      }
+
+      batchFavourites = batchFavourites.filter(
+        (record) => record.id !== favouriteId,
+      );
+      if (expandedBatchFavouriteId === favouriteId) {
+        expandedBatchFavouriteId = null;
+      }
     }
+
+    if (!isCurrentFavouriteRemoveUiRequest(request)) {
+      clearFavouriteRemoveRequest(request);
+      renderFavourites();
+      return;
+    }
+
+    clearFavouriteRemoveRequest(request);
     renderGame();
-    renderFavourites();
+    handleFavouriteRemovalSuccess({
+      tab,
+      removedIndex,
+      message:
+        tab === "phrases"
+          ? "Phrase favourite removed."
+          : "Batch favourite removed.",
+    });
   } catch {
-    activeFavouritesStatus = "Batch favourite could not be removed. Try again.";
+    if (!isCurrentFavouriteRemoveUiRequest(request)) {
+      settleStaleFavouriteRemoveRequest(request);
+      return;
+    }
+
+    completeFavouriteRemoveRequest(request);
+    confirmation.pending = false;
+    confirmation.status =
+      tab === "phrases"
+        ? "Could not remove phrase favourite."
+        : "Could not remove batch favourite.";
     renderFavourites();
+    findFavouriteRemoveCancelButton(favouriteId)?.focus();
   }
 }
 
-function hasSavedFavourites() {
-  return phraseFavourites.length + batchFavourites.length > 0;
+function createFavouriteRemoveRequest({ confirmation, favouriteId, tab }) {
+  const request = {
+    accountId: accountShell.accountId,
+    activeTab: activeFavouritesTab,
+    confirmation,
+    favouriteId,
+    requestId: (favouriteRemoveRequestId += 1),
+    route: currentRoute,
+    tab,
+  };
+  confirmation.requestId = request.requestId;
+  activeFavouriteRemoveRequest = request;
+  return request;
+}
+
+function isCurrentFavouriteRemoveMutationAccount(request) {
+  return (
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === request.accountId
+  );
+}
+
+function isCurrentFavouriteRemoveMountedContext(request) {
+  return (
+    isCurrentFavouriteRemoveMutationAccount(request) &&
+    request.route === ROUTES.favourites &&
+    currentRoute === ROUTES.favourites
+  );
+}
+
+function isCurrentFavouriteRemoveUiRequest(request) {
+  return (
+    isCurrentFavouriteRemoveMountedContext(request) &&
+    activeFavouritesTab === request.activeTab &&
+    activeFavouritesTab === request.tab &&
+    openRemoveConfirmation === request.confirmation &&
+    openRemoveConfirmation?.requestId === request.requestId &&
+    openRemoveConfirmation?.favouriteId === request.favouriteId &&
+    openRemoveConfirmation?.tab === request.tab &&
+    activeFavouriteRemoveRequest?.requestId === request.requestId
+  );
+}
+
+function settleStaleFavouriteRemoveRequest(request) {
+  clearFavouriteRemoveRequest(request);
+  favouritesListState[request.tab] = "stale";
+}
+
+function clearFavouriteRemoveRequest(request) {
+  completeFavouriteRemoveRequest(request);
+
+  if (openRemoveConfirmation?.requestId === request.requestId) {
+    openRemoveConfirmation = null;
+  }
+}
+
+function completeFavouriteRemoveRequest(request) {
+  if (activeFavouriteRemoveRequest?.requestId === request.requestId) {
+    activeFavouriteRemoveRequest = null;
+  }
+}
+
+function invalidateFavouriteRemoveRequest() {
+  activeFavouriteRemoveRequest = null;
+  favouriteRemoveRequestId += 1;
+}
+
+function handleFavouriteRemovalSuccess({ tab, removedIndex, message }) {
+  if (currentRoute !== ROUTES.favourites || activeFavouritesTab !== tab) {
+    renderFavourites();
+    return;
+  }
+
+  setActiveFavouritesStatus(message);
+  getFavouriteRemovalFocusTarget(tab, removedIndex)?.focus();
+}
+
+function setActiveFavouritesStatus(message) {
+  if (activeFavouritesStatusTimer !== null) {
+    window.clearTimeout(activeFavouritesStatusTimer);
+    activeFavouritesStatusTimer = null;
+  }
+
+  activeFavouritesStatus = message;
+  renderFavourites();
+
+  activeFavouritesStatusTimer = window.setTimeout(() => {
+    if (activeFavouritesStatus === message) {
+      activeFavouritesStatus = "";
+      renderFavourites();
+    }
+
+    activeFavouritesStatusTimer = null;
+  }, 2000);
+}
+
+function getFavouriteRemovalIndex(tab, favouriteId) {
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+  return records.findIndex((record) => record.id === favouriteId);
+}
+
+function getFavouriteRemovalFocusTarget(tab, removedIndex) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  const rows = [
+    ...favouritesPanel.querySelectorAll(`[data-favourite-kind="${kind}"]`),
+  ];
+
+  return (
+    rows[Math.min(removedIndex, rows.length - 1)] ??
+    rows[removedIndex - 1] ??
+    favouritesPanel.querySelector(
+      `[data-favourites-empty-heading="${CSS.escape(tab)}"]`,
+    ) ??
+    null
+  );
+}
+
+function findFavouriteRemoveCancelButton(favouriteId) {
+  return favouritesPanel?.querySelector(
+    `[data-cancel-favourite-remove="${CSS.escape(favouriteId)}"]`,
+  );
+}
+
+function findFavouriteRemoveOpenButton(tab, favouriteId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const datasetName =
+    tab === "phrases"
+      ? "confirmRemovePhraseFavouriteId"
+      : "confirmRemoveBatchFavouriteId";
+  const selector =
+    tab === "phrases"
+      ? "[data-confirm-remove-phrase-favourite-id]"
+      : "[data-confirm-remove-batch-favourite-id]";
+
+  return (
+    [...favouritesPanel.querySelectorAll(selector)].find(
+      (button) => button.dataset[datasetName] === favouriteId,
+    ) ?? null
+  );
 }
 
 function upsertFavouriteRecord(records, record) {

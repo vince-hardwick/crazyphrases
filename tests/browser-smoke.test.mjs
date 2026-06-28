@@ -155,6 +155,31 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("shows a regular notification bell when there are no unread notifications", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    const notificationButton = page.getByRole("button", { name: "Notifications" });
+    assert.equal(await notificationButton.isVisible(), true);
+    await expectFontAwesomeClass(notificationButton, "fa-regular", "fa-bell");
+    assert.equal((await notificationButton.innerText()).includes("!"), false);
+    assert.equal(
+      await notificationButton.evaluate((button) => button.dataset.unreadCount),
+      "0",
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("resumes local test signed-in setup without importing anonymous local play", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -1155,6 +1180,15 @@ describe("solo browser smoke", () => {
         .isVisible(),
       true,
     );
+    const notificationButton = page.getByRole("button", {
+      name: "Notifications, 2 unread",
+    });
+    await expectFontAwesomeClass(notificationButton, "fa-solid", "fa-bell");
+    assert.equal(
+      await notificationButton.locator("[data-notification-badge]").innerText(),
+      "2",
+    );
+
     await page.getByRole("button", { name: "Notifications" }).click();
     await assertTextVisible(
       page,

@@ -457,6 +457,29 @@ h1 {
   position: relative;
 }
 
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  padding: 0 5px;
+  color: var(--accent-contrast);
+  background: var(--warm);
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .notification-panel {
   position: absolute;
   right: 0;

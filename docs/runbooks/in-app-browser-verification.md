@@ -60,6 +60,16 @@ The correct recovery for a local static smoke is:
 
 Do not treat shell network access, deployment approval, or environment detection as authority to mutate a live environment. Deployment authority remains the approved GitHub Environment workflow.
 
+For hosted runtime changes, visible in-app browser verification has two
+mandatory deployment gates:
+
+- Before merge, the final feature-branch head must be freshly deployed to
+  `dev` and smoked in the visible in-app browser. A stale waiting or completed
+  `dev` run for an older commit does not count.
+- After merge, the promoted `main` commit must be smoked functionally in
+  `test` after the `test` deployment completes. A waiting `production` gate in
+  the same workflow must be left waiting; it does not block `test` validation.
+
 Feature-specific live verification must exercise the behaviour being promoted.
 For data-dependent features such as completed-history pagination, an
 empty-state browser smoke proves deployment, authentication, asset freshness,
@@ -69,6 +79,10 @@ target environment lacks the required hosted data, either obtain explicit owner
 approval for a create/verify/cleanup smoke in that environment or record the
 run as an empty-state deployment smoke with the pagination or non-empty-data
 coverage left unverified.
+
+Static asset commit-hash stamping is required evidence for deployed browser
+checks, but it is not sufficient by itself. The smoke must also exercise the
+promoted UI or behaviour in the deployed environment.
 
 Do not use the local static-server snippet for deployed environments. Live sites are served by the documented GitHub Actions and hosting path, and deployment authority comes from GitHub Environment approvals, not from detecting a hostname or branch.
 
@@ -238,7 +252,9 @@ For the signed-in foundation, local and deployment smoke should check:
 - The mobile viewport has no horizontal overflow or blocking layout overlap in the signed-in setup, entry, reveal, and recovery states.
 - Save failure, load failure, and stale-write conflict states show explicit recovery or warning copy instead of silently treating account-backed progress as safe.
 
-Local committed smoke uses the localhost-only test sign-in fixture so it can run without Supabase, Google OAuth, or live data mutation. Hosted `dev`/`test` smoke may use real Supabase Auth after the relevant deployment approval, but any smoke that starts, replaces, or deletes a hosted signed-in current game writes account-owned Supabase data and needs explicit user approval for that mutation. Deployment approval alone authorizes deploying files; it does not authorize extra live data mutation beyond the verified deployment path.
+Local committed smoke uses the localhost-only test sign-in fixture so it can run without Supabase, Google OAuth, or live data mutation. Hosted `dev`/`test` smoke may use real Supabase Auth after the relevant deployment approval. A deliberately configured non-production test sign-in fixture is also acceptable if a future implementation exposes one for hosted `dev`/`test`; do not expose such a fixture to production without a separate ADR.
+
+Any smoke that starts, replaces, saves, removes, or deletes hosted signed-in account data needs explicit user approval for that mutation. Deployment approval alone authorizes deploying files; it does not authorize extra live data mutation beyond the verified deployment path. When hosted mutation is approved for smoke testing, restore or remove any records created or modified by the test before closeout unless the owner explicitly accepts the changed state.
 
 ## Static Asset Cache Check
 

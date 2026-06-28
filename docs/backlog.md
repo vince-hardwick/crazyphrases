@@ -622,7 +622,9 @@ preserve their original history.
 - **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. The
   first signed-in navigation slice is item-level only and does not include a `Mark all
   read` notification action. Implementation still needs an owning PRD and agent-sized
-  issues before code changes.
+  issues before code changes. GitHub issue #97 tracks the current production-visible
+  placeholder gap: replacing the old exclamation-mark affordance with the accepted Font
+  Awesome bell states.
 - **Remaining risk**: Until implemented, notification affordance semantics and icon
   state may remain inconsistent with the accepted signed-in navigation model. The
   implementation plan still needs unread-state derivation, badge cap rendering,

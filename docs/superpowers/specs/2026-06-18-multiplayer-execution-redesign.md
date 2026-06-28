@@ -1,8 +1,11 @@
 # Multiplayer Execution Redesign
 
-**Status:** Approved design. Implementation has not started. Current durable
-authority lives in ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, and
-`docs/runbooks/supabase-auth-and-postgres.md`.
+**Status:** Approved design provenance. Source-controlled participant-section
+implementation is complete; PR #57 was merged to `main` and promoted through
+production on 2026-06-19 after owner approvals. Current durable authority lives
+in ADR 0015, `docs/product-rules.md`, `docs/backlog.md`,
+`docs/runbooks/supabase-auth-and-postgres.md`, and
+`docs/planning/supabase-state-ledger.md`.
 
 ## Goal
 

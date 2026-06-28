@@ -68,8 +68,11 @@ When adding a new plan or spec:
 2. Add a row to this index.
 3. When the work completes, is abandoned, or is superseded, update both this
    index row and the file header in the same change.
-4. Promote durable rules to the owning product rule, ADR, runbook, or backlog
+4. In historical or completed plan/spec files, put status and current authority
+   before any old worker instructions, checkbox tasks, or implementation
+   prompts.
+5. Promote durable rules to the owning product rule, ADR, runbook, or backlog
    document before closing the task.
-5. Do not leave checkbox state inside a plan/spec as the only signal of current
+6. Do not leave checkbox state inside a plan/spec as the only signal of current
    status. Completed, abandoned, and superseded documents must route readers to
    the current authority or follow-up location.

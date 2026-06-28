@@ -1,6 +1,16 @@
 # Signed-in Favourites Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** Historical/completed. Do not execute this plan as active work.
+> Implemented with the signed-in Favourites feature branch and superseded by
+> `docs/product-rules.md`, tests, and the shipped source files for future
+> changes.
+>
+> **For provenance:** This plan was originally executable with
+> superpowers:subagent-driven-development or superpowers:executing-plans. Future
+> agents should use `docs/product-rules.md`,
+> `docs/superpowers/README.md`, `assets/app.js`, `assets/site.css`,
+> `assets/favourites-view-model.js`, `tests/browser-smoke.test.mjs`, and
+> `tests/favourites-view-model.test.mjs` as current authority.
 
 **Goal:** Build the approved signed-in `#/favourites` destination and supporting favourite-heart behaviour for current revealed output.
 
@@ -9,8 +19,6 @@
 **Tech Stack:** Static HTML, `assets/app.js` ES modules, `assets/site.css`, Node `node:test`, Playwright browser smoke tests, Supabase-backed repository adapters already present in the repo.
 
 ---
-
-**Status:** Historical/completed. Implemented with the signed-in Favourites feature branch and superseded by `docs/product-rules.md`, tests, and the shipped source files for future changes.
 
 **Source Spec:** `docs/superpowers/specs/2026-06-26-signed-in-favourites-design.md`
 

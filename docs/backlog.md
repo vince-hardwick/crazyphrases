@@ -621,17 +621,15 @@ preserve their original history.
   concrete target should mark read and leave the current route unchanged.
 - **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. The
   first signed-in navigation slice is item-level only and does not include a `Mark all
-  read` notification action. Implementation still needs an owning PRD and agent-sized
-  issues before code changes. GitHub issue #97 tracks the current production-visible
-  placeholder gap: replacing the old exclamation-mark affordance with the accepted Font
-  Awesome bell states.
-- **Remaining risk**: Until implemented, notification affordance semantics and icon
-  state may remain inconsistent with the accepted signed-in navigation model. The
-  implementation plan still needs unread-state derivation, badge cap rendering,
-  accessible label/status copy with actual unread count, unread-first/newest-first panel
-  ordering, focus/dropdown behaviour, notification selection sequencing, read-state
-  failure handling, mobile layout, and regression coverage for signed-in-only
-  notification UI.
+  read` notification action. GitHub issue #97 owns the implementation slice that
+  replaces the old exclamation-mark affordance with the accepted Font Awesome bell
+  states, actual-count accessible labelling, and visual unread badge.
+- **Remaining risk**: Until the #97 implementation is merged and deployed, runtime
+  environments may still show the old placeholder. Broader notification-panel hardening
+  still needs its own PRD or agent-sized issues before code changes: unread-first and
+  newest-first ordering, focus/dropdown behaviour, notification selection sequencing,
+  read-state failure handling, mobile layout, and regression coverage beyond the
+  current signed-in smoke tests.
 
 ### Notification bulk read management
 

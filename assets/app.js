@@ -2730,6 +2730,22 @@ function updateNotificationToggle() {
       : `Notifications, ${unreadCount} unread`;
   notificationToggle.setAttribute("aria-label", label);
   notificationToggle.dataset.unreadCount = String(unreadCount);
+
+  const children = [
+    createFontAwesomeIcon(unreadCount > 0 ? "solid" : "regular", "bell"),
+    createScreenReaderText(label),
+  ];
+
+  if (unreadCount > 0) {
+    const badge = document.createElement("span");
+    badge.className = "notification-badge";
+    badge.dataset.notificationBadge = "";
+    badge.setAttribute("aria-hidden", "true");
+    badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+    children.splice(1, 0, badge);
+  }
+
+  notificationToggle.replaceChildren(...children);
 }
 
 function getMultiplayerSectionTitle(entryKind) {

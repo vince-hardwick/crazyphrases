@@ -447,7 +447,7 @@ linking into Multiplayer.
 The notification affordance uses the Font Awesome Classic `bell` icon: Classic Solid
 when the Account has new or unread notifications, and Classic Regular when there are no
 new or unread notifications. The bell replaces the earlier exclamation-mark placeholder
-and still needs accessible status labelling for unread state. When the unread count is
+and keeps accessible status labelling for unread state. When the unread count is
 greater than zero, the bell also shows a numeric unread badge; the visible badge caps at
 `9+`, while the accessible label includes the actual unread count.
 

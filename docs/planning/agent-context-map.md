@@ -49,7 +49,7 @@ For large documents, search for the relevant heading first and then read that se
 | Uploaded Avatar storage | `docs/decisions/0019-uploaded-avatar-storage-authority.md`, `docs/decisions/0021-derived-cropped-images-for-uploaded-avatars.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/backlog.md` section `Uploaded Avatars` |
 | Built-in Avatar icons | `docs/decisions/0020-font-awesome-kit-for-built-in-avatars.md`, `.font-awesome.md`, `docs/runbooks/font-awesome-kit.md`, `docs/product-rules.md` |
 | Pending Game foundation and lifecycle slices | `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, `docs/decisions/0011-account-profile-handle-directory.md`, `docs/decisions/0012-pending-game-invite-response-authority.md`, `docs/decisions/0013-pending-game-start-conversion-authority.md`, `docs/decisions/0016-creator-controlled-multiplayer-cancellation.md`, `docs/decisions/0017-pending-game-invite-expiry.md`, `docs/decisions/0018-dashboard-triggered-nudge-generation.md`, `docs/runbooks/supabase-auth-and-postgres.md` |
-| Notification top-bar affordance | `docs/backlog.md` section `Notification top-bar affordance`, `docs/product-rules.md` section `Notification delivery`; GitHub issue #97 |
+| Notification top-bar affordance | `docs/backlog.md` section `Notification top-bar affordance`, `docs/product-rules.md` section `Notification delivery`; completed GitHub issue #97 for bell-affordance implementation evidence |
 | Supabase project operations | `docs/runbooks/supabase-auth-and-postgres.md` |
 | Supabase hosted migration, deployment, or smoke evidence | `docs/planning/supabase-state-ledger.md` |
 | Supabase schema migrations | `supabase/migrations/`, `docs/runbooks/supabase-auth-and-postgres.md` |

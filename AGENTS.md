@@ -73,7 +73,7 @@ Do not create ADRs for every product preference. Product behaviour normally belo
 ## Environment and Mutation Policy
 
 - Development review happens in `dev`; formal testing happens in `test`; production promotion happens only after automated tests pass and human acceptance is completed in `test`.
-- Feature-branch pushes may request gated deployment to the shared `dev` environment. Merged `main` commits promote through `test` before any gated `production` deployment. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md` and `docs/runbooks/cloudflare-dns-and-access.md`.
+- Feature-branch pushes may request gated deployment to the shared `dev` environment. For hosted runtime changes, the final branch head must receive a fresh approved `dev` deployment and visible in-app browser smoke before merge; an older or stale waiting `dev` run does not satisfy this gate. Merged `main` commits promote through `test` before any gated `production` deployment. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md` and `docs/runbooks/cloudflare-dns-and-access.md`.
 - `main` is protected by the active GitHub repository ruleset `Protect main`: work must reach `main` through a pull request with `CI / Verify static site` passing, resolved review threads, and no direct push, force-push, deletion, or routine bypass path. See `docs/decisions/0009-branch-based-dev-and-main-promotion.md`.
 - If a Codex action triggers a deployment workflow that waits for GitHub Environment approval, Codex must pause and wait for the user to confirm that approval has been granted before continuing deployment-dependent work.
 - Detecting a hostname, branch, GitHub Environment, deployment target, or runtime context does not authorize mutation.
@@ -90,6 +90,7 @@ Use risk-tiered validation:
 - Static frontend changes: run the relevant local tests and a browser smoke test when available.
 - For local or deployed browser smoke tests, route through `docs/runbooks/in-app-browser-verification.md` before using standalone Playwright or other browser automation. In this repository, browser smoke tests are user-observable by default: reveal the Codex in-app browser side pane with the Browser plugin visibility capability before navigating or interacting, unless the user explicitly asks for a hidden pre-push confidence check.
 - For local static frontend checks, follow the runbook's Local Static Site Fast Path before trying shell-launched servers, random ports, Edge-backed Playwright, or standalone Playwright. If a local server is needed, prefer the runbook's in-process JavaScript static server in the same persistent Browser-control runtime so the server remains alive while the visible `iab` tab is driven.
+- For hosted runtime changes, perform functional in-app browser testing against `test` after the merged `main` commit deploys to `test`. Static asset commit-hash stamping is required evidence but is not sufficient by itself. A waiting `production` gate must not block `test` validation.
 - Deployment workflow changes: validate workflow syntax or dry-run paths where practical, then use `dev` before `test`.
 - Production-impacting changes: require explicit approval or the documented GitHub Environment gate, plus post-deployment verification.
 

@@ -167,12 +167,13 @@ Feature slices move through environments in order:
 3. `deploy-dev.yml` creates a deployment request for the shared `dev` environment when the branch changes hosted static runtime paths.
 4. Approve the `dev` GitHub Environment deployment when that branch is ready for engineering inspection.
 5. Inspect `https://dev.crazyphrases.com/` after Cloudflare Access authentication. For user-observed Codex smoke tests, use the visible in-app browser path in `docs/runbooks/in-app-browser-verification.md`.
-6. Open or update the pull request into `main`.
-7. Merge the pull request only after `CI / Verify static site` passes, review threads are resolved, and any required dev inspection is complete. The active `Protect main` repository ruleset blocks direct `main` pushes, force-pushes, deletion, and PR merges that do not satisfy that required check.
-8. `promote.yml` deploys the merged `main` commit to `test` when the merge includes hosted runtime changes.
-9. Complete formal/human testing at `https://test.crazyphrases.com/`.
-10. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
-11. After the required closeout for the merged PR is complete, delete the merged feature branch from GitHub and prune stale local tracking refs. For runtime changes, closeout includes production deployment and post-promotion verification. For source-only or docs-only changes that do not request promotion, closeout is the successful `main` CI run plus any required issue/documentation updates.
+6. Before merge, confirm that the inspected `dev` deployment is the final feature-branch head. If a waiting or completed `dev` deployment targets an older commit, cancel or ignore the stale run, request a fresh `dev` deployment for the final branch head, and repeat the visible in-app browser smoke. Do not merge a hosted runtime change using only local smoke, CI, or an earlier `dev` run.
+7. Open or update the pull request into `main`.
+8. Merge the pull request only after `CI / Verify static site` passes, review threads are resolved, and the required fresh `dev` inspection is complete. The active `Protect main` repository ruleset blocks direct `main` pushes, force-pushes, deletion, and PR merges that do not satisfy that required check.
+9. `promote.yml` deploys the merged `main` commit to `test` when the merge includes hosted runtime changes.
+10. Complete formal/human functional testing at `https://test.crazyphrases.com/` after the `test` deployment succeeds. Use the visible in-app browser path and exercise the promoted behaviour; commit-hash asset stamping alone is not enough. If the same promote run is already waiting at the `production` gate, leave that gate waiting and continue with `test` validation.
+11. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
+12. After the required closeout for the merged PR is complete, delete the merged feature branch from GitHub and prune stale local tracking refs. For runtime changes, closeout includes production deployment and post-promotion verification. For source-only or docs-only changes that do not request promotion, closeout is the successful `main` CI run plus any required issue/documentation updates.
 
 The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
@@ -285,6 +286,12 @@ Required reviewer intent:
 - `dev` approval means the branch commit may overwrite the shared engineering inspection environment.
 - `test` approval means the merged `main` commit may overwrite the formal testing environment.
 - `production` approval means human testing has passed in `test` and the same `main` commit may mutate the live site.
+
+For hosted runtime changes, approval of a stale `dev` run is not reusable for a
+newer branch head. The final branch commit needs its own approved `dev`
+deployment and visible in-app browser smoke before merge. After merge, `test`
+approval and deployment authorize formal testing only; they do not imply
+production acceptance.
 
 Codex/operator pause rule:
 

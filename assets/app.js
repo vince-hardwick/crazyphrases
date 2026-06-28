@@ -59,6 +59,11 @@ import {
   createSupabasePrivateFavouritesRepository,
 } from "./private-favourites.js?v=__ASSET_VERSION__";
 import {
+  createFavouriteRowModel,
+  getBatchFavouriteCopyText,
+  getPhraseFavouriteCopyText,
+} from "./favourites-view-model.js?v=__ASSET_VERSION__";
+import {
   createLocalTestPendingGameRepository,
   createSupabasePendingGameRepository,
 } from "./pending-game.js?v=__ASSET_VERSION__";
@@ -101,6 +106,8 @@ const helpPanel = document.querySelector("#help-panel");
 const notificationShell = document.querySelector("[data-notification-shell]");
 const notificationToggle = document.querySelector("[data-notification-toggle]");
 const notificationPanel = document.querySelector("[data-notification-panel]");
+const primaryNav = document.querySelector("[data-primary-nav]");
+const routeGate = document.querySelector("[data-route-gate]");
 const gamePanel = document.querySelector("[data-game-panel]");
 const progress = document.querySelector("[data-progress]");
 const sectionProgress = document.querySelector("[data-section-progress]");
@@ -135,10 +142,20 @@ const startNewCurrentGameButton = document.querySelector(
 
 const loadFailureMessage =
   "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.";
+const ROUTES = {
+  playSolo: "#/play/solo",
+  playMultiplayer: "#/play/multiplayer",
+  favourites: "#/favourites",
+};
+const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
   createAnonymousSoloGame({ rowCount: 20 });
+let currentRoute = normaliseRoute(window.location.hash);
+let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
+  ? currentRoute
+  : null;
 let wordBank = null;
 let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
@@ -197,7 +214,33 @@ let accountProfileRepository = localTestAccountProfileRepository;
 let avatarStorageRepository = localTestAvatarStorageRepository;
 let phraseFavourites = [];
 let batchFavourites = [];
-let saveBatchButton = null;
+let favouritesListState = {
+  phrases: "idle",
+  batches: "idle",
+};
+let phraseFavouritesLoadRequestId = 0;
+let batchFavouritesLoadRequestId = 0;
+let activeFavouritesTab = "phrases";
+let expandedBatchFavouriteId = null;
+let activeFavouritesStatus = "";
+let activeFavouritesStatusTimer = null;
+let rowActionStatus = {
+  phrases: null,
+  batches: null,
+};
+let rowActionStatusTimer = null;
+let favouriteCopyRequestIds = {
+  phrases: 0,
+  batches: 0,
+};
+let favouriteRouteCopyLock = null;
+let favouriteRouteCopyLockId = 0;
+let openRemoveConfirmation = null;
+let favouriteRemoveRequestId = 0;
+let activeFavouriteRemoveRequest = null;
+let batchFavouriteToggleButton = null;
+let favouriteToggleRequestId = 0;
+let pendingFavouriteToggleRequests = [];
 let pendingGamePanel = null;
 let pendingGameHandleInput = null;
 let pendingGameRowCountSelect = null;
@@ -218,8 +261,6 @@ let accountProfileDraftAvatar = null;
 let accountProfileCropGuideTimer = null;
 let accountProfilePreviewRequestId = 0;
 let favouritesPanel = null;
-let favouritesStatus = null;
-let phraseFavouritesList = null;
 
 loadFontAwesomeKit();
 loadWordBank();
@@ -413,15 +454,19 @@ entryForm.addEventListener("submit", (event) => {
 });
 
 revealPanel.addEventListener("click", (event) => {
-  if (event.target.closest("[data-save-batch-button]")) {
-    void saveBatchFavourite();
+  if (event.target.closest("[data-toggle-batch-favourite]")) {
+    void toggleBatchFavourite();
     return;
   }
 
-  const phraseSaveButton = event.target.closest("[data-save-phrase-index]");
+  const phraseFavouriteButton = event.target.closest(
+    "[data-toggle-phrase-favourite-index]",
+  );
 
-  if (phraseSaveButton) {
-    void savePhraseFavourite(Number(phraseSaveButton.dataset.savePhraseIndex));
+  if (phraseFavouriteButton) {
+    void togglePhraseFavourite(
+      Number(phraseFavouriteButton.dataset.togglePhraseFavouriteIndex),
+    );
     return;
   }
 
@@ -442,9 +487,109 @@ revealPanel.addEventListener("click", (event) => {
   }
 });
 
-renderGame();
-renderPendingGamePanel();
-renderFavourites();
+window.addEventListener("hashchange", () => {
+  currentRoute = normaliseRoute(window.location.hash);
+  if (accountShell.persistenceAuthority.type !== "account") {
+    requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
+      ? currentRoute
+      : null;
+  }
+  renderRoute();
+});
+
+renderRoute();
+
+function normaliseRoute(hash) {
+  if (
+    hash === ROUTES.playSolo ||
+    hash === ROUTES.playMultiplayer ||
+    hash === ROUTES.favourites
+  ) {
+    return hash;
+  }
+
+  return ROUTES.playSolo;
+}
+
+function ensureHashRoute(route) {
+  if (window.location.hash === route) {
+    return;
+  }
+
+  window.location.hash = route;
+}
+
+function renderRoute() {
+  const isSignedIn = accountShell.persistenceAuthority.type === "account";
+  const routeNeedsAccount = signedInOnlyRoutes.has(currentRoute);
+
+  primaryNav.hidden = accountShell.mode !== "signed-in";
+  updatePrimaryNavState();
+
+  if (routeNeedsAccount && !isSignedIn) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    removeFavouritesPanel();
+    renderSignInRequiredGate(currentRoute);
+    return;
+  }
+
+  routeGate.hidden = true;
+  routeGate.replaceChildren();
+
+  if (currentRoute === ROUTES.favourites) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    renderFavourites();
+    return;
+  }
+
+  if (currentRoute === ROUTES.playMultiplayer) {
+    gamePanel.hidden = true;
+    removeFavouritesPanel();
+    renderPendingGamePanel();
+    return;
+  }
+
+  gamePanel.hidden = false;
+  removeFavouritesPanel();
+  renderGame();
+  if (accountShell.persistenceAuthority.type === "account") {
+    renderPendingGamePanel();
+  } else {
+    removePendingGamePanel();
+  }
+}
+
+function renderSignInRequiredGate(route) {
+  const heading = document.createElement("h2");
+  heading.textContent =
+    route === ROUTES.favourites
+      ? "Sign in to view Favourites"
+      : "Sign in to play Multiplayer";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    "Use an Account-backed session to open this private destination.";
+
+  routeGate.replaceChildren(heading, copy);
+  routeGate.hidden = false;
+}
+
+function updatePrimaryNavState() {
+  primaryNav.querySelectorAll("[data-route-link]").forEach((link) => {
+    const linkRoute = link.getAttribute("href");
+    if (
+      linkRoute === currentRoute ||
+      (link.dataset.routeLink === "play" && currentRoute.startsWith("#/play/"))
+    ) {
+      link.setAttribute("aria-current", "page");
+      return;
+    }
+
+    link.removeAttribute("aria-current");
+  });
+}
 
 function renderGame() {
   hideStartAgainConfirmation();
@@ -463,13 +608,27 @@ function renderGame() {
     entryForm.hidden = true;
     revealPanel.hidden = false;
     if (accountShell.persistenceAuthority.type === "account") {
-      const currentSaveBatchButton = ensureSaveBatchButton();
-      currentSaveBatchButton.disabled = isBatchFavouriteSaved();
-      currentSaveBatchButton.textContent = currentSaveBatchButton.disabled
-        ? "Saved"
-        : "Save batch";
+      const currentBatchFavouriteButton = ensureBatchFavouriteToggleButton();
+      const savedBatch = findBatchFavouriteRecordForCurrentReveal();
+      currentBatchFavouriteButton.disabled = isFavouriteTogglePending({
+        type: "batch",
+      });
+      currentBatchFavouriteButton.className =
+        "secondary-button icon-action-button";
+      currentBatchFavouriteButton.dataset.toggleBatchFavourite = "";
+      currentBatchFavouriteButton.ariaLabel = savedBatch
+        ? "Remove batch from favourites"
+        : "Save batch as favourite";
+      currentBatchFavouriteButton.setAttribute(
+        "aria-pressed",
+        String(Boolean(savedBatch)),
+      );
+      currentBatchFavouriteButton.replaceChildren(
+        createFontAwesomeIcon(savedBatch ? "solid" : "regular", "heart"),
+        createScreenReaderText(currentBatchFavouriteButton.ariaLabel),
+      );
     } else {
-      removeSaveBatchButton();
+      removeBatchFavouriteToggleButton();
     }
     progress.textContent = "";
     copyStatus.textContent = "";
@@ -1235,16 +1394,46 @@ function getLocalTestPersistenceFailureMode() {
 }
 
 function getLocalTestPrivateFavouritesFailureMode() {
+  const failureMode = getLocalTestPrivateFavouritesMode();
+
+  if (
+    [
+      "remove-fails",
+      "remove-fails-after-delay",
+      "load-fails",
+      "load-fails-once",
+      "load-race",
+    ].includes(failureMode)
+  ) {
+    return failureMode === "remove-fails-after-delay"
+      ? "remove-fails"
+      : failureMode;
+  }
+
+  return null;
+}
+
+function getLocalTestPrivateFavouritesMode() {
   if (!isLocalTestAuthAvailable()) {
     return null;
   }
 
-  const failureMode = new URLSearchParams(window.location.search).get(
+  const testMode = new URLSearchParams(window.location.search).get(
     "testPrivateFavourites",
   );
 
-  if (failureMode === "remove-fails") {
-    return failureMode;
+  if (
+    [
+      "mutation-delays",
+      "remove-fails",
+      "remove-fails-after-delay",
+      "save-fails",
+      "load-fails",
+      "load-fails-once",
+      "load-race",
+    ].includes(testMode)
+  ) {
+    return testMode;
   }
 
   return null;
@@ -1382,17 +1571,25 @@ function renderPhraseItem(phrase, phraseIndex) {
   actions.append(copyButton);
 
   if (accountShell.persistenceAuthority.type === "account") {
-    const isSaved = isPhraseFavouriteSaved(phraseIndex);
-    const saveButton = document.createElement("button");
-    saveButton.type = "button";
-    saveButton.className = "secondary-button phrase-copy-button";
-    saveButton.dataset.savePhraseIndex = String(phraseIndex);
-    saveButton.textContent = isSaved ? "Saved" : "Save";
-    saveButton.disabled = isSaved;
-    saveButton.ariaLabel = isSaved
-      ? `Phrase ${phraseIndex + 1} saved`
-      : `Save phrase ${phraseIndex + 1}`;
-    actions.append(saveButton);
+    const savedRecord = findPhraseFavouriteRecordForCurrentReveal(phraseIndex);
+    const favouriteButton = document.createElement("button");
+    favouriteButton.type = "button";
+    favouriteButton.className =
+      "secondary-button phrase-copy-button icon-action-button";
+    favouriteButton.dataset.togglePhraseFavouriteIndex = String(phraseIndex);
+    favouriteButton.disabled = isFavouriteTogglePending({
+      rowIndex: phraseIndex,
+      type: "phrase",
+    });
+    favouriteButton.ariaLabel = savedRecord
+      ? `Remove phrase ${phraseIndex + 1} from favourites`
+      : `Save phrase ${phraseIndex + 1} as favourite`;
+    favouriteButton.setAttribute("aria-pressed", String(Boolean(savedRecord)));
+    favouriteButton.append(
+      createFontAwesomeIcon(savedRecord ? "solid" : "regular", "heart"),
+      createScreenReaderText(favouriteButton.ariaLabel),
+    );
+    actions.append(favouriteButton);
   }
 
   item.append(phraseText, actions);
@@ -1402,21 +1599,172 @@ function renderPhraseItem(phrase, phraseIndex) {
 function renderFavourites() {
   const isSignedIn = accountShell.persistenceAuthority.type === "account";
 
-  if (!isSignedIn) {
+  if (!isSignedIn || currentRoute !== ROUTES.favourites) {
     removeFavouritesPanel();
     return;
   }
 
-  ensureFavouritesPanel();
+  const panel = ensureFavouritesPanel();
+  const heading = renderFavouritesHeading();
+  const tabs = renderFavouritesTabs();
+  const status = renderActiveFavouritesStatus();
+  refreshStaleFavouritesTab(activeFavouritesTab);
+  const body =
+    activeFavouritesTab === "phrases"
+      ? renderFavouritesTabPanel("phrases")
+      : renderFavouritesTabPanel("batches");
 
-  const favouriteItems = [
-    ...batchFavourites.map(renderBatchFavourite),
-    ...phraseFavourites.map(renderPhraseFavourite),
-  ];
+  panel.replaceChildren(heading, tabs, ...status, body);
+}
 
-  favouritesStatus.textContent =
-    favouriteItems.length === 0 ? "No favourites yet." : "";
-  phraseFavouritesList.replaceChildren(...favouriteItems);
+function renderFavouritesHeading() {
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const kicker = document.createElement("p");
+  kicker.className = "section-kicker";
+  kicker.textContent = "Favourites";
+
+  const title = document.createElement("h2");
+  title.textContent = "Favourites";
+
+  heading.append(kicker, title);
+  return heading;
+}
+
+function renderFavouritesTabs() {
+  const tabs = document.createElement("div");
+  tabs.className = "favourites-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "Favourite type");
+
+  tabs.append(
+    renderFavouritesTabButton("phrases", "Phrases"),
+    renderFavouritesTabButton("batches", "Batches"),
+  );
+  return tabs;
+}
+
+function renderFavouritesTabButton(tab, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "favourites-tab";
+  button.dataset.favouritesTab = tab;
+  button.setAttribute("role", "tab");
+  button.setAttribute("aria-selected", String(activeFavouritesTab === tab));
+  button.textContent = label;
+  return button;
+}
+
+function renderActiveFavouritesStatus() {
+  if (activeFavouritesStatus === "") {
+    return [];
+  }
+
+  const status = document.createElement("p");
+  status.className = "favourites-status";
+  status.dataset.favouritesStatus = "";
+  status.setAttribute("aria-live", "polite");
+  status.textContent = activeFavouritesStatus;
+  return [status];
+}
+
+function renderFavouritesTabPanel(tab) {
+  const panel = document.createElement("div");
+  panel.className = "favourites-tab-panel";
+  panel.dataset.favouritesTabPanel = tab;
+  panel.setAttribute("role", "tabpanel");
+
+  const state = favouritesListState[tab];
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+
+  if (state === "loading") {
+    panel.append(
+      createFavouritesStateCopy(
+        tab === "phrases"
+          ? "Loading phrase favourites..."
+          : "Loading batch favourites...",
+      ),
+    );
+    return panel;
+  }
+
+  if (state === "error") {
+    panel.append(renderFavouritesError(tab));
+    return panel;
+  }
+
+  if (records.length === 0) {
+    panel.append(renderFavouritesEmptyState(tab));
+    return panel;
+  }
+
+  const list = document.createElement("ol");
+  list.className = "favourites-list";
+  list.dataset.phraseFavouritesList = "";
+  list.replaceChildren(
+    ...(tab === "phrases"
+      ? phraseFavourites.map(renderPhraseFavourite)
+      : batchFavourites.map(renderBatchFavourite)),
+  );
+  panel.append(list);
+  return panel;
+}
+
+function createFavouritesStateCopy(text) {
+  const copy = document.createElement("p");
+  copy.className = "favourites-state-copy";
+  copy.textContent = text;
+  return copy;
+}
+
+function renderFavouritesEmptyState(tab) {
+  const empty = document.createElement("div");
+  empty.className = "favourites-empty-state";
+
+  const heading = document.createElement("h3");
+  heading.tabIndex = -1;
+  heading.dataset.favouritesEmptyHeading = tab;
+  heading.textContent =
+    tab === "phrases" ? "No phrase favourites yet." : "No batch favourites yet.";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    tab === "phrases"
+      ? "Favourite revealed phrases from Play Solo."
+      : "Favourite a revealed batch from Play Solo.";
+
+  const action = document.createElement("a");
+  action.className = "secondary-button favourites-empty-action";
+  action.href = ROUTES.playSolo;
+  action.textContent = "Play Solo";
+
+  empty.append(heading, copy, action);
+  return empty;
+}
+
+function renderFavouritesError(tab) {
+  const error = document.createElement("div");
+  error.className = "favourites-error-state";
+
+  const copy = document.createElement("p");
+  copy.textContent =
+    tab === "phrases"
+      ? "Could not load phrase favourites."
+      : "Could not load batch favourites.";
+
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.className = "secondary-button";
+  retry.dataset.retryFavouritesTab = tab;
+  retry.ariaLabel =
+    tab === "phrases"
+      ? "Try loading phrase favourites again"
+      : "Try loading batch favourites again";
+  retry.textContent = "Try again";
+
+  error.append(copy, retry);
+  return error;
 }
 
 function renderPendingGamePanel() {
@@ -1434,26 +1782,39 @@ function renderPendingGamePanel() {
   renderNotificationDropdown();
 }
 
-function ensureSaveBatchButton() {
-  if (saveBatchButton) {
-    return saveBatchButton;
+function ensureBatchFavouriteToggleButton() {
+  if (batchFavouriteToggleButton) {
+    return batchFavouriteToggleButton;
   }
 
-  saveBatchButton = document.createElement("button");
-  saveBatchButton.type = "button";
-  saveBatchButton.className = "secondary-button";
-  saveBatchButton.dataset.saveBatchButton = "";
-  copyStatus.before(saveBatchButton);
-  return saveBatchButton;
+  batchFavouriteToggleButton = document.createElement("button");
+  batchFavouriteToggleButton.type = "button";
+  batchFavouriteToggleButton.className = "secondary-button";
+  copyStatus.before(batchFavouriteToggleButton);
+  return batchFavouriteToggleButton;
 }
 
-function removeSaveBatchButton() {
-  saveBatchButton?.remove();
-  saveBatchButton = null;
+function removeBatchFavouriteToggleButton() {
+  batchFavouriteToggleButton?.remove();
+  batchFavouriteToggleButton = null;
+}
+
+function createFontAwesomeIcon(style, name) {
+  const icon = document.createElement("i");
+  icon.className = `fa-${style} fa-${name}`;
+  icon.setAttribute("aria-hidden", "true");
+  return icon;
+}
+
+function createScreenReaderText(text) {
+  const element = document.createElement("span");
+  element.className = "sr-only";
+  element.textContent = text;
+  return element;
 }
 
 function clearRevealSurface() {
-  removeSaveBatchButton();
+  removeBatchFavouriteToggleButton();
   phraseList.replaceChildren();
   revealDetails.replaceChildren();
   copyStatus.textContent = "";
@@ -1579,7 +1940,12 @@ function removePendingGamePanel() {
   pendingGameIncomingList = null;
   multiplayerDashboardMount = null;
   completedMultiplayerHistoryPanel = null;
+}
+
+function resetPendingGameState() {
   currentPendingGame = null;
+  createdPendingGames = [];
+  incomingPendingGameInvites = [];
   multiplayerDashboard = createEmptyMultiplayerDashboard();
   completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
   inAppNotifications = [];
@@ -2471,11 +2837,7 @@ function getNotificationMessage(notification) {
 
 async function loadPendingGameLists() {
   if (accountShell.persistenceAuthority.type !== "account") {
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
-    inAppNotifications = [];
+    resetPendingGameState();
     return;
   }
 
@@ -2490,11 +2852,7 @@ async function loadPendingGameLists() {
     ]);
     await loadMultiplayerDashboard();
   } catch {
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
-    inAppNotifications = [];
+    resetPendingGameState();
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
 }
@@ -2560,119 +2918,721 @@ function ensureFavouritesPanel() {
   }
 
   favouritesPanel = document.createElement("section");
-  favouritesPanel.className = "favourites-panel";
+  favouritesPanel.className = "favourites-panel favourites-route";
   favouritesPanel.dataset.favouritesPanel = "";
+  favouritesPanel.dataset.favouritesRoute = "";
   favouritesPanel.addEventListener("click", handleFavouritesPanelClick);
+  favouritesPanel.addEventListener("keydown", handleFavouritesPanelKeydown);
 
-  const heading = document.createElement("div");
-  heading.className = "section-heading";
-
-  const kicker = document.createElement("p");
-  kicker.className = "section-kicker";
-  kicker.textContent = "Favourites";
-
-  const title = document.createElement("h2");
-  title.textContent = "Saved favourites";
-
-  favouritesStatus = document.createElement("p");
-  favouritesStatus.className = "favourites-status";
-  favouritesStatus.dataset.favouritesStatus = "";
-  favouritesStatus.setAttribute("aria-live", "polite");
-
-  phraseFavouritesList = document.createElement("ol");
-  phraseFavouritesList.className = "favourites-list";
-  phraseFavouritesList.dataset.phraseFavouritesList = "";
-
-  heading.append(kicker, title);
-  favouritesPanel.append(heading, favouritesStatus, phraseFavouritesList);
-  (pendingGamePanel ?? gamePanel).after(favouritesPanel);
+  routeGate.after(favouritesPanel);
   return favouritesPanel;
 }
 
 function removeFavouritesPanel() {
   favouritesPanel?.remove();
   favouritesPanel = null;
-  favouritesStatus = null;
-  phraseFavouritesList = null;
+  activeFavouritesTab = "phrases";
+  expandedBatchFavouriteId = null;
+  clearFavouritesTransientState();
 }
 
 function handleFavouritesPanelClick(event) {
-  const phraseRemoveButton = event.target.closest(
-    "[data-remove-phrase-favourite-id]",
-  );
-
-  if (phraseRemoveButton) {
-    void removePhraseFavourite(phraseRemoveButton.dataset.removePhraseFavouriteId);
+  const tabButton = event.target.closest("[data-favourites-tab]");
+  if (tabButton) {
+    switchFavouritesTab(tabButton.dataset.favouritesTab);
     return;
   }
 
-  const batchRemoveButton = event.target.closest(
-    "[data-remove-batch-favourite-id]",
+  const retryButton = event.target.closest("[data-retry-favourites-tab]");
+  if (retryButton) {
+    retryFavouritesTab(retryButton.dataset.retryFavouritesTab);
+    return;
+  }
+
+  const batchDisclosure = event.target.closest(
+    "[data-toggle-batch-favourite-phrases]",
+  );
+  if (batchDisclosure) {
+    toggleExpandedBatchFavourite(
+      batchDisclosure.dataset.toggleBatchFavouritePhrases,
+    );
+    return;
+  }
+
+  const phraseCopyButton = event.target.closest(
+    "[data-copy-phrase-favourite-id]",
   );
 
-  if (batchRemoveButton) {
-    void removeBatchFavourite(batchRemoveButton.dataset.removeBatchFavouriteId);
+  if (phraseCopyButton) {
+    void copyPhraseFavourite(
+      phraseCopyButton.dataset.copyPhraseFavouriteId,
+      phraseCopyButton,
+    );
+    return;
+  }
+
+  const batchCopyButton = event.target.closest("[data-copy-batch-favourite-id]");
+
+  if (batchCopyButton) {
+    void copyBatchFavourite(
+      batchCopyButton.dataset.copyBatchFavouriteId,
+      batchCopyButton,
+    );
+    return;
+  }
+
+  const phraseRemoveConfirm = event.target.closest(
+    "[data-confirm-remove-phrase-favourite-id]",
+  );
+
+  if (phraseRemoveConfirm) {
+    openFavouriteRemoveConfirmation(
+      "phrases",
+      phraseRemoveConfirm.dataset.confirmRemovePhraseFavouriteId,
+    );
+    return;
+  }
+
+  const batchRemoveConfirm = event.target.closest(
+    "[data-confirm-remove-batch-favourite-id]",
+  );
+
+  if (batchRemoveConfirm) {
+    openFavouriteRemoveConfirmation(
+      "batches",
+      batchRemoveConfirm.dataset.confirmRemoveBatchFavouriteId,
+    );
+    return;
+  }
+
+  const cancelRemove = event.target.closest("[data-cancel-favourite-remove]");
+  if (cancelRemove) {
+    cancelFavouriteRemoveConfirmation({ restoreFocus: true });
+    return;
+  }
+
+  const remove = event.target.closest("[data-remove-confirmed-favourite-id]");
+  if (remove) {
+    void removeFavouriteFromRoute({
+      tab: remove.dataset.removeConfirmedFavouriteTab,
+      favouriteId: remove.dataset.removeConfirmedFavouriteId,
+    });
+  }
+}
+
+function handleFavouritesPanelKeydown(event) {
+  if (event.key !== "Escape" || !openRemoveConfirmation) {
+    return;
+  }
+
+  event.preventDefault();
+  if (openRemoveConfirmation.pending) {
+    return;
+  }
+
+  cancelFavouriteRemoveConfirmation({ restoreFocus: true });
+}
+
+function switchFavouritesTab(tab) {
+  if (!["phrases", "batches"].includes(tab)) {
+    return;
+  }
+
+  activeFavouritesTab = tab;
+  clearFavouritesTransientState();
+  renderFavourites();
+}
+
+function toggleExpandedBatchFavourite(favouriteId) {
+  expandedBatchFavouriteId =
+    expandedBatchFavouriteId === favouriteId ? null : favouriteId;
+  renderFavourites();
+  favouritesPanel
+    ?.querySelector(
+      `[data-toggle-batch-favourite-phrases="${CSS.escape(favouriteId)}"]`,
+    )
+    ?.focus();
+}
+
+function retryFavouritesTab(tab) {
+  clearFavouritesTransientState();
+  if (tab === "phrases") {
+    void loadPhraseFavourites();
+    return;
+  }
+
+  if (tab === "batches") {
+    expandedBatchFavouriteId = null;
+    void loadBatchFavourites();
+  }
+}
+
+function clearFavouritesTransientState() {
+  if (activeFavouritesStatusTimer !== null) {
+    window.clearTimeout(activeFavouritesStatusTimer);
+    activeFavouritesStatusTimer = null;
+  }
+
+  activeFavouritesStatus = "";
+  clearRowActionStatusTimer();
+  rowActionStatus = {
+    phrases: null,
+    batches: null,
+  };
+  invalidateFavouriteCopyRequests();
+  invalidateFavouriteRemoveRequest();
+  removeVisibleRowActionStatuses();
+
+  openRemoveConfirmation = null;
+}
+
+function refreshStaleFavouritesTab(tab) {
+  if (favouritesListState[tab] !== "stale") {
+    return;
+  }
+
+  favouritesListState[tab] = "loading";
+  window.setTimeout(() => {
+    if (
+      accountShell.persistenceAuthority.type !== "account" ||
+      currentRoute !== ROUTES.favourites
+    ) {
+      favouritesListState[tab] = "stale";
+      return;
+    }
+
+    if (tab === "phrases") {
+      void loadPhraseFavourites();
+      return;
+    }
+
+    if (tab === "batches") {
+      void loadBatchFavourites();
+    }
+  }, 0);
+}
+
+function openFavouriteRemoveConfirmation(tab, favouriteId) {
+  if (openRemoveConfirmation?.pending) {
+    return;
+  }
+
+  clearFavouritesTransientState();
+  openRemoveConfirmation = {
+    tab,
+    favouriteId,
+    status: "",
+    pending: false,
+  };
+  renderFavourites();
+  findFavouriteRemoveCancelButton(favouriteId)?.focus();
+}
+
+function cancelFavouriteRemoveConfirmation({ restoreFocus }) {
+  const confirmation = openRemoveConfirmation;
+  if (confirmation?.pending) {
+    return;
+  }
+
+  openRemoveConfirmation = null;
+  renderFavourites();
+
+  if (restoreFocus && confirmation) {
+    findFavouriteRemoveOpenButton(
+      confirmation.tab,
+      confirmation.favouriteId,
+    )?.focus();
   }
 }
 
 function renderPhraseFavourite(record) {
+  const model = createFavouriteRowModel({
+    kind: "phrase",
+    record,
+    currentHandle: accountShell.profile?.handle,
+  });
   const item = document.createElement("li");
+  item.className = "favourite-row";
+  item.dataset.favouriteRow = record.id;
+  item.dataset.favouriteKind = "phrase";
+  item.tabIndex = -1;
+  item.ariaLabel = model.accessibleLabel;
 
-  const phraseText = document.createElement("span");
-  phraseText.dataset.favouritePhraseText = "";
-  phraseText.textContent = record.favourite.phraseText;
+  const icon = createFontAwesomeIcon("solid", "quote-right");
+  icon.classList.add("favourite-row-type-icon");
 
-  const actions = document.createElement("div");
-  actions.className = "favourite-actions";
+  const content = document.createElement("div");
+  content.className = "favourite-row-content";
 
-  const removeButton = document.createElement("button");
-  removeButton.type = "button";
-  removeButton.className = "secondary-button favourite-remove-button";
-  removeButton.dataset.removePhraseFavouriteId = record.id;
-  removeButton.textContent = "Remove";
-  removeButton.ariaLabel = `Remove phrase favourite: ${record.favourite.phraseText}`;
+  const title = document.createElement("p");
+  title.className = "favourite-row-title";
+  title.dataset.favouritePhraseText = "";
+  title.textContent = model.primaryText;
+  title.title = model.primaryText;
 
-  actions.append(removeButton);
-  item.append(phraseText, actions);
+  const actions = isFavouriteRemoveConfirmationOpen("phrases", record.id)
+    ? renderFavouriteRemoveConfirmation("phrases", record.id)
+    : renderPhraseFavouriteActions(record.id);
+
+  content.append(title, renderFavouriteMeta(model));
+  item.append(icon, content, actions);
+  if (!isFavouriteRemoveConfirmationOpen("phrases", record.id)) {
+    appendRowActionStatus(item, "phrases", record.id);
+  }
   return item;
 }
 
 function renderBatchFavourite(record) {
+  const model = createFavouriteRowModel({
+    kind: "batch",
+    record,
+    currentHandle: accountShell.profile?.handle,
+  });
   const item = document.createElement("li");
-  const content = document.createElement("div");
+  item.className = "favourite-row";
+  item.dataset.favouriteRow = record.id;
+  item.dataset.favouriteKind = "batch";
+  item.tabIndex = -1;
+  item.ariaLabel = model.accessibleLabel;
 
-  const title = document.createElement("h3");
-  title.className = "batch-favourite-title";
-  title.textContent = "Batch Favourite";
+  const icon = createFontAwesomeIcon("solid", "file-lines");
+  icon.classList.add("favourite-row-type-icon");
+
+  const content = document.createElement("div");
+  content.className = "favourite-row-content";
+
+  const title = document.createElement("p");
+  title.className = "favourite-row-title";
+  title.textContent = model.primaryText;
 
   const detail = document.createElement("p");
-  detail.className = "batch-favourite-detail";
-  detail.textContent = `${record.favourite.rowCount} phrases`;
+  detail.className = "favourite-row-detail";
+  detail.textContent = model.detailText;
 
-  const list = document.createElement("ol");
-  list.className = "batch-favourite-phrases";
-  list.replaceChildren(
-    ...record.favourite.phrases.map((phrase) => {
-      const phraseItem = document.createElement("li");
-      phraseItem.textContent = phrase;
-      return phraseItem;
-    }),
-  );
+  const actions = isFavouriteRemoveConfirmationOpen("batches", record.id)
+    ? renderFavouriteRemoveConfirmation("batches", record.id)
+    : renderBatchFavouriteActions(record.id);
 
+  content.append(title, detail, renderFavouriteMeta(model));
+  item.append(icon, content, actions);
+  if (expandedBatchFavouriteId === record.id) {
+    item.append(renderExpandedBatchFavourite(record));
+  }
+  if (!isFavouriteRemoveConfirmationOpen("batches", record.id)) {
+    appendRowActionStatus(item, "batches", record.id);
+  }
+  return item;
+}
+
+function renderPhraseFavouriteActions(recordId) {
   const actions = document.createElement("div");
   actions.className = "favourite-actions";
 
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy phrase",
+    iconName: "copy",
+    datasetName: "copyPhraseFavouriteId",
+    datasetValue: recordId,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove phrase favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "confirmRemovePhraseFavouriteId",
+    datasetValue: recordId,
+  });
+
+  actions.append(copyButton, removeButton);
+  return actions;
+}
+
+function renderBatchFavouriteActions(recordId) {
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions";
+
+  const disclosureButton = createBatchFavouriteDisclosureButton(recordId);
+  const copyButton = createFavouriteIconActionButton({
+    label: "Copy batch",
+    iconName: "copy",
+    datasetName: "copyBatchFavouriteId",
+    datasetValue: recordId,
+  });
+  const removeButton = createFavouriteIconActionButton({
+    label: "Remove batch favourite",
+    iconName: "heart-circle-minus",
+    datasetName: "confirmRemoveBatchFavouriteId",
+    datasetValue: recordId,
+  });
+
+  actions.append(disclosureButton, copyButton, removeButton);
+  return actions;
+}
+
+function renderFavouriteRemoveConfirmation(tab, recordId) {
+  const confirmation = openRemoveConfirmation;
+  const actions = document.createElement("div");
+  actions.className = "favourite-actions favourite-remove-confirmation";
+  actions.setAttribute("aria-busy", String(Boolean(confirmation?.pending)));
+
+  const question = document.createElement("p");
+  question.className = "favourite-remove-question";
+  question.textContent =
+    tab === "phrases" ? "Remove phrase favourite?" : "Remove batch favourite?";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.className = "secondary-button icon-action-button";
+  cancelButton.dataset.cancelFavouriteRemove = recordId;
+  cancelButton.disabled = Boolean(confirmation?.pending);
+  cancelButton.replaceChildren(
+    createFontAwesomeIcon("solid", "circle-left"),
+    "Cancel",
+  );
+
   const removeButton = document.createElement("button");
   removeButton.type = "button";
-  removeButton.className = "secondary-button favourite-remove-button";
-  removeButton.dataset.removeBatchFavouriteId = record.id;
-  removeButton.textContent = "Remove";
-  removeButton.ariaLabel = "Remove batch favourite";
+  removeButton.className = "danger-button icon-action-button";
+  removeButton.dataset.removeConfirmedFavouriteId = recordId;
+  removeButton.dataset.removeConfirmedFavouriteTab = tab;
+  removeButton.disabled = Boolean(confirmation?.pending);
+  removeButton.replaceChildren(
+    createFontAwesomeIcon("solid", "heart-circle-minus"),
+    "Remove",
+  );
 
-  content.append(title, detail, list);
-  actions.append(removeButton);
-  item.append(content, actions);
-  return item;
+  actions.append(question, cancelButton, removeButton);
+
+  if (confirmation?.status) {
+    const status = document.createElement("p");
+    status.className = "favourite-row-status";
+    status.dataset.favouriteRowStatus = "";
+    status.setAttribute("aria-live", "polite");
+    status.textContent = confirmation.status;
+    actions.append(status);
+  }
+
+  return actions;
+}
+
+function isFavouriteRemoveConfirmationOpen(tab, favouriteId) {
+  return (
+    openRemoveConfirmation?.tab === tab &&
+    openRemoveConfirmation.favouriteId === favouriteId
+  );
+}
+
+function renderExpandedBatchFavourite(record) {
+  const group = document.createElement("div");
+  group.className = "expanded-batch-favourite";
+  group.dataset.expandedBatchFavourite = record.id;
+  group.setAttribute("role", "group");
+  group.ariaLabel = "Phrases in this batch favourite";
+
+  const list = document.createElement("ul");
+  list.className = "expanded-batch-favourite-list";
+  list.replaceChildren(
+    ...record.favourite.phrases.map((phrase) => {
+      const item = document.createElement("li");
+      item.textContent = phrase;
+      return item;
+    }),
+  );
+
+  group.append(list);
+  return group;
+}
+
+function renderFavouriteMeta(model) {
+  const meta = document.createElement("p");
+  meta.className = "favourite-row-meta";
+
+  const savedDate = document.createElement("span");
+  savedDate.className = "favourite-row-date";
+  savedDate.ariaLabel = model.savedDateAccessibleText;
+  savedDate.textContent = model.savedDateText || "Saved date unavailable";
+
+  const participant = document.createElement("span");
+  participant.className = "favourite-row-participants";
+  participant.textContent = model.participantIndicator;
+
+  meta.append(savedDate, participant);
+  return meta;
+}
+
+function createFavouriteIconActionButton({
+  label,
+  iconName,
+  datasetName,
+  datasetValue,
+}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className =
+    "secondary-button icon-action-button tooltip-action favourite-action-button";
+  button.dataset[datasetName] = datasetValue;
+  button.dataset.tooltip = label;
+  button.ariaLabel = label;
+  button.title = label;
+  if (isFavouriteRouteCopyDataset(datasetName)) {
+    button.disabled = isFavouriteRouteCopyLocked();
+  }
+  button.replaceChildren(
+    createFontAwesomeIcon("solid", iconName),
+    createScreenReaderText(label),
+  );
+  return button;
+}
+
+function createBatchFavouriteDisclosureButton(recordId) {
+  const isExpanded = expandedBatchFavouriteId === recordId;
+  const label = isExpanded ? "Hide phrases" : "View phrases";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "secondary-button favourite-disclosure-button";
+  button.dataset.toggleBatchFavouritePhrases = recordId;
+  button.setAttribute("aria-expanded", String(isExpanded));
+  button.textContent = label;
+  button.ariaLabel = label;
+  return button;
+}
+
+function appendRowActionStatus(item, tab, recordId) {
+  const status = rowActionStatus[tab];
+  if (!status || status.recordId !== recordId) {
+    return;
+  }
+
+  const statusElement = document.createElement("p");
+  statusElement.className = "favourite-row-status";
+  statusElement.dataset.favouriteRowStatus = "";
+  statusElement.setAttribute("aria-live", "polite");
+  statusElement.textContent = status.message;
+  item.append(statusElement);
+}
+
+function setRowActionStatus(tab, recordId, message, { autoClear = false } = {}) {
+  clearRowActionStatusTimer();
+  rowActionStatus[tab] = { recordId, message };
+  renderRowActionStatus(tab, recordId);
+
+  if (!autoClear) {
+    return;
+  }
+
+  rowActionStatusTimer = window.setTimeout(() => {
+    const status = rowActionStatus[tab];
+    if (status?.recordId === recordId && status?.message === message) {
+      rowActionStatus[tab] = null;
+      removeVisibleRowActionStatuses(tab);
+    }
+    rowActionStatusTimer = null;
+  }, 2000);
+}
+
+function clearRowActionStatus(tab) {
+  clearRowActionStatusTimer();
+  rowActionStatus[tab] = null;
+  removeVisibleRowActionStatuses(tab);
+}
+
+function renderRowActionStatus(tab, recordId) {
+  if (currentRoute !== ROUTES.favourites || activeFavouritesTab !== tab) {
+    return;
+  }
+
+  removeVisibleRowActionStatuses(tab);
+
+  const row = findVisibleFavouriteRow(tab, recordId);
+  const status = rowActionStatus[tab];
+  if (!row || !status || status.recordId !== recordId) {
+    return;
+  }
+
+  const statusElement = document.createElement("p");
+  statusElement.className = "favourite-row-status";
+  statusElement.dataset.favouriteRowStatus = "";
+  statusElement.setAttribute("aria-live", "polite");
+  statusElement.textContent = status.message;
+  row.append(statusElement);
+}
+
+function removeVisibleRowActionStatuses(tab = activeFavouritesTab) {
+  if (!favouritesPanel || currentRoute !== ROUTES.favourites) {
+    return;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  favouritesPanel
+    .querySelectorAll(
+      `[data-favourite-kind="${kind}"] [data-favourite-row-status]`,
+    )
+    .forEach((status) => status.remove());
+}
+
+function findVisibleFavouriteRow(tab, recordId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  return (
+    [...favouritesPanel.querySelectorAll(`[data-favourite-kind="${kind}"]`)].find(
+      (row) => row.dataset.favouriteRow === recordId,
+    ) ?? null
+  );
+}
+
+function clearRowActionStatusTimer() {
+  if (rowActionStatusTimer === null) {
+    return;
+  }
+
+  window.clearTimeout(rowActionStatusTimer);
+  rowActionStatusTimer = null;
+}
+
+function createFavouriteCopyRequest(tab, favouriteId, initiatingButton) {
+  if (
+    currentRoute !== ROUTES.favourites ||
+    activeFavouritesTab !== tab ||
+    accountShell.persistenceAuthority.type !== "account" ||
+    isFavouriteRouteCopyLocked()
+  ) {
+    return null;
+  }
+
+  const record = getFavouriteRecordForTab(tab, favouriteId);
+  if (!record) {
+    return null;
+  }
+
+  const lockId = (favouriteRouteCopyLockId += 1);
+  const request = {
+    accountId: accountShell.accountId,
+    favouriteId,
+    focusTarget: createFavouriteCopyFocusTarget({
+      favouriteId,
+      initiatingButton,
+      tab,
+    }),
+    lockId,
+    requestId: (favouriteCopyRequestIds[tab] += 1),
+    tab,
+  };
+  favouriteRouteCopyLock = {
+    favouriteId,
+    lockId,
+    tab,
+  };
+  setFavouriteRouteCopyButtonsDisabled(true);
+  return request;
+}
+
+function isCurrentFavouriteCopyRequest(request) {
+  return (
+    request &&
+    currentRoute === ROUTES.favourites &&
+    activeFavouritesTab === request.tab &&
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === request.accountId &&
+    favouriteCopyRequestIds[request.tab] === request.requestId &&
+    Boolean(getFavouriteRecordForTab(request.tab, request.favouriteId))
+  );
+}
+
+function isFavouriteRouteCopyDataset(datasetName) {
+  return (
+    datasetName === "copyPhraseFavouriteId" ||
+    datasetName === "copyBatchFavouriteId"
+  );
+}
+
+function isFavouriteRouteCopyLocked() {
+  return favouriteRouteCopyLock !== null;
+}
+
+function releaseFavouriteRouteCopyLock(request) {
+  if (favouriteRouteCopyLock?.lockId !== request.lockId) {
+    return;
+  }
+
+  favouriteRouteCopyLock = null;
+  setFavouriteRouteCopyButtonsDisabled(false);
+}
+
+function setFavouriteRouteCopyButtonsDisabled(disabled) {
+  favouritesPanel
+    ?.querySelectorAll(
+      "[data-copy-phrase-favourite-id], [data-copy-batch-favourite-id]",
+    )
+    .forEach((button) => {
+      button.disabled = disabled;
+    });
+}
+
+function createFavouriteCopyFocusTarget({ favouriteId, initiatingButton, tab }) {
+  return {
+    favouriteId,
+    restoreIfFocusLost: document.activeElement === initiatingButton,
+    tab,
+  };
+}
+
+function restoreFavouriteCopyFocus(focusTarget) {
+  if (!focusTarget?.restoreIfFocusLost) {
+    return;
+  }
+
+  const activeElement = document.activeElement;
+  if (
+    activeElement &&
+    activeElement !== document.body &&
+    activeElement.isConnected
+  ) {
+    return;
+  }
+
+  const button = findFavouriteCopyButton(
+    focusTarget.tab,
+    focusTarget.favouriteId,
+  );
+  if (!button || button.disabled) {
+    return;
+  }
+
+  button.focus();
+}
+
+function findFavouriteCopyButton(tab, favouriteId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const datasetName =
+    tab === "phrases" ? "copyPhraseFavouriteId" : "copyBatchFavouriteId";
+  const selector =
+    tab === "phrases"
+      ? "[data-copy-phrase-favourite-id]"
+      : "[data-copy-batch-favourite-id]";
+  return (
+    [...favouritesPanel.querySelectorAll(selector)].find(
+      (button) => button.dataset[datasetName] === favouriteId,
+    ) ?? null
+  );
+}
+
+function getFavouriteRecordForTab(tab, favouriteId) {
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+  return records.find((candidate) => candidate.id === favouriteId) ?? null;
+}
+
+function invalidateFavouriteCopyRequests(tab) {
+  if (tab) {
+    favouriteCopyRequestIds[tab] += 1;
+    return;
+  }
+
+  favouriteCopyRequestIds.phrases += 1;
+  favouriteCopyRequestIds.batches += 1;
 }
 
 function renderDetailGroup(group, groupIndex) {
@@ -2807,98 +3767,630 @@ async function copyText(text, successMessage) {
 }
 
 async function savePhraseFavourite(rowIndex) {
-  if (accountShell.persistenceAuthority.type !== "account") {
+  const context = captureCurrentRevealFavouriteContext();
+
+  if (!context) {
     return;
   }
 
+  const favourite = createPhraseFavouriteSnapshot(game, {
+    rowIndex,
+    wordBank,
+  });
+  const pendingRequest = addPendingFavouriteToggleRequest(context, {
+    rowIndex,
+    type: "phrase",
+  });
+  renderCurrentFavouritePendingSurface(context);
+
   try {
-    const favourite = createPhraseFavouriteSnapshot(game, {
-      rowIndex,
-      wordBank,
-    });
+    await waitForLocalTestPrivateFavouritesMutation();
+    assertLocalTestPrivateFavouriteSaveAllowed();
     const savedFavourite = await privateFavouritesRepository.savePhraseFavourite({
-      accountId: accountShell.accountId,
+      accountId: context.accountId,
       favourite,
     });
+    removePendingFavouriteToggleRequest(pendingRequest);
+
+    if (!isSameActiveAccount(context)) {
+      return;
+    }
+
     phraseFavourites = upsertFavouriteRecord(phraseFavourites, savedFavourite);
-    renderGame();
-    renderFavourites();
-    copyStatus.textContent = "Phrase favourite saved.";
+    renderSuccessfulFavouriteMutationResult(context, "Phrase favourite saved.");
   } catch {
-    copyStatus.textContent = "Phrase favourite could not be saved. Try again.";
+    removePendingFavouriteToggleRequest(pendingRequest);
+    renderFailedFavouriteMutationResult(
+      context,
+      "Could not update phrase favourite.",
+    );
   }
 }
 
 async function saveBatchFavourite() {
-  if (accountShell.persistenceAuthority.type !== "account") {
+  const context = captureCurrentRevealFavouriteContext();
+
+  if (!context) {
     return;
   }
 
+  const favourite = createBatchFavouriteSnapshot(game, {
+    wordBank,
+  });
+  const pendingRequest = addPendingFavouriteToggleRequest(context, {
+    type: "batch",
+  });
+  renderCurrentFavouritePendingSurface(context);
+
   try {
-    const favourite = createBatchFavouriteSnapshot(game, {
-      wordBank,
-    });
+    await waitForLocalTestPrivateFavouritesMutation();
+    assertLocalTestPrivateFavouriteSaveAllowed();
     const savedFavourite = await privateFavouritesRepository.saveBatchFavourite({
-      accountId: accountShell.accountId,
+      accountId: context.accountId,
       favourite,
     });
+    removePendingFavouriteToggleRequest(pendingRequest);
+
+    if (!isSameActiveAccount(context)) {
+      return;
+    }
+
     batchFavourites = upsertFavouriteRecord(batchFavourites, savedFavourite);
-    renderGame();
-    renderFavourites();
-    copyStatus.textContent = "Batch favourite saved.";
+    renderSuccessfulFavouriteMutationResult(context, "Batch favourite saved.");
   } catch {
-    copyStatus.textContent = "Batch favourite could not be saved. Try again.";
+    removePendingFavouriteToggleRequest(pendingRequest);
+    renderFailedFavouriteMutationResult(
+      context,
+      "Could not update batch favourite.",
+    );
   }
 }
 
-async function removePhraseFavourite(favouriteId) {
+async function togglePhraseFavourite(rowIndex) {
   if (accountShell.persistenceAuthority.type !== "account") {
     return;
   }
 
+  const savedRecord = findPhraseFavouriteRecordForCurrentReveal(rowIndex);
+
+  if (savedRecord) {
+    await removeCurrentPhraseFavourite(savedRecord.id, rowIndex);
+    return;
+  }
+
+  await savePhraseFavourite(rowIndex);
+}
+
+async function toggleBatchFavourite() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const savedRecord = findBatchFavouriteRecordForCurrentReveal();
+
+  if (savedRecord) {
+    await removeCurrentBatchFavourite(savedRecord.id);
+    return;
+  }
+
+  await saveBatchFavourite();
+}
+
+async function removeCurrentPhraseFavourite(favouriteId, rowIndex) {
+  const context = captureCurrentRevealFavouriteContext();
+
+  if (!context) {
+    return;
+  }
+
+  const pendingRequest = addPendingFavouriteToggleRequest(context, {
+    rowIndex,
+    type: "phrase",
+  });
+  renderCurrentFavouritePendingSurface(context);
+
   try {
+    await waitForLocalTestPrivateFavouritesMutation("remove");
     await privateFavouritesRepository.removePhraseFavourite({
-      accountId: accountShell.accountId,
+      accountId: context.accountId,
       favouriteId,
     });
+    removePendingFavouriteToggleRequest(pendingRequest);
+
+    if (!isSameActiveAccount(context)) {
+      return;
+    }
+
     phraseFavourites = phraseFavourites.filter(
       (record) => record.id !== favouriteId,
     );
-    renderGame();
-    renderFavourites();
-    if (hasSavedFavourites()) {
-      favouritesStatus.textContent = "Phrase favourite removed.";
-    }
+    renderSuccessfulFavouriteMutationResult(context, "Phrase favourite removed.");
   } catch {
-    favouritesStatus.textContent =
-      "Phrase favourite could not be removed. Try again.";
+    removePendingFavouriteToggleRequest(pendingRequest);
+    renderFailedFavouriteMutationResult(
+      context,
+      "Could not update phrase favourite.",
+    );
   }
 }
 
-async function removeBatchFavourite(favouriteId) {
-  if (accountShell.persistenceAuthority.type !== "account") {
+async function removeCurrentBatchFavourite(favouriteId) {
+  const context = captureCurrentRevealFavouriteContext();
+
+  if (!context) {
     return;
   }
 
+  const pendingRequest = addPendingFavouriteToggleRequest(context, {
+    type: "batch",
+  });
+  renderCurrentFavouritePendingSurface(context);
+
   try {
+    await waitForLocalTestPrivateFavouritesMutation("remove");
     await privateFavouritesRepository.removeBatchFavourite({
-      accountId: accountShell.accountId,
+      accountId: context.accountId,
       favouriteId,
     });
-    batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
-    renderGame();
-    renderFavourites();
-    if (hasSavedFavourites()) {
-      favouritesStatus.textContent = "Batch favourite removed.";
+    removePendingFavouriteToggleRequest(pendingRequest);
+
+    if (!isSameActiveAccount(context)) {
+      return;
     }
+
+    batchFavourites = batchFavourites.filter((record) => record.id !== favouriteId);
+    renderSuccessfulFavouriteMutationResult(context, "Batch favourite removed.");
   } catch {
-    favouritesStatus.textContent =
-      "Batch favourite could not be removed. Try again.";
+    removePendingFavouriteToggleRequest(pendingRequest);
+    renderFailedFavouriteMutationResult(
+      context,
+      "Could not update batch favourite.",
+    );
   }
 }
 
-function hasSavedFavourites() {
-  return phraseFavourites.length + batchFavourites.length > 0;
+function captureCurrentRevealFavouriteContext() {
+  if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
+    return null;
+  }
+
+  return {
+    accountId: accountShell.accountId,
+    reveal: createBatchFavouriteSnapshot(game, { wordBank }),
+  };
+}
+
+function addPendingFavouriteToggleRequest(context, target) {
+  const request = {
+    ...context,
+    ...target,
+    id: String((favouriteToggleRequestId += 1)),
+  };
+  pendingFavouriteToggleRequests = [...pendingFavouriteToggleRequests, request];
+  return request;
+}
+
+function removePendingFavouriteToggleRequest(request) {
+  pendingFavouriteToggleRequests = pendingFavouriteToggleRequests.filter(
+    (candidate) => candidate.id !== request.id,
+  );
+}
+
+function isFavouriteTogglePending(target) {
+  return pendingFavouriteToggleRequests.some(
+    (request) =>
+      request.type === target.type &&
+      request.rowIndex === target.rowIndex &&
+      isCurrentRevealFavouriteContext(request),
+  );
+}
+
+function isCurrentRevealFavouriteContext(context) {
+  if (
+    !isSameActiveAccount(context) ||
+    !game.revealed
+  ) {
+    return false;
+  }
+
+  return areFavouriteSnapshotsEqual(
+    createBatchFavouriteSnapshot(game, { wordBank }),
+    context.reveal,
+  );
+}
+
+function isSameActiveAccount(context) {
+  return (
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === context.accountId
+  );
+}
+
+function renderCurrentFavouritePendingSurface(context) {
+  if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
+    return;
+  }
+
+  renderGame();
+}
+
+function renderSuccessfulFavouriteMutationResult(context, statusText) {
+  if (!isSameActiveAccount(context)) {
+    return;
+  }
+
+  if (currentRoute === ROUTES.favourites) {
+    renderFavourites();
+    return;
+  }
+
+  if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
+    return;
+  }
+
+  renderGame();
+  copyStatus.textContent = statusText;
+}
+
+function renderFailedFavouriteMutationResult(context, statusText) {
+  if (!isCurrentRevealFavouriteContext(context) || currentRoute !== ROUTES.playSolo) {
+    return;
+  }
+
+  renderGame();
+  copyStatus.textContent = statusText;
+}
+
+async function waitForLocalTestPrivateFavouritesMutation(operation = "mutation") {
+  const mode = getLocalTestPrivateFavouritesMode();
+  if (
+    mode !== "mutation-delays" &&
+    (mode !== "remove-fails-after-delay" || operation !== "remove")
+  ) {
+    return;
+  }
+
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, 500);
+  });
+}
+
+function assertLocalTestPrivateFavouriteSaveAllowed() {
+  if (getLocalTestPrivateFavouritesMode() === "save-fails") {
+    throw new Error("Local test private favourite save failed.");
+  }
+}
+
+async function copyPhraseFavourite(favouriteId, initiatingButton) {
+  const record = getFavouriteRecordForTab("phrases", favouriteId);
+  if (!record) {
+    return;
+  }
+
+  const request = createFavouriteCopyRequest(
+    "phrases",
+    favouriteId,
+    initiatingButton,
+  );
+  if (!request) {
+    return;
+  }
+
+  clearRowActionStatus("phrases");
+  let copied = false;
+  let shouldPublishStatus = false;
+
+  try {
+    copied = await writePlainText(getPhraseFavouriteCopyText(record));
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } catch {
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } finally {
+    releaseFavouriteRouteCopyLock(request);
+  }
+
+  if (!shouldPublishStatus) {
+    return;
+  }
+
+  if (copied) {
+    setRowActionStatus("phrases", favouriteId, "Phrase copied.", {
+      autoClear: true,
+    });
+    restoreFavouriteCopyFocus(request.focusTarget);
+    return;
+  }
+
+  setRowActionStatus("phrases", favouriteId, "Could not copy phrase.");
+  restoreFavouriteCopyFocus(request.focusTarget);
+}
+
+async function copyBatchFavourite(favouriteId, initiatingButton) {
+  const record = getFavouriteRecordForTab("batches", favouriteId);
+  if (!record) {
+    return;
+  }
+
+  const request = createFavouriteCopyRequest(
+    "batches",
+    favouriteId,
+    initiatingButton,
+  );
+  if (!request) {
+    return;
+  }
+
+  clearRowActionStatus("batches");
+  let copied = false;
+  let shouldPublishStatus = false;
+
+  try {
+    copied = await writePlainText(getBatchFavouriteCopyText(record));
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } catch {
+    shouldPublishStatus = isCurrentFavouriteCopyRequest(request);
+  } finally {
+    releaseFavouriteRouteCopyLock(request);
+  }
+
+  if (!shouldPublishStatus) {
+    return;
+  }
+
+  if (copied) {
+    setRowActionStatus("batches", favouriteId, "Batch copied.", {
+      autoClear: true,
+    });
+    restoreFavouriteCopyFocus(request.focusTarget);
+    return;
+  }
+
+  setRowActionStatus("batches", favouriteId, "Could not copy batch.");
+  restoreFavouriteCopyFocus(request.focusTarget);
+}
+
+async function removeFavouriteFromRoute({ tab, favouriteId }) {
+  const confirmation = openRemoveConfirmation;
+  if (
+    !confirmation ||
+    confirmation.pending ||
+    confirmation.tab !== tab ||
+    confirmation.favouriteId !== favouriteId ||
+    !["phrases", "batches"].includes(tab) ||
+    accountShell.persistenceAuthority.type !== "account"
+  ) {
+    return;
+  }
+
+  const removedIndex = getFavouriteRemovalIndex(tab, favouriteId);
+  if (removedIndex === -1) {
+    return;
+  }
+
+  const request = createFavouriteRemoveRequest({
+    confirmation,
+    favouriteId,
+    tab,
+  });
+  confirmation.pending = true;
+  confirmation.status =
+    tab === "phrases"
+      ? "Removing phrase favourite..."
+      : "Removing batch favourite...";
+  renderFavourites();
+
+  try {
+    await waitForLocalTestPrivateFavouritesMutation("remove");
+    if (tab === "phrases") {
+      await privateFavouritesRepository.removePhraseFavourite({
+        accountId: request.accountId,
+        favouriteId,
+      });
+      if (!isCurrentFavouriteRemoveMountedContext(request)) {
+        settleStaleFavouriteRemoveRequest(request);
+        return;
+      }
+
+      phraseFavourites = phraseFavourites.filter(
+        (record) => record.id !== favouriteId,
+      );
+    } else {
+      await privateFavouritesRepository.removeBatchFavourite({
+        accountId: request.accountId,
+        favouriteId,
+      });
+      if (!isCurrentFavouriteRemoveMountedContext(request)) {
+        settleStaleFavouriteRemoveRequest(request);
+        return;
+      }
+
+      batchFavourites = batchFavourites.filter(
+        (record) => record.id !== favouriteId,
+      );
+      if (expandedBatchFavouriteId === favouriteId) {
+        expandedBatchFavouriteId = null;
+      }
+    }
+
+    if (!isCurrentFavouriteRemoveUiRequest(request)) {
+      clearFavouriteRemoveRequest(request);
+      renderFavourites();
+      return;
+    }
+
+    clearFavouriteRemoveRequest(request);
+    renderGame();
+    handleFavouriteRemovalSuccess({
+      tab,
+      removedIndex,
+      message:
+        tab === "phrases"
+          ? "Phrase favourite removed."
+          : "Batch favourite removed.",
+    });
+  } catch {
+    if (!isCurrentFavouriteRemoveUiRequest(request)) {
+      settleStaleFavouriteRemoveRequest(request);
+      return;
+    }
+
+    completeFavouriteRemoveRequest(request);
+    confirmation.pending = false;
+    confirmation.status =
+      tab === "phrases"
+        ? "Could not remove phrase favourite."
+        : "Could not remove batch favourite.";
+    renderFavourites();
+    findFavouriteRemoveCancelButton(favouriteId)?.focus();
+  }
+}
+
+function createFavouriteRemoveRequest({ confirmation, favouriteId, tab }) {
+  const request = {
+    accountId: accountShell.accountId,
+    activeTab: activeFavouritesTab,
+    confirmation,
+    favouriteId,
+    requestId: (favouriteRemoveRequestId += 1),
+    route: currentRoute,
+    tab,
+  };
+  confirmation.requestId = request.requestId;
+  activeFavouriteRemoveRequest = request;
+  return request;
+}
+
+function isCurrentFavouriteRemoveMutationAccount(request) {
+  return (
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === request.accountId
+  );
+}
+
+function isCurrentFavouriteRemoveMountedContext(request) {
+  return (
+    isCurrentFavouriteRemoveMutationAccount(request) &&
+    request.route === ROUTES.favourites &&
+    currentRoute === ROUTES.favourites
+  );
+}
+
+function isCurrentFavouriteRemoveUiRequest(request) {
+  return (
+    isCurrentFavouriteRemoveMountedContext(request) &&
+    activeFavouritesTab === request.activeTab &&
+    activeFavouritesTab === request.tab &&
+    openRemoveConfirmation === request.confirmation &&
+    openRemoveConfirmation?.requestId === request.requestId &&
+    openRemoveConfirmation?.favouriteId === request.favouriteId &&
+    openRemoveConfirmation?.tab === request.tab &&
+    activeFavouriteRemoveRequest?.requestId === request.requestId
+  );
+}
+
+function settleStaleFavouriteRemoveRequest(request) {
+  clearFavouriteRemoveRequest(request);
+  favouritesListState[request.tab] = "stale";
+}
+
+function clearFavouriteRemoveRequest(request) {
+  completeFavouriteRemoveRequest(request);
+
+  if (openRemoveConfirmation?.requestId === request.requestId) {
+    openRemoveConfirmation = null;
+  }
+}
+
+function completeFavouriteRemoveRequest(request) {
+  if (activeFavouriteRemoveRequest?.requestId === request.requestId) {
+    activeFavouriteRemoveRequest = null;
+  }
+}
+
+function invalidateFavouriteRemoveRequest() {
+  activeFavouriteRemoveRequest = null;
+  favouriteRemoveRequestId += 1;
+}
+
+function handleFavouriteRemovalSuccess({ tab, removedIndex, message }) {
+  if (currentRoute !== ROUTES.favourites || activeFavouritesTab !== tab) {
+    renderFavourites();
+    return;
+  }
+
+  setActiveFavouritesStatus(message);
+  getFavouriteRemovalFocusTarget(tab, removedIndex)?.focus();
+}
+
+function setActiveFavouritesStatus(message) {
+  if (activeFavouritesStatusTimer !== null) {
+    window.clearTimeout(activeFavouritesStatusTimer);
+    activeFavouritesStatusTimer = null;
+  }
+
+  activeFavouritesStatus = message;
+  renderFavourites();
+
+  activeFavouritesStatusTimer = window.setTimeout(() => {
+    if (activeFavouritesStatus === message) {
+      activeFavouritesStatus = "";
+      renderFavourites();
+    }
+
+    activeFavouritesStatusTimer = null;
+  }, 2000);
+}
+
+function getFavouriteRemovalIndex(tab, favouriteId) {
+  const records = tab === "phrases" ? phraseFavourites : batchFavourites;
+  return records.findIndex((record) => record.id === favouriteId);
+}
+
+function getFavouriteRemovalFocusTarget(tab, removedIndex) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const kind = tab === "phrases" ? "phrase" : "batch";
+  const rows = [
+    ...favouritesPanel.querySelectorAll(`[data-favourite-kind="${kind}"]`),
+  ];
+
+  return (
+    rows[Math.min(removedIndex, rows.length - 1)] ??
+    rows[removedIndex - 1] ??
+    favouritesPanel.querySelector(
+      `[data-favourites-empty-heading="${CSS.escape(tab)}"]`,
+    ) ??
+    null
+  );
+}
+
+function findFavouriteRemoveCancelButton(favouriteId) {
+  return favouritesPanel?.querySelector(
+    `[data-cancel-favourite-remove="${CSS.escape(favouriteId)}"]`,
+  );
+}
+
+function findFavouriteRemoveOpenButton(tab, favouriteId) {
+  if (!favouritesPanel) {
+    return null;
+  }
+
+  const datasetName =
+    tab === "phrases"
+      ? "confirmRemovePhraseFavouriteId"
+      : "confirmRemoveBatchFavouriteId";
+  const selector =
+    tab === "phrases"
+      ? "[data-confirm-remove-phrase-favourite-id]"
+      : "[data-confirm-remove-batch-favourite-id]";
+
+  return (
+    [...favouritesPanel.querySelectorAll(selector)].find(
+      (button) => button.dataset[datasetName] === favouriteId,
+    ) ?? null
+  );
 }
 
 function upsertFavouriteRecord(records, record) {
@@ -2913,9 +4405,9 @@ function upsertFavouriteRecord(records, record) {
   );
 }
 
-function isPhraseFavouriteSaved(phraseIndex) {
+function findPhraseFavouriteRecordForCurrentReveal(phraseIndex) {
   if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
-    return false;
+    return null;
   }
 
   const favourite = createPhraseFavouriteSnapshot(game, {
@@ -2923,22 +4415,26 @@ function isPhraseFavouriteSaved(phraseIndex) {
     wordBank,
   });
 
-  return phraseFavourites.some((record) =>
-    areFavouriteSnapshotsEqual(record.favourite, favourite),
+  return (
+    phraseFavourites.find((record) =>
+      areFavouriteSnapshotsEqual(record.favourite, favourite),
+    ) ?? null
   );
 }
 
-function isBatchFavouriteSaved() {
+function findBatchFavouriteRecordForCurrentReveal() {
   if (accountShell.persistenceAuthority.type !== "account" || !game.revealed) {
-    return false;
+    return null;
   }
 
   const favourite = createBatchFavouriteSnapshot(game, {
     wordBank,
   });
 
-  return batchFavourites.some((record) =>
-    areFavouriteSnapshotsEqual(record.favourite, favourite),
+  return (
+    batchFavourites.find((record) =>
+      areFavouriteSnapshotsEqual(record.favourite, favourite),
+    ) ?? null
   );
 }
 
@@ -3018,8 +4514,7 @@ async function applyAccountShell(shell) {
 
   if (accountShell.persistenceAuthority.type === "account") {
     await loadSignedInCurrentGame();
-    await loadPhraseFavourites();
-    await loadBatchFavourites();
+    await Promise.all([loadPhraseFavourites(), loadBatchFavourites()]);
     await loadPendingGameLists();
   } else {
     signedInGameSession.reset();
@@ -3028,17 +4523,30 @@ async function applyAccountShell(shell) {
       createAnonymousSoloGame({ rowCount: 20 });
     phraseFavourites = [];
     batchFavourites = [];
-    createdPendingGames = [];
-    incomingPendingGameInvites = [];
-    multiplayerDashboard = createEmptyMultiplayerDashboard();
-    inAppNotifications = [];
+    invalidateFavouritesListLoads();
+    favouritesListState.phrases = "idle";
+    favouritesListState.batches = "idle";
+    activeFavouritesTab = "phrases";
+    expandedBatchFavouriteId = null;
+    clearFavouritesTransientState();
+    resetPendingGameState();
     hidePersistenceRecovery();
   }
 
+  if (
+    accountShell.persistenceAuthority.type === "account" &&
+    requestedSignedInRoute &&
+    signedInOnlyRoutes.has(currentRoute)
+  ) {
+    currentRoute = requestedSignedInRoute;
+    requestedSignedInRoute = null;
+    ensureHashRoute(currentRoute);
+  } else if (accountShell.persistenceAuthority.type === "account") {
+    requestedSignedInRoute = null;
+  }
+
   renderAccountShell(accountShell);
-  renderGame();
-  renderPendingGamePanel();
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadSignedInCurrentGame() {
@@ -3066,51 +4574,111 @@ function applySignedOutShell() {
     createAnonymousSoloGame({ rowCount: 20 });
   phraseFavourites = [];
   batchFavourites = [];
-  createdPendingGames = [];
-  incomingPendingGameInvites = [];
+  invalidateFavouritesListLoads();
+  favouritesListState.phrases = "idle";
+  favouritesListState.batches = "idle";
+  activeFavouritesTab = "phrases";
+  expandedBatchFavouriteId = null;
+  clearFavouritesTransientState();
+  resetPendingGameState();
   hidePersistenceRecovery();
+  requestedSignedInRoute = null;
+  if (signedInOnlyRoutes.has(currentRoute)) {
+    currentRoute = ROUTES.playSolo;
+    ensureHashRoute(ROUTES.playSolo);
+  }
   renderAccountShell(accountShell);
-  renderGame();
-  renderPendingGamePanel();
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadPhraseFavourites() {
+  const requestId = ++phraseFavouritesLoadRequestId;
+
   if (accountShell.persistenceAuthority.type !== "account") {
     phraseFavourites = [];
-    renderFavourites();
+    favouritesListState.phrases = "idle";
+    renderRoute();
     return;
   }
 
+  const accountId = accountShell.accountId;
+  favouritesListState.phrases = "loading";
+  renderRoute();
+
   try {
-    phraseFavourites = await privateFavouritesRepository.listPhraseFavourites({
-      accountId: accountShell.accountId,
+    const records = await privateFavouritesRepository.listPhraseFavourites({
+      accountId,
     });
+    if (!isCurrentFavouritesListLoad("phrases", { accountId, requestId })) {
+      return;
+    }
+
+    phraseFavourites = records;
+    favouritesListState.phrases = "loaded";
   } catch {
+    if (!isCurrentFavouritesListLoad("phrases", { accountId, requestId })) {
+      return;
+    }
+
     phraseFavourites = [];
-    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+    favouritesListState.phrases = "error";
   }
 
-  renderFavourites();
+  renderRoute();
 }
 
 async function loadBatchFavourites() {
+  const requestId = ++batchFavouritesLoadRequestId;
+
   if (accountShell.persistenceAuthority.type !== "account") {
     batchFavourites = [];
-    renderFavourites();
+    favouritesListState.batches = "idle";
+    renderRoute();
     return;
   }
 
+  const accountId = accountShell.accountId;
+  favouritesListState.batches = "loading";
+  renderRoute();
+
   try {
-    batchFavourites = await privateFavouritesRepository.listBatchFavourites({
-      accountId: accountShell.accountId,
+    const records = await privateFavouritesRepository.listBatchFavourites({
+      accountId,
     });
+    if (!isCurrentFavouritesListLoad("batches", { accountId, requestId })) {
+      return;
+    }
+
+    batchFavourites = records;
+    favouritesListState.batches = "loaded";
   } catch {
+    if (!isCurrentFavouritesListLoad("batches", { accountId, requestId })) {
+      return;
+    }
+
     batchFavourites = [];
-    authMessage.textContent = "Private favourites could not be loaded. Try again.";
+    favouritesListState.batches = "error";
   }
 
-  renderFavourites();
+  renderRoute();
+}
+
+function invalidateFavouritesListLoads() {
+  phraseFavouritesLoadRequestId += 1;
+  batchFavouritesLoadRequestId += 1;
+}
+
+function isCurrentFavouritesListLoad(tab, { accountId, requestId }) {
+  const currentRequestId =
+    tab === "phrases"
+      ? phraseFavouritesLoadRequestId
+      : batchFavouritesLoadRequestId;
+
+  return (
+    requestId === currentRequestId &&
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === accountId
+  );
 }
 
 function showPersistenceRecovery(message) {

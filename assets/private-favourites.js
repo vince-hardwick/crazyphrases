@@ -126,6 +126,11 @@ export function createLocalTestPrivateFavouritesRepository(
     now = () => new Date().toISOString(),
   } = {},
 ) {
+  const listAttempts = {
+    phrases: new Map(),
+    batches: new Map(),
+  };
+
   return {
     async savePhraseFavourite({ accountId, favourite }) {
       assertAccountId(accountId);
@@ -161,6 +166,15 @@ export function createLocalTestPrivateFavouritesRepository(
 
     async listPhraseFavourites({ accountId }) {
       assertAccountId(accountId);
+      await prepareLocalTestPrivateFavouritesList({
+        accountId,
+        failureMode,
+        listAttempts: listAttempts.phrases,
+      });
+
+      if (failureMode === "load-fails") {
+        throw new Error("Local test private favourite load failed.");
+      }
 
       return loadStoredPhraseFavourites(storage, { accountId }).map(
         ({ record }) => cloneFavouriteRecord(record),
@@ -217,6 +231,15 @@ export function createLocalTestPrivateFavouritesRepository(
 
     async listBatchFavourites({ accountId }) {
       assertAccountId(accountId);
+      await prepareLocalTestPrivateFavouritesList({
+        accountId,
+        failureMode,
+        listAttempts: listAttempts.batches,
+      });
+
+      if (failureMode === "load-fails") {
+        throw new Error("Local test private favourite load failed.");
+      }
 
       return loadStoredBatchFavourites(storage, { accountId }).map(
         ({ record }) => cloneFavouriteRecord(record),
@@ -239,6 +262,35 @@ export function createLocalTestPrivateFavouritesRepository(
       });
     },
   };
+}
+
+async function prepareLocalTestPrivateFavouritesList({
+  accountId,
+  failureMode,
+  listAttempts,
+}) {
+  if (failureMode === "load-race") {
+    await delayLocalTestPrivateFavouritesList(
+      accountId === "test-account" ? 500 : 50,
+    );
+  }
+
+  if (failureMode !== "load-fails-once") {
+    return;
+  }
+
+  const attemptCount = listAttempts.get(accountId) ?? 0;
+  listAttempts.set(accountId, attemptCount + 1);
+
+  if (attemptCount === 0) {
+    throw new Error("Local test private favourite load failed.");
+  }
+}
+
+async function delayLocalTestPrivateFavouritesList(delayMs) {
+  await new Promise((resolve) => {
+    globalThis.setTimeout(resolve, delayMs);
+  });
 }
 
 export function createSupabasePrivateFavouritesRepository({ supabase }) {

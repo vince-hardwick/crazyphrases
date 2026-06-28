@@ -12,6 +12,11 @@ _Avoid_: Random phrase generator, quote app
 One configured play instance that produces one batch of completed rows.
 _Avoid_: Match, series
 
+**Game Mode**:
+A supported way of configuring and playing a game, such as Solo Game,
+multiplayer Game, or a future CPU-participant Game.
+_Avoid_: Primary navigation item, account surface
+
 **Cancelled Game**:
 An in-progress game stopped before reveal.
 _Avoid_: Deleted game, abandoned game

@@ -18,6 +18,21 @@
         <div>
           <h1 id="site-title">Crazy Phrases</h1>
         </div>
+        <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>
+          <a class="primary-nav-link" href="#/play/solo" data-route-link="play">
+            Play
+          </a>
+          <a
+            class="primary-nav-link primary-nav-icon-link"
+            href="#/favourites"
+            aria-label="Favourites"
+            data-route-link="favourites"
+            data-tooltip="Favourites"
+          >
+            <i class="fa-solid fa-heart" aria-hidden="true"></i>
+            <span class="sr-only">Favourites</span>
+          </a>
+        </nav>
         <div class="header-actions">
           <section class="account-shell" aria-label="Account mode" data-account-shell>
             <p data-account-status></p>
@@ -121,6 +136,13 @@
           <li>Reveal the completed batch and enjoy the strange combinations.</li>
         </ol>
       </section>
+
+      <section
+        class="route-gate"
+        data-route-gate
+        aria-live="polite"
+        hidden
+      ></section>
 
       <section class="game-panel" aria-live="polite" data-game-panel data-game-phase="setup">
         <div class="setup-row">

@@ -30,10 +30,9 @@ preserve their original history.
   [Friend relationships](#friend-relationships);
   [Manual pokes](#manual-pokes);
   [Android app and push notifications](#android-app-and-push-notifications).
-- **Account, profile, and auth**: profile-management MVP completed; signed-in route
-  gate, avatar-first account affordance, and account-menu placement accepted. Start
-  with:
-  [Signed-in route gate for anonymous visitors](#signed-in-route-gate-for-anonymous-visitors);
+- **Account, profile, and auth**: profile-management MVP and signed-in route gate
+  completed; avatar-first account affordance and account-menu placement accepted.
+  Start with:
   [Signed-in Account Profile management surface](#signed-in-account-profile-management-surface);
   [Auth-gated favourites DOM loading](#auth-gated-favourites-dom-loading);
   [Anonymous solo import to signed-in state](#anonymous-solo-import-to-signed-in-state);
@@ -276,37 +275,33 @@ preserve their original history.
   should make the requested destination clear without mounting account-only DOM, wiring
   account-only event paths, or fetching private data before Supabase Auth and Row Level
   Security can authorise the Account.
-- **Status**: Accepted on 2026-06-25 as part of signed-in navigation design. PRD
-  issue #104 and implementation issues #105, #106, #107, and #108 were published on
-  2026-06-29. The requested signed-in destination should be preserved through sign-in
-  and opened after a valid Account session exists. Explicit sign-out from a
-  signed-in-only route should clear account-only UI, close account and notification
-  menus, discard preserved requested destination state, and reset the route to
-  `#/play/solo`; fresh anonymous visits to bookmarked signed-in-only routes may still
-  show the gate. Issue #105 locks the local/test route-gate invariant: anonymous
-  gated routes render no account-only Notification DOM, and unsupported non-empty
-  hashes resolve to `#/play/solo` without granting account authority. Issue #106 adds
-  the hosted Auth redirect handoff: Google OAuth and valid
-  email magic-link starts use one pre-redirect preparation hook, store only allowlisted
-  signed-in-only destinations in `crazyphrases.signedInRouteHandoff.v1`, expire the
-  handoff after ten minutes, consume it only after a valid Account session exists, and
-  clear it after consumption, sign-out, stale anonymous Solo navigation, unsupported
-  route input, malformed storage, or expiry. Supabase Auth callback hash fragments such
-  as `#access_token=...` are not route input; the app leaves them available for Auth
-  initialisation before canonicalising the visible route, and that callback cleanup does
-  not clear an otherwise valid handoff. Issue #107 adds the sign-out cleanup hardening:
-  account-only Favourites, Multiplayer, Account Profile, and Notification work that
-  started before sign-out must verify that the same Account session is still current
-  before mutating client state or DOM. Delayed results from the old session should
-  settle silently after sign-out, leaving anonymous `#/play/solo`, closed notification
-  UI, and no account-only DOM. Remaining closeout should continue with issue #108 after
-  issue #107 merges.
-- **Remaining risk**: Hosted OAuth and magic-link redirects still require deployed
-  `dev`, `test`, and production smoke after implementation because local tests simulate
-  the redirect handoff rather than completing the live provider round trip. Browser
-  tests must continue to cover anonymous `#/play/multiplayer` and `#/favourites` gate
-  rendering, absence of account-only DOM/data fetches, signed-in restoration to the
-  requested route, sign-out reset to `#/play/solo`, and sign-out cleanup.
+- **Status**: Completed on 2026-06-29. PRD issue #104 and implementation issues #105,
+  #106, #107, and #108 were published on 2026-06-29, implemented through PRs #110,
+  #111, and #112, and promoted through the documented `dev`, `test`, and production
+  gates. Issue #105 locked the local/test route-gate invariant: anonymous gated routes
+  render no account-only Notification DOM, and unsupported non-empty hashes resolve to
+  `#/play/solo` without granting account authority. Issue #106 added the hosted Auth
+  redirect handoff: Google OAuth and valid email magic-link starts use one pre-redirect
+  preparation hook, store only allowlisted signed-in-only destinations in
+  `crazyphrases.signedInRouteHandoff.v1`, expire the handoff after ten minutes, consume
+  it only after a valid Account session exists, and clear it after consumption,
+  sign-out, stale anonymous Solo navigation, unsupported route input, malformed storage,
+  or expiry. Supabase Auth callback hash fragments such as `#access_token=...` are not
+  route input; the app leaves them available for Auth initialisation before
+  canonicalising the visible route, and that callback cleanup does not clear an
+  otherwise valid handoff. Issue #107 added sign-out cleanup hardening: account-only
+  Favourites, Multiplayer, Account Profile, and Notification work that started before
+  sign-out must verify that the same Account session is still current before mutating
+  client state or DOM. Delayed results from the old session settle silently after
+  sign-out, leaving anonymous `#/play/solo`, closed notification UI, and no account-only
+  DOM. Issue #108 closed the documentation route after hosted smoke evidence was
+  recorded for the final route-gate promotions, including production verification of
+  merge commit `5c2e797e6b53df65801786e4ea4163c5cf4c1f8c`.
+- **Remaining risk and trigger**: No accepted route-gate closeout work remains deferred
+  in this backlog item. Future signed-in destinations or Auth redirect/provider changes
+  own revisiting the allowlist, handoff contract, browser coverage, and hosted smoke.
+  The risk is regressing destination restoration, anonymous account-only DOM absence, or
+  sign-out cleanup if a new route or provider bypasses the shared route/auth invariant.
 
 ### Icon-first favourite and copy actions
 

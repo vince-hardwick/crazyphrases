@@ -287,13 +287,21 @@ preserve their original history.
   gated routes render no account-only Notification DOM, and unsupported non-empty
   hashes resolve to `#/play/solo` without granting account authority. Remaining
   implementation should continue with issues #106, #107, and #108 in dependency
-  order.
-- **Remaining risk**: Hosted OAuth and magic-link redirects may not preserve URL
-  fragments directly, so implementation may need a short-lived client-side
-  requested-destination handoff before leaving for hosted auth. Browser tests must cover
-  anonymous `#/play/multiplayer` and `#/favourites` gate rendering, absence of
-  account-only DOM/data fetches, signed-in restoration to the requested route, sign-out
-  reset to `#/play/solo`, and sign-out cleanup.
+  order. Issue #106 adds the hosted Auth redirect handoff: Google OAuth and valid
+  email magic-link starts use one pre-redirect preparation hook, store only allowlisted
+  signed-in-only destinations in `crazyphrases.signedInRouteHandoff.v1`, expire the
+  handoff after ten minutes, consume it only after a valid Account session exists, and
+  clear it after consumption, sign-out, stale anonymous Solo navigation, unsupported
+  route input, malformed storage, or expiry. Supabase Auth callback hash fragments such
+  as `#access_token=...` are not route input; the app leaves them available for Auth
+  initialisation before canonicalising the visible route, and that callback cleanup does
+  not clear an otherwise valid handoff.
+- **Remaining risk**: Hosted OAuth and magic-link redirects still require deployed
+  `dev`, `test`, and production smoke after implementation because local tests simulate
+  the redirect handoff rather than completing the live provider round trip. Browser
+  tests must continue to cover anonymous `#/play/multiplayer` and `#/favourites` gate
+  rendering, absence of account-only DOM/data fetches, signed-in restoration to the
+  requested route, sign-out reset to `#/play/solo`, and sign-out cleanup.
 
 ### Icon-first favourite and copy actions
 

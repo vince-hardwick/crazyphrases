@@ -5,6 +5,7 @@ import {
 
 export function createSupabaseAuthSession({
   location = globalThis.location,
+  prepareAuthRedirect = () => {},
   profileRepository = null,
   supabase,
 } = {}) {
@@ -44,6 +45,8 @@ export function createSupabaseAuthSession({
     },
 
     async signInWithGoogle() {
+      prepareAuthRedirect();
+
       const response = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -56,8 +59,12 @@ export function createSupabaseAuthSession({
     },
 
     async sendEmailMagicLink({ email }) {
+      const normalisedEmail = normaliseEmail(email);
+
+      prepareAuthRedirect();
+
       const response = await supabase.auth.signInWithOtp({
-        email: normaliseEmail(email),
+        email: normalisedEmail,
         options: {
           emailRedirectTo: getAppRootUrl(location),
         },

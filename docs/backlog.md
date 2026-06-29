@@ -285,9 +285,8 @@ preserve their original history.
   `#/play/solo`; fresh anonymous visits to bookmarked signed-in-only routes may still
   show the gate. Issue #105 locks the local/test route-gate invariant: anonymous
   gated routes render no account-only Notification DOM, and unsupported non-empty
-  hashes resolve to `#/play/solo` without granting account authority. Remaining
-  implementation should continue with issues #106, #107, and #108 in dependency
-  order. Issue #106 adds the hosted Auth redirect handoff: Google OAuth and valid
+  hashes resolve to `#/play/solo` without granting account authority. Issue #106 adds
+  the hosted Auth redirect handoff: Google OAuth and valid
   email magic-link starts use one pre-redirect preparation hook, store only allowlisted
   signed-in-only destinations in `crazyphrases.signedInRouteHandoff.v1`, expire the
   handoff after ten minutes, consume it only after a valid Account session exists, and
@@ -295,7 +294,13 @@ preserve their original history.
   route input, malformed storage, or expiry. Supabase Auth callback hash fragments such
   as `#access_token=...` are not route input; the app leaves them available for Auth
   initialisation before canonicalising the visible route, and that callback cleanup does
-  not clear an otherwise valid handoff.
+  not clear an otherwise valid handoff. Issue #107 adds the sign-out cleanup hardening:
+  account-only Favourites, Multiplayer, Account Profile, and Notification work that
+  started before sign-out must verify that the same Account session is still current
+  before mutating client state or DOM. Delayed results from the old session should
+  settle silently after sign-out, leaving anonymous `#/play/solo`, closed notification
+  UI, and no account-only DOM. Remaining closeout should continue with issue #108 after
+  issue #107 merges.
 - **Remaining risk**: Hosted OAuth and magic-link redirects still require deployed
   `dev`, `test`, and production smoke after implementation because local tests simulate
   the redirect handoff rather than completing the live provider round trip. Browser

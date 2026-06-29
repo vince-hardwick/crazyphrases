@@ -390,6 +390,11 @@ Explicit sign-out from a signed-in-only route should clear account-only UI, clos
 account and notification menus, discard any preserved requested destination, and reset
 the route to `#/play/solo` for anonymous Solo Game play. A fresh anonymous visit to a
 bookmarked signed-in-only route may still show the sign-in-required gate.
+Any in-flight account-only work that started before sign-out, including Favourites,
+Multiplayer, Account Profile, or Notification work, must re-check the current Account
+session before mutating client state or DOM. A delayed result from the old Account must
+settle silently after sign-out rather than re-mounting account-only UI, restoring a
+signed-in-only route, or showing stale status copy.
 
 Moving between hash-route destinations is non-destructive view switching: leaving
 `#/play/solo` for `#/favourites` or `#/play/multiplayer` should preserve any in-progress

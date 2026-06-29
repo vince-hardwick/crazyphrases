@@ -1067,6 +1067,7 @@ function createAvatarCropControls() {
 }
 
 function removeAccountProfilePanel() {
+  accountProfilePreviewRequestId += 1;
   clearDraftAvatarPreviewUrl();
   accountProfileDraftAvatar = null;
   accountProfilePanel?.remove();
@@ -1247,6 +1248,11 @@ function showAvatarCropGuide(panel) {
 }
 
 async function selectUploadedAvatarFile(file) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
   const panel = ensureAccountProfilePanel();
   setAccountProfileStatus("");
 
@@ -1255,6 +1261,10 @@ async function selectUploadedAvatarFile(file) {
   }
 
   const validation = await validateUploadedAvatarFile(file);
+  if (!isCurrentAccountSession(accountId)) {
+    return;
+  }
+
   if (!validation.valid) {
     clearDraftAvatarPreviewUrl();
     accountProfileDraftAvatar = null;
@@ -1354,7 +1364,7 @@ async function decodeImageDimensions(file) {
   }
 }
 
-async function uploadDraftAvatar({ draft }) {
+async function uploadDraftAvatar({ accountId, draft, profileId }) {
   let objectPath = null;
 
   let derivedFile;
@@ -1372,12 +1382,12 @@ async function uploadDraftAvatar({ draft }) {
       contentType: derivedFile.type,
     });
     await avatarStorageRepository.registerPendingUpload({
-      accountId: accountShell.accountId,
+      accountId,
       byteSize: derivedFile.size,
       contentType: derivedFile.type,
       height: AVATAR_CROP_OUTPUT_SIZE,
       objectPath,
-      profileId: accountShell.profile.profileId,
+      profileId,
       width: AVATAR_CROP_OUTPUT_SIZE,
     });
     await avatarStorageRepository.uploadAvatarObject({
@@ -1437,6 +1447,8 @@ async function saveAccountProfile(event) {
     return;
   }
 
+  const accountId = accountShell.accountId;
+  const profileId = accountShell.profile.profileId;
   const panel = ensureAccountProfilePanel();
   const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
   const handle = panel.querySelector("[data-account-profile-handle]");
@@ -1449,30 +1461,53 @@ async function saveAccountProfile(event) {
   try {
     const avatarDescriptor =
       accountProfileDraftAvatar?.type === "uploaded-draft"
-        ? await uploadDraftAvatar({ draft: accountProfileDraftAvatar })
+        ? await uploadDraftAvatar({
+            accountId,
+            draft: accountProfileDraftAvatar,
+            profileId,
+          })
         : accountProfileDraftAvatar?.type === "built-in"
           ? accountProfileDraftAvatar
           : createBuiltInAvatarDescriptor(avatar.value);
     if (avatarDescriptor.type === "uploaded") {
       uploadedObjectPath = avatarDescriptor.objectPath;
     }
+    if (!isCurrentAccountSession(accountId)) {
+      if (uploadedObjectPath) {
+        await cleanupUploadedAvatar(uploadedObjectPath);
+      }
+      return;
+    }
 
     const profile = await accountProfileRepository.updateOwnProfile({
-      accountId: accountShell.accountId,
+      accountId,
       profile: {
         avatar: avatarDescriptor,
         gamerName: gamerName.value,
         handle: handle.value,
       },
     });
+    if (!isCurrentAccountSession(accountId)) {
+      if (uploadedObjectPath) {
+        await cleanupUploadedAvatar(uploadedObjectPath);
+      }
+      return;
+    }
+
     accountShell = createAccountShell({
-      account: { id: accountShell.accountId },
+      account: { id: accountId },
       profile,
     });
     renderAccountShell(accountShell);
-    panel.querySelector("[data-account-profile-status]").textContent =
-      "Profile saved.";
+    setAccountProfileStatus("Profile saved.");
   } catch (error) {
+    if (!isCurrentAccountSession(accountId)) {
+      if (uploadedObjectPath) {
+        await cleanupUploadedAvatar(uploadedObjectPath);
+      }
+      return;
+    }
+
     if (uploadedObjectPath) {
       await cleanupUploadedAvatar(uploadedObjectPath);
       status.textContent = AVATAR_UPLOAD_COPY.saveFailureAfterUpload;
@@ -2098,15 +2133,23 @@ async function createPendingGameInvite(event) {
     return;
   }
 
+  const accountId = accountShell.accountId;
+  const inviteeHandle = pendingGameHandleInput.value;
+  const nudgeTimeoutHours = Number(pendingGameNudgeTimeoutSelect.value);
+  const rowCount = Number(pendingGameRowCountSelect.value);
   pendingGameStatus.textContent = "";
 
   try {
     const pendingGame = await pendingGameRepository.createPendingGameFromHandle({
-      creatorAccountId: accountShell.accountId,
-      inviteeHandle: pendingGameHandleInput.value,
-      nudgeTimeoutHours: Number(pendingGameNudgeTimeoutSelect.value),
-      rowCount: Number(pendingGameRowCountSelect.value),
+      creatorAccountId: accountId,
+      inviteeHandle,
+      nudgeTimeoutHours,
+      rowCount,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     const invitee = pendingGame.participants.find(
       (participant) => participant.role === "invitee",
     );
@@ -2118,10 +2161,18 @@ async function createPendingGameInvite(event) {
     pendingGameStatus.textContent =
       `Game invite created. Waiting for @${invitee.handle} to accept.`;
   } catch (error) {
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     currentPendingGame = null;
-    pendingGameSummary.hidden = true;
-    pendingGameSummary.replaceChildren();
-    pendingGameStatus.textContent = getPendingGameFailureMessage(error);
+    if (pendingGameSummary) {
+      pendingGameSummary.hidden = true;
+      pendingGameSummary.replaceChildren();
+    }
+    if (pendingGameStatus) {
+      pendingGameStatus.textContent = getPendingGameFailureMessage(error);
+    }
   }
 }
 
@@ -2398,19 +2449,23 @@ async function respondToPendingGameInvite(pendingGameId, response) {
     return;
   }
 
+  const accountId = accountShell.accountId;
   pendingGameStatus.textContent = "";
 
   try {
     const pendingGame =
       response === "accept"
         ? await pendingGameRepository.acceptPendingGameInvite({
-            accountId: accountShell.accountId,
+            accountId,
             pendingGameId,
           })
         : await pendingGameRepository.declinePendingGameInvite({
-            accountId: accountShell.accountId,
+            accountId,
             pendingGameId,
           });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
 
     if (
       incomingPendingGameInvites.some((candidate) => candidate.id === pendingGame.id) ||
@@ -2431,7 +2486,9 @@ async function respondToPendingGameInvite(pendingGameId, response) {
     pendingGameStatus.textContent =
       response === "accept" ? "Game invite accepted." : "Game invite declined.";
   } catch {
-    pendingGameStatus.textContent = "Game invite could not be updated. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Game invite could not be updated. Try again.";
+    }
   }
 }
 
@@ -2440,19 +2497,29 @@ async function cancelCreatedGame(pendingGameId) {
     return;
   }
 
+  const accountId = accountShell.accountId;
   pendingGameStatus.textContent = "";
 
   try {
     const pendingGame = await pendingGameRepository.cancelCreatedGame({
-      creatorAccountId: accountShell.accountId,
+      creatorAccountId: accountId,
       pendingGameId,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
-    await loadMultiplayerDashboard();
+    if (!(await loadMultiplayerDashboard({ accountId }))) {
+      return;
+    }
+
     renderPendingGamePanel();
     pendingGameStatus.textContent = "Game cancelled.";
   } catch {
-    pendingGameStatus.textContent = "Game could not be cancelled. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Game could not be cancelled. Try again.";
+    }
   }
 }
 
@@ -2461,25 +2528,35 @@ async function startPendingGame(pendingGameId) {
     return;
   }
 
+  const accountId = accountShell.accountId;
   pendingGameStatus.textContent = "";
 
   try {
     const startedGame = await pendingGameRepository.startPendingGame({
-      creatorAccountId: accountShell.accountId,
+      creatorAccountId: accountId,
       pendingGameId,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     createdPendingGames = upsertPendingGame(
       createdPendingGames,
       createPendingGameFromStartedGame(startedGame),
     );
-    await loadMultiplayerDashboard();
+    if (!(await loadMultiplayerDashboard({ accountId }))) {
+      return;
+    }
+
     renderPendingGamePanel();
     pendingGameStatus.textContent =
       multiplayerDashboard.awaitingYourEntries.length > 0
         ? "Game started. Your turn is ready."
         : "Game started. Waiting for another participant.";
   } catch {
-    pendingGameStatus.textContent = "Game could not be started. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Game could not be started. Try again.";
+    }
   }
 }
 
@@ -2606,28 +2683,44 @@ async function openCompletedMultiplayerHistory() {
     return;
   }
 
+  const accountId = accountShell.accountId;
   pendingGameStatus.textContent = "";
   multiplayerDashboardMount.hidden = true;
   completedMultiplayerHistoryPanel.hidden = false;
   renderCompletedMultiplayerHistoryLoading();
 
   try {
-    completedMultiplayerHistory = await loadCompletedMultiplayerHistoryPage();
+    completedMultiplayerHistory = await loadCompletedMultiplayerHistoryPage({
+      accountId,
+    });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     renderCompletedMultiplayerHistory();
   } catch {
-    renderCompletedMultiplayerHistoryError();
+    if (isCurrentAccountSession(accountId)) {
+      renderCompletedMultiplayerHistoryError();
+    }
   }
 }
 
-async function loadCompletedMultiplayerHistoryPage({ cursor } = {}) {
+async function loadCompletedMultiplayerHistoryPage({
+  accountId = accountShell.accountId,
+  cursor,
+} = {}) {
   return pendingGameRepository.listCompletedMultiplayerHistory({
-    accountId: accountShell.accountId,
+    accountId,
     ...(cursor ? { cursor } : {}),
     pageSize: COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE,
   });
 }
 
 async function loadMoreCompletedMultiplayerHistory() {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
   if (
     !completedMultiplayerHistory.hasMore ||
     !completedMultiplayerHistory.nextCursor
@@ -2636,6 +2729,7 @@ async function loadMoreCompletedMultiplayerHistory() {
   }
 
   const existingBatches = completedMultiplayerHistory.batches;
+  const accountId = accountShell.accountId;
   completedMultiplayerHistory = {
     ...completedMultiplayerHistory,
     loadMoreError: false,
@@ -2645,13 +2739,22 @@ async function loadMoreCompletedMultiplayerHistory() {
 
   try {
     const nextPage = await loadCompletedMultiplayerHistoryPage({
+      accountId,
       cursor: completedMultiplayerHistory.nextCursor,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     completedMultiplayerHistory = {
       ...nextPage,
       batches: [...existingBatches, ...nextPage.batches],
     };
   } catch {
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     completedMultiplayerHistory = {
       ...completedMultiplayerHistory,
       batches: existingBatches,
@@ -2664,6 +2767,10 @@ async function loadMoreCompletedMultiplayerHistory() {
 }
 
 function showMultiplayerDashboard() {
+  if (!completedMultiplayerHistoryPanel || !multiplayerDashboardMount) {
+    return;
+  }
+
   completedMultiplayerHistoryPanel.hidden = true;
   multiplayerDashboardMount.hidden = false;
 }
@@ -2724,6 +2831,10 @@ function renderCompletedHistoryLoadMore() {
 }
 
 function renderCompletedMultiplayerHistoryShell(children) {
+  if (!completedMultiplayerHistoryPanel) {
+    return;
+  }
+
   const heading = document.createElement("h3");
   heading.textContent = "Completed multiplayer history";
 
@@ -2902,6 +3013,11 @@ function getMultiplayerSectionTitle(entryKind) {
 
 async function submitMultiplayerSection(event, currentSection) {
   event.preventDefault();
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
   const form = event.currentTarget;
   const entries = [...form.querySelectorAll("[data-multiplayer-section-input]")]
     .map((input) => ({
@@ -2913,24 +3029,39 @@ async function submitMultiplayerSection(event, currentSection) {
 
   try {
     await pendingGameRepository.submitMultiplayerSection({
-      accountId: accountShell.accountId,
+      accountId,
       entries,
       sectionId: currentSection.id,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     await refreshMultiplayerSurfaces();
   } catch {
-    pendingGameStatus.textContent = "Section could not be submitted. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Section could not be submitted. Try again.";
+    }
   }
 }
 
 async function revealMultiplayerBatch(gameId) {
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
   pendingGameStatus.textContent = "";
 
   try {
     const revealed = await pendingGameRepository.revealMultiplayerBatch({
-      accountId: accountShell.accountId,
+      accountId,
       gameId,
     });
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     multiplayerDashboard.completedBatches = multiplayerDashboard.completedBatches.map(
       (batch) => batch.id === gameId ? { ...batch, ...revealed } : batch,
     );
@@ -2943,17 +3074,29 @@ async function revealMultiplayerBatch(gameId) {
     }
   } catch {
     try {
-      await loadMultiplayerDashboard();
+      if (!(await loadMultiplayerDashboard({ accountId }))) {
+        return;
+      }
       renderPendingGamePanel();
     } catch {
       // Keep the existing dashboard visible if recovery loading also fails.
     }
-    pendingGameStatus.textContent = "Phrases could not be revealed. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Phrases could not be revealed. Try again.";
+    }
   }
 }
 
 async function refreshMultiplayerSurfaces() {
-  await loadMultiplayerDashboard();
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
+  if (!(await loadMultiplayerDashboard({ accountId }))) {
+    return;
+  }
+
   renderPendingGamePanel();
 }
 
@@ -2973,14 +3116,23 @@ async function markNotificationRead(notificationId) {
     return;
   }
 
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
   try {
     const updatedNotification =
       typeof pendingGameRepository.markInAppNotificationRead === "function"
         ? await pendingGameRepository.markInAppNotificationRead({
-            accountId: accountShell.accountId,
+            accountId,
             notificationId,
           })
         : { ...notification, status: "read" };
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     inAppNotifications = inAppNotifications.map((candidate) =>
       candidate.id === notificationId
         ? { ...candidate, ...updatedNotification, status: "read" }
@@ -2988,7 +3140,9 @@ async function markNotificationRead(notificationId) {
     );
     renderNotificationDropdown();
   } catch {
-    pendingGameStatus.textContent = "Notification could not be updated. Try again.";
+    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
+      pendingGameStatus.textContent = "Notification could not be updated. Try again.";
+    }
   }
 }
 
@@ -3005,37 +3159,55 @@ async function loadPendingGameLists() {
     return;
   }
 
+  const accountId = accountShell.accountId;
   try {
-    [createdPendingGames, incomingPendingGameInvites] = await Promise.all([
+    const [createdGames, incomingInvites] = await Promise.all([
       pendingGameRepository.listCreatedPendingGames({
-        accountId: accountShell.accountId,
+        accountId,
       }),
       pendingGameRepository.listIncomingPendingGameInvites({
-        accountId: accountShell.accountId,
+        accountId,
       }),
     ]);
-    await loadMultiplayerDashboard();
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
+    createdPendingGames = createdGames;
+    incomingPendingGameInvites = incomingInvites;
+    await loadMultiplayerDashboard({ accountId });
   } catch {
+    if (!isCurrentAccountSession(accountId)) {
+      return;
+    }
+
     resetPendingGameState();
     authMessage.textContent = "Game invites could not be loaded. Try again.";
   }
 }
 
-async function loadMultiplayerDashboard() {
+async function loadMultiplayerDashboard({ accountId = accountShell.accountId } = {}) {
   if (accountShell.persistenceAuthority.type !== "account") {
     multiplayerDashboard = createEmptyMultiplayerDashboard();
     inAppNotifications = [];
-    return;
+    return false;
   }
 
-  [multiplayerDashboard, inAppNotifications] = await Promise.all([
+  const [dashboard, notifications] = await Promise.all([
     pendingGameRepository.listMultiplayerDashboard({
-      accountId: accountShell.accountId,
+      accountId,
     }),
     pendingGameRepository.listInAppNotifications({
-      accountId: accountShell.accountId,
+      accountId,
     }),
   ]);
+  if (!isCurrentAccountSession(accountId)) {
+    return false;
+  }
+
+  multiplayerDashboard = dashboard;
+  inAppNotifications = notifications;
+  return true;
 }
 
 function createEmptyMultiplayerDashboard() {
@@ -3073,6 +3245,13 @@ function isCurrentAccountPendingGameParticipant(pendingGame, role) {
     (participant) =>
       participant.role === role &&
       participant.handle === accountShell.profile?.handle,
+  );
+}
+
+function isCurrentAccountSession(accountId) {
+  return (
+    accountShell.persistenceAuthority.type === "account" &&
+    accountShell.accountId === accountId
   );
 }
 

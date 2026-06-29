@@ -2121,6 +2121,73 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps signed-out Solo clean when Multiplayer invite creation finishes late", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await delayLocalTestPendingGameInviteCreation(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/play/multiplayer`);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    await assertPendingGameSurfaceMounted(page);
+
+    await page.getByRole("button", { name: "Notifications" }).click();
+    assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/play/multiplayer",
+        }),
+      );
+    });
+
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
+    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
+
+    await page.getByRole("button", { name: "Sign out" }).focus();
+    await page.keyboard.press("Enter");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertTextVisible(page, "Local play in this browser");
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
+    await assertNoPendingGameDom(page);
+    await assertNoFavouriteDom(page);
+    await assertNoProfileEditorDom(page);
+    await assertNoNotificationDom(page);
+
+    await releaseDelayedPendingGameInviteCreation(page);
+    await page.waitForTimeout(100);
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoPendingGameDom(page);
+    await assertNoFavouriteDom(page);
+    await assertNoProfileEditorDom(page);
+    await assertNoNotificationDom(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+
+    assertNoConsoleErrors();
+  });
+
   it("restores signed-in reveal after sign out and sign back in until Start again replaces it", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -3277,6 +3344,55 @@ async function openMultiplayerRoute(page) {
       document.querySelectorAll("[data-pending-game-panel]").length === 1,
   );
   assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+}
+
+async function delayLocalTestPendingGameInviteCreation(context) {
+  await context.addInitScript(() => {
+    window.__pendingGameCreateStarted = false;
+    window.__releasePendingGameCreate = null;
+    window.__delayPendingGameCreate = () => {
+      window.__pendingGameCreateStarted = true;
+      return new Promise((resolve) => {
+        window.__releasePendingGameCreate = resolve;
+      });
+    };
+  });
+
+  await context.route("**/assets/pending-game.js*", async (route) => {
+    const pendingGameSource = await readFile(
+      resolve(workspaceRoot, "assets/pending-game.js"),
+      "utf8",
+    );
+    const delayedPendingGameSource = pendingGameSource.replace(
+      /export function createLocalTestPendingGameRepository\(options = \{\}\) \{\r?\n  return createTestPendingGameRepository\(options\);\r?\n\}/,
+      `export function createLocalTestPendingGameRepository(options = {}) {
+  const repository = createTestPendingGameRepository(options);
+  if (typeof globalThis.__delayPendingGameCreate !== "function") {
+    return repository;
+  }
+
+  return {
+    ...repository,
+    async createPendingGameFromHandle(args) {
+      await globalThis.__delayPendingGameCreate();
+      return repository.createPendingGameFromHandle(args);
+    },
+  };
+}`,
+    );
+
+    assert.notEqual(delayedPendingGameSource, pendingGameSource);
+    await route.fulfill({
+      body: delayedPendingGameSource,
+      contentType: "text/javascript; charset=utf-8",
+    });
+  });
+}
+
+async function releaseDelayedPendingGameInviteCreation(page) {
+  await page.evaluate(() => {
+    window.__releasePendingGameCreate?.();
+  });
 }
 
 async function assertFavouriteSurfaceMounted(page) {

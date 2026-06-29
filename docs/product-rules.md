@@ -382,8 +382,9 @@ Supabase Auth callback fragments that carry Auth response parameters, such as
 available to Supabase initialisation before canonicalising the visible hash route, and
 must not treat that callback cleanup as stale anonymous navigation.
 If hosted Auth SDK cleanup removes the visible hash after the app has consumed a
-signed-in-only handoff, the app should reassert the consumed destination while
-the internal current route still matches that destination.
+signed-in-only handoff, the app should reassert the consumed destination during
+a bounded post-auth reconciliation window while the internal current route still
+matches that destination.
 Explicit sign-out from a signed-in-only route should clear account-only UI, close
 account and notification menus, discard any preserved requested destination, and reset
 the route to `#/play/solo` for anonymous Solo Game play. A fresh anonymous visit to a

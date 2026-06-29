@@ -149,7 +149,7 @@ const ROUTES = {
   playMultiplayer: "#/play/multiplayer",
   favourites: "#/favourites",
 };
-const signedInRouteReconciliationDelaysMs = [0, 100, 500];
+const signedInRouteReconciliationDelaysMs = [0, 100, 500, 1500, 3000, 6000, 10000];
 const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
 const signedInRouteHandoff = createSignedInRouteHandoff({
   allowedRoutes: signedInOnlyRoutes,

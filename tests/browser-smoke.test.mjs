@@ -1887,6 +1887,69 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("reasserts a consumed signed-in route after delayed hosted Auth URL cleanup", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/play/multiplayer",
+        }),
+      );
+    });
+    await page.reload();
+    assert.equal(new URL(page.url()).hash, "");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoPendingGameDom(page);
+
+    await page.evaluate(() => {
+      window.__hostedAuthDelayedUrlCleanupApplied = false;
+      window.addEventListener(
+        "hashchange",
+        () => {
+          if (window.location.hash !== "#/play/multiplayer") {
+            return;
+          }
+
+          window.setTimeout(() => {
+            window.history.replaceState(null, "", `${window.location.pathname}#`);
+            window.__hostedAuthDelayedUrlCleanupApplied = true;
+          }, 1_000);
+        },
+        { once: true },
+      );
+    });
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await page.waitForFunction(
+      () => window.__hostedAuthDelayedUrlCleanupApplied === true,
+    );
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+      undefined,
+      { timeout: 2_000 },
+    );
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    await assertPendingGameSurfaceMounted(page);
+    await assertNoFavouritesPanelDom(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("resolves unsupported hash routes to anonymous Solo play", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

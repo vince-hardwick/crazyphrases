@@ -163,7 +163,7 @@ const initialHashIsSupabaseAuthCallback = isSupabaseAuthCallbackHash(
   window.location.hash,
 );
 let pendingSupabaseAuthCallbackHash = initialHashIsSupabaseAuthCallback;
-let preserveNextAnonymousRouteHandoff = false;
+let preserveNextAnonymousRouteHandoff = initialHashIsSupabaseAuthCallback;
 let currentRoute = normaliseRoute(window.location.hash);
 let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
   ? currentRoute

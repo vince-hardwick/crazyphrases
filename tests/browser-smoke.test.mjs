@@ -1820,6 +1820,88 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("preserves a hosted Auth route handoff when callback cleanup runs before sign-in", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.route("**/assets/supabase-config.js*", async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript; charset=utf-8",
+        body: `
+          export const SUPABASE_RUNTIME_CONFIG = Object.freeze({
+            publishableKey: "sb_publishable_test",
+            url: "https://example.supabase.co",
+          });
+
+          export function getSupabaseRuntimeConfig(config = SUPABASE_RUNTIME_CONFIG) {
+            return {
+              configured: true,
+              publishableKey: config.publishableKey,
+              url: config.url,
+            };
+          }
+        `,
+      });
+    });
+    await context.addInitScript(() => {
+      window.supabase = {
+        createClient: () => ({
+          auth: {
+            getUser: () => new Promise(() => {}),
+            signInWithOAuth: async () => ({ data: {}, error: null }),
+            signOut: async () => ({ error: null }),
+          },
+          from: () => ({}),
+          rpc: async () => ({ data: [], error: null }),
+          storage: {
+            from: () => ({}),
+          },
+        }),
+      };
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/play/multiplayer",
+        }),
+      );
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(
+      `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
+    );
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoPendingGameDom(page);
+
+    await page.evaluate(() => {
+      window.location.hash = "";
+    });
+    await page.waitForFunction(() => window.location.hash === "");
+
+    const preservedHandoff = await page.evaluate(() =>
+      window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+    );
+    assert.notEqual(preservedHandoff, null);
+    assert.equal(JSON.parse(preservedHandoff).route, "#/play/multiplayer");
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    await assertPendingGameSurfaceMounted(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("reasserts a consumed signed-in route after hosted Auth URL cleanup", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

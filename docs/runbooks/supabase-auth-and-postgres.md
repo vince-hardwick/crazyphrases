@@ -319,7 +319,8 @@ until Supabase JS has had a chance to initialise the browser session. After Auth
 initialisation settles, the app may canonicalise the visible hash route back to
 `#/play/solo` or to the consumed signed-in destination. This callback cleanup is
 not stale anonymous navigation and must not clear an otherwise valid signed-in
-route handoff.
+route handoff, even if the cleanup happens before `supabase.auth.getUser()`
+has settled into an Account shell.
 
 Hosted OAuth callback cleanup can also replace the visible URL after the app has
 already consumed a signed-in-only handoff. When the Account shell is signed in

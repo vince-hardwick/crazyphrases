@@ -380,7 +380,8 @@ input, malformed storage, or expiry.
 Supabase Auth callback fragments that carry Auth response parameters, such as
 `#access_token=...`, are not route input. The app should leave those fragments
 available to Supabase initialisation before canonicalising the visible hash route, and
-must not treat that callback cleanup as stale anonymous navigation.
+must not treat that callback cleanup as stale anonymous navigation, including when
+the cleanup happens before Account session initialisation has settled.
 If hosted Auth SDK cleanup removes the visible hash after the app has consumed a
 signed-in-only handoff, the app should reassert the consumed destination during
 a bounded post-auth reconciliation window while the internal current route still

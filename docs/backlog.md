@@ -283,8 +283,11 @@ preserve their original history.
   signed-in-only route should clear account-only UI, close account and notification
   menus, discard preserved requested destination state, and reset the route to
   `#/play/solo`; fresh anonymous visits to bookmarked signed-in-only routes may still
-  show the gate. Implementation should start with issue #105 and follow the issue
-  dependency order.
+  show the gate. Issue #105 locks the local/test route-gate invariant: anonymous
+  gated routes render no account-only Notification DOM, and unsupported non-empty
+  hashes resolve to `#/play/solo` without granting account authority. Remaining
+  implementation should continue with issues #106, #107, and #108 in dependency
+  order.
 - **Remaining risk**: Hosted OAuth and magic-link redirects may not preserve URL
   fragments directly, so implementation may need a short-lived client-side
   requested-destination handoff before leaving for hosted auth. Browser tests must cover

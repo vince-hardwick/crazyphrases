@@ -1536,6 +1536,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/#/favourites`);
     await assertTextVisible(page, "Sign in to view Favourites");
     await assertNoFavouriteDom(page);
+    await assertNoNotificationDom(page);
     assert.equal(await page.locator("[data-favourites-route]").count(), 0);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
@@ -1569,6 +1570,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Anonymous solo");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoFavouriteDom(page);
+    await assertNoNotificationDom(page);
 
     assertNoConsoleErrors();
   });
@@ -1700,6 +1702,28 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("resolves unsupported hash routes to anonymous Solo play", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/account/settings`);
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertTextVisible(page, "Anonymous solo");
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), false);
+    await assertNoFavouriteDom(page);
+    await assertNoPendingGameDom(page);
+    await assertNoProfileEditorDom(page);
+    await assertNoNotificationDom(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("gates and restores the Multiplayer route without dropping pending state", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -1714,6 +1738,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Sign in to play Multiplayer");
     await assertNoPendingGameDom(page);
     await assertNoFavouriteDom(page);
+    await assertNoNotificationDom(page);
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
@@ -2984,6 +3009,22 @@ async function assertNoProfileEditorDom(page) {
   assert.equal(await page.locator("[data-account-profile-crop-scale]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-crop-x]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-crop-y]").count(), 0);
+}
+
+async function assertNoNotificationDom(page) {
+  assert.equal(
+    await page
+      .locator(
+        [
+          "[data-notification-shell]",
+          "[data-notification-toggle]",
+          "[data-notification-panel]",
+          "[data-notification-badge]",
+        ].join(", "),
+      )
+      .count(),
+    0,
+  );
 }
 
 async function assertProfileManagementSurfaceMounted(page) {

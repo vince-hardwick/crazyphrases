@@ -103,9 +103,10 @@ const confirmStartAgainButton = document.querySelector("[data-confirm-start-agai
 const cancelStartAgainButton = document.querySelector("[data-cancel-start-again]");
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
-const notificationShell = document.querySelector("[data-notification-shell]");
-const notificationToggle = document.querySelector("[data-notification-toggle]");
-const notificationPanel = document.querySelector("[data-notification-panel]");
+const headerActions = document.querySelector(".header-actions");
+let notificationShell = document.querySelector("[data-notification-shell]");
+let notificationToggle = document.querySelector("[data-notification-toggle]");
+let notificationPanel = document.querySelector("[data-notification-panel]");
 const primaryNav = document.querySelector("[data-primary-nav]");
 const routeGate = document.querySelector("[data-route-gate]");
 const gamePanel = document.querySelector("[data-game-panel]");
@@ -350,7 +351,7 @@ helpToggle.addEventListener("click", () => {
   helpPanel.hidden = isExpanded;
 });
 
-notificationToggle.addEventListener("click", () => {
+function handleNotificationToggleClick() {
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
   notificationToggle.setAttribute("aria-expanded", String(!isExpanded));
   notificationPanel.hidden = isExpanded;
@@ -359,7 +360,7 @@ notificationToggle.addEventListener("click", () => {
     renderNotificationDropdown();
     void markUnreadNotificationsRead();
   }
-});
+}
 
 rowCountButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -488,7 +489,13 @@ revealPanel.addEventListener("click", (event) => {
 });
 
 window.addEventListener("hashchange", () => {
-  currentRoute = normaliseRoute(window.location.hash);
+  const requestedHashRoute = window.location.hash;
+  currentRoute = normaliseRoute(requestedHashRoute);
+  if (requestedHashRoute && requestedHashRoute !== currentRoute) {
+    ensureHashRoute(currentRoute);
+    return;
+  }
+
   if (accountShell.persistenceAuthority.type !== "account") {
     requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
       ? currentRoute
@@ -497,7 +504,11 @@ window.addEventListener("hashchange", () => {
   renderRoute();
 });
 
-renderRoute();
+if (window.location.hash && window.location.hash !== currentRoute) {
+  ensureHashRoute(currentRoute);
+} else {
+  renderRoute();
+}
 
 function normaliseRoute(hash) {
   if (
@@ -672,14 +683,50 @@ function renderAccountShell(shell) {
     shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   emailSignInForm.hidden = shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
   signOutButton.hidden = shell.mode !== "signed-in";
-  notificationShell.hidden = shell.mode !== "signed-in";
-  if (shell.mode !== "signed-in") {
-    notificationToggle.setAttribute("aria-expanded", "false");
-    notificationPanel.hidden = true;
-    notificationPanel.replaceChildren();
+  if (shell.mode === "signed-in") {
+    ensureNotificationShell();
+    notificationShell.hidden = false;
+  } else {
+    removeNotificationShell();
   }
   renderAccountProfilePanel(shell);
   updateNotificationToggle();
+}
+
+function ensureNotificationShell() {
+  if (notificationShell && notificationToggle && notificationPanel) {
+    return;
+  }
+
+  notificationShell = document.createElement("div");
+  notificationShell.className = "notification-shell";
+  notificationShell.dataset.notificationShell = "";
+
+  notificationToggle = document.createElement("button");
+  notificationToggle.className = "icon-button notification-button";
+  notificationToggle.type = "button";
+  notificationToggle.setAttribute("aria-expanded", "false");
+  notificationToggle.setAttribute("aria-controls", "notification-panel");
+  notificationToggle.dataset.notificationToggle = "";
+  notificationToggle.addEventListener("click", handleNotificationToggleClick);
+
+  notificationPanel = document.createElement("div");
+  notificationPanel.className = "notification-panel";
+  notificationPanel.id = "notification-panel";
+  notificationPanel.role = "region";
+  notificationPanel.setAttribute("aria-label", "Notifications");
+  notificationPanel.dataset.notificationPanel = "";
+  notificationPanel.hidden = true;
+
+  notificationShell.append(notificationToggle, notificationPanel);
+  headerActions.insertBefore(notificationShell, helpToggle);
+}
+
+function removeNotificationShell() {
+  notificationShell?.remove();
+  notificationShell = null;
+  notificationToggle = null;
+  notificationPanel = null;
 }
 
 function renderAccountProfilePanel(shell) {
@@ -2703,6 +2750,10 @@ function renderMultiplayerSectionRow(row, currentSection) {
 }
 
 function renderNotificationDropdown() {
+  if (!notificationPanel) {
+    return;
+  }
+
   updateNotificationToggle();
   notificationPanel.replaceChildren(
     ...inAppNotifications.map((notification) => {
@@ -2721,6 +2772,10 @@ function renderNotificationDropdown() {
 }
 
 function updateNotificationToggle() {
+  if (!notificationToggle) {
+    return;
+  }
+
   const unreadCount = inAppNotifications.filter(
     (notification) => notification.status === "unread",
   ).length;

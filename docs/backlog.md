@@ -315,25 +315,19 @@ preserve their original history.
 - **Revisit trigger satisfied**: Signed-in navigation and Favourites placement were
   designed on 2026-06-25 and 2026-06-26, including a dedicated `#/favourites`
   destination and account-scoped saved-output management.
-- **Status**: Accepted. Canonical icon, action-availability, status-copy, confirmation,
-  focus, visible-tooltip, touch-activation, and pending-settlement rules live in
-  [Signed-in Favourites product rules](product-rules.md#signed-in-favourites) and
-  [Icon-first actions product rules](product-rules.md#icon-first-actions).
-- **Implementation risk**: The implementation plan still needs to translate those rules
-  into accessible names, hover/focus tooltips for icon-only row actions, direct touch
-  activation without tap-to-preview tooltips, mobile-safe hit areas, narrow-row action
-  wrapping without overflow menus, row-local live regions, 2-second copy/share and
-  removal success status auto-clear, active-tab removal success status placement without
-  reserved blank space, tab-switch clearing for removal success status, removal-success
-  focus recovery that does not focus the status message, visible focus indicators for
-  programmatic row focus targets that do not imply selection, `Tab` flow from row focus
-  to the row's first normal action, normal reverse order for `Shift+Tab` from row focus,
-  no activation from `Enter` or `Space` on programmatic row focus targets, one copy/share
-  status per visible tab, persistent copy/share failure status while the failed row
-  remains visible, remove-failure status while the confirmation remains open, tab-switch
-  and remove-confirmation status clearing, pending-disabled state, failure state,
-  share-action visibility, and regression coverage for anonymous DOM absence and
-  signed-in saved-state behaviour.
+- **Status**: Completed for the first dedicated signed-in Favourites destination on
+  2026-06-28. PR #95 added icon-first signed-in Favourites navigation, icon-only
+  `#/favourites` row actions, row-local status handling, removal confirmation, focus
+  recovery, mobile/narrow-row hardening, and anonymous DOM absence coverage. The slice
+  was promoted through `test` and production with hosted smoke evidence in
+  `docs/planning/supabase-state-ledger.md`.
+- **Remaining risk and trigger**: No first-slice `#/favourites` icon-action work remains
+  deferred here. Future non-Favourites reveal controls, new share surfaces, or broader
+  signed-in navigation changes should reuse the canonical icon, action-availability,
+  status-copy, confirmation, focus, visible-tooltip, touch-activation, and
+  pending-settlement rules in [Signed-in Favourites product
+  rules](product-rules.md#signed-in-favourites) and [Icon-first actions product
+  rules](product-rules.md#icon-first-actions).
 
 ### Dedicated favourites destination
 
@@ -346,18 +340,18 @@ preserve their original history.
 - **Revisit trigger satisfied**: Signed-in navigation and profile/account surfaces were
   designed on 2026-06-25 and 2026-06-26 after private Phrase Favourites, Batch
   Favourites, and uploaded Avatar profile editing shipped.
-- **Status**: Accepted. Canonical destination, tab, row, expansion, copy/share,
-  remove-confirmation, pending-settlement, saved-date, participant-indicator, and
-  snapshot rules live in [Signed-in Favourites product
-  rules](product-rules.md#signed-in-favourites). The backlog now records implementation
-  readiness and deferred follow-up ideas rather than restating the full UI contract.
-- **Implementation risk**: The implementation plan still needs to define the code-level
-  removal of current inline saved-collection browsing from Play/Reveal, `#/favourites`
-  route mounting, parallel list loading, list-specific retries, newest-first full-list
-  query/render contracts, row-local live status, Share Consent checks,
-  participant-indicator truncation, accessible labels, programmatic focus targets,
-  expanded Batch Favourite state, pending removal unmount/inactive-tab settlement, and
-  regression coverage for anonymous DOM absence and stable hash routing.
+- **Status**: Completed for the first dedicated signed-in Favourites destination on
+  2026-06-28. PR #95 moved saved-output browsing and management to `#/favourites`,
+  mounted Phrases and Batches tabs behind the signed-in route gate, loaded Phrase and
+  Batch Favourites as account-scoped lists, rendered snapshot rows with saved dates and
+  participant indicators, supported copy, expansion, removal confirmation, pending
+  settlement, focus recovery, and anonymous DOM absence coverage, and promoted the
+  slice through `test` and production. Detailed runtime evidence lives in
+  `docs/planning/supabase-state-ledger.md`.
+- **Remaining risk and trigger**: No first-slice dedicated Favourites destination work
+  remains deferred here. Future changes should treat the implemented `#/favourites`
+  destination as the baseline and route any new volume, grouping, source-link,
+  localisation, avatar, or count work through the dedicated follow-up entries below.
 - **True follow-ups**: Pagination/search, duplicate grouping, source-game/reveal links,
   original reveal date reconsideration, date localisation, participant avatars, and a
   saved-count badge remain deferred in the dedicated backlog entries below.
@@ -451,24 +445,16 @@ preserve their original history.
   navigation shape feel less direct. A heart icon is widely understood as a
   saved/favourite affordance and lets the destination stay prominent without
   overcrowding the header.
-- **Status**: Accepted on 2026-06-26 as part of signed-in navigation design. The
-  `Favourites` nav heart keeps accessible name `Favourites`; when icon-only, it shows a
-  lightweight hover/focus tooltip with the text `Favourites`. The nav heart uses stable
-  icon style; active route state is shown through nav-control styling and
-  `aria-current`, not by switching the nav icon between regular and solid styles.
-  Regular-vs-solid heart changes remain reserved for item-level favourite actions: Font
-  Awesome Classic Regular `heart` means the item is not currently a favourite, and Font
-  Awesome Classic Solid `heart` means it is already a favourite. Do not show a
-  saved-count badge on the `Favourites` nav heart in the first slice; saved counts are
-  not urgent notifications, and the dedicated destination tabs own saved-output loading,
-  empty, and error state after the participant chooses Favourites. The Notifications
-  bell remains a utility control and the account affordance remains the identity
-  control; `Play` and account menus may open as full-width mobile popovers or sheets on
-  narrow screens. Implementation still needs an owning PRD and agent-sized issues before
-  code changes.
-- **Remaining risk**: The implementation plan still needs mobile-safe hit areas,
-  active-route styling, full-width mobile menu behaviour, and browser coverage for
-  narrow viewport layout without overlap or horizontal overflow.
+- **Status**: Completed for the first signed-in Favourites navigation slice on
+  2026-06-28 through PR #95. The `Favourites` nav heart keeps accessible name
+  `Favourites`; when icon-only, it shows the accepted lightweight tooltip. Active route
+  state is handled by nav-control styling and `aria-current`, while regular-vs-solid
+  heart changes remain item-level favourite state. The first slice intentionally omitted
+  a saved-count badge.
+- **Remaining risk and trigger**: No first-slice Favourites nav-heart work remains
+  deferred here. Revisit only if future navigation work changes mobile menu behaviour,
+  adds saved-count loading, or expands the signed-in header enough to create overlap,
+  hit-area, or horizontal-overflow risk.
 
 ### Favourites saved-count badge
 

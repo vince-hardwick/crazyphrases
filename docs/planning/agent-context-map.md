@@ -43,6 +43,7 @@ For large documents, search for the relevant heading first and then read that se
 | --- | --- |
 | MVP anonymous solo behaviour | `docs/product-rules.md` |
 | Signed-in backend and auth source of truth | `docs/decisions/0010-supabase-auth-and-postgres-for-signed-in-state.md` |
+| Signed-in route gate for anonymous visitors | `docs/backlog.md` section `Signed-in route gate for anonymous visitors`, `docs/product-rules.md` section `Route model and account gates`; GitHub PRD issue #104 and implementation issues #105-#108 |
 | Account Profile and Handle Directory | `docs/decisions/0011-account-profile-handle-directory.md`, `docs/product-rules.md` |
 | Additional hosted Auth providers | `docs/backlog.md` section `Additional hosted Auth providers`, `docs/runbooks/supabase-auth-and-postgres.md`; GitHub issue #89 |
 | Branded hosted Auth domain | `docs/decisions/0022-branded-supabase-auth-deferral.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/runbooks/cloudflare-dns-and-access.md`, `docs/backlog.md` section `Branded Supabase Auth domain`; completed GitHub issues #83 and #84 |

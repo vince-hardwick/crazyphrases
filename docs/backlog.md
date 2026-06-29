@@ -276,13 +276,15 @@ preserve their original history.
   should make the requested destination clear without mounting account-only DOM, wiring
   account-only event paths, or fetching private data before Supabase Auth and Row Level
   Security can authorise the Account.
-- **Status**: Accepted on 2026-06-25 as part of signed-in navigation design. The
-  requested signed-in destination should be preserved through sign-in and opened after a
-  valid Account session exists. Explicit sign-out from a signed-in-only route should
-  clear account-only UI, close account and notification menus, discard preserved
-  requested destination state, and reset the route to `#/play/solo`; fresh anonymous
-  visits to bookmarked signed-in-only routes may still show the gate. Implementation
-  still needs an owning PRD and agent-sized issues before code changes.
+- **Status**: Accepted on 2026-06-25 as part of signed-in navigation design. PRD
+  issue #104 and implementation issues #105, #106, #107, and #108 were published on
+  2026-06-29. The requested signed-in destination should be preserved through sign-in
+  and opened after a valid Account session exists. Explicit sign-out from a
+  signed-in-only route should clear account-only UI, close account and notification
+  menus, discard preserved requested destination state, and reset the route to
+  `#/play/solo`; fresh anonymous visits to bookmarked signed-in-only routes may still
+  show the gate. Implementation should start with issue #105 and follow the issue
+  dependency order.
 - **Remaining risk**: Hosted OAuth and magic-link redirects may not preserve URL
   fragments directly, so implementation may need a short-lived client-side
   requested-destination handoff before leaving for hosted auth. Browser tests must cover

@@ -304,6 +304,23 @@ with `emailRedirectTo` set to the current app root, and signs out through
 `supabase.auth.signOut()`. It must not expose user email as the game-facing
 Handle, Gamer Name, or persistence authority.
 
+Before a hosted Google OAuth or valid email magic-link request leaves the app,
+the adapter runs the app-provided redirect preparation hook. Crazy Phrases uses
+that hook to preserve only allowlisted signed-in-only destinations through
+`assets/signed-in-route-handoff.js`. The handoff is client-side, uses
+`localStorage` key `crazyphrases.signedInRouteHandoff.v1`, expires after ten
+minutes, and is consumed only after `supabase.auth.getUser()` has produced a
+valid Account shell. Unsupported, malformed, expired, explicitly cleared, or
+signed-out handoffs must not redirect the participant.
+
+When a hosted Auth callback returns with Supabase response parameters in the hash
+fragment, for example `#access_token=...`, the app must leave that fragment intact
+until Supabase JS has had a chance to initialise the browser session. After Auth
+initialisation settles, the app may canonicalise the visible hash route back to
+`#/play/solo` or to the consumed signed-in destination. This callback cleanup is
+not stale anonymous navigation and must not clear an otherwise valid signed-in
+route handoff.
+
 The app uses the revision-aware current-game session wrapper:
 
 ```text

@@ -1565,10 +1565,25 @@ describe("solo browser smoke", () => {
     await assertFavouriteSurfaceMounted(page);
     await assertTextVisible(page, "No phrase favourites yet.");
     await assertTextVisible(page, "Favourite revealed phrases from Play Solo.");
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/favourites",
+        }),
+      );
+    });
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertTextVisible(page, "Anonymous solo");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
     await assertNoFavouriteDom(page);
     await assertNoNotificationDom(page);
 
@@ -1687,17 +1702,120 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/#/favourites`);
     await assertTextVisible(page, "Sign in to view Favourites");
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/favourites",
+        }),
+      );
+    });
 
     await page.evaluate(() => {
       window.location.hash = "#/play/solo";
     });
     await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoFavouritesPanelDom(page);
     assert.equal(await page.locator("[data-game-panel]").isHidden(), false);
+
+    assertNoConsoleErrors();
+  });
+
+  it("consumes a hosted Auth route handoff only after sign-in", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/favourites",
+        }),
+      );
+    });
+    await page.reload();
+
+    assert.equal(new URL(page.url()).hash, "");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoFavouritesPanelDom(page);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    await assertFavouriteSurfaceMounted(page);
+    await assertTextVisible(page, "No phrase favourites yet.");
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("preserves a hosted Auth route handoff through a Supabase callback hash", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.addInitScript(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/favourites",
+        }),
+      );
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(
+      `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
+    );
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertTextVisible(page, "Anonymous solo");
+    await assertNoFavouritesPanelDom(page);
+    const preservedHandoff = await page.evaluate(() =>
+      JSON.parse(
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+    );
+    assert.equal(preservedHandoff.route, "#/favourites");
+    assert.equal(Number.isFinite(preservedHandoff.createdAt), true);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    await assertFavouriteSurfaceMounted(page);
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
 
     assertNoConsoleErrors();
   });
@@ -1712,9 +1830,25 @@ describe("solo browser smoke", () => {
     const page = await context.newPage();
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
+    await page.goto(staticServer.origin);
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route: "#/favourites",
+        }),
+      );
+    });
     await page.goto(`${staticServer.origin}/#/account/settings`);
     await page.waitForFunction(() => window.location.hash === "#/play/solo");
     await assertTextVisible(page, "Anonymous solo");
+    assert.equal(
+      await page.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
     assert.equal(await page.locator("[data-game-panel]").isHidden(), false);
     await assertNoFavouriteDom(page);
     await assertNoPendingGameDom(page);

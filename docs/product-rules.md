@@ -372,6 +372,15 @@ Anonymous visitors may play `#/play/solo`, but anonymous visits to signed-in-onl
 such as `#/play/multiplayer` and `#/favourites` should show a sign-in-required gate for
 the requested destination, preserve that requested destination through sign-in, and must
 not mount account-only DOM or fetch private data until a valid Account session exists.
+Hosted OAuth and email magic-link starts may preserve only an allowlisted signed-in-only
+destination in a client-side handoff for up to ten minutes. That handoff is consumed
+only after a valid Account session exists, and it is cleared after consumption,
+explicit sign-out, stale anonymous navigation back to `#/play/solo`, unsupported route
+input, malformed storage, or expiry.
+Supabase Auth callback fragments that carry Auth response parameters, such as
+`#access_token=...`, are not route input. The app should leave those fragments
+available to Supabase initialisation before canonicalising the visible hash route, and
+must not treat that callback cleanup as stale anonymous navigation.
 Explicit sign-out from a signed-in-only route should clear account-only UI, close
 account and notification menus, discard any preserved requested destination, and reset
 the route to `#/play/solo` for anonymous Solo Game play. A fresh anonymous visit to a

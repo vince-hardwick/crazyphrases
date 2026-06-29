@@ -110,6 +110,75 @@ describe("Supabase Auth session", () => {
     ]);
   });
 
+  it("prepares the requested destination before hosted Auth redirects", async () => {
+    const calls = [];
+    const session = createSupabaseAuthSession({
+      location: {
+        href: "https://dev.crazyphrases.com/#/favourites",
+      },
+      prepareAuthRedirect() {
+        calls.push({
+          method: "prepareAuthRedirect",
+        });
+      },
+      supabase: createFakeSupabaseAuthClient({
+        calls,
+        user: null,
+      }),
+    });
+
+    await session.signInWithGoogle();
+    await session.sendEmailMagicLink({ email: "player@example.com" });
+
+    assert.deepEqual(calls, [
+      {
+        method: "prepareAuthRedirect",
+      },
+      {
+        method: "signInWithOAuth",
+        request: {
+          provider: "google",
+          options: {
+            redirectTo: "https://dev.crazyphrases.com/",
+          },
+        },
+      },
+      {
+        method: "prepareAuthRedirect",
+      },
+      {
+        method: "signInWithOtp",
+        request: {
+          email: "player@example.com",
+          options: {
+            emailRedirectTo: "https://dev.crazyphrases.com/",
+          },
+        },
+      },
+    ]);
+  });
+
+  it("does not prepare an Auth redirect when email input is invalid", async () => {
+    const calls = [];
+    const session = createSupabaseAuthSession({
+      prepareAuthRedirect() {
+        calls.push({
+          method: "prepareAuthRedirect",
+        });
+      },
+      supabase: createFakeSupabaseAuthClient({
+        calls,
+        user: null,
+      }),
+    });
+
+    await assert.rejects(
+      () => session.sendEmailMagicLink({ email: "   " }),
+      /An email address is required/,
+    );
+    assert.deepEqual(calls, []);
+  });
+
   it("signs out through Supabase Auth", async () => {
     const calls = [];
     const session = createSupabaseAuthSession({

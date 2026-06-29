@@ -67,6 +67,7 @@ import {
   createLocalTestPendingGameRepository,
   createSupabasePendingGameRepository,
 } from "./pending-game.js?v=__ASSET_VERSION__";
+import { createSignedInRouteHandoff } from "./signed-in-route-handoff.js?v=__ASSET_VERSION__";
 
 const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
@@ -149,10 +150,19 @@ const ROUTES = {
   favourites: "#/favourites",
 };
 const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
+const signedInRouteHandoff = createSignedInRouteHandoff({
+  allowedRoutes: signedInOnlyRoutes,
+  storage: window.localStorage,
+});
 
 let game =
   loadCurrentAnonymousSoloGame(window.localStorage) ??
   createAnonymousSoloGame({ rowCount: 20 });
+const initialHashIsSupabaseAuthCallback = isSupabaseAuthCallbackHash(
+  window.location.hash,
+);
+let pendingSupabaseAuthCallbackHash = initialHashIsSupabaseAuthCallback;
+let preserveNextAnonymousRouteHandoff = false;
 let currentRoute = normaliseRoute(window.location.hash);
 let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
   ? currentRoute
@@ -497,15 +507,20 @@ window.addEventListener("hashchange", () => {
   }
 
   if (accountShell.persistenceAuthority.type !== "account") {
-    requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
-      ? currentRoute
-      : null;
+    updateAnonymousRequestedSignedInRoute(currentRoute, {
+      preserveStoredHandoff: preserveNextAnonymousRouteHandoff,
+    });
   }
+  preserveNextAnonymousRouteHandoff = false;
   renderRoute();
 });
 
 if (window.location.hash && window.location.hash !== currentRoute) {
-  ensureHashRoute(currentRoute);
+  if (initialHashIsSupabaseAuthCallback) {
+    renderRoute();
+  } else {
+    ensureHashRoute(currentRoute);
+  }
 } else {
   renderRoute();
 }
@@ -528,6 +543,63 @@ function ensureHashRoute(route) {
   }
 
   window.location.hash = route;
+}
+
+function isSupabaseAuthCallbackHash(hash) {
+  if (!hash || hash.startsWith("#/")) {
+    return false;
+  }
+
+  const params = new URLSearchParams(hash.slice(1));
+
+  return (
+    params.has("access_token") ||
+    params.has("refresh_token") ||
+    (params.has("error") && params.has("error_description"))
+  );
+}
+
+function resolvePendingSupabaseAuthCallbackHash() {
+  if (!pendingSupabaseAuthCallbackHash) {
+    return;
+  }
+
+  pendingSupabaseAuthCallbackHash = false;
+
+  if (!isSupabaseAuthCallbackHash(window.location.hash)) {
+    return;
+  }
+
+  preserveNextAnonymousRouteHandoff = true;
+  ensureHashRoute(currentRoute);
+}
+
+function preserveCurrentSignedInRouteForHostedAuth() {
+  if (signedInOnlyRoutes.has(currentRoute)) {
+    requestedSignedInRoute = currentRoute;
+    signedInRouteHandoff.preserve(currentRoute);
+    return;
+  }
+
+  requestedSignedInRoute = null;
+  signedInRouteHandoff.clear();
+}
+
+function updateAnonymousRequestedSignedInRoute(
+  route,
+  { preserveStoredHandoff = false } = {},
+) {
+  if (signedInOnlyRoutes.has(route)) {
+    requestedSignedInRoute = route;
+    return;
+  }
+
+  requestedSignedInRoute = null;
+  if (preserveStoredHandoff) {
+    return;
+  }
+
+  signedInRouteHandoff.clear();
 }
 
 function renderRoute() {
@@ -4543,6 +4615,7 @@ async function initialiseHostedAuth() {
     });
 
     if (!supabase) {
+      resolvePendingSupabaseAuthCallbackHash();
       return;
     }
 
@@ -4552,6 +4625,7 @@ async function initialiseHostedAuth() {
       createSupabaseAvatarStorageRepository({ supabase });
 
     hostedAuthSession = createSupabaseAuthSession({
+      prepareAuthRedirect: preserveCurrentSignedInRouteForHostedAuth,
       profileRepository: hostedAccountProfileRepository,
       supabase,
     });
@@ -4567,6 +4641,7 @@ async function initialiseHostedAuth() {
     pendingGameRepository = createSupabasePendingGameRepository({ supabase });
 
     await applyAccountShell(await hostedAuthSession.loadAccountShell());
+    resolvePendingSupabaseAuthCallbackHash();
   } catch {
     hostedAuthSession = null;
     hostedAuthAvailable = false;
@@ -4577,6 +4652,7 @@ async function initialiseHostedAuth() {
     avatarStorageRepository = localTestAvatarStorageRepository;
     authMessage.textContent = "Sign in unavailable.";
     renderAccountShell(accountShell);
+    resolvePendingSupabaseAuthCallbackHash();
   }
 }
 
@@ -4604,16 +4680,24 @@ async function applyAccountShell(shell) {
     hidePersistenceRecovery();
   }
 
+  const restoredSignedInRoute =
+    accountShell.persistenceAuthority.type === "account"
+      ? requestedSignedInRoute ??
+        signedInRouteHandoff.consume({ hasAccountSession: true })
+      : null;
+
   if (
     accountShell.persistenceAuthority.type === "account" &&
-    requestedSignedInRoute &&
-    signedInOnlyRoutes.has(currentRoute)
+    restoredSignedInRoute &&
+    signedInOnlyRoutes.has(restoredSignedInRoute)
   ) {
-    currentRoute = requestedSignedInRoute;
+    currentRoute = restoredSignedInRoute;
     requestedSignedInRoute = null;
+    signedInRouteHandoff.clear();
     ensureHashRoute(currentRoute);
   } else if (accountShell.persistenceAuthority.type === "account") {
     requestedSignedInRoute = null;
+    signedInRouteHandoff.clear();
   }
 
   renderAccountShell(accountShell);
@@ -4654,6 +4738,7 @@ function applySignedOutShell() {
   resetPendingGameState();
   hidePersistenceRecovery();
   requestedSignedInRoute = null;
+  signedInRouteHandoff.clear();
   if (signedInOnlyRoutes.has(currentRoute)) {
     currentRoute = ROUTES.playSolo;
     ensureHashRoute(ROUTES.playSolo);

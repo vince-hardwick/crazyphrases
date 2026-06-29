@@ -321,6 +321,12 @@ initialisation settles, the app may canonicalise the visible hash route back to
 not stale anonymous navigation and must not clear an otherwise valid signed-in
 route handoff.
 
+Hosted OAuth callback cleanup can also replace the visible URL after the app has
+already consumed a signed-in-only handoff. When the Account shell is signed in
+and the app's internal current route remains `#/play/multiplayer` or
+`#/favourites`, the browser hash should be reconciled back to that consumed
+destination rather than left at the app root.
+
 The app uses the revision-aware current-game session wrapper:
 
 ```text

@@ -149,6 +149,7 @@ const ROUTES = {
   playMultiplayer: "#/play/multiplayer",
   favourites: "#/favourites",
 };
+const signedInRouteReconciliationDelaysMs = [0, 100, 500];
 const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
 const signedInRouteHandoff = createSignedInRouteHandoff({
   allowedRoutes: signedInOnlyRoutes,
@@ -543,6 +544,26 @@ function ensureHashRoute(route) {
   }
 
   window.location.hash = route;
+}
+
+function scheduleSignedInRouteHashReconciliation(route) {
+  if (!signedInOnlyRoutes.has(route)) {
+    return;
+  }
+
+  for (const delayMs of signedInRouteReconciliationDelaysMs) {
+    window.setTimeout(() => {
+      if (
+        accountShell.persistenceAuthority.type !== "account" ||
+        currentRoute !== route ||
+        window.location.hash === route
+      ) {
+        return;
+      }
+
+      ensureHashRoute(route);
+    }, delayMs);
+  }
 }
 
 function isSupabaseAuthCallbackHash(hash) {
@@ -4695,6 +4716,7 @@ async function applyAccountShell(shell) {
     requestedSignedInRoute = null;
     signedInRouteHandoff.clear();
     ensureHashRoute(currentRoute);
+    scheduleSignedInRouteHashReconciliation(currentRoute);
   } else if (accountShell.persistenceAuthority.type === "account") {
     requestedSignedInRoute = null;
     signedInRouteHandoff.clear();

@@ -384,22 +384,42 @@ document.addEventListener("click", (event) => {
   setPlayMenuOpen(false);
 });
 
+document.addEventListener("click", (event) => {
+  if (
+    !notificationPanel ||
+    notificationPanel.hidden ||
+    notificationShell?.contains(event.target)
+  ) {
+    return;
+  }
+
+  closeNotificationPanel({ returnFocus: true });
+});
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !playMenu.hidden) {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!playMenu.hidden) {
     setPlayMenuOpen(false);
     playMenuToggle.focus();
   }
+
+  if (notificationPanel && !notificationPanel.hidden) {
+    closeNotificationPanel({ returnFocus: true });
+  }
 });
 
-function handleNotificationToggleClick() {
+function handleNotificationToggleClick(event) {
+  event.stopPropagation();
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
-  notificationToggle.setAttribute("aria-expanded", String(!isExpanded));
-  notificationPanel.hidden = isExpanded;
-
-  if (!isExpanded) {
-    renderNotificationDropdown();
-    void markUnreadNotificationsRead();
+  if (isExpanded) {
+    closeNotificationPanel({ returnFocus: true });
+    return;
   }
+
+  openNotificationPanel();
 }
 
 rowCountButtons.forEach((button) => {
@@ -854,6 +874,7 @@ function ensureNotificationShell() {
   notificationPanel.id = "notification-panel";
   notificationPanel.role = "region";
   notificationPanel.setAttribute("aria-label", "Notifications");
+  notificationPanel.tabIndex = -1;
   notificationPanel.dataset.notificationPanel = "";
   notificationPanel.hidden = true;
 
@@ -3014,19 +3035,65 @@ function renderNotificationDropdown() {
   }
 
   notificationPanel.replaceChildren(
-    ...inAppNotifications.map((notification) => {
+    ...getNotificationPanelItems().map((notification) => {
+      const message = getNotificationMessage(notification);
       const item = document.createElement("button");
       item.type = "button";
       item.className = "notification-item";
-      item.textContent = `${getNotificationMessage(notification)} ${
-        notification.status === "unread" ? "Unread" : "Read"
-      }`;
+      item.dataset.notificationStatus = notification.status;
+      item.textContent = message;
+      item.setAttribute("aria-label", getNotificationAccessibleLabel(notification, message));
       item.addEventListener("click", () => {
         void handleNotificationItemClick(notification);
       });
       return item;
     }),
   );
+}
+
+function openNotificationPanel() {
+  if (!notificationToggle || !notificationPanel) {
+    return;
+  }
+
+  notificationToggle.setAttribute("aria-expanded", "true");
+  notificationPanel.hidden = false;
+  renderNotificationDropdown();
+  notificationPanel.focus({ preventScroll: true });
+}
+
+function getNotificationPanelItems() {
+  return inAppNotifications
+    .map((notification, index) => ({ index, notification }))
+    .sort((left, right) => {
+      const statusComparison =
+        notificationStatusOrder(left.notification.status) -
+        notificationStatusOrder(right.notification.status);
+      if (statusComparison !== 0) {
+        return statusComparison;
+      }
+
+      const timeComparison =
+        getNotificationCreatedTime(right.notification) -
+        getNotificationCreatedTime(left.notification);
+      return timeComparison || left.index - right.index;
+    })
+    .map(({ notification }) => notification);
+}
+
+function notificationStatusOrder(status) {
+  return status === "unread" ? 0 : 1;
+}
+
+function getNotificationCreatedTime(notification) {
+  const time = Date.parse(notification.createdAt ?? "");
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getNotificationAccessibleLabel(notification, message) {
+  const state = notification.status === "unread" ? "Unread" : "Read";
+  const action = getNotificationTargetRoute(notification) ? "Open Multiplayer" : "Notification";
+  return `${state}: ${message} ${action}`;
 }
 
 function handleNotificationItemClick(notification) {
@@ -3045,13 +3112,16 @@ function handleNotificationItemClick(notification) {
   renderRoute();
 }
 
-function closeNotificationPanel() {
+function closeNotificationPanel({ returnFocus = false } = {}) {
   if (!notificationToggle || !notificationPanel) {
     return;
   }
 
   notificationToggle.setAttribute("aria-expanded", "false");
   notificationPanel.hidden = true;
+  if (returnFocus) {
+    notificationToggle.focus();
+  }
 }
 
 function getNotificationTargetRoute(notification) {

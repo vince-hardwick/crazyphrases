@@ -186,6 +186,154 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("opens the notification panel without marking unread notifications read", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context);
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    const notificationToggle = page.locator("[data-notification-toggle]");
+    assert.equal(
+      await page.getByRole("button", { name: "Notifications, 2 unread" }).isVisible(),
+      true,
+    );
+    assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "2");
+
+    await notificationToggle.click();
+
+    await assertTextVisible(
+      page.locator("[data-notification-panel]"),
+      "Newest unread notification.",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => window.__notificationReadCalls),
+      [],
+    );
+    assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "2");
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders mixed notifications in scan order without visible read-state labels", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context);
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await page.locator("[data-notification-toggle]").click();
+
+    const notificationItems = page.locator("[data-notification-panel] .notification-item");
+    assert.equal(await notificationItems.count(), 3);
+    assert.deepEqual(await notificationItems.allInnerTexts(), [
+      "Newest unread notification.",
+      "Older unread notification.",
+      "Already read notification.",
+    ]);
+    assert.equal(
+      await notificationItems.nth(0).getAttribute("aria-label"),
+      "Unread: Newest unread notification. Open Multiplayer",
+    );
+    assert.equal(
+      await notificationItems.nth(1).getAttribute("aria-label"),
+      "Unread: Older unread notification. Open Multiplayer",
+    );
+    assert.equal(
+      await notificationItems.nth(2).getAttribute("aria-label"),
+      "Read: Already read notification. Open Multiplayer",
+    );
+    const itemStyles = await notificationItems.evaluateAll((items) =>
+      items.map((item) => ({
+        status: item.getAttribute("data-notification-status"),
+        fontWeight: Number.parseInt(window.getComputedStyle(item).fontWeight, 10),
+      })),
+    );
+    assert.deepEqual(
+      itemStyles.map(({ status }) => status),
+      ["unread", "unread", "read"],
+    );
+    assert.ok(
+      itemStyles[0].fontWeight > itemStyles[2].fontWeight,
+      `Expected unread item to be visually distinct from read item, got ${JSON.stringify(
+        itemStyles,
+      )}`,
+    );
+    assert.ok(
+      itemStyles[1].fontWeight > itemStyles[2].fontWeight,
+      `Expected unread item to be visually distinct from read item, got ${JSON.stringify(
+        itemStyles,
+      )}`,
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("closes the notification panel without marking notifications read", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context);
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    const notificationToggle = page.locator("[data-notification-toggle]");
+    const notificationPanel = page.locator("[data-notification-panel]");
+
+    await notificationToggle.click();
+    assert.equal(await notificationPanel.isVisible(), true);
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.dataset?.notificationPanel),
+      "",
+    );
+
+    await page.keyboard.press("Escape");
+    assert.equal(await notificationPanel.isHidden(), true);
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.dataset?.notificationToggle),
+      "",
+    );
+
+    await notificationToggle.click();
+    assert.equal(await notificationPanel.isVisible(), true);
+    await page.locator("main").click({ position: { x: 5, y: 5 } });
+    assert.equal(await notificationPanel.isHidden(), true);
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.dataset?.notificationToggle),
+      "",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => window.__notificationReadCalls),
+      [],
+    );
+    assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "2");
+
+    assertNoConsoleErrors();
+  });
+
   it("routes signed-in play modes from the Play menu", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -3597,6 +3745,80 @@ async function waitForRouteCopyButtonsDisabled(page) {
       "[data-copy-phrase-favourite-id], [data-copy-batch-favourite-id]",
     )];
     return buttons.length > 0 && buttons.every((button) => button.disabled);
+  });
+}
+
+async function routeSeededNotificationRepository(context) {
+  await context.addInitScript(() => {
+    window.__notificationReadCalls = [];
+  });
+  await context.route("**/assets/pending-game.js*", async (route) => {
+    const pendingGameSource = await readFile(
+      resolve(workspaceRoot, "assets/pending-game.js"),
+      "utf8",
+    );
+    const seededNotificationSource = pendingGameSource.replace(
+      /export function createLocalTestPendingGameRepository\(options = \{\}\) \{\r?\n  return createTestPendingGameRepository\(options\);\r?\n\}/,
+      `export function createLocalTestPendingGameRepository(options = {}) {
+  const repository = createTestPendingGameRepository(options);
+  const notifications = [
+    {
+      id: "notification-unread-newest",
+      type: "entries_needed",
+      status: "unread",
+      message: "Newest unread notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T12:00:00.000Z",
+      targetGameId: "started-game-newest",
+    },
+    {
+      id: "notification-read",
+      type: "batch_complete",
+      status: "read",
+      message: "Already read notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T11:00:00.000Z",
+      targetGameId: "started-game-read",
+    },
+    {
+      id: "notification-unread-oldest",
+      type: "game_cancelled",
+      status: "unread",
+      message: "Older unread notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T10:00:00.000Z",
+      targetPendingGameId: "pending-game-oldest",
+    },
+  ];
+
+  return {
+    ...repository,
+    async listInAppNotifications({ accountId }) {
+      return notifications
+        .filter((notification) => notification.accountId === accountId)
+        .map((notification) => ({ ...notification }));
+    },
+    async markInAppNotificationRead({ accountId, notificationId }) {
+      globalThis.__notificationReadCalls.push({ accountId, notificationId });
+      const notification = notifications.find(
+        (candidate) =>
+          candidate.accountId === accountId && candidate.id === notificationId,
+      );
+      if (!notification) {
+        throw new Error("Notification not found.");
+      }
+      notification.status = "read";
+      return { ...notification };
+    },
+  };
+}`,
+    );
+
+    assert.notEqual(seededNotificationSource, pendingGameSource);
+    await route.fulfill({
+      body: seededNotificationSource,
+      contentType: "text/javascript; charset=utf-8",
+    });
   });
 }
 

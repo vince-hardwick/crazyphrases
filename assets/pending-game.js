@@ -1784,6 +1784,7 @@ function toNotificationDto(notification) {
     type: notification.type,
     status: notification.status,
     message: notification.message,
+    createdAt: notification.createdAt,
     ...(notification.targetGameId
       ? { targetGameId: notification.targetGameId }
       : {}),
@@ -2295,6 +2296,10 @@ function recoverInAppNotification(notificationRow) {
     message: assertText(
       notificationRow?.message,
       "A notification message is required.",
+    ),
+    createdAt: assertText(
+      notificationRow?.createdAt ?? notificationRow?.created_at,
+      "A notification created timestamp is required.",
     ),
     ...(targetGameId
       ? {

@@ -515,6 +515,7 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
       ],
@@ -530,6 +531,7 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
       ],
@@ -580,6 +582,7 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "You can submit entries to a batch with @creator-one and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
         {
@@ -588,6 +591,7 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "A batch is waiting for your entries with @creator-one and @invitee-two.",
+          createdAt: "2026-06-02T13:00:00.000Z",
           targetGameId: "started-game-1",
         },
       ],
@@ -1073,6 +1077,7 @@ describe("Pending Game repository", () => {
           status: "read",
           message:
             "You can submit entries to a batch with @creator-one and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
         {
@@ -1080,6 +1085,7 @@ describe("Pending Game repository", () => {
           type: "game_cancelled",
           status: "unread",
           message: "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
       ],
@@ -1140,6 +1146,7 @@ describe("Pending Game repository", () => {
           status: "unread",
           message:
             "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          createdAt: "1970-01-01T00:00:00.000Z",
           targetPendingGameId: "pending-game-1",
         },
       ],
@@ -2251,6 +2258,7 @@ describe("Pending Game repository", () => {
         status: "unread",
         message:
           "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+        createdAt: "2026-01-01T00:00:01.000Z",
         targetPendingGameId: "supabase-pending-game-1",
       },
     ]);
@@ -2296,6 +2304,7 @@ describe("Pending Game repository", () => {
         status: "unread",
         message:
           "You can submit entries to a batch with @creator-one and @invitee-two.",
+        createdAt: "2026-01-01T00:00:00.000Z",
         targetGameId: "supabase-started-game-1",
       },
     ]);
@@ -2362,6 +2371,7 @@ describe("Pending Game repository", () => {
           status: "read",
           message:
             "You can submit entries to a batch with @creator-one and @invitee-two.",
+          createdAt: "2026-01-01T00:00:00.000Z",
           targetGameId: "supabase-started-game-1",
         },
       ],

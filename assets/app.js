@@ -3005,6 +3005,14 @@ function renderNotificationDropdown() {
   }
 
   updateNotificationToggle();
+  if (inAppNotifications.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "notification-empty";
+    emptyState.textContent = "You have no notifications yet.";
+    notificationPanel.replaceChildren(emptyState);
+    return;
+  }
+
   notificationPanel.replaceChildren(
     ...inAppNotifications.map((notification) => {
       const item = document.createElement("button");

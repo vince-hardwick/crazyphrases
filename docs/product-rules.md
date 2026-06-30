@@ -478,6 +478,9 @@ concrete target should mark read and leave the current route unchanged. The firs
 signed-in navigation slice does not include a `Mark all read` notification action;
 notification read handling is item-level only.
 
+When the notification list is empty, opening the notification panel shows the copy `You
+have no notifications yet.` inside the panel instead of rendering an empty region.
+
 ### Visual metaphor
 
 MVP may hint at the folded-paper origin of the game, but uses a clean web-form

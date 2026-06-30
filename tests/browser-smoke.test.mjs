@@ -177,7 +177,10 @@ describe("solo browser smoke", () => {
       "0",
     );
 
-    await notificationButton.click();
+    await notificationButton.evaluate((button) => {
+      const icon = button.querySelector("i");
+      icon.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
     await assertTextVisible(
       page.locator("[data-notification-panel]"),
       "You have no notifications yet.",

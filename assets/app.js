@@ -411,7 +411,8 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function handleNotificationToggleClick() {
+function handleNotificationToggleClick(event) {
+  event.stopPropagation();
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
   if (isExpanded) {
     closeNotificationPanel({ returnFocus: true });

@@ -632,13 +632,14 @@ preserve their original history.
   empty-state copy and was promoted through production on 2026-06-30. Bulk `Mark all as
   read` is now accepted for the next notification-panel hardening slice.
 - **Remaining risk**: Broader notification-panel hardening is tracked by GitHub issue
-  #127 and child issues #128-#132. Issue #128 is the first implementation slice and
-  keeps bell open/close read-only while adding mixed-list ordering, accessible read-state
-  labels, focus-return, and mobile no-overflow regression coverage. The remaining
-  hardening work still covers row-level read actions, loaded-list bulk `Mark all as
-  read`, notification selection sequencing under route, render, or read-state failure,
-  non-target notification behaviour, multiple-notification regression coverage, and
-  explicit status/recovery copy for read-state failures.
+  #127 and child issues #128-#132. Issue #128 keeps bell open/close read-only while
+  adding mixed-list ordering, accessible read-state labels, focus-return, and mobile
+  no-overflow regression coverage. Issue #129 adds row-level read actions for target and
+  non-target rows, keeps manual read actions on the current route with the panel open,
+  and covers row-level read failure feedback. The remaining hardening work still covers
+  loaded-list bulk `Mark all as read`, notification selection sequencing under route,
+  render, or read-state failure, multiple-notification exact-target regression coverage,
+  and the broader notification-panel hardening regression pass.
 
 ### Notification bulk read management
 
@@ -726,11 +727,11 @@ preserve their original history.
   notifications for the same exact target context, loaded-list bulk `Mark all as read`,
   bulk partial failure, accessible status feedback, and mobile layout with several rows
   without horizontal overflow.
-- **Remaining risk after the bell read-only slice**: Future implementation should
-  preserve signed-in-only DOM absence, read-state failure handling, accessible status
-  feedback, focus recovery, mobile no-overflow behaviour, and the new open/close
-  read-only invariant while adding row-level read actions, loaded-list bulk read
-  actions, and target-proof read sequencing.
+- **Remaining risk after the row-level read slice**: Future implementation should
+  preserve signed-in-only DOM absence, row-level read failure handling, accessible
+  status feedback, focus recovery, mobile no-overflow behaviour, the open/close
+  read-only invariant, and manual row-level read actions while adding loaded-list bulk
+  read actions and target-proof read sequencing.
 
 ### Notification pagination
 

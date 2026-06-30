@@ -18,10 +18,9 @@ preserve their original history.
   [Partial or timeout reveal](#partial-or-timeout-reveal);
   [Participant replacement](#participant-replacement);
   [Post-submission correction requests](#post-submission-correction-requests).
-- **Multiplayer and social graph**: nudge timeout foundation and the first
-  signed-in Multiplayer destination/notification-routing slices promoted through
-  production; notification empty-state copy remains open in issue #123; most social
-  scope deferred. Start with:
+- **Multiplayer and social graph**: nudge timeout foundation, the first signed-in
+  Multiplayer destination/notification-routing slices, and notification empty-state
+  copy promoted through production; most social scope deferred. Start with:
   [Signed-in 2-player asynchronous game](#signed-in-2-player-asynchronous-game);
   [Multiplayer destination placement](#multiplayer-destination-placement);
   [Notification top-bar affordance](#notification-top-bar-affordance);
@@ -628,13 +627,13 @@ preserve their original history.
   2026-06-28 through PR #102, replacing the old exclamation-mark affordance with the
   accepted Font Awesome bell states, actual-count accessible labelling, and visual
   unread badge. PR #102 was promoted through `test` and production with visible
-  signed-in browser smokes.
+  signed-in browser smokes. Issue #123 / PR #124 completed the no-notifications
+  empty-state copy and was promoted through production on 2026-06-30.
 - **Remaining risk**: Broader notification-panel hardening still needs its own PRD or
   agent-sized issues before code changes: unread-first and newest-first ordering,
   focus/dropdown behaviour, notification selection sequencing, read-state failure
   handling, mobile layout, and regression coverage beyond the current signed-in smoke
-  tests. Issue #123 tracks the no-notifications empty-state copy observed during the
-  PR #122 hosted smoke.
+  tests.
 
 ### Notification bulk read management
 

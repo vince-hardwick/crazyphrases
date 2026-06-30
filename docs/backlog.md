@@ -589,14 +589,15 @@ preserve their original history.
 - **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. GitHub
   PRD issue #116 and agent-sized implementation issues #117-#119 now track the first
   implementation sequence. Issue #117 completed the `Play` Game Mode menu. Issue #118
-  is the current implementation slice for mutually exclusive Solo/Multiplayer
-  destinations. Issue #119 remains the follow-up for Multiplayer integration hardening.
-- **Remaining risk**: Until implemented, the current single-flow app may keep exposing
-  multiplayer through inline panels and completed-history links without a coherent
-  signed-in navigation destination. The implementation plan still needs lightweight
-  hash-route view-switching mechanics, mobile `Play` menu behaviour, preservation of
-  existing completed-history contracts, and regression coverage for anonymous/signed-in
-  separation.
+  completed mutually exclusive Solo/Multiplayer destinations. Issue #119 is the source
+  implementation slice for Multiplayer destination hardening, including actionable
+  notification navigation back to `#/play/multiplayer` without changing backend
+  authority paths.
+- **Remaining risk**: Until issue #119 is merged and promoted, hosted environments do
+  not yet include its final regression coverage. Post-merge `test` and production
+  smoke should verify the signed-in Multiplayer route gate, dashboard buckets,
+  completed-history entry point, actionable notification routing, and anonymous
+  account-only DOM absence against the stamped deployment.
 
 ### Notification top-bar affordance
 

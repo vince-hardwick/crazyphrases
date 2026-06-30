@@ -3014,11 +3014,44 @@ function renderNotificationDropdown() {
         notification.status === "unread" ? "Unread" : "Read"
       }`;
       item.addEventListener("click", () => {
-        void markNotificationRead(notification.id);
+        void handleNotificationItemClick(notification);
       });
       return item;
     }),
   );
+}
+
+function handleNotificationItemClick(notification) {
+  closeNotificationPanel();
+  void markNotificationRead(notification.id);
+  const targetRoute = getNotificationTargetRoute(notification);
+  if (
+    !targetRoute ||
+    accountShell.persistenceAuthority.type !== "account"
+  ) {
+    return;
+  }
+
+  currentRoute = targetRoute;
+  ensureHashRoute(targetRoute);
+  renderRoute();
+}
+
+function closeNotificationPanel() {
+  if (!notificationToggle || !notificationPanel) {
+    return;
+  }
+
+  notificationToggle.setAttribute("aria-expanded", "false");
+  notificationPanel.hidden = true;
+}
+
+function getNotificationTargetRoute(notification) {
+  if (notification.targetGameId || notification.targetPendingGameId) {
+    return ROUTES.playMultiplayer;
+  }
+
+  return null;
 }
 
 function updateNotificationToggle() {

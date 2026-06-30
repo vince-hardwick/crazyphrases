@@ -1424,6 +1424,85 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("routes actionable notifications to the Multiplayer destination", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openMultiplayerRoute(page);
+    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.getByRole("button", { name: "Create invite" }).click();
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for @invitee-two to accept.",
+    );
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await openMultiplayerRoute(page);
+    await page
+      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .click();
+    await assertTextVisible(page, "Game invite accepted.");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openMultiplayerRoute(page);
+    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await assertTextVisible(page, "Game started. Your turn is ready.");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await openFavouritesRoute(page);
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 1 unread" })
+        .isVisible(),
+      true,
+    );
+
+    await page.getByRole("button", { name: "Notifications" }).click();
+    const notificationItem = page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({
+        hasText:
+          "You can submit entries to a batch with @player-test-account and @invitee-two.",
+      });
+    assert.equal(await notificationItem.count(), 1);
+    await notificationItem.click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    await assertPendingGameSurfaceMounted(page);
+    await assertTextVisible(page, "Awaiting your entries");
+    await assertNoFavouritesPanelDom(page);
+    assert.equal(await page.locator("[data-notification-panel]").isHidden(), true);
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "0",
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Notifications" }).isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("opens completed multiplayer history from the dashboard", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

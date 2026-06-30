@@ -588,9 +588,9 @@ preserve their original history.
   like a settings/account surface rather than game state.
 - **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. GitHub
   PRD issue #116 and agent-sized implementation issues #117-#119 now track the first
-  implementation sequence. Issue #117 covers the `Play` Game Mode menu; issues #118 and
-  #119 cover mutually exclusive Solo/Multiplayer destinations and Multiplayer
-  integration hardening.
+  implementation sequence. Issue #117 completed the `Play` Game Mode menu. Issue #118
+  is the current implementation slice for mutually exclusive Solo/Multiplayer
+  destinations. Issue #119 remains the follow-up for Multiplayer integration hardening.
 - **Remaining risk**: Until implemented, the current single-flow app may keep exposing
   multiplayer through inline panels and completed-history links without a coherent
   signed-in navigation destination. The implementation plan still needs lightweight

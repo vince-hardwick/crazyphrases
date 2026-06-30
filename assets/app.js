@@ -693,7 +693,8 @@ function renderRoute() {
   removeFavouritesPanel();
   renderGame();
   if (accountShell.persistenceAuthority.type === "account") {
-    renderPendingGamePanel();
+    removePendingGamePanel();
+    renderNotificationDropdown();
   } else {
     removePendingGamePanel();
   }

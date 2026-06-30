@@ -471,12 +471,83 @@ greater than zero, the bell also shows a numeric unread badge; the visible badge
 `9+`, while the accessible label includes the actual unread count.
 
 The notification panel lists unread items first, then read items, newest first within
-each group. Selecting a notification item should close the panel, mark that notification
-read, and navigate to its relevant destination when one exists, such as
-`#/play/multiplayer` for invite, turn, or nudge notifications. Notifications without a
-concrete target should mark read and leave the current route unchanged. The first
-signed-in navigation slice does not include a `Mark all read` notification action;
-notification read handling is item-level only.
+each group. The bell is only a panel toggle: opening or closing it must not mark any
+notification read. A notification may become read when the participant selects that
+notification and is routed to its relevant destination, such as `#/play/multiplayer` for
+invite, turn, or nudge notifications; when the participant reaches the relevant
+destination through another route without opening the notification panel first; when the
+participant uses a row-level `Mark as read` action; or when the participant uses a bulk
+`Mark all as read` action. Notifications without a concrete target should remain
+readable through the explicit row-level or bulk read actions. Notifications without a
+concrete target are not clickable navigation rows. They render as static notification
+content with a row-level `Mark as read` action when unread; once read, they are static
+read-only content.
+
+Implicit target-navigation read requires the notification target to be present in the
+rendered destination context. Matching the broad route alone is not enough; for example,
+`#/play/multiplayer` may mark a notification read only when the matching Pending Game,
+Started Game, current section, nudge target, or completed batch is loaded into the
+visible Multiplayer dashboard or history context.
+
+For a clicked target notification, route and render the target first, then mark that
+notification read only after the target context is successfully present. If the target
+cannot be loaded, keep the notification unread and show recovery or status feedback.
+Activating a target notification row closes the panel immediately; read-state mutation
+still waits until the target context is present.
+
+Implicit read updates caused by reaching a target through another route should not
+interrupt the target workflow. Quietly update the unread badge/count and row state when
+available. If that implicit read update fails, keep the notification unread; show
+notification-specific error feedback only when the notification panel is already open.
+When multiple unread notifications refer to the exact loaded target context, they may be
+marked read together; for example, reaching a current section can mark unread
+`entries_needed` and `nudge` notifications for that same section or assignment read.
+Do not mark unrelated notifications read merely because they share the same broad route.
+Explicit read actions are acknowledgements rather than navigation proof: a row-level
+`Mark as read` action or the bulk `Mark all as read` action may mark notifications read
+without loading their targets. If an explicit read update fails, the affected
+notification or notifications stay unread and the panel shows accessible failure
+feedback. In the next notification-panel hardening slice, bulk `Mark all as read`
+applies to the currently loaded notification list rendered in the panel, not to
+unloaded account-wide notification history. Show the bulk `Mark all as read` action
+only when that loaded list contains at least one unread notification; hide it when every
+loaded notification is already read. Bulk `Mark all as read` does not require a
+confirmation step.
+
+Unread notification rows use a Font Awesome `circle-check` icon for the row-level `Mark
+as read` action. Already-read rows do not show a redundant row-level read action, but
+remain selectable when they have a target. The notification panel uses a Font Awesome
+`list-check` icon for the bulk `Mark all as read` action when unread notifications
+exist.
+
+When an unread notification row has both a target and a row-level `Mark as read` action,
+the row body remains the target-navigation action and the `circle-check` is a distinct
+icon button with its own accessible name, such as `Mark notification as read`. Activating
+the checkmark marks that notification read without routing; activating the row body
+routes to the target and then marks the notification read only after the target context
+is present.
+
+Successful row-level and bulk manual read actions keep the notification panel open,
+update affected rows in place, and update the unread badge/count. Row-level focus
+returns to the updated row or the next sensible control. Bulk-action focus remains on
+the bulk control until it disappears, then moves to the panel heading or list container
+so the participant can continue reviewing notifications. Notifications newly marked read
+while the panel is open stay in their current visual position for that open panel
+session; the unread-first then read ordering rule is reapplied when the panel is
+reopened or refreshed. The row's visual read state updates immediately: unread
+notification text is bold, read notification text is unbolded, accessible labelling
+communicates read state for assistive technology, and the row-level `Mark as read`
+checkmark is removed once that notification becomes read. Do not show visible `Unread`
+or `Read` status text in each row. Target-row accessible names should include message,
+read state, and action, such as `Unread: You can submit entries... Open Multiplayer`.
+Read target rows can use `Read: ... Open Multiplayer`. Row-level checkmark accessible
+names should identify the exact notification being changed, such as `Mark notification
+as read: You can submit entries...`.
+
+Bulk `Mark all as read` may partially succeed. Successfully updated notifications become
+read, failed notifications stay unread, the unread badge/count reflects the remaining
+unread notifications, and the panel shows accessible status feedback such as `Some
+notifications could not be marked read. Try again.`
 
 When the notification list is empty, opening the notification panel shows the copy `You
 have no notifications yet.` inside the panel instead of rendering an empty region.

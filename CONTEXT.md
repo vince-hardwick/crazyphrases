@@ -277,6 +277,11 @@ _Avoid_: Manual poke, reminder
 A notification shown inside the Crazy Phrases web app.
 _Avoid_: Push notification, email notification
 
+**Notification Target**:
+The concrete Game, Pending Game, current section, nudge, or completed batch context that
+an In-App Notification refers to.
+_Avoid_: Route, page, broad destination
+
 **Nudge Timeout**:
 The inactivity period configured for a game before a nudge may be sent.
 _Avoid_: Notification preference, reminder setting

@@ -19,9 +19,42 @@
           <h1 id="site-title">Crazy Phrases</h1>
         </div>
         <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>
-          <a class="primary-nav-link" href="#/play/solo" data-route-link="play">
-            Play
-          </a>
+          <div class="primary-nav-menu" data-play-menu-root>
+            <button
+              class="primary-nav-link primary-nav-button"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              data-route-link="play"
+              data-play-menu-toggle
+            >
+              Play
+            </button>
+            <div
+              class="play-menu"
+              role="menu"
+              aria-label="Play Game Modes"
+              data-play-menu
+              hidden
+            >
+              <a
+                class="play-menu-item"
+                href="#/play/solo"
+                role="menuitem"
+                data-play-menu-item
+              >
+                Solo play
+              </a>
+              <a
+                class="play-menu-item"
+                href="#/play/multiplayer"
+                role="menuitem"
+                data-play-menu-item
+              >
+                Multiplayer
+              </a>
+            </div>
+          </div>
           <a
             class="primary-nav-link primary-nav-icon-link"
             href="#/favourites"

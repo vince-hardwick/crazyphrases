@@ -586,10 +586,11 @@ preserve their original history.
   history are one game lifecycle. A separate primary `History` nav item or account-menu
   history item would split that lifecycle and make completed multiplayer records feel
   like a settings/account surface rather than game state.
-- **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. The
-  first implementation should expose this destination at `#/play/multiplayer` inside the
-  static single-page app. Implementation still needs an owning PRD and agent-sized
-  issues before code changes.
+- **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. GitHub
+  PRD issue #116 and agent-sized implementation issues #117-#119 now track the first
+  implementation sequence. Issue #117 covers the `Play` Game Mode menu; issues #118 and
+  #119 cover mutually exclusive Solo/Multiplayer destinations and Multiplayer
+  integration hardening.
 - **Remaining risk**: Until implemented, the current single-flow app may keep exposing
   multiplayer through inline panels and completed-history links without a coherent
   signed-in navigation destination. The implementation plan still needs lightweight

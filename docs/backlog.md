@@ -633,10 +633,12 @@ preserve their original history.
   read` is now accepted for the next notification-panel hardening slice.
 - **Remaining risk**: Broader notification-panel hardening still needs its own PRD or
   agent-sized issues before code changes: unread-first and newest-first ordering,
-  focus/dropdown behaviour, notification selection sequencing, read-state failure
-  handling, mobile layout, and regression coverage beyond the current signed-in smoke
-  tests. The next notification-panel hardening slice should also correct the current
-  runtime behaviour where opening the bell marks all unread notifications read.
+  focus/dropdown behaviour, notification selection sequencing under route, render, or
+  read-state failure, non-target notification behaviour, multiple-notification
+  regression coverage, mobile layout with several rows, and explicit status/recovery
+  copy for read-state failures. The next notification-panel hardening slice should also
+  correct the current runtime behaviour where opening the bell marks all unread
+  notifications read.
 
 ### Notification bulk read management
 
@@ -678,12 +680,27 @@ preserve their original history.
   history. Show the bulk action only when that loaded list contains at least one unread
   notification; hide it when every loaded notification is already read. Bulk `Mark all
   as read` does not require confirmation.
+- **Selection failure rule**: If a target notification routes successfully but the
+  target data is stale, missing, or mismatched, treat the target as not present and do
+  not mark the notification read. If the route and target render succeed but the later
+  read-state update fails, keep the participant on the rendered destination, keep the
+  notification unread, keep or restore the unread badge/count, and surface accessible
+  failure feedback when the notification UI is visible. Do not return the participant
+  to the notification panel solely because read-state persistence failed.
 - **Icon rule**: Use Font Awesome `circle-check` for a row-level unread notification
   `Mark as read` action and Font Awesome `list-check` for the bulk `Mark all as read`
   action. Already-read rows do not show a redundant row-level read action, but remain
   selectable when they have a target. When an unread notification has both a target and a
   row-level read action, the row body routes and the checkmark is a distinct icon button
   with its own accessible name; clicking the checkmark marks read without routing.
+  Clicking row-level `Mark as read` for a non-target notification also stays on the
+  current route.
+- **Focus/dropdown rule**: The bell owns a dropdown-style notification panel. Keyboard
+  activation of the bell opens the panel and moves focus into the panel heading, list,
+  or first actionable notification control. `Escape`, reactivating the bell, or
+  clicking/tapping outside the panel closes it without marking notifications read.
+  Non-navigating close actions return focus to the bell. Target-row navigation closes
+  the panel and lets focus move to the rendered destination instead.
 - **Panel continuity rule**: Successful row-level and bulk manual read actions keep the
   panel open, update affected rows and the unread badge/count in place, and preserve
   sensible focus recovery so the participant can keep reviewing notifications. Newly
@@ -699,6 +716,16 @@ preserve their original history.
   updated notifications become read, failed notifications stay unread, the unread
   badge/count reflects remaining unread items, and the panel shows accessible retry
   feedback.
+- **Regression coverage rule**: The implementation slice should test mixed notification
+  lists rather than only one actionable row. Cover unread-first/read-second and
+  newest-first ordering, bell open/close without read mutation, keyboard focus entry,
+  `Escape`, outside-click close, focus return to the bell on non-navigating close,
+  row-level mark-read without routing, target navigation read after rendered target
+  presence, route-success/read-failure recovery, stale or mismatched target data staying
+  unread, non-target notification read actions staying on the current route, multiple
+  notifications for the same exact target context, loaded-list bulk `Mark all as read`,
+  bulk partial failure, accessible status feedback, and mobile layout with several rows
+  without horizontal overflow.
 - **Remaining risk**: Until this ships, opening the notification panel can clear all
   unread state at once. Future implementation should preserve signed-in-only DOM
   absence, read-state failure handling, accessible status feedback, focus recovery, and

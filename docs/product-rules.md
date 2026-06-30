@@ -483,6 +483,14 @@ concrete target are not clickable navigation rows. They render as static notific
 content with a row-level `Mark as read` action when unread; once read, they are static
 read-only content.
 
+The notification panel behaves as a dropdown-style surface owned by the bell. Keyboard
+activation of the bell opens the panel and moves focus into the panel heading, list, or
+first actionable notification control. `Escape`, activating the bell again, or
+clicking/tapping outside the panel closes it without mutating notification read state.
+Close actions that do not navigate return focus to the bell. When a target notification
+row closes the panel to navigate, focus follows the rendered destination instead of
+returning to the bell.
+
 Implicit target-navigation read requires the notification target to be present in the
 rendered destination context. Matching the broad route alone is not enough; for example,
 `#/play/multiplayer` may mark a notification read only when the matching Pending Game,
@@ -493,7 +501,13 @@ For a clicked target notification, route and render the target first, then mark 
 notification read only after the target context is successfully present. If the target
 cannot be loaded, keep the notification unread and show recovery or status feedback.
 Activating a target notification row closes the panel immediately; read-state mutation
-still waits until the target context is present.
+still waits until the target context is present. If the route changes successfully but
+the target data is stale, missing, or mismatched, treat the target as not present and do
+not issue the read mutation. If the route and target render succeed but the later
+read-state update fails, leave the participant on the rendered destination, keep the
+notification unread, keep or restore the unread badge/count, and surface accessible
+failure feedback when the notification UI is visible. Do not bounce the participant
+back to the notification panel solely because a read-state update failed.
 
 Implicit read updates caused by reaching a target through another route should not
 interrupt the target workflow. Quietly update the unread badge/count and row state when
@@ -525,7 +539,8 @@ the row body remains the target-navigation action and the `circle-check` is a di
 icon button with its own accessible name, such as `Mark notification as read`. Activating
 the checkmark marks that notification read without routing; activating the row body
 routes to the target and then marks the notification read only after the target context
-is present.
+is present. Activating row-level `Mark as read` for a non-target notification also stays
+on the current route.
 
 Successful row-level and bulk manual read actions keep the notification panel open,
 update affected rows in place, and update the unread badge/count. Row-level focus
@@ -588,6 +603,17 @@ The signed-in foundation adds browser smoke coverage for local/test sign-in, Acc
 shell display, signed-in Solo Game start/resume, in-progress entry persistence, reveal,
 copy actions, sign-out/sign-back-in restore, anonymous solo regression, persistence
 failure warnings, stale-write conflict warnings, and mobile overflow checks.
+
+The notification-panel hardening slice should add focused regression coverage for mixed
+notification lists, not just one actionable row. Cover unread-first/read-second and
+newest-first ordering, bell open/close without read mutation, keyboard focus entry,
+`Escape`, outside-click close, focus return to the bell on non-navigating close,
+row-level mark-read without routing, target navigation read after rendered target
+presence, route-success/read-failure recovery, stale or mismatched target data staying
+unread, non-target notification read actions staying on the current route, multiple
+notifications for the same exact target context, loaded-list bulk `Mark all as read`,
+bulk partial failure, accessible status feedback, and mobile layout with several rows
+without horizontal overflow.
 
 ### Frontend implementation
 

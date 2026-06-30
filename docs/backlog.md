@@ -18,9 +18,10 @@ preserve their original history.
   [Partial or timeout reveal](#partial-or-timeout-reveal);
   [Participant replacement](#participant-replacement);
   [Post-submission correction requests](#post-submission-correction-requests).
-- **Multiplayer and social graph**: nudge timeout foundation promoted through
-  production; multiplayer destination and notification utility placement accepted; most
-  social scope deferred. Start with:
+- **Multiplayer and social graph**: nudge timeout foundation and the first
+  signed-in Multiplayer destination/notification-routing slices promoted through
+  production; notification empty-state copy remains open in issue #123; most social
+  scope deferred. Start with:
   [Signed-in 2-player asynchronous game](#signed-in-2-player-asynchronous-game);
   [Multiplayer destination placement](#multiplayer-destination-placement);
   [Notification top-bar affordance](#notification-top-bar-affordance);
@@ -587,17 +588,18 @@ preserve their original history.
   history item would split that lifecycle and make completed multiplayer records feel
   like a settings/account surface rather than game state.
 - **Status**: Accepted on 2026-06-25 as part of the signed-in navigation design. GitHub
-  PRD issue #116 and agent-sized implementation issues #117-#119 now track the first
+  PRD issue #116 and agent-sized implementation issues #117-#119 completed the first
   implementation sequence. Issue #117 completed the `Play` Game Mode menu. Issue #118
-  completed mutually exclusive Solo/Multiplayer destinations. Issue #119 is the source
-  implementation slice for Multiplayer destination hardening, including actionable
-  notification navigation back to `#/play/multiplayer` without changing backend
-  authority paths.
-- **Remaining risk**: Until issue #119 is merged and promoted, hosted environments do
-  not yet include its final regression coverage. Post-merge `test` and production
-  smoke should verify the signed-in Multiplayer route gate, dashboard buckets,
-  completed-history entry point, actionable notification routing, and anonymous
-  account-only DOM absence against the stamped deployment.
+  completed mutually exclusive Solo/Multiplayer destinations. Issue #119 completed
+  Multiplayer destination hardening, including actionable notification navigation back
+  to `#/play/multiplayer` without changing backend authority paths. PR #122 merged to
+  `main` and was promoted through `test` and production on 2026-06-30.
+- **Remaining risk**: The first Multiplayer destination sequence has hosted coverage
+  for the route gate, mutually exclusive destinations, dashboard buckets, completed
+  history entry point, actionable notification routing, and anonymous account-only DOM
+  absence. Production validation for issue #119 was read-only; data-backed notification
+  routing remains covered by the approved hosted `test` write/cleanup smoke rather than
+  production data mutation.
 
 ### Notification top-bar affordance
 
@@ -631,7 +633,8 @@ preserve their original history.
   agent-sized issues before code changes: unread-first and newest-first ordering,
   focus/dropdown behaviour, notification selection sequencing, read-state failure
   handling, mobile layout, and regression coverage beyond the current signed-in smoke
-  tests.
+  tests. Issue #123 tracks the no-notifications empty-state copy observed during the
+  PR #122 hosted smoke.
 
 ### Notification bulk read management
 

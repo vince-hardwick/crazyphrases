@@ -561,6 +561,14 @@ h1 {
   background: var(--surface-soft);
 }
 
+.notification-empty {
+  margin: 0;
+  padding: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .icon-button:hover,
 .dice-button:not(:disabled):hover,
 .segmented-control button:not(:disabled):hover,

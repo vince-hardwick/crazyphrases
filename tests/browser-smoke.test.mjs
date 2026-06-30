@@ -177,6 +177,12 @@ describe("solo browser smoke", () => {
       "0",
     );
 
+    await notificationButton.click();
+    await assertTextVisible(
+      page.locator("[data-notification-panel]"),
+      "You have no notifications yet.",
+    );
+
     assertNoConsoleErrors();
   });
 

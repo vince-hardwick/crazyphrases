@@ -1277,10 +1277,11 @@ refresh, using database-owned logic for participant scoping, timeout checks,
 and de-duplication by Started Game, Account, and assigned section. Browser
 clients do not receive direct insert authority for nudge notifications.
 
-Viewing notification items in the top-bar notification dropdown marks them
-read. Read notifications remain listed. No notification is created for a
-participant's own next assigned section after submitting a previous assigned
-section, because the participant can continue immediately in the same flow.
+Top-bar notification read-state changes follow the notification panel rules
+above: opening or viewing the dropdown does not mark notifications read. Read
+notifications remain listed. No notification is created for a participant's own
+next assigned section after submitting a previous assigned section, because the
+participant can continue immediately in the same flow.
 
 ### Reveal
 

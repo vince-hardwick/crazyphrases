@@ -109,6 +109,9 @@ let notificationShell = document.querySelector("[data-notification-shell]");
 let notificationToggle = document.querySelector("[data-notification-toggle]");
 let notificationPanel = document.querySelector("[data-notification-panel]");
 const primaryNav = document.querySelector("[data-primary-nav]");
+const playMenuRoot = document.querySelector("[data-play-menu-root]");
+const playMenuToggle = document.querySelector("[data-play-menu-toggle]");
+const playMenu = document.querySelector("[data-play-menu]");
 const routeGate = document.querySelector("[data-route-gate]");
 const gamePanel = document.querySelector("[data-game-panel]");
 const progress = document.querySelector("[data-progress]");
@@ -362,6 +365,32 @@ helpToggle.addEventListener("click", () => {
   helpPanel.hidden = isExpanded;
 });
 
+playMenuToggle.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setPlayMenuOpen(playMenu.hidden);
+});
+
+playMenu.addEventListener("click", (event) => {
+  if (event.target.closest("[data-play-menu-item]")) {
+    setPlayMenuOpen(false);
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (playMenu.hidden || playMenuRoot.contains(event.target)) {
+    return;
+  }
+
+  setPlayMenuOpen(false);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !playMenu.hidden) {
+    setPlayMenuOpen(false);
+    playMenuToggle.focus();
+  }
+});
+
 function handleNotificationToggleClick() {
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
   notificationToggle.setAttribute("aria-expanded", String(!isExpanded));
@@ -546,6 +575,11 @@ function ensureHashRoute(route) {
   window.location.hash = route;
 }
 
+function setPlayMenuOpen(isOpen) {
+  playMenu.hidden = !isOpen;
+  playMenuToggle.setAttribute("aria-expanded", String(isOpen));
+}
+
 function scheduleSignedInRouteHashReconciliation(route) {
   if (!signedInOnlyRoutes.has(route)) {
     return;
@@ -683,15 +717,26 @@ function renderSignInRequiredGate(route) {
 function updatePrimaryNavState() {
   primaryNav.querySelectorAll("[data-route-link]").forEach((link) => {
     const linkRoute = link.getAttribute("href");
-    if (
-      linkRoute === currentRoute ||
-      (link.dataset.routeLink === "play" && currentRoute.startsWith("#/play/"))
-    ) {
+    const isCurrentRoute =
+      link.dataset.routeLink === "play"
+        ? currentRoute.startsWith("#/play/")
+        : linkRoute === currentRoute;
+
+    if (isCurrentRoute) {
       link.setAttribute("aria-current", "page");
       return;
     }
 
     link.removeAttribute("aria-current");
+  });
+
+  primaryNav.querySelectorAll("[data-play-menu-item]").forEach((item) => {
+    if (item.getAttribute("href") === currentRoute) {
+      item.setAttribute("aria-current", "page");
+      return;
+    }
+
+    item.removeAttribute("aria-current");
   });
 }
 

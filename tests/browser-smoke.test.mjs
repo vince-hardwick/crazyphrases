@@ -180,6 +180,80 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("routes signed-in play modes from the Play menu", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    const playMenu = page.getByRole("menu", { name: "Play Game Modes" });
+    assert.equal(await playMenu.isVisible(), true);
+    assert.equal(await playMenu.getByRole("menuitem", { name: "Solo play" }).count(), 1);
+    assert.equal(await playMenu.getByRole("menuitem", { name: "Multiplayer" }).count(), 1);
+    assert.equal(await playMenu.getByRole("menuitem", { name: /vs cpu/i }).count(), 0);
+    await assertNoHorizontalOverflow(page);
+
+    await playMenu.getByRole("menuitem", { name: "Multiplayer" }).click();
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+
+    assertNoConsoleErrors();
+  });
+
+  it("marks the current Game Mode inside the Play menu", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    let playMenu = page.getByRole("menu", { name: "Play Game Modes" });
+    assert.equal(
+      await playMenu
+        .getByRole("menuitem", { name: "Solo play" })
+        .getAttribute("aria-current"),
+      "page",
+    );
+    assert.equal(
+      await playMenu
+        .getByRole("menuitem", { name: "Multiplayer" })
+        .getAttribute("aria-current"),
+      null,
+    );
+
+    await playMenu.getByRole("menuitem", { name: "Multiplayer" }).click();
+    await page.waitForFunction(() => window.location.hash === "#/play/multiplayer");
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    playMenu = page.getByRole("menu", { name: "Play Game Modes" });
+    assert.equal(
+      await playMenu
+        .getByRole("menuitem", { name: "Multiplayer" })
+        .getAttribute("aria-current"),
+      "page",
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("resumes local test signed-in setup without importing anonymous local play", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -1552,9 +1626,7 @@ describe("solo browser smoke", () => {
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertNoHorizontalOverflow(page);
 
-    await page.getByRole("link", { name: "Play", exact: true }).click();
-    await page.waitForFunction(() => window.location.hash === "#/play/solo");
-    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    await openPlayRoute(page);
     await assertNoFavouritesPanelDom(page);
 
     await page.getByRole("link", { name: "Favourites" }).click();
@@ -3325,7 +3397,11 @@ async function openFavouritesRoute(page) {
 }
 
 async function openPlayRoute(page) {
-  await page.getByRole("link", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page
+    .getByRole("menu", { name: "Play Game Modes" })
+    .getByRole("menuitem", { name: "Solo play" })
+    .click();
   await page.waitForFunction(
     () =>
       window.location.hash === "#/play/solo" &&

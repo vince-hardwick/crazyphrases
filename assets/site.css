@@ -555,6 +555,12 @@ h1 {
   margin-top: 2px;
 }
 
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
 .notification-row-body-only {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -600,6 +606,24 @@ h1 {
 }
 
 .notification-mark-read:hover {
+  background: var(--surface-soft);
+}
+
+.notification-mark-all-read {
+  min-width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: var(--surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.notification-mark-all-read:hover {
   background: var(--surface-soft);
 }
 

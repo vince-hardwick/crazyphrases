@@ -516,6 +516,175 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("marks the loaded notification list read from the bulk panel action", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context);
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+
+    const notificationToggle = page.locator("[data-notification-toggle]");
+    const notificationPanel = page.locator("[data-notification-panel]");
+    await notificationToggle.click();
+
+    const bulkMarkReadButton = page.getByRole("button", {
+      name: "Mark all as read",
+    });
+    assert.equal(await bulkMarkReadButton.count(), 1);
+    await expectFontAwesomeClass(bulkMarkReadButton, "fa-solid", "fa-list-check");
+
+    await bulkMarkReadButton.click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "0",
+    );
+
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    assert.equal(await notificationPanel.isVisible(), true);
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-newest",
+      },
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-oldest",
+      },
+    ]);
+    assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "0");
+    assert.equal(await bulkMarkReadButton.count(), 0);
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Mark notification as read: Newest unread notification.",
+        })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Mark notification as read: Older unread notification.",
+        })
+        .count(),
+      0,
+    );
+    const notificationItems = page.locator("[data-notification-panel] .notification-item");
+    assert.deepEqual(await notificationItems.allInnerTexts(), [
+      "Newest unread notification.",
+      "Older unread notification.",
+      "Already read notification.",
+    ]);
+    assert.equal(
+      await notificationItems.nth(0).getAttribute("data-notification-status"),
+      "read",
+    );
+    assert.equal(
+      await notificationItems.nth(1).getAttribute("data-notification-status"),
+      "read",
+    );
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.dataset?.notificationPanel),
+      "",
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps failed notifications unread after a partial bulk read failure", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      failingNotificationIds: ["notification-unread-oldest"],
+    });
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+
+    const notificationToggle = page.locator("[data-notification-toggle]");
+    const notificationPanel = page.locator("[data-notification-panel]");
+    await notificationToggle.click();
+
+    const bulkMarkReadButton = page.getByRole("button", {
+      name: "Mark all as read",
+    });
+    await bulkMarkReadButton.click();
+
+    const notificationFeedback = page.locator(
+      "[data-notification-panel] [role='status']",
+    );
+    await notificationFeedback.waitFor({ state: "visible" });
+
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    assert.equal(await notificationPanel.isVisible(), true);
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-newest",
+      },
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-oldest",
+      },
+    ]);
+    assert.equal(
+      await notificationFeedback.innerText(),
+      "Some notifications could not be marked read. Try again.",
+    );
+    assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "1");
+    assert.equal(await bulkMarkReadButton.count(), 1);
+    await assertActiveElementMatches(page, {
+      selector: "[data-notification-mark-all-read]",
+      accessibleName: "Mark all as read",
+    });
+
+    const notificationItems = page.locator("[data-notification-panel] .notification-item");
+    assert.equal(
+      await notificationItems.nth(0).getAttribute("data-notification-status"),
+      "read",
+    );
+    assert.equal(
+      await notificationItems.nth(1).getAttribute("data-notification-status"),
+      "unread",
+    );
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Mark notification as read: Newest unread notification.",
+        })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("button", {
+          name: "Mark notification as read: Older unread notification.",
+        })
+        .count(),
+      1,
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("closes the notification panel without marking notifications read", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

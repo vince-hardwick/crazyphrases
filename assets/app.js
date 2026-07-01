@@ -3036,7 +3036,12 @@ function renderNotificationDropdown() {
     return;
   }
 
-  const rows = getNotificationPanelRenderItems().map(renderNotificationRow);
+  const renderItems = getNotificationPanelRenderItems();
+  const rows = [];
+  if (renderItems.some((notification) => notification.status === "unread")) {
+    rows.push(renderNotificationBulkReadAction());
+  }
+  rows.push(...renderItems.map(renderNotificationRow));
   if (notificationPanelFeedbackMessage) {
     const feedback = document.createElement("p");
     feedback.className = "notification-feedback";
@@ -3046,6 +3051,29 @@ function renderNotificationDropdown() {
   }
 
   notificationPanel.replaceChildren(...rows);
+}
+
+function renderNotificationBulkReadAction() {
+  const action = document.createElement("div");
+  action.className = "notification-actions";
+
+  const button = document.createElement("button");
+  const label = "Mark all as read";
+  button.type = "button";
+  button.className = "notification-mark-all-read";
+  button.dataset.notificationMarkAllRead = "";
+  button.setAttribute("aria-label", label);
+  button.append(
+    createFontAwesomeIcon("solid", "list-check"),
+    createScreenReaderText(label),
+  );
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    void handleNotificationMarkAllRead();
+  });
+
+  action.append(button);
+  return action;
 }
 
 function renderNotificationRow(notification) {
@@ -3195,6 +3223,45 @@ async function handleNotificationMarkRead(notificationId) {
 
   const item = getRenderedNotificationItem(notificationId);
   item?.focus({ preventScroll: true });
+}
+
+async function handleNotificationMarkAllRead() {
+  if (!notificationPanel || notificationPanel.hidden) {
+    return;
+  }
+
+  const unreadNotifications = getNotificationPanelRenderItems().filter(
+    (notification) => notification.status === "unread",
+  );
+  if (unreadNotifications.length === 0) {
+    return;
+  }
+
+  const results = [];
+  for (const notification of unreadNotifications) {
+    results.push(await persistNotificationRead(notification.id));
+  }
+
+  const failedCount = results.filter((updated) => !updated).length;
+  const succeededCount = results.length - failedCount;
+  if (failedCount === 0) {
+    notificationPanelFeedbackMessage = "";
+  } else {
+    notificationPanelFeedbackMessage =
+      succeededCount > 0
+        ? "Some notifications could not be marked read. Try again."
+        : "Notifications could not be marked read. Try again.";
+  }
+
+  renderNotificationDropdown();
+  const remainingBulkAction = notificationPanel.querySelector(
+    "[data-notification-mark-all-read]",
+  );
+  if (remainingBulkAction) {
+    remainingBulkAction.focus({ preventScroll: true });
+  } else {
+    notificationPanel.focus({ preventScroll: true });
+  }
 }
 
 function getRenderedNotificationItem(notificationId) {
@@ -3360,7 +3427,7 @@ async function markUnreadNotificationsRead() {
   );
 }
 
-async function markNotificationRead(notificationId) {
+async function persistNotificationRead(notificationId) {
   const notification = inAppNotifications.find(
     (candidate) => candidate.id === notificationId,
   );
@@ -3390,21 +3457,35 @@ async function markNotificationRead(notificationId) {
         ? { ...candidate, ...updatedNotification, status: "read" }
         : candidate,
     );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function markNotificationRead(notificationId) {
+  const attemptedAccountId =
+    accountShell.persistenceAuthority.type === "account"
+      ? accountShell.accountId
+      : null;
+  const updated = await persistNotificationRead(notificationId);
+  if (updated) {
     notificationPanelFeedbackMessage = "";
     renderNotificationDropdown();
     return true;
-  } catch {
-    if (isCurrentAccountSession(accountId)) {
-      notificationPanelFeedbackMessage =
-        "Notification could not be marked read. Try again.";
-      if (notificationPanel && !notificationPanel.hidden) {
-        renderNotificationDropdown();
-      } else if (pendingGameStatus) {
-        pendingGameStatus.textContent = notificationPanelFeedbackMessage;
-      }
-    }
-    return false;
   }
+
+  if (attemptedAccountId && isCurrentAccountSession(attemptedAccountId)) {
+    notificationPanelFeedbackMessage =
+      "Notification could not be marked read. Try again.";
+    if (notificationPanel && !notificationPanel.hidden) {
+      renderNotificationDropdown();
+    } else if (pendingGameStatus) {
+      pendingGameStatus.textContent = notificationPanelFeedbackMessage;
+    }
+  }
+
+  return false;
 }
 
 function getNotificationMessage(notification) {

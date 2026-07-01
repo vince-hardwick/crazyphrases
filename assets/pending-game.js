@@ -994,7 +994,7 @@ export function createSupabasePendingGameRepository({
       const response = await supabase
         .from("in_app_notifications")
         .select(
-          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, target_assignment_id, created_at",
         )
         .eq("account_id", accountId)
         .order("created_at", { ascending: false })
@@ -1014,7 +1014,7 @@ export function createSupabasePendingGameRepository({
         .eq("id", notificationId)
         .eq("account_id", accountId)
         .select(
-          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, target_assignment_id, created_at",
         )
         .single();
       assertNoSupabaseError(response, "Could not mark notification read");
@@ -1453,7 +1453,7 @@ function createOverdueNudgeNotifications({
       (notification) =>
         notification.accountId === accountId &&
         notification.targetGameId === pendingGame.startedGameId &&
-        notification.targetSectionId === currentSection.id &&
+        notification.targetAssignmentId === currentSection.id &&
         notification.type === "nudge",
     );
     if (currentTime < overdueAt || alreadyNudged) {
@@ -1470,7 +1470,7 @@ function createOverdueNudgeNotifications({
       }),
       status: "unread",
       targetGameId: pendingGame.startedGameId,
-      targetSectionId: currentSection.id,
+      targetAssignmentId: currentSection.id,
       type: "nudge",
     });
   }
@@ -1790,6 +1790,11 @@ function toNotificationDto(notification) {
       : {}),
     ...(notification.targetPendingGameId
       ? { targetPendingGameId: notification.targetPendingGameId }
+      : {}),
+    ...(notification.targetAssignmentId
+      ? {
+          targetAssignmentId: notification.targetAssignmentId,
+        }
       : {}),
   };
 }
@@ -2288,6 +2293,9 @@ function recoverInAppNotification(notificationRow) {
   const targetPendingGameId =
     notificationRow?.targetPendingGameId ??
     notificationRow?.target_pending_game_id;
+  const targetAssignmentId =
+    notificationRow?.targetAssignmentId ??
+    notificationRow?.target_assignment_id;
 
   return {
     id: assertText(notificationRow?.id, "A notification id is required."),
@@ -2314,6 +2322,14 @@ function recoverInAppNotification(notificationRow) {
             "A Pending Game id is required.",
           ),
         }),
+    ...(targetAssignmentId
+      ? {
+          targetAssignmentId: assertText(
+            targetAssignmentId,
+            "A multiplayer section id is required.",
+          ),
+        }
+      : {}),
   };
 }
 

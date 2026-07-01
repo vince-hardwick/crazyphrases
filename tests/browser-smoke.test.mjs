@@ -685,6 +685,332 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps a target notification unread when the Multiplayer target is missing", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+
+    await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
+    const notificationItem = page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Newest unread notification." });
+    assert.equal(await notificationItem.count(), 1);
+    await notificationItem.click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    await page.waitForFunction(
+      () =>
+        window.__notificationReadCalls.length > 0 ||
+        document
+          .querySelector("[data-pending-game-status]")
+          ?.textContent.includes("Notification target could not be found."),
+    );
+
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), []);
+    assert.equal(
+      await page.locator("[data-notification-panel]").isHidden(),
+      true,
+    );
+    await assertTextVisible(
+      page,
+      "Notification target could not be found. It may no longer be available.",
+    );
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "2",
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 2 unread" })
+        .isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps a nudge notification unread when its assignment target is mismatched", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeMismatchedTargetNotification: true,
+      includeTargetDashboard: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Mismatched assignment notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document
+          .querySelector("[data-pending-game-status]")
+          ?.textContent.includes("Notification target could not be found."),
+    );
+    await assertTextVisible(page, "Awaiting your entries");
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), []);
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 3 unread" })
+        .isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps a target notification unread when read persistence fails after routing", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      failingNotificationIds: ["notification-unread-newest"],
+      includeTargetDashboard: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Newest unread notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    await assertTextVisible(page, "Awaiting your entries");
+    await assertTextVisible(page, "Notification could not be marked read. Try again.");
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-newest",
+      },
+    ]);
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "2",
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 2 unread" })
+        .isVisible(),
+      true,
+    );
+    assert.equal(
+      await page.locator("[data-notification-panel]").isHidden(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("marks duplicate unread notifications for the exact rendered target together", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeDuplicateTargetNotifications: true,
+      includeTargetDashboard: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Newest unread notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "1",
+    );
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-newest",
+      },
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-nudge",
+      },
+    ]);
+    await assertTextVisible(page, "Awaiting your entries");
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 1 unread" })
+        .isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("marks a Pending Game target notification read after the invite is rendered", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includePendingTargetInvite: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Older unread notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "1",
+    );
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-oldest",
+      },
+    ]);
+    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Waiting for responses");
+
+    assertNoConsoleErrors();
+  });
+
+  it("marks a completed-batch target notification read after the batch is rendered", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeCompletedTargetNotification: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Completed batch notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "2",
+    );
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-completed",
+      },
+    ]);
+    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Reveal phrases");
+
+    assertNoConsoleErrors();
+  });
+
+  it("quietly marks matching notifications read when the target route is opened directly", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeTargetDashboard: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openMultiplayerRoute(page);
+
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "1",
+    );
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      {
+        accountId: "test-account",
+        notificationId: "notification-unread-newest",
+      },
+    ]);
+    await assertTextVisible(page, "Awaiting your entries");
+    assert.equal(await page.locator("[data-notification-panel]").isHidden(), true);
+    assert.equal(
+      await page.locator("[data-pending-game-status]").innerText(),
+      "",
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("closes the notification panel without marking notifications read", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -4150,7 +4476,15 @@ async function waitForRouteCopyButtonsDisabled(page) {
 
 async function routeSeededNotificationRepository(
   context,
-  { includeStaticNotifications = false, failingNotificationIds = [] } = {},
+  {
+    includeCompletedTargetNotification = false,
+    includeDuplicateTargetNotifications = false,
+    includeMismatchedTargetNotification = false,
+    includePendingTargetInvite = false,
+    includeStaticNotifications = false,
+    includeTargetDashboard = false,
+    failingNotificationIds = [],
+  } = {},
 ) {
   await context.addInitScript((notificationFailures) => {
     window.__notificationReadCalls = [];
@@ -4173,6 +4507,119 @@ async function routeSeededNotificationRepository(
       message: "Static read notification.",
       accountId: "test-account",
       createdAt: "2026-06-30T08:30:00.000Z",
+    },`
+    : "";
+  const duplicateTargetNotificationSeed = includeDuplicateTargetNotifications
+    ? `
+    {
+      id: "notification-unread-nudge",
+      type: "nudge",
+      status: "unread",
+      message: "Duplicate target nudge notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T11:30:00.000Z",
+      targetGameId: "started-game-newest",
+      targetAssignmentId: "started-game-newest-section",
+    },`
+    : "";
+  const completedTargetNotificationSeed = includeCompletedTargetNotification
+    ? `
+    {
+      id: "notification-unread-completed",
+      type: "batch_complete",
+      status: "unread",
+      message: "Completed batch notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T11:45:00.000Z",
+      targetGameId: "started-game-completed",
+    },`
+    : "";
+  const mismatchedTargetNotificationSeed = includeMismatchedTargetNotification
+    ? `
+    {
+      id: "notification-unread-mismatched-assignment",
+      type: "nudge",
+      status: "unread",
+      message: "Mismatched assignment notification.",
+      accountId: "test-account",
+      createdAt: "2026-06-30T11:30:00.000Z",
+      targetGameId: "started-game-newest",
+      targetAssignmentId: "started-game-other-section",
+    },`
+    : "";
+  const awaitingEntryBatchSeed = includeTargetDashboard
+    ? `
+          {
+            id: "started-game-newest",
+            pendingGameId: "pending-game-newest",
+            rowCount: 10,
+            participants: [
+              { handle: "player-test-account" },
+              { handle: "invitee-two" },
+            ],
+            currentSection: {
+              id: "started-game-newest-section",
+              entryKind: "noun",
+              sectionIndex: 0,
+              sectionCount: 2,
+              rows: Array.from({ length: 10 }, (_, rowIndex) => ({
+                rowIndex,
+                value: "",
+              })),
+            },
+          },`
+    : "";
+  const completedBatchSeed = includeCompletedTargetNotification
+    ? `
+          {
+            id: "started-game-completed",
+            pendingGameId: "pending-game-completed",
+            rowCount: 10,
+            participants: [
+              { handle: "player-test-account" },
+              { handle: "invitee-two" },
+            ],
+            revealed: false,
+          },`
+    : "";
+  const targetDashboardOverride =
+    includeTargetDashboard || includeCompletedTargetNotification
+      ? `
+    async listMultiplayerDashboard({ accountId }) {
+      return {
+        awaitingYourEntries: [
+${awaitingEntryBatchSeed}
+        ],
+        awaitingOtherPlayerEntries: [],
+        completedBatches: [
+${completedBatchSeed}
+        ],
+      };
+    },`
+      : "";
+  const pendingInviteOverride = includePendingTargetInvite
+    ? `
+    async listIncomingPendingGameInvites({ accountId }) {
+      return [
+        {
+          id: "pending-game-oldest",
+          rowCount: 10,
+          status: "pending",
+          nudgeTimeoutHours: 48,
+          participants: [
+            {
+              handle: "player-test-account",
+              inviteStatus: "accepted",
+              role: "creator",
+            },
+            {
+              handle: "invitee-two",
+              inviteStatus: "pending",
+              role: "invitee",
+            },
+          ],
+        },
+      ];
     },`
     : "";
   await context.route("**/assets/pending-game.js*", async (route) => {
@@ -4203,6 +4650,9 @@ async function routeSeededNotificationRepository(
       createdAt: "2026-06-30T11:00:00.000Z",
       targetGameId: "started-game-read",
     },
+${duplicateTargetNotificationSeed}
+${completedTargetNotificationSeed}
+${mismatchedTargetNotificationSeed}
     {
       id: "notification-unread-oldest",
       type: "game_cancelled",
@@ -4217,6 +4667,8 @@ ${staticNotificationSeed}
 
   return {
     ...repository,
+${pendingInviteOverride}
+${targetDashboardOverride}
     async listInAppNotifications({ accountId }) {
       return notifications
         .filter((notification) => notification.accountId === accountId)

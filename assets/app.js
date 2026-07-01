@@ -110,6 +110,7 @@ let notificationToggle = document.querySelector("[data-notification-toggle]");
 let notificationPanel = document.querySelector("[data-notification-panel]");
 let notificationPanelFeedbackMessage = "";
 let notificationPanelOrder = [];
+let notificationTargetNavigationInProgress = false;
 const primaryNav = document.querySelector("[data-primary-nav]");
 const playMenuRoot = document.querySelector("[data-play-menu-root]");
 const playMenuToggle = document.querySelector("[data-play-menu-toggle]");
@@ -2024,6 +2025,9 @@ function renderPendingGamePanel() {
   renderIncomingPendingGameInvites();
   renderMultiplayerDashboardMount();
   renderNotificationDropdown();
+  if (!notificationTargetNavigationInProgress) {
+    void markUnreadNotificationsForRenderedMultiplayerTargets();
+  }
 }
 
 function ensureBatchFavouriteToggleButton() {
@@ -3201,7 +3205,6 @@ function getNotificationAccessibleLabel(notification, message) {
 
 function handleNotificationItemClick(notification) {
   closeNotificationPanel();
-  void markNotificationRead(notification.id);
   const targetRoute = getNotificationTargetRoute(notification);
   if (
     !targetRoute ||
@@ -3210,9 +3213,18 @@ function handleNotificationItemClick(notification) {
     return;
   }
 
+  notificationTargetNavigationInProgress = true;
   currentRoute = targetRoute;
   ensureHashRoute(targetRoute);
   renderRoute();
+  void markRenderedNotificationTargetRead(notification, {
+    reportMissingTarget: true,
+    reportReadFailure: true,
+  }).finally(() => {
+    window.setTimeout(() => {
+      notificationTargetNavigationInProgress = false;
+    }, 0);
+  });
 }
 
 async function handleNotificationMarkRead(notificationId) {
@@ -3292,6 +3304,137 @@ function getNotificationTargetRoute(notification) {
   }
 
   return null;
+}
+
+async function markUnreadNotificationsForRenderedMultiplayerTargets() {
+  if (
+    accountShell.persistenceAuthority.type !== "account" ||
+    currentRoute !== ROUTES.playMultiplayer
+  ) {
+    return;
+  }
+
+  const unreadNotifications = inAppNotifications.filter(
+    (notification) =>
+      notification.status === "unread" && getNotificationTargetRoute(notification),
+  );
+  for (const notification of unreadNotifications) {
+    await markRenderedNotificationTargetRead(notification);
+  }
+}
+
+async function markRenderedNotificationTargetRead(
+  notification,
+  { reportMissingTarget = false, reportReadFailure = false } = {},
+) {
+  const targetContext = findRenderedNotificationTargetContext(notification);
+  if (!targetContext) {
+    if (reportMissingTarget && pendingGameStatus) {
+      pendingGameStatus.textContent =
+        "Notification target could not be found. It may no longer be available.";
+    }
+    return false;
+  }
+
+  const targetNotifications = inAppNotifications.filter(
+    (candidate) =>
+      candidate.status === "unread" &&
+      notificationMatchesTargetContext(candidate, targetContext),
+  );
+  if (targetNotifications.length === 0) {
+    return false;
+  }
+
+  const results = [];
+  for (const targetNotification of targetNotifications) {
+    results.push(await persistNotificationRead(targetNotification.id));
+  }
+
+  const failedCount = results.filter((updated) => !updated).length;
+  const succeededCount = results.length - failedCount;
+  if (succeededCount > 0) {
+    notificationPanelFeedbackMessage = "";
+    renderNotificationDropdown();
+  }
+  if (failedCount > 0 && reportReadFailure) {
+    notificationPanelFeedbackMessage =
+      failedCount === results.length
+        ? "Notification could not be marked read. Try again."
+        : "Some notifications could not be marked read. Try again.";
+    if (notificationPanel && !notificationPanel.hidden) {
+      renderNotificationDropdown();
+    } else if (pendingGameStatus) {
+      pendingGameStatus.textContent = notificationPanelFeedbackMessage;
+    }
+  }
+
+  return failedCount === 0;
+}
+
+function findRenderedNotificationTargetContext(notification) {
+  if (
+    accountShell.persistenceAuthority.type !== "account" ||
+    currentRoute !== ROUTES.playMultiplayer
+  ) {
+    return null;
+  }
+
+  if (notification.targetPendingGameId) {
+    const pendingGame = [
+      ...createdPendingGames,
+      ...incomingPendingGameInvites,
+    ].find((candidate) => candidate.id === notification.targetPendingGameId);
+    return pendingGame
+      ? { kind: "pending-game", pendingGameId: pendingGame.id }
+      : null;
+  }
+
+  if (!notification.targetGameId) {
+    return null;
+  }
+
+  const awaitingEntryBatch = multiplayerDashboard.awaitingYourEntries.find(
+    (batch) =>
+      batch.id === notification.targetGameId &&
+      (!notification.targetAssignmentId ||
+        batch.currentSection?.id === notification.targetAssignmentId),
+  );
+  if (awaitingEntryBatch) {
+    return {
+      assignmentId: awaitingEntryBatch.currentSection?.id ?? null,
+      gameId: awaitingEntryBatch.id,
+      kind: "current-section",
+    };
+  }
+
+  const completedBatch = multiplayerDashboard.completedBatches.find(
+    (batch) => batch.id === notification.targetGameId,
+  );
+  return completedBatch
+    ? { gameId: completedBatch.id, kind: "completed-batch" }
+    : null;
+}
+
+function notificationMatchesTargetContext(notification, targetContext) {
+  if (targetContext.kind === "pending-game") {
+    return notification.targetPendingGameId === targetContext.pendingGameId;
+  }
+
+  if (notification.targetGameId !== targetContext.gameId) {
+    return false;
+  }
+
+  if (targetContext.kind === "current-section") {
+    return notification.targetAssignmentId
+      ? notification.targetAssignmentId === targetContext.assignmentId
+      : ["entries_needed", "nudge"].includes(notification.type);
+  }
+
+  if (targetContext.kind === "completed-batch") {
+    return notification.type === "batch_complete";
+  }
+
+  return false;
 }
 
 function updateNotificationToggle() {

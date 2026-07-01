@@ -108,6 +108,8 @@ const headerActions = document.querySelector(".header-actions");
 let notificationShell = document.querySelector("[data-notification-shell]");
 let notificationToggle = document.querySelector("[data-notification-toggle]");
 let notificationPanel = document.querySelector("[data-notification-panel]");
+let notificationPanelFeedbackMessage = "";
+let notificationPanelOrder = [];
 const primaryNav = document.querySelector("[data-primary-nav]");
 const playMenuRoot = document.querySelector("[data-play-menu-root]");
 const playMenuToggle = document.querySelector("[data-play-menu-toggle]");
@@ -3034,21 +3036,64 @@ function renderNotificationDropdown() {
     return;
   }
 
-  notificationPanel.replaceChildren(
-    ...getNotificationPanelItems().map((notification) => {
-      const message = getNotificationMessage(notification);
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "notification-item";
-      item.dataset.notificationStatus = notification.status;
-      item.textContent = message;
-      item.setAttribute("aria-label", getNotificationAccessibleLabel(notification, message));
-      item.addEventListener("click", () => {
-        void handleNotificationItemClick(notification);
-      });
-      return item;
-    }),
-  );
+  const rows = getNotificationPanelRenderItems().map(renderNotificationRow);
+  if (notificationPanelFeedbackMessage) {
+    const feedback = document.createElement("p");
+    feedback.className = "notification-feedback";
+    feedback.role = "status";
+    feedback.textContent = notificationPanelFeedbackMessage;
+    rows.push(feedback);
+  }
+
+  notificationPanel.replaceChildren(...rows);
+}
+
+function renderNotificationRow(notification) {
+  const message = getNotificationMessage(notification);
+  const targetRoute = getNotificationTargetRoute(notification);
+  const row = document.createElement("div");
+  row.className = "notification-row";
+  row.dataset.notificationRow = notification.id;
+  row.dataset.notificationStatus = notification.status;
+  if (notification.status !== "unread") {
+    row.classList.add("notification-row-body-only");
+  }
+
+  const item = document.createElement(targetRoute ? "button" : "div");
+  if (targetRoute) {
+    item.type = "button";
+    item.addEventListener("click", () => {
+      void handleNotificationItemClick(notification);
+    });
+  } else {
+    item.tabIndex = -1;
+  }
+  item.className = "notification-item";
+  item.dataset.notificationItemId = notification.id;
+  item.dataset.notificationStatus = notification.status;
+  item.textContent = message;
+  item.setAttribute("aria-label", getNotificationAccessibleLabel(notification, message));
+  row.append(item);
+
+  if (notification.status === "unread") {
+    const markReadButton = document.createElement("button");
+    const label = `Mark notification as read: ${message}`;
+    markReadButton.type = "button";
+    markReadButton.className = "notification-mark-read";
+    markReadButton.dataset.notificationMarkRead = notification.id;
+    markReadButton.setAttribute("aria-label", label);
+    markReadButton.append(
+      createFontAwesomeIcon("solid", "circle-check"),
+      createScreenReaderText(label),
+    );
+    markReadButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      void handleNotificationMarkRead(notification.id);
+    });
+    row.append(markReadButton);
+  }
+
+  return row;
 }
 
 function openNotificationPanel() {
@@ -3058,6 +3103,10 @@ function openNotificationPanel() {
 
   notificationToggle.setAttribute("aria-expanded", "true");
   notificationPanel.hidden = false;
+  notificationPanelFeedbackMessage = "";
+  notificationPanelOrder = getNotificationPanelItems().map(
+    (notification) => notification.id,
+  );
   renderNotificationDropdown();
   notificationPanel.focus({ preventScroll: true });
 }
@@ -3079,6 +3128,32 @@ function getNotificationPanelItems() {
       return timeComparison || left.index - right.index;
     })
     .map(({ notification }) => notification);
+}
+
+function getNotificationPanelRenderItems() {
+  if (!notificationPanel || notificationPanel.hidden || notificationPanelOrder.length === 0) {
+    return getNotificationPanelItems();
+  }
+
+  const notificationsById = new Map(
+    inAppNotifications.map((notification) => [notification.id, notification]),
+  );
+  const orderedNotifications = notificationPanelOrder
+    .map((id) => notificationsById.get(id))
+    .filter(Boolean);
+  const orderedIds = new Set(notificationPanelOrder);
+  const newNotifications = getNotificationPanelItems().filter(
+    (notification) => !orderedIds.has(notification.id),
+  );
+
+  if (newNotifications.length > 0) {
+    notificationPanelOrder = [
+      ...notificationPanelOrder,
+      ...newNotifications.map((notification) => notification.id),
+    ];
+  }
+
+  return [...orderedNotifications, ...newNotifications];
 }
 
 function notificationStatusOrder(status) {
@@ -3112,6 +3187,25 @@ function handleNotificationItemClick(notification) {
   renderRoute();
 }
 
+async function handleNotificationMarkRead(notificationId) {
+  const updated = await markNotificationRead(notificationId);
+  if (!updated || !notificationPanel || notificationPanel.hidden) {
+    return;
+  }
+
+  const item = getRenderedNotificationItem(notificationId);
+  item?.focus({ preventScroll: true });
+}
+
+function getRenderedNotificationItem(notificationId) {
+  if (!notificationPanel) {
+    return null;
+  }
+
+  return [...notificationPanel.querySelectorAll("[data-notification-item-id]")]
+    .find((item) => item.dataset.notificationItemId === notificationId) ?? null;
+}
+
 function closeNotificationPanel({ returnFocus = false } = {}) {
   if (!notificationToggle || !notificationPanel) {
     return;
@@ -3119,6 +3213,7 @@ function closeNotificationPanel({ returnFocus = false } = {}) {
 
   notificationToggle.setAttribute("aria-expanded", "false");
   notificationPanel.hidden = true;
+  notificationPanelOrder = [];
   if (returnFocus) {
     notificationToggle.focus();
   }
@@ -3270,11 +3365,11 @@ async function markNotificationRead(notificationId) {
     (candidate) => candidate.id === notificationId,
   );
   if (!notification || notification.status === "read") {
-    return;
+    return false;
   }
 
   if (accountShell.persistenceAuthority.type !== "account") {
-    return;
+    return false;
   }
 
   const accountId = accountShell.accountId;
@@ -3287,7 +3382,7 @@ async function markNotificationRead(notificationId) {
           })
         : { ...notification, status: "read" };
     if (!isCurrentAccountSession(accountId)) {
-      return;
+      return false;
     }
 
     inAppNotifications = inAppNotifications.map((candidate) =>
@@ -3295,11 +3390,20 @@ async function markNotificationRead(notificationId) {
         ? { ...candidate, ...updatedNotification, status: "read" }
         : candidate,
     );
+    notificationPanelFeedbackMessage = "";
     renderNotificationDropdown();
+    return true;
   } catch {
-    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
-      pendingGameStatus.textContent = "Notification could not be updated. Try again.";
+    if (isCurrentAccountSession(accountId)) {
+      notificationPanelFeedbackMessage =
+        "Notification could not be marked read. Try again.";
+      if (notificationPanel && !notificationPanel.hidden) {
+        renderNotificationDropdown();
+      } else if (pendingGameStatus) {
+        pendingGameStatus.textContent = notificationPanelFeedbackMessage;
+      }
     }
+    return false;
   }
 }
 

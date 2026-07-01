@@ -321,6 +321,39 @@ Expected:
 - Users not listed in Access policies cannot reach dev/test.
 - Mail still works for `hello@crazyphrases.com`.
 
+### Codex Sandbox TLS Client Failures
+
+When a Codex sandboxed shell checks a public HTTPS page or asset, the local
+Windows TLS provider can fail before any HTTP response is received. Known
+symptoms include:
+
+```text
+Invoke-WebRequest: Authentication failed, see inner exception.
+curl: (35) schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS (0x8009030e) - No credentials are available in the security package
+```
+
+For public production URLs, including stamped assets such as
+`https://www.crazyphrases.com/assets/app.js?v=<commit-sha>`, these messages are
+not evidence that the site, Cloudflare, Supabase Auth, or Crazy Phrases account
+login is requesting credentials. They usually mean the sandboxed Windows
+Schannel security context cannot acquire local TLS credentials.
+
+Do not change DNS, Cloudflare SSL/TLS mode, cPanel certificates, Access
+policies, asset paths, or cache-busting rules based only on this sandboxed
+client failure.
+
+Use the accepted workaround:
+
+1. Confirm the command is read-only and targets the intended public URL.
+2. Rerun the same `curl.exe` or `Invoke-WebRequest` command with sandbox
+   escalation.
+3. If the escalated command returns the expected HTTP status, use that result as
+   the shell verification evidence and record the original failure as a Codex
+   sandbox TLS-client issue.
+4. If the escalated command still fails before an HTTP response, then continue
+   normal public edge TLS triage and compare with the visible in-app browser or
+   an external TLS checker before proposing hosting changes.
+
 ### Mobile SSL Protocol Error Triage
 
 If a mobile browser reports `ERR_SSL_PROTOCOL_ERROR` while desktop browsers can

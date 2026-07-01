@@ -121,6 +121,12 @@ Expected:
 - The browser no longer shows `Index of /`.
 - The page opens the Crazy Phrases anonymous solo game rather than a holding page.
 
+If sandboxed `curl.exe` or `Invoke-WebRequest` fails before an HTTP response
+with Windows Schannel or `Authentication failed` wording, follow
+`docs/runbooks/cloudflare-dns-and-access.md` section `Codex Sandbox TLS Client
+Failures` before treating the public site or asset as private, broken, or
+misconfigured.
+
 ## Authority Boundary
 
 Detecting the live host, document root, protocol, or branch does not authorize live mutation. Uploads and server setting changes require an explicit deployment action by the site owner or an approved deployment workflow.

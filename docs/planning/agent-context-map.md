@@ -62,6 +62,7 @@ For large documents, search for the relevant heading first and then read that se
 | Visible in-app browser verification | `docs/runbooks/in-app-browser-verification.md` |
 | Local static frontend smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md` - read the Local Static Site Fast Path before starting any local server or hidden Playwright run. |
 | Deployed dev/test/production browser smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
+| Sandboxed public HTTPS checks fail before HTTP with `Invoke-WebRequest: Authentication failed`, `curl.exe` Schannel `SEC_E_NO_CREDENTIALS`, or `AcquireCredentialsHandle failed` | `docs/runbooks/cloudflare-dns-and-access.md` section `Codex Sandbox TLS Client Failures` |
 | Browser side pane not visible, localhost refused, or Playwright wrapper limitations | `docs/runbooks/in-app-browser-verification.md` - use the failure-mode checklist before falling back to standalone or Edge-backed Playwright. |
 | Branch-based dev deployment, protected `main`, required CI check, and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |

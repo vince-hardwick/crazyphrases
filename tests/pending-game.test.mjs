@@ -593,6 +593,7 @@ describe("Pending Game repository", () => {
             "A batch is waiting for your entries with @creator-one and @invitee-two.",
           createdAt: "2026-06-02T13:00:00.000Z",
           targetGameId: "started-game-1",
+          targetAssignmentId: "started-game-1-section-invitee-1",
         },
       ],
     );
@@ -2300,12 +2301,13 @@ describe("Pending Game repository", () => {
     assert.deepEqual(notifications, [
       {
         id: "supabase-notification-1",
-        type: "entries_needed",
+        type: "nudge",
         status: "unread",
         message:
           "You can submit entries to a batch with @creator-one and @invitee-two.",
         createdAt: "2026-01-01T00:00:00.000Z",
         targetGameId: "supabase-started-game-1",
+        targetAssignmentId: "supabase-section-1",
       },
     ]);
     assert.deepEqual(supabase.tableCalls, [
@@ -2316,7 +2318,7 @@ describe("Pending Game repository", () => {
       {
         method: "select",
         projection:
-          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, target_assignment_id, created_at",
         tableName: "in_app_notifications",
       },
       {
@@ -2356,7 +2358,7 @@ describe("Pending Game repository", () => {
       {
         method: "select",
         projection:
-          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, created_at",
+          "id, notification_type, notification_status, message, target_game_id, target_pending_game_id, target_assignment_id, created_at",
         tableName: "in_app_notifications",
       },
     ]);
@@ -2367,12 +2369,13 @@ describe("Pending Game repository", () => {
       [
         {
           id: "supabase-notification-1",
-          type: "entries_needed",
+          type: "nudge",
           status: "read",
           message:
             "You can submit entries to a batch with @creator-one and @invitee-two.",
           createdAt: "2026-01-01T00:00:00.000Z",
           targetGameId: "supabase-started-game-1",
+          targetAssignmentId: "supabase-section-1",
         },
       ],
     );
@@ -2417,7 +2420,8 @@ function createFakePendingGameSupabase({
         message:
           "You can submit entries to a batch with @creator-one and @invitee-two.",
         notification_status: "unread",
-        notification_type: "entries_needed",
+        notification_type: "nudge",
+        target_assignment_id: "supabase-section-1",
         target_game_id: "supabase-started-game-1",
       },
     ],

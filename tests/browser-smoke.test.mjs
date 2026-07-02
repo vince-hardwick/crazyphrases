@@ -64,7 +64,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-toggle-batch-favourite]").count(), 0);
     assert.equal(await page.locator("[data-toggle-phrase-favourite-index]").count(), 0);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
     await assertAnonymousSignInSurfaceClosed(page);
     await assertNoFavouriteDom(page);
@@ -273,6 +273,160 @@ describe("solo browser smoke", () => {
       },
     ]);
     await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
+  it("opens a signed-in Avatar account menu with Settings and Sign out only", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    const accountMenuButton = page.getByRole("button", {
+      name: "Account menu for Player",
+    });
+    assert.equal(await accountMenuButton.isVisible(), true);
+    await expectFontAwesomeClass(accountMenuButton, "fa-solid", "fa-dice");
+    assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
+
+    const hashBeforeOpen = new URL(page.url()).hash;
+    await accountMenuButton.click();
+
+    assert.equal(new URL(page.url()).hash, hashBeforeOpen);
+    assert.equal(await accountMenuButton.getAttribute("aria-expanded"), "true");
+
+    const accountMenu = page.getByRole("menu", { name: "Account menu" });
+    await accountMenu.waitFor({ state: "visible" });
+    const settings = accountMenu.getByRole("menuitem", { name: "Settings" });
+    const signOut = accountMenu.getByRole("menuitem", { name: "Sign out" });
+    assert.equal(await settings.isVisible(), true);
+    assert.equal(await signOut.isVisible(), true);
+    await expectFontAwesomeClass(settings, "fa-solid", "fa-sliders");
+    await expectFontAwesomeClass(signOut, "fa-solid", "fa-arrow-right-from-bracket");
+    assert.ok(Number(await signOut.evaluate((button) => getComputedStyle(button).fontWeight)) < 600);
+    assert.equal(await accountMenu.getByRole("menuitem").count(), 2);
+    assert.equal(await accountMenu.getByText("Favourites").count(), 0);
+    assert.equal(await accountMenu.getByText("Notifications").count(), 0);
+    assert.equal(await accountMenu.getByText("Profile").count(), 0);
+    assert.equal(await accountMenu.getByText("Avatar").count(), 0);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("closes the signed-in account menu on keyboard, outside click, and route change", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    const accountMenuButton = page.getByRole("button", {
+      name: "Account menu for Player",
+    });
+    await accountMenuButton.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("menu", { name: "Account menu" }).waitFor({
+      state: "visible",
+    });
+
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+    await assertActiveElementMatches(page, {
+      selector: "[data-account-menu-toggle]",
+      accessibleName: "Account menu for Player",
+    });
+
+    await accountMenuButton.click();
+    await page.mouse.click(8, 8);
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+
+    await accountMenuButton.click();
+    await page.evaluate(() => {
+      window.location.hash = "#/favourites";
+    });
+    await page.waitForFunction(() => window.location.hash === "#/favourites");
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("signs out from the account menu with the existing anonymous cleanup", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openFavouritesRoute(page);
+
+    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Sign out" })
+      .click();
+
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertAnonymousAccountIconVisible(page);
+    await assertAnonymousSignInSurfaceClosed(page);
+    await assertNoProfileEditorDom(page);
+    await assertNoFavouritesPanelDom(page);
+    await assertNoNotificationDom(page);
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("opens the signed-in settings panel from the account menu without routing", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    const hashBeforeOpen = new URL(page.url()).hash;
+    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Settings" })
+      .click();
+
+    assert.equal(new URL(page.url()).hash, hashBeforeOpen);
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+    const settingsPanel = page.getByRole("region", { name: "Profile" });
+    await assertTextVisible(settingsPanel, "Gamer Tag");
+    await assertActiveElementMatches(page, {
+      selector: "[data-account-profile-gamer-tag]",
+      accessibleName: "",
+    });
+    await assertNoHorizontalOverflow(page);
+
     assertNoConsoleErrors();
   });
 
@@ -1293,7 +1447,11 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
     assert.equal(await page.locator("[data-notification-row]").count(), 5);
 
-    await page.getByRole("button", { name: "Sign out" }).focus();
+    await page.getByRole("button", { name: /^Account menu for / }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Sign out" })
+      .focus();
     await page.keyboard.press("Enter");
 
     await assertAnonymousAccountIconVisible(page);
@@ -1576,7 +1734,7 @@ describe("solo browser smoke", () => {
       "Captain Spoon",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertNoProfileEditorDom(page);
     await signInWithLocalTestAccount(page);
 
@@ -1676,7 +1834,7 @@ describe("solo browser smoke", () => {
       "Profile could not be saved. Try again.",
     );
     await assertTextHidden(profileRegion, "Profile saved.");
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
 
     assert.equal(
@@ -1722,7 +1880,7 @@ describe("solo browser smoke", () => {
       "dragon",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
 
     assert.equal(
@@ -2108,7 +2266,7 @@ describe("solo browser smoke", () => {
       .getByText("Avatar could not be uploaded. Try again.")
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
-    await uploadFailurePage.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(uploadFailurePage);
     await signInWithLocalTestAccount(uploadFailurePage);
     profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
     assert.equal(
@@ -2138,7 +2296,7 @@ describe("solo browser smoke", () => {
       .getByText("Profile could not be saved. Your previous avatar is still active.")
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
-    await saveFailurePage.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(saveFailurePage);
     await signInWithLocalTestAccount(saveFailurePage);
     profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
     assert.equal(
@@ -2187,7 +2345,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Nudge after 3 days");
     await assertNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
 
@@ -2226,7 +2384,7 @@ describe("solo browser smoke", () => {
       0,
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Incoming invites");
@@ -2270,7 +2428,7 @@ describe("solo browser smoke", () => {
       "Game invite created. Waiting for Invitee Two to accept.",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Invitee Two");
@@ -2284,7 +2442,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Game invite accepted.");
     await assertTextVisible(page, "Accepted");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Player");
@@ -2316,7 +2474,7 @@ describe("solo browser smoke", () => {
       "Game invite created. Waiting for Invitee Two to accept.",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
@@ -2324,7 +2482,7 @@ describe("solo browser smoke", () => {
       .click();
     await assertTextVisible(page, "Game invite declined.");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Cancelled");
@@ -2359,7 +2517,7 @@ describe("solo browser smoke", () => {
       "Game invite created. Waiting for Invitee Two to accept.",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
@@ -2367,7 +2525,7 @@ describe("solo browser smoke", () => {
       .click();
     await assertTextVisible(page, "Game invite accepted.");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
@@ -2377,7 +2535,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Awaiting your entries");
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting your entries");
@@ -2399,7 +2557,7 @@ describe("solo browser smoke", () => {
       0,
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
@@ -2407,7 +2565,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Your crazy phrases");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openFavouritesRoute(page);
     assert.equal(
@@ -2458,7 +2616,7 @@ describe("solo browser smoke", () => {
       "Game invite created. Waiting for Invitee Two to accept.",
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
@@ -2466,13 +2624,13 @@ describe("solo browser smoke", () => {
       .click();
     await assertTextVisible(page, "Game invite accepted.");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
     await assertTextVisible(page, "Game started. Your turn is ready.");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
@@ -2539,25 +2697,25 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
@@ -2714,25 +2872,25 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
@@ -2770,14 +2928,14 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
@@ -2794,7 +2952,7 @@ describe("solo browser smoke", () => {
       0,
     );
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     assert.equal(
@@ -2828,25 +2986,25 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
@@ -2910,7 +3068,7 @@ describe("solo browser smoke", () => {
       );
     });
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     assert.equal(
@@ -3009,7 +3167,7 @@ describe("solo browser smoke", () => {
     });
 
     await signInWithLocalTestAccount(page);
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
 
     await assertTextVisible(page, "Invitee Two");
@@ -3492,7 +3650,11 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Create invite" }).click();
     await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
 
-    await page.getByRole("button", { name: "Sign out" }).focus();
+    await page.getByRole("button", { name: /^Account menu for / }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Sign out" })
+      .focus();
     await page.keyboard.press("Enter");
     await assertAnonymousAccountIconVisible(page);
     await assertAnonymousSignInSurfaceClosed(page);
@@ -3732,7 +3894,7 @@ describe("solo browser smoke", () => {
     await waitForRouteCopyButtonsEnabled(page);
     await restoreClipboardWrite(page);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
     await assertNoFavouriteDom(page);
@@ -3801,7 +3963,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
     assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
 
-    await page.getByRole("button", { name: "Sign out" }).click();
+    await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
 
@@ -4568,6 +4730,18 @@ async function signInWithLocalTestAccount(page, { invitee = false } = {}) {
     .getByRole("button", {
       name: invitee ? "Test invitee sign in" : "Test sign in",
     })
+    .click();
+}
+
+async function signOutFromAccountMenu(page) {
+  const accountMenuButton = page.getByRole("button", { name: /^Account menu for / });
+  if ((await accountMenuButton.getAttribute("aria-expanded")) !== "true") {
+    await accountMenuButton.click();
+  }
+  const accountMenu = page.getByRole("menu", { name: "Account menu" });
+  await accountMenu.waitFor({ state: "visible" });
+  await accountMenu
+    .getByRole("menuitem", { name: "Sign out" })
     .click();
 }
 

@@ -79,8 +79,43 @@
             >
               <i class="fa-regular fa-circle-user" aria-hidden="true"></i>
             </button>
+            <button
+              class="icon-button tooltip-action account-menu-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="account-menu"
+              data-account-menu-toggle
+              hidden
+            ></button>
             <p data-account-status></p>
             <span data-account-detail></span>
+            <div
+              class="account-menu-panel"
+              id="account-menu"
+              role="menu"
+              aria-label="Account menu"
+              data-account-menu-panel
+              hidden
+            >
+              <button
+                class="account-menu-item"
+                type="button"
+                role="menuitem"
+                data-account-settings-button
+              >
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                <span>Settings</span>
+              </button>
+              <button
+                class="account-menu-item"
+                type="button"
+                role="menuitem"
+                data-account-menu-sign-out-button
+              >
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                <span>Sign out</span>
+              </button>
+            </div>
             <div class="account-sign-in-panel" data-account-sign-in-panel hidden>
               <div class="account-actions">
                 <button
@@ -138,6 +173,7 @@
               </div>
               <p class="auth-message" data-auth-message aria-live="polite"></p>
             </div>
+            <p class="account-feedback" data-account-feedback aria-live="polite" hidden></p>
             <div class="persistence-recovery" data-persistence-recovery hidden>
               <p data-persistence-recovery-message></p>
               <div class="persistence-recovery-actions">

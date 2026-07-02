@@ -452,11 +452,13 @@ Font Awesome `sliders`, and `Sign out` uses Font Awesome
 `arrow-right-from-bracket`.
 
 `Settings` opens or routes to a signed-in-only focused editor view or panel for Gamer
-Tag and Avatar. The hosted email lookup key is derived from Supabase Auth email and
+Tag and Avatar. In the first account-menu implementation, `Settings` closes the account
+menu and focuses the existing signed-in Account Profile panel in place without changing
+the hash route. The hosted email lookup key is derived from Supabase Auth email and
 must not be presented as public identity or a normal editable profile text field unless
-a later accepted design explicitly adds Auth-email change behaviour. The implementing
-slice must document the accepted Settings route or panel route, preserve signed-in-only
-DOM gating, and avoid disrupting the participant's current game context.
+a later accepted design explicitly adds Auth-email change behaviour. Settings entry
+points must preserve signed-in-only DOM gating and avoid disrupting the participant's
+current game context.
 
 Closing the `Settings` panel with unsaved edits should require confirmation. The
 Settings editor save control uses Font Awesome `floppy-disk`; the profile edit

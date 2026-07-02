@@ -571,13 +571,13 @@ preserve their original history.
   in.
 - **Remaining risk**: Uploaded avatar images are now implemented through #63 / PR #74,
   browser-generated circular crop derivatives through #64 / PR #78, and the visual
-  cropper through #79 / PR #92. The accepted account-menu placement still needs an
-  owning PRD and agent-sized implementation issues, including avatar-first responsive
-  display, menu states, mobile behaviour, keyboard/focus behaviour, focused Profile and
-  Avatar panel behaviour without hash-route changes, unsaved-edit confirmation
-  behaviour, sign-out-with-unsaved-edits sequencing, menu item and confirmation icon
-  styling, sign-out cleanup coverage, accessible avatar-only labelling, and regression
-  coverage for anonymous DOM absence.
+  cropper through #79 / PR #92. The avatar-first account menu is owned by #142 and its
+  first implementation slice #144: it uses the current Avatar as the signed-in account
+  affordance, exposes only `Settings` and `Sign out`, closes on keyboard/outside
+  click/route changes/sign-out, and sends `Settings` to the existing Account Profile
+  panel without changing the hash route. Follow-up Settings polish remains under #145,
+  including unsaved-edit confirmation, sign-out-with-unsaved-edits sequencing, and
+  icon-only save/cancel controls.
 
 ### Phrase reactions
 

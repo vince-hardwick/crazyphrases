@@ -129,6 +129,9 @@ const revealDetails = document.querySelector("[data-reveal-details]");
 const copyStatus = document.querySelector("[data-copy-status]");
 const accountShellElement = document.querySelector("[data-account-shell]");
 const accountSignInToggle = document.querySelector("[data-account-sign-in-toggle]");
+const accountMenuToggle = document.querySelector("[data-account-menu-toggle]");
+const accountMenuPanel = document.querySelector("[data-account-menu-panel]");
+const accountSettingsButton = document.querySelector("[data-account-settings-button]");
 const accountSignInPanel = document.querySelector("[data-account-sign-in-panel]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
@@ -140,7 +143,11 @@ const googleSignInButton = document.querySelector("[data-google-sign-in-button]"
 const emailSignInForm = document.querySelector("[data-email-sign-in-form]");
 const emailSignInInput = document.querySelector("[data-email-sign-in-input]");
 const authMessage = document.querySelector("[data-auth-message]");
+const accountFeedback = document.querySelector("[data-account-feedback]");
 const signOutButton = document.querySelector("[data-sign-out-button]");
+const accountMenuSignOutButton = document.querySelector(
+  "[data-account-menu-sign-out-button]",
+);
 const persistenceRecovery = document.querySelector("[data-persistence-recovery]");
 const persistenceRecoveryMessage = document.querySelector(
   "[data-persistence-recovery-message]",
@@ -181,6 +188,8 @@ let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
 let hostedAuthAvailable = false;
 let accountSignInPanelOpen = false;
+let accountMenuOpen = false;
+let accountMenuAvatarRequestId = 0;
 const localTestSignedInGameSession = createSignedInGameSession({
   repository: createLocalTestSignedInSoloGameRepository(window.localStorage, {
     failureMode: getLocalTestPersistenceFailureMode(),
@@ -301,6 +310,16 @@ accountSignInToggle.addEventListener("click", () => {
   renderAccountShell(accountShell);
 });
 
+accountMenuToggle.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setAccountMenuOpen(!accountMenuOpen, { returnFocus: false });
+});
+
+accountSettingsButton.addEventListener("click", () => {
+  closeAccountMenu({ returnFocus: false });
+  focusAccountSettingsPanel();
+});
+
 async function applyLocalTestAccountShell(profile) {
   signedInGameSession = localTestSignedInGameSession;
   privateFavouritesRepository = localTestPrivateFavouritesRepository;
@@ -343,20 +362,31 @@ emailSignInForm.addEventListener("submit", async (event) => {
   }
 });
 
-signOutButton.addEventListener("click", async () => {
+signOutButton.addEventListener("click", () => {
+  void signOutOfAccount();
+});
+
+accountMenuSignOutButton.addEventListener("click", () => {
+  void signOutOfAccount();
+});
+
+async function signOutOfAccount() {
   authMessage.textContent = "";
+  setAccountFeedback("");
+  closeAccountMenu({ returnFocus: false });
+  closeNotificationPanel({ returnFocus: false });
 
   try {
     if (hostedAuthSession) {
       await hostedAuthSession.signOut();
     }
   } catch {
-    authMessage.textContent = "Could not sign out.";
+    setAccountFeedback("Could not sign out.");
     return;
   }
 
   applySignedOutShell();
-});
+}
 
 retryCurrentGameButton.addEventListener("click", () => {
   void loadSignedInCurrentGame();
@@ -396,6 +426,14 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  if (!accountMenuOpen || accountShellElement.contains(event.target)) {
+    return;
+  }
+
+  closeAccountMenu({ returnFocus: true });
+});
+
+document.addEventListener("click", (event) => {
   if (
     !notificationPanel ||
     notificationPanel.hidden ||
@@ -420,10 +458,15 @@ document.addEventListener("keydown", (event) => {
   if (notificationPanel && !notificationPanel.hidden) {
     closeNotificationPanel({ returnFocus: true });
   }
+
+  if (accountMenuOpen) {
+    closeAccountMenu({ returnFocus: true });
+  }
 });
 
 function handleNotificationToggleClick(event) {
   event.stopPropagation();
+  closeAccountMenu({ returnFocus: false });
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
   if (isExpanded) {
     closeNotificationPanel({ returnFocus: true });
@@ -562,6 +605,7 @@ revealPanel.addEventListener("click", (event) => {
 window.addEventListener("hashchange", () => {
   const requestedHashRoute = window.location.hash;
   currentRoute = normaliseRoute(requestedHashRoute);
+  closeAccountMenu({ returnFocus: false });
   if (requestedHashRoute && requestedHashRoute !== currentRoute) {
     ensureHashRoute(currentRoute);
     return;
@@ -838,16 +882,29 @@ function renderGame() {
 function renderAccountShell(shell) {
   const isAnonymous = shell.mode === "anonymous-solo";
   const isSignInPanelOpen = isAnonymous && accountSignInPanelOpen;
+  const isSignedIn = shell.mode === "signed-in";
 
   if (!isAnonymous) {
     accountSignInPanelOpen = false;
   }
+  if (!isSignedIn) {
+    accountMenuOpen = false;
+  }
 
   accountShellElement.classList.toggle("is-anonymous", isAnonymous);
   accountShellElement.classList.toggle("is-sign-in-open", isSignInPanelOpen);
+  accountShellElement.classList.toggle("is-account-menu-open", accountMenuOpen);
   accountSignInToggle.hidden = !isAnonymous;
   accountSignInToggle.setAttribute("aria-expanded", String(isSignInPanelOpen));
-  accountSignInPanel.hidden = isAnonymous ? !isSignInPanelOpen : false;
+  accountMenuToggle.hidden = !isSignedIn;
+  accountMenuToggle.setAttribute("aria-expanded", String(isSignedIn && accountMenuOpen));
+  accountMenuPanel.hidden = !(isSignedIn && accountMenuOpen);
+  accountSignInPanel.hidden = isAnonymous ? !isSignInPanelOpen : true;
+  if (!isSignedIn) {
+    setAccountFeedback("");
+  } else {
+    accountFeedback.hidden = accountFeedback.textContent.trim() === "";
+  }
   accountStatus.hidden = isAnonymous;
   accountDetail.hidden = isAnonymous;
   accountStatus.textContent = isAnonymous ? "" : shell.statusLabel;
@@ -865,15 +922,107 @@ function renderAccountShell(shell) {
   googleSignInButton.hidden =
     !isSignInPanelOpen || !hostedAuthAvailable;
   emailSignInForm.hidden = !isSignInPanelOpen || !hostedAuthAvailable;
-  signOutButton.hidden = shell.mode !== "signed-in";
-  if (shell.mode === "signed-in") {
+  signOutButton.hidden = true;
+  if (isSignedIn) {
+    renderAccountMenuToggle(shell);
     ensureNotificationShell();
     notificationShell.hidden = false;
   } else {
+    accountMenuAvatarRequestId += 1;
+    accountMenuToggle.replaceChildren();
+    accountMenuToggle.removeAttribute("aria-label");
+    delete accountMenuToggle.dataset.tooltip;
     removeNotificationShell();
   }
   renderAccountProfilePanel(shell);
   updateNotificationToggle();
+}
+
+function setAccountFeedback(message) {
+  accountFeedback.textContent = message;
+  accountFeedback.hidden = String(message ?? "").trim() === "";
+}
+
+function renderAccountMenuToggle(shell) {
+  const gamerTag = shell.profile?.gamerTag ?? "Account";
+  const label = `Account menu for ${gamerTag}`;
+  accountMenuToggle.setAttribute("aria-label", label);
+  accountMenuToggle.dataset.tooltip = label;
+  void renderAccountMenuAvatar(shell.profile?.avatar);
+}
+
+async function renderAccountMenuAvatar(avatarDescriptor) {
+  const requestId = ++accountMenuAvatarRequestId;
+
+  if (avatarDescriptor?.type === "uploaded") {
+    try {
+      const publicUrl = await avatarStorageRepository.getPublicUrl({
+        objectPath: avatarDescriptor.objectPath,
+      });
+
+      if (requestId !== accountMenuAvatarRequestId) {
+        return;
+      }
+
+      if (publicUrl) {
+        const image = document.createElement("img");
+        image.className = "account-menu-avatar-image";
+        image.alt = "";
+        image.src = publicUrl;
+        accountMenuToggle.replaceChildren(image);
+        return;
+      }
+    } catch {
+      if (requestId !== accountMenuAvatarRequestId) {
+        return;
+      }
+    }
+  }
+
+  if (requestId !== accountMenuAvatarRequestId) {
+    return;
+  }
+
+  const avatar = createBuiltInAvatarDescriptor(avatarDescriptor?.key);
+  const icon = createFontAwesomeIcon("solid", avatar.key);
+  icon.dataset.accountMenuBuiltInAvatarIcon = "";
+  icon.dataset.avatarKey = avatar.key;
+  accountMenuToggle.replaceChildren(icon);
+}
+
+function setAccountMenuOpen(isOpen, { returnFocus = false } = {}) {
+  const canOpen = accountShell.mode === "signed-in";
+  accountMenuOpen = canOpen && isOpen;
+  accountShellElement.classList.toggle("is-account-menu-open", accountMenuOpen);
+  accountMenuToggle.hidden = !canOpen;
+  accountMenuToggle.setAttribute("aria-expanded", String(accountMenuOpen));
+  accountMenuPanel.hidden = !accountMenuOpen;
+
+  if (accountMenuOpen) {
+    setPlayMenuOpen(false);
+    closeNotificationPanel({ returnFocus: false });
+  } else if (returnFocus && canOpen) {
+    accountMenuToggle.focus();
+  }
+}
+
+function closeAccountMenu({ returnFocus = false } = {}) {
+  if (!accountMenuOpen) {
+    return;
+  }
+
+  setAccountMenuOpen(false, { returnFocus });
+}
+
+function focusAccountSettingsPanel() {
+  if (accountShell.mode !== "signed-in") {
+    return;
+  }
+
+  const panel = ensureAccountProfilePanel();
+  panel.scrollIntoView({ block: "nearest" });
+  const target = panel.querySelector("[data-account-profile-gamer-tag]") ?? panel;
+  target.focus({ preventScroll: true });
 }
 
 function ensureNotificationShell() {
@@ -3682,7 +3831,7 @@ async function loadPendingGameLists() {
     }
 
     resetPendingGameState();
-    authMessage.textContent = "Game invites could not be loaded. Try again.";
+    setAccountFeedback("Game invites could not be loaded. Try again.");
   }
 }
 
@@ -4543,9 +4692,9 @@ async function persistGame() {
         accountId: accountShell.accountId,
         game,
       });
-      authMessage.textContent = "";
+      setAccountFeedback("");
     } catch (error) {
-      authMessage.textContent = getSaveFailureMessage(error);
+      setAccountFeedback(getSaveFailureMessage(error));
     }
     return;
   }
@@ -4561,10 +4710,11 @@ async function startAgain() {
       await signedInGameSession.deleteCurrentGame({
         accountId: accountShell.accountId,
       });
-      authMessage.textContent = "";
+      setAccountFeedback("");
     } catch {
-      authMessage.textContent =
-        "Account-backed progress could not be replaced. Keep this tab open and try again.";
+      setAccountFeedback(
+        "Account-backed progress could not be replaced. Keep this tab open and try again.",
+      );
       renderGame();
       return;
     }

@@ -676,6 +676,13 @@ descriptor writes; the browser must not send `email_lookup_key`, `handle`, or
 
 Applying this cleanup to hosted Supabase is a live schema mutation and still
 requires explicit owner approval or the documented gated deployment workflow.
+It is also a schema/static-asset cutover: the old deployed browser assets still
+write or read `handle`/`gamer_name`, while the new browser assets require the
+cleanup schema. Because `dev`, `test`, and production currently use the same
+hosted Supabase project, applying the migration changes the schema seen by all
+hosted static environments. Coordinate hosted application with the matching
+static deployment, expect old assets to fail on affected profile or participant
+paths after the migration, and expect new assets to fail before the migration.
 Do not treat the source migration or a branch deployment as hosted application
 evidence; record any hosted apply and verification in
 `docs/planning/supabase-state-ledger.md`.

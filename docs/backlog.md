@@ -549,8 +549,11 @@ preserve their original history.
   identity columns, tightens browser grants, and drops `handle`/`gamer_name` from
   Account Profile, Account Profile Directory, Pending Game participant, and Started Game
   participant tables. Hosted application is still a live Supabase schema mutation and
-  remains approval-gated through the runbook and environment workflow; this backlog
-  entry must not be treated as evidence that the hosted migration has already run.
+  remains approval-gated through the runbook and environment workflow. Because the
+  shared hosted Supabase schema and static assets must agree on the profile/participant
+  columns, apply the hosted migration only as part of an approved cutover with the
+  matching static deployment and smoke validation; this backlog entry must not be
+  treated as evidence that the hosted migration has already run.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
   the `Settings` panel with unsaved edits should require confirmation. The confirmation

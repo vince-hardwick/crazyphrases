@@ -351,13 +351,16 @@ approval to apply the migration.
 - Read: `supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql`
 - Update later: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Get explicit owner approval to apply the hosted migration**
+- [x] **Step 1: Get explicit owner approval to apply the hosted migration**
 
 This approval is separate from reset approval. It authorises DDL/schema change
 only for source migration
 `supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql`.
 
-- [ ] **Step 2: Apply the migration**
+Execution note, 2026-07-02: the owner explicitly approved applying the hosted
+migration.
+
+- [x] **Step 2: Apply the migration**
 
 Use Supabase MCP `apply_migration` against project `egnudphshvqdhrotxrfs` with
 name `private_email_lookup_and_gamer_tag` and the exact SQL from the
@@ -366,7 +369,14 @@ source-controlled migration file. Then run Supabase MCP `list_migrations`.
 Expected: migration history includes the new hosted migration and no later
 unexpected migration appears.
 
-- [ ] **Step 3: Verify schema, grants, and lookup privacy**
+Execution note, 2026-07-02: Supabase MCP `apply_migration` returned success for
+project `egnudphshvqdhrotxrfs`, name `private_email_lookup_and_gamer_tag`, using
+the exact SQL from
+`supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql`.
+Follow-up `list_migrations` returned hosted version `20260702141616` as the
+latest migration with no later unexpected migration.
+
+- [x] **Step 3: Verify schema, grants, and lookup privacy**
 
 Run read-only SQL:
 
@@ -399,12 +409,32 @@ Expected:
 - `authenticated_can_execute_lookup` is `true`;
 - no authenticated direct `SELECT` privilege exists for `email_lookup_key`.
 
-- [ ] **Step 4: Run Supabase advisors where available**
+Execution note, 2026-07-02: read-only verification confirmed both
+`public.account_profiles` and `public.account_profile_directory` have
+`email_lookup_key` and `gamer_tag`; `authenticated` can execute
+`public.lookup_account_profile(text,text)`; `anon` and `public` cannot execute
+that function; and `authenticated` has no direct `SELECT` privilege on
+`email_lookup_key`. The account profile and directory row counts remained `0`.
+
+- [x] **Step 4: Run Supabase advisors where available**
 
 Use Supabase Dashboard, Supabase MCP, or CLI-supported advisors if available.
 Record new security/performance findings separately from existing accepted
 project posture. Supabase recommends using the security advisor before
 production-facing changes.
+
+Execution note, 2026-07-02: Supabase MCP security advisors ran. Existing advisor
+posture still includes informational RLS-without-policy findings on owned child
+tables, existing authenticated-callable `SECURITY DEFINER` RPC warnings, and
+the existing leaked-password-protection Auth warning. A new warning now exists
+for `public.lookup_account_profile(lookup_key text, lookup_kind text)` as an
+authenticated-callable `SECURITY DEFINER` RPC. That is expected for the accepted
+private lookup design and was separately checked: it is not executable by
+`anon` or `public`, includes the authenticated-user guard, and returns only
+Gamer Tag plus Avatar descriptor data rather than email values. Supabase MCP
+performance advisors were attempted twice but failed with a Supabase-side
+advisor SQL syntax error near `'storage.buckets'`; record this as advisor tool
+failure rather than a project performance pass.
 
 ## Task 7: Feature-Branch Dev Deployment and Smoke
 

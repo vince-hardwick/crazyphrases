@@ -618,9 +618,20 @@ environment workflow. Browser-facing table grants still must not expose
 email address or Gamer Tag goes through
 `public.lookup_account_profile(text, text)`, a security-definer RPC that returns
 only `profile_id`, `gamer_tag`, and the Avatar descriptor columns. Hosted
-application remains a live backend mutation requiring the documented dev, test,
-and production gates; adding this source migration does not apply it to hosted
-Supabase.
+application remains a live backend mutation requiring the documented approval
+gates. On 2026-07-02, after separate explicit owner approval and the
+app-profile reset precondition, this migration was applied to hosted Supabase as
+version `20260702141616 private_email_lookup_and_gamer_tag`; schema, grants,
+and lookup privacy were verified.
+
+Supabase security advisors report
+`public.lookup_account_profile(text, text)` as an authenticated-callable
+`SECURITY DEFINER` function. That is expected for the accepted private lookup
+design: authenticated Accounts need exact known-email and Gamer Tag lookup
+without direct `SELECT` access to `email_lookup_key`. Keep this RPC narrow. It
+must not be executable by `anon` or `public`, it must keep an authenticated-user
+guard, and it must return only invite-safe Gamer Tag and Avatar descriptor data,
+not email addresses or email-backed lookup values.
 
 The first private Phrase Favourite migration is:
 

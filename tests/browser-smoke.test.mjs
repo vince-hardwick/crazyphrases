@@ -15,6 +15,10 @@ const mimeTypes = new Map([
   [".css", "text/css; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
 ]);
+const LONG_TARGET_NOTIFICATION_MESSAGE =
+  "Target notification with abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.";
+const LONG_STATIC_NOTIFICATION_MESSAGE =
+  "Static notification with zyxwvutsrqponmlkjihgfedcbazyxwvutsrqponmlkjihgfedcbazyxwvutsrqponmlkjihgfedcba.";
 
 describe("solo browser smoke", () => {
   let staticServer;
@@ -282,6 +286,97 @@ describe("solo browser smoke", () => {
       `Expected unread item to be visually distinct from read item, got ${JSON.stringify(
         itemStyles,
       )}`,
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps several mixed notification rows usable on narrow mobile", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 360, height: 780 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeLongNotificationMessages: true,
+      includeStaticNotifications: true,
+    });
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    const notificationToggle = page.locator("[data-notification-toggle]");
+    assert.equal(
+      await page.getByRole("button", { name: "Notifications, 4 unread" }).isVisible(),
+      true,
+    );
+    await expectFontAwesomeClass(notificationToggle, "fa-solid", "fa-bell");
+    await notificationToggle.click();
+
+    const notificationPanel = page.locator("[data-notification-panel]");
+    const notificationItems = notificationPanel.locator(".notification-item");
+    assert.equal(await notificationItems.count(), 7);
+    assert.deepEqual(await notificationItems.allInnerTexts(), [
+      LONG_TARGET_NOTIFICATION_MESSAGE,
+      "Newest unread notification.",
+      "Older unread notification.",
+      "Static unread notification.",
+      LONG_STATIC_NOTIFICATION_MESSAGE,
+      "Already read notification.",
+      "Static read notification.",
+    ]);
+    assert.deepEqual(
+      await notificationItems.evaluateAll((items) =>
+        items.map((item) => ({
+          status: item.getAttribute("data-notification-status"),
+          tagName: item.tagName,
+        })),
+      ),
+      [
+        { status: "unread", tagName: "BUTTON" },
+        { status: "unread", tagName: "BUTTON" },
+        { status: "unread", tagName: "BUTTON" },
+        { status: "unread", tagName: "DIV" },
+        { status: "read", tagName: "DIV" },
+        { status: "read", tagName: "BUTTON" },
+        { status: "read", tagName: "DIV" },
+      ],
+    );
+    assert.equal(
+      await notificationItems.nth(0).getAttribute("aria-label"),
+      `Unread: ${LONG_TARGET_NOTIFICATION_MESSAGE} Open Multiplayer`,
+    );
+    assert.equal(
+      await notificationItems.nth(4).getAttribute("aria-label"),
+      `Read: ${LONG_STATIC_NOTIFICATION_MESSAGE} Notification`,
+    );
+    assert.equal(
+      await notificationPanel
+        .getByRole("button", { name: "Mark all as read" })
+        .count(),
+      1,
+    );
+    await expectFontAwesomeClass(
+      notificationPanel.getByRole("button", { name: "Mark all as read" }),
+      "fa-solid",
+      "fa-list-check",
+    );
+    assert.equal(
+      await notificationPanel.locator("[data-notification-mark-read] i.fa-solid.fa-circle-check").count(),
+      4,
+    );
+    assert.equal(
+      await notificationPanel.getByText("Unread", { exact: true }).count(),
+      0,
+    );
+    assert.equal(
+      await notificationPanel.getByText("Read", { exact: true }).count(),
+      0,
     );
     await assertNoHorizontalOverflow(page);
 
@@ -1056,6 +1151,40 @@ describe("solo browser smoke", () => {
       [],
     );
     assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "2");
+
+    assertNoConsoleErrors();
+  });
+
+  it("removes populated notification DOM after sign-out", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      includeStaticNotifications: true,
+    });
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "Test sign in" }).click();
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
+    assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
+    assert.equal(await page.locator("[data-notification-row]").count(), 5);
+
+    await page.getByRole("button", { name: "Sign out" }).focus();
+    await page.keyboard.press("Enter");
+
+    await assertTextVisible(page, "Anonymous solo");
+    assert.equal(new URL(page.url()).hash, "#/play/solo");
+    await assertNoNotificationDom(page);
+    await assertNoFavouriteDom(page);
+    await assertNoPendingGameDom(page);
+    await assertNoProfileEditorDom(page);
 
     assertNoConsoleErrors();
   });
@@ -4479,6 +4608,7 @@ async function routeSeededNotificationRepository(
   {
     includeCompletedTargetNotification = false,
     includeDuplicateTargetNotifications = false,
+    includeLongNotificationMessages = false,
     includeMismatchedTargetNotification = false,
     includePendingTargetInvite = false,
     includeStaticNotifications = false,
@@ -4507,6 +4637,26 @@ async function routeSeededNotificationRepository(
       message: "Static read notification.",
       accountId: "test-account",
       createdAt: "2026-06-30T08:30:00.000Z",
+    },`
+    : "";
+  const longNotificationSeed = includeLongNotificationMessages
+    ? `
+    {
+      id: "notification-unread-long-target",
+      type: "entries_needed",
+      status: "unread",
+      message: ${JSON.stringify(LONG_TARGET_NOTIFICATION_MESSAGE)},
+      accountId: "test-account",
+      createdAt: "2026-06-30T12:30:00.000Z",
+      targetGameId: "started-game-newest",
+    },
+    {
+      id: "notification-read-long-static",
+      type: "game_cancelled",
+      status: "read",
+      message: ${JSON.stringify(LONG_STATIC_NOTIFICATION_MESSAGE)},
+      accountId: "test-account",
+      createdAt: "2026-06-30T12:15:00.000Z",
     },`
     : "";
   const duplicateTargetNotificationSeed = includeDuplicateTargetNotifications
@@ -4632,6 +4782,7 @@ ${completedBatchSeed}
       `export function createLocalTestPendingGameRepository(options = {}) {
   const repository = createTestPendingGameRepository(options);
   const notifications = [
+${longNotificationSeed}
     {
       id: "notification-unread-newest",
       type: "entries_needed",

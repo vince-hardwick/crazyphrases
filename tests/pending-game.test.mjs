@@ -2448,6 +2448,17 @@ describe("Pending Game repository", () => {
     assert.doesNotMatch(appSource, /createPendingGameFromHandle\(\{/);
     assert.doesNotMatch(appSource, /Gamer Tag not found/);
   });
+
+  it("keeps hosted Pending Game identity reads on Gamer Tag columns", () => {
+    const repositorySource = readFileSync(
+      new URL("../assets/pending-game.js", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(repositorySource, /gamer_tag/);
+    assert.doesNotMatch(repositorySource, /\bhandle\b/);
+    assert.doesNotMatch(repositorySource, /gamer_name/);
+  });
 });
 
 function createFakePendingGameSupabase({
@@ -2989,8 +3000,6 @@ class FakePendingGameQuery {
 function toAccountProfileRow(profile) {
   return {
     profile_id: profile.profileId,
-    handle: legacyStorageHandle(profile.gamerTag),
-    gamer_name: profile.gamerTag,
     gamer_tag: profile.gamerTag,
     avatar_key: profile.avatarKey,
   };
@@ -3000,8 +3009,7 @@ function toParticipantRow(profile, { inviteStatus, pendingGameId, role }) {
   return {
     pending_game_id: pendingGameId,
     profile_id: profile.profileId,
-    handle: legacyStorageHandle(profile.gamerTag),
-    gamer_name: profile.gamerTag,
+    gamer_tag: profile.gamerTag,
     avatar_key: profile.avatarKey,
     participant_role: role,
     invite_status: inviteStatus,
@@ -3012,19 +3020,10 @@ function toStartedParticipantRow(participant, { gameId }) {
   return {
     game_id: gameId,
     profile_id: participant.profile_id,
-    handle: participant.handle,
-    gamer_name: participant.gamer_name,
+    gamer_tag: participant.gamer_tag,
     avatar_key: participant.avatar_key,
     participant_role: participant.participant_role,
   };
-}
-
-function legacyStorageHandle(gamerTag) {
-  return String(gamerTag ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {

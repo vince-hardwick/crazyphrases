@@ -643,9 +643,10 @@ It replaces the remaining browser-facing Handle/Gamer Name RPC payloads with
 Gamer Tag output for `public.list_multiplayer_dashboard()`,
 `public.list_completed_multiplayer_history(integer, bigint, uuid)`,
 `public.cancel_created_game(uuid)`, and
-`private.multiplayer_participant_message(uuid, text)`. The legacy storage
-columns `handle` and `gamer_name` remain transitional schema internals until the
-deferred physical column cleanup work is taken up.
+`private.multiplayer_participant_message(uuid, text)`. This migration is
+ordered before the physical column cleanup below because it still reads the
+transitional storage columns while producing Gamer Tag-shaped JSON and
+notification copy.
 
 For multi-function hosted migrations applied through the Supabase MCP
 `apply_migration` path, prefer explicit dollar-quote tags for PL/pgSQL bodies
@@ -654,6 +655,37 @@ cleanup migration failed with generic `$$` delimiters before recording a
 migration-history row and with no partial function changes. Retagging the
 function bodies with explicit names preserved SQL semantics and allowed the
 single hosted migration to apply successfully.
+
+The physical legacy identity column cleanup migration is:
+
+```text
+supabase/migrations/20260702180000_legacy_identity_column_cleanup.sql
+```
+
+It is source-controlled after the Gamer Tag snapshot RPC cleanup migration. It
+adds and backfills `gamer_tag` on Pending Game and Started Game participant
+snapshot tables, recreates Account Profile lookup/directory triggers, Pending
+Game participant snapshot triggers, Started Game participant snapshot triggers,
+dashboard/history/cancellation RPCs, and the private participant-message helper
+without `handle` or `gamer_name` dependencies, then drops those legacy columns
+from `public.account_profiles`, `public.account_profile_directory`,
+`public.pending_game_participants`, and `public.game_participants`. Browser
+Account Profile grants after this migration allow only Gamer Tag and Avatar
+descriptor writes; the browser must not send `email_lookup_key`, `handle`, or
+`gamer_name`.
+
+Applying this cleanup to hosted Supabase is a live schema mutation and still
+requires explicit owner approval or the documented gated deployment workflow.
+It is also a schema/static-asset cutover: the old deployed browser assets still
+write or read `handle`/`gamer_name`, while the new browser assets require the
+cleanup schema. Because `dev`, `test`, and production currently use the same
+hosted Supabase project, applying the migration changes the schema seen by all
+hosted static environments. Coordinate hosted application with the matching
+static deployment, expect old assets to fail on affected profile or participant
+paths after the migration, and expect new assets to fail before the migration.
+Do not treat the source migration or a branch deployment as hosted application
+evidence; record any hosted apply and verification in
+`docs/planning/supabase-state-ledger.md`.
 
 The first private Phrase Favourite migration is:
 
@@ -696,13 +728,14 @@ ADR 0023 supersedes the product terminology and authority boundary for this
 area: `Gamer Name` is now `Gamer Tag`; the legacy public `Handle` model is
 replaced by one signed-in lookup-key input that accepts either a known email
 address or Gamer Tag and never returns email addresses in profile results. The
-migrations below describe the historical hosted schema that still uses legacy
-`handle` and `gamer_name` storage names until #151 renames or replaces that
-storage. ADR 0023 does not require hosted compatibility mapping from those
-legacy profile rows; the accepted hosted path is to clear the current
-owner-approved legacy Account/Profile data before applying the private
-lookup-key migration. Do not introduce new user-facing Handle/Gamer Name copy or
-email display from these historical column names.
+migrations below describe the historical hosted schema that originally used
+legacy `handle` and `gamer_name` storage names. Current source removes those
+transitional storage mirrors through
+`20260702180000_legacy_identity_column_cleanup.sql`. ADR 0023 does not require
+hosted compatibility mapping from legacy profile rows; the accepted hosted path
+was to clear the owner-approved legacy Account/Profile data before applying the
+private lookup-key migration. Do not introduce new user-facing Handle/Gamer Name
+copy or email display from these historical column names.
 
 It creates `public.account_profiles` for one active durable profile per
 Account, with a separate directory `profile_id`, globally unique `handle`,

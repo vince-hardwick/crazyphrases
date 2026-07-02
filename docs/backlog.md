@@ -531,26 +531,29 @@ preserve their original history.
   Game creation, notification copy generated through the active SQL helpers,
   favourite participant indicators, dashboard participant JSON, completed-history
   participant JSON, repository DTOs, and active test fixtures now use Gamer Tag as the
-  game-facing identity. The cleanup deliberately preserves current hosted storage
-  columns where the physical schema still names snapshot mirrors `handle` or
-  `gamer_name`; those columns are treated as storage implementation detail, not product
-  terminology.
+  game-facing identity. Current source now also removes the transitional hosted storage
+  mirrors through the physical legacy identity column cleanup below.
 - **Post-migration legacy-remnant audit**: Completed on 2026-07-02 by the
   legacy-identity-remnant cleanup slice after hosted dev/test/prod acceptance of the
   private lookup and Gamer Tag migration. The audit removed the old public
   `createPendingGameFromHandle` path, raw directory lookup exposure from active
   repository tests, browser hidden-handle profile editing, `currentHandle` favourite
   comparison, and app-facing participant/profile DTO fields for Handle and Gamer Name.
-  Remaining old names are limited to historical migrations/docs, absence assertions, and
-  storage-column mirrors pending the schema cleanup deferral below.
-- **Physical legacy identity column cleanup**: Deferred on 2026-07-02 after the
-  app-facing cleanup. Current hosted tables still include legacy-named storage columns
-  such as `handle` and `gamer_name` on Account Profile, directory, Pending Game
-  participant, and Started Game participant snapshots. The app and active RPC JSON now
-  translate those values to Gamer Tag at the boundary. Revisit after the new identity
-  model has settled in production and before any larger profile/history schema
-  redesign. Remaining risk: physical column names can confuse future schema work if an
-  agent treats them as product authority instead of storage mirrors.
+  Remaining old names are limited to historical migrations/docs and explicit absence or
+  cleanup assertions.
+- **Physical legacy identity column cleanup**: No longer deferred for source
+  implementation. Source-controlled migration
+  `supabase/migrations/20260702180000_legacy_identity_column_cleanup.sql` runs after the
+  Gamer Tag RPC cleanup migration, backfills participant snapshots to `gamer_tag`,
+  recreates profile/directory/participant helper functions and RPCs without old
+  identity columns, tightens browser grants, and drops `handle`/`gamer_name` from
+  Account Profile, Account Profile Directory, Pending Game participant, and Started Game
+  participant tables. Hosted application is still a live Supabase schema mutation and
+  remains approval-gated through the runbook and environment workflow. Because the
+  shared hosted Supabase schema and static assets must agree on the profile/participant
+  columns, apply the hosted migration only as part of an approved cutover with the
+  matching static deployment and smoke validation; this backlog entry must not be
+  treated as evidence that the hosted migration has already run.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
   the `Settings` panel with unsaved edits should require confirmation. The confirmation

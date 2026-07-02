@@ -552,6 +552,36 @@ body {
   gap: 8px;
 }
 
+.account-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.account-profile-action-button {
+  flex: 0 0 44px;
+  padding: 0;
+}
+
+.account-profile-unsaved-confirmation {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.account-profile-unsaved-confirmation[hidden] {
+  display: none;
+}
+
+.account-profile-unsaved-confirmation p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .account-profile-status {
   min-height: 1.2em;
   margin: 0;

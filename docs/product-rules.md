@@ -451,21 +451,26 @@ The first account menu contains only `Settings` and `Sign out`. Do not add
 Font Awesome `sliders`, and `Sign out` uses Font Awesome
 `arrow-right-from-bracket`.
 
-`Settings` opens or routes to a signed-in-only focused editor view or panel for Gamer
-Tag and Avatar. In the first account-menu implementation, `Settings` closes the account
-menu and focuses the existing signed-in Account Profile panel in place without changing
-the hash route. The hosted email lookup key is derived from Supabase Auth email and
-must not be presented as public identity or a normal editable profile text field unless
-a later accepted design explicitly adds Auth-email change behaviour. Settings entry
-points must preserve signed-in-only DOM gating and avoid disrupting the participant's
-current game context.
+`Settings` routes to `#/settings`, a signed-in-only focused editor view or panel for
+Gamer Tag and Avatar. Choosing `Settings` closes the account menu, updates the hash
+route, mounts the profile editor, and focuses the Gamer Tag field. The hosted email
+lookup key is derived from Supabase Auth email and must not be presented as public
+identity or a normal editable profile text field unless a later accepted design
+explicitly adds Auth-email change behaviour. Anonymous or signed-out sessions that
+request `#/settings` must see a sign-in-required gate and must not mount Settings,
+Profile, Avatar upload, crop, or hidden profile-input DOM.
 
-Closing the `Settings` panel with unsaved edits should require confirmation. The
-Settings editor save control uses Font Awesome `floppy-disk`; the profile edit
-undo/cancel control uses Font Awesome `arrow-rotate-left`. If the participant tries to
-sign out while a panel has unsaved edits, show confirmation before sign-out proceeds:
-`Save` saves first and then signs out, `Discard` discards edits and then signs out, and
-`Cancel` returns to the editor and keeps the participant signed in.
+The Settings profile editor is mounted only while the signed-in participant is on
+`#/settings`; leaving the route removes the editor DOM without clearing the current
+game/session state. The save control is an icon-only button using Font Awesome
+`floppy-disk`, with accessible name and tooltip `Save profile`. The profile edit
+reset/cancel control is an icon-only button using Font Awesome `arrow-rotate-left`,
+with accessible name and tooltip `Reset profile changes`.
+
+Leaving `#/settings` or signing out with unsaved profile edits requires confirmation.
+`Save` saves first and then continues the pending route change or sign-out, `Discard`
+discards edits and then continues, and `Cancel` returns to the editor and keeps the
+participant signed in.
 
 #### Notifications
 

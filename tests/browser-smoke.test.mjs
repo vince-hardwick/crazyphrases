@@ -56,7 +56,11 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Player");
     await assertTextHidden(page, "@player-test-account");
+    await assertNoProfileEditorDom(page);
+    await openSettingsRouteFromAccountMenu(page);
     await assertProfileManagementSurfaceMounted(page);
+    await openPlayRoute(page);
+    await assertNoProfileEditorDom(page);
     await assertNoFavouritesPanelDom(page);
     await openFavouritesRoute(page);
     await assertFavouriteSurfaceMounted(page);
@@ -397,7 +401,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("opens the signed-in settings panel from the account menu without routing", async () => {
+  it("routes signed-in Settings to the profile editor and keeps the editor unmounted elsewhere", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -409,22 +413,242 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
+    await assertNoProfileEditorDom(page);
 
-    const hashBeforeOpen = new URL(page.url()).hash;
     await page.getByRole("button", { name: "Account menu for Player" }).click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Settings" })
       .click();
 
-    assert.equal(new URL(page.url()).hash, hashBeforeOpen);
+    await page.waitForFunction(() => window.location.hash === "#/settings");
     assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
-    const settingsPanel = page.getByRole("region", { name: "Profile" });
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
     await assertTextVisible(settingsPanel, "Gamer Tag");
     await assertActiveElementMatches(page, {
       selector: "[data-account-profile-gamer-tag]",
       accessibleName: "",
     });
+    await openPlayRoute(page);
+    await assertNoProfileEditorDom(page);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders Settings profile save and reset as icon-only actions", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    const saveProfile = settingsPanel.getByRole("button", {
+      name: "Save profile",
+    });
+    const resetChanges = settingsPanel.getByRole("button", {
+      name: "Reset profile changes",
+    });
+
+    await expectFontAwesomeClass(saveProfile, "fa-solid", "fa-floppy-disk");
+    assert.equal(await saveProfile.getAttribute("data-tooltip"), "Save profile");
+    assert.equal(await visibleTextContent(saveProfile), "");
+    await expectFontAwesomeClass(resetChanges, "fa-solid", "fa-arrow-rotate-left");
+    assert.equal(
+      await resetChanges.getAttribute("data-tooltip"),
+      "Reset profile changes",
+    );
+    assert.equal(await visibleTextContent(resetChanges), "");
+
+    await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
+    await settingsPanel.locator("[data-account-profile-avatar]").selectOption("dragon");
+    await resetChanges.click();
+
+    assert.equal(
+      await settingsPanel.getByLabel("Gamer Tag").inputValue(),
+      "Player",
+    );
+    assert.equal(
+      await settingsPanel.locator("[data-account-profile-avatar]").inputValue(),
+      "dice",
+    );
+    await assertTextHidden(settingsPanel, "Profile saved.");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("confirms before leaving Settings with unsaved profile edits", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page
+      .getByRole("menu", { name: "Play Game Modes" })
+      .getByRole("menuitem", { name: "Solo play" })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/settings" &&
+        document.querySelector(
+          "[data-account-profile-unsaved-confirmation]",
+        )?.hidden === false,
+    );
+    assert.equal(new URL(page.url()).hash, "#/settings");
+    await assertTextVisible(settingsPanel, "Save changes before leaving Settings?");
+    await assertTextVisible(settingsPanel, "Save");
+    await assertTextVisible(settingsPanel, "Discard");
+    await assertTextVisible(settingsPanel, "Cancel");
+
+    await settingsPanel.getByRole("button", { name: "Cancel" }).click();
+    await assertTextHidden(settingsPanel, "Save changes before leaving Settings?");
+    assert.equal(
+      await settingsPanel.getByLabel("Gamer Tag").inputValue(),
+      "Captain Spoon",
+    );
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page
+      .getByRole("menu", { name: "Play Game Modes" })
+      .getByRole("menuitem", { name: "Solo play" })
+      .click();
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/settings" &&
+        document.querySelector(
+          "[data-account-profile-unsaved-confirmation]",
+        )?.hidden === false,
+    );
+    await settingsPanel.getByRole("button", { name: "Discard" }).click();
+
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertNoProfileEditorDom(page);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("saves before leaving Settings with unsaved profile edits", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    let settingsPanel = page.getByRole("region", { name: "Settings" });
+    await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page
+      .getByRole("menu", { name: "Play Game Modes" })
+      .getByRole("menuitem", { name: "Solo play" })
+      .click();
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/settings" &&
+        document.querySelector(
+          "[data-account-profile-unsaved-confirmation]",
+        )?.hidden === false,
+    );
+
+    await settingsPanel.getByRole("button", { name: "Save", exact: true }).click();
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertNoProfileEditorDom(page);
+
+    await openSettingsRouteFromAccountMenu(page);
+    settingsPanel = page.getByRole("region", { name: "Settings" });
+    assert.equal(
+      await settingsPanel.getByLabel("Gamer Tag").inputValue(),
+      "Captain Spoon",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("confirms before signing out with unsaved Settings edits", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
+    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Sign out" })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/settings" &&
+        document.querySelector(
+          "[data-account-profile-unsaved-confirmation]",
+        )?.hidden === false,
+    );
+    await assertTextVisible(settingsPanel, "Save changes before leaving Settings?");
+    assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
+
+    await settingsPanel.getByRole("button", { name: "Cancel" }).click();
+    await assertTextHidden(settingsPanel, "Save changes before leaving Settings?");
+    assert.equal(
+      await settingsPanel.getByLabel("Gamer Tag").inputValue(),
+      "Captain Spoon",
+    );
+    await assertTextVisible(page, "Account-backed mode");
+
+    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page
+      .getByRole("menu", { name: "Account menu" })
+      .getByRole("menuitem", { name: "Sign out" })
+      .click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector(
+          "[data-account-profile-unsaved-confirmation]",
+        )?.hidden === false,
+    );
+    await settingsPanel.getByRole("button", { name: "Discard" }).click();
+
+    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertAnonymousAccountIconVisible(page);
+    await assertNoProfileEditorDom(page);
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -1725,21 +1949,25 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    await page.getByLabel("Gamer Tag").fill("Captain Spoon");
-    await page.getByRole("button", { name: "Save profile" }).click();
+    await openSettingsRouteFromAccountMenu(page);
+    let profileRegion = page.getByRole("region", { name: "Settings" });
+    await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
+    await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
-    await assertTextVisible(page, "Profile saved.");
+    await assertTextVisible(profileRegion, "Profile saved.");
     assert.equal(
-      await page.getByLabel("Gamer Tag").inputValue(),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
     );
 
     await signOutFromAccountMenu(page);
     await assertNoProfileEditorDom(page);
     await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+    profileRegion = page.getByRole("region", { name: "Settings" });
 
     assert.equal(
-      await page.getByLabel("Gamer Tag").inputValue(),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
     );
     await assertNoHorizontalOverflow(page);
@@ -1759,7 +1987,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    const profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    const profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
@@ -1797,7 +2026,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    const profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    const profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion.getByLabel("Gamer Tag").fill(gamerTag);
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
@@ -1824,7 +2054,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testAccountProfile=save-fails`);
     await signInWithLocalTestAccount(page);
-    const profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    const profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
@@ -1834,12 +2065,13 @@ describe("solo browser smoke", () => {
       "Profile could not be saved. Try again.",
     );
     await assertTextHidden(profileRegion, "Profile saved.");
-    await signOutFromAccountMenu(page);
+    await signOutFromAccountMenuDiscardingUnsavedSettings(page);
     await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
 
     assert.equal(
       await page
-        .getByRole("region", { name: "Profile" })
+        .getByRole("region", { name: "Settings" })
         .getByLabel("Gamer Tag")
         .inputValue(),
       "Player",
@@ -1863,7 +2095,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    const profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    const profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion.locator("[data-account-profile-avatar]").selectOption("dragon");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
@@ -1882,10 +2115,11 @@ describe("solo browser smoke", () => {
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
 
     assert.equal(
       await page
-        .getByRole("region", { name: "Profile" })
+        .getByRole("region", { name: "Settings" })
         .locator("[data-account-profile-avatar]")
         .inputValue(),
       "dragon",
@@ -1907,7 +2141,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    let profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    let profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
     await profileRegion
@@ -1919,7 +2154,8 @@ describe("solo browser smoke", () => {
     await page.reload();
     await assertAnonymousAccountIconVisible(page);
     await signInWithLocalTestAccount(page);
-    profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    profileRegion = page.getByRole("region", { name: "Settings" });
 
     assert.equal(
       await profileRegion.getByLabel("Gamer Tag").inputValue(),
@@ -1963,7 +2199,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    let profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    let profileRegion = page.getByRole("region", { name: "Settings" });
 
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
@@ -2146,7 +2383,8 @@ describe("solo browser smoke", () => {
 
     await page.reload();
     await signInWithLocalTestAccount(page);
-    profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    profileRegion = page.getByRole("region", { name: "Settings" });
     assert.match(
       await profileRegion
         .locator("[data-account-profile-uploaded-avatar-image]")
@@ -2194,7 +2432,8 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    const profileRegion = page.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(page);
+    const profileRegion = page.getByRole("region", { name: "Settings" });
     const uploadInput = profileRegion.locator(
       "[data-account-profile-uploaded-avatar-input]",
     );
@@ -2256,7 +2495,8 @@ describe("solo browser smoke", () => {
 
     await uploadFailurePage.goto(`${staticServer.origin}/?testAvatarStorage=upload-fails`);
     await signInWithLocalTestAccount(uploadFailurePage);
-    let profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(uploadFailurePage);
+    let profileRegion = uploadFailurePage.getByRole("region", { name: "Settings" });
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
       .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
@@ -2266,9 +2506,10 @@ describe("solo browser smoke", () => {
       .getByText("Avatar could not be uploaded. Try again.")
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
-    await signOutFromAccountMenu(uploadFailurePage);
+    await signOutFromAccountMenuDiscardingUnsavedSettings(uploadFailurePage);
     await signInWithLocalTestAccount(uploadFailurePage);
-    profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(uploadFailurePage);
+    profileRegion = uploadFailurePage.getByRole("region", { name: "Settings" });
     assert.equal(
       await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
       "dice",
@@ -2286,7 +2527,8 @@ describe("solo browser smoke", () => {
       `${staticServer.origin}/?testAccountProfile=save-fails`,
     );
     await signInWithLocalTestAccount(saveFailurePage);
-    profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(saveFailurePage);
+    profileRegion = saveFailurePage.getByRole("region", { name: "Settings" });
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
       .setInputFiles(createPngFilePayload({ height: 128, width: 128 }));
@@ -2296,9 +2538,10 @@ describe("solo browser smoke", () => {
       .getByText("Profile could not be saved. Your previous avatar is still active.")
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
-    await signOutFromAccountMenu(saveFailurePage);
+    await signOutFromAccountMenuDiscardingUnsavedSettings(saveFailurePage);
     await signInWithLocalTestAccount(saveFailurePage);
-    profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
+    await openSettingsRouteFromAccountMenu(saveFailurePage);
+    profileRegion = saveFailurePage.getByRole("region", { name: "Settings" });
     assert.equal(
       await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
       "dice",
@@ -3526,6 +3769,32 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("gates the signed-in Settings route and restores it after sign-in", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/#/settings`);
+    await assertTextVisible(page, "Sign in to view Settings");
+    await assertNoProfileEditorDom(page);
+    await assertNoFavouriteDom(page);
+    await assertNoPendingGameDom(page);
+    await assertNoNotificationDom(page);
+
+    await signInWithLocalTestAccount(page);
+    await assertTextVisible(page, "Account-backed mode");
+    assert.equal(new URL(page.url()).hash, "#/settings");
+    await assertProfileManagementSurfaceMounted(page);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("resolves unsupported hash routes to anonymous Solo play", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -4745,6 +5014,18 @@ async function signOutFromAccountMenu(page) {
     .click();
 }
 
+async function signOutFromAccountMenuDiscardingUnsavedSettings(page) {
+  await signOutFromAccountMenu(page);
+  const settingsPanel = page.getByRole("region", { name: "Settings" });
+  await assertTextVisible(settingsPanel, "Save changes before leaving Settings?");
+  await settingsPanel.getByRole("button", { name: "Discard" }).click();
+  await page.waitForFunction(
+    () =>
+      window.location.hash === "#/play/solo" &&
+      document.querySelector("[data-account-sign-in-toggle]")?.hidden === false,
+  );
+}
+
 async function assertTextHidden(page, text) {
   assert.equal(await page.getByText(text).first().isVisible(), false);
 }
@@ -5149,6 +5430,25 @@ async function openFavouritesRoute(page) {
   assert.equal(new URL(page.url()).hash, "#/favourites");
 }
 
+async function openSettingsRouteFromAccountMenu(page) {
+  const accountMenuButton = page.getByRole("button", {
+    name: /^Account menu for /,
+  });
+  if ((await accountMenuButton.getAttribute("aria-expanded")) !== "true") {
+    await accountMenuButton.click();
+  }
+  await page
+    .getByRole("menu", { name: "Account menu" })
+    .getByRole("menuitem", { name: "Settings" })
+    .click();
+  await page.waitForFunction(
+    () =>
+      window.location.hash === "#/settings" &&
+      document.querySelectorAll("[data-account-profile-panel]").length === 1,
+  );
+  assert.equal(new URL(page.url()).hash, "#/settings");
+}
+
 async function openPlayRoute(page) {
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await page
@@ -5320,8 +5620,8 @@ async function assertNoNotificationDom(page) {
 
 async function assertProfileManagementSurfaceMounted(page) {
   assert.equal(await page.locator("[data-account-profile-panel]").count(), 1);
-  const profileRegion = page.getByRole("region", { name: "Profile" });
-  await assertTextVisible(profileRegion, "Profile");
+  const profileRegion = page.getByRole("region", { name: "Settings" });
+  await assertTextVisible(profileRegion, "Settings");
   await assertTextVisible(profileRegion, "Gamer Tag");
   assert.equal(
     await profileRegion.getByLabel("Gamer Tag").inputValue(),

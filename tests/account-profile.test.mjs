@@ -106,7 +106,7 @@ describe("Account Profile repository", () => {
     assert.equal(JSON.stringify(lookup).includes("created.player@example.test"), false);
   });
 
-  it("creates and looks up durable profiles without exposing Auth identity", async () => {
+  it("creates durable profiles with Gamer Tag identity without exposing Auth identity", async () => {
     const repository = createMemoryAccountProfileRepository({
       createProfileId: () => "profile-directory-1",
     });
@@ -117,26 +117,25 @@ describe("Account Profile repository", () => {
     const duplicate = await repository.ensureOwnProfile({
       accountId: "auth-account-1",
     });
-    const lookup = await repository.lookupProfileByHandle({
-      handle: profile.handle.toUpperCase(),
-    });
 
     assert.deepEqual(duplicate, profile);
-    assert.deepEqual(lookup, {
+    assert.deepEqual(profile, {
       profileId: "profile-directory-1",
-      handle: profile.handle,
-      gamerName: "Player",
+      gamerTag: "Player",
       avatar: {
         type: "built-in",
         key: profile.avatarKey,
       },
       avatarKey: profile.avatarKey,
     });
-    assert.equal("accountId" in lookup, false);
-    assert.equal(JSON.stringify(lookup).includes("auth-account-1"), false);
+    assert.equal("accountId" in profile, false);
+    assert.equal("handle" in profile, false);
+    assert.equal("gamerName" in profile, false);
+    assert.equal("lookupProfileByHandle" in repository, false);
+    assert.equal(JSON.stringify(profile).includes("auth-account-1"), false);
   });
 
-  it("creates and looks up durable profiles through Supabase rows", async () => {
+  it("creates durable profiles through Supabase rows with Gamer Tag identity", async () => {
     const supabase = createFakeAccountProfilesSupabase();
     const repository = createSupabaseAccountProfileRepository({
       createProfileId: () => "profile-directory-2",
@@ -149,23 +148,22 @@ describe("Account Profile repository", () => {
     const duplicate = await repository.ensureOwnProfile({
       accountId: "auth-account-2",
     });
-    const lookup = await repository.lookupProfileByHandle({
-      handle: profile.handle.toUpperCase(),
-    });
 
     assert.deepEqual(duplicate, profile);
-    assert.deepEqual(lookup, {
+    assert.deepEqual(profile, {
       profileId: "profile-directory-2",
-      handle: profile.handle,
-      gamerName: "Player",
+      gamerTag: "Player",
       avatar: {
         type: "built-in",
         key: profile.avatarKey,
       },
       avatarKey: profile.avatarKey,
     });
-    assert.equal("accountId" in lookup, false);
-    assert.equal(JSON.stringify(lookup).includes("auth-account-2"), false);
+    assert.equal("accountId" in profile, false);
+    assert.equal("handle" in profile, false);
+    assert.equal("gamerName" in profile, false);
+    assert.equal("lookupProfileByHandle" in repository, false);
+    assert.equal(JSON.stringify(profile).includes("auth-account-2"), false);
   });
 
   it("stores hosted Auth email as a private Supabase lookup key on profile creation", async () => {
@@ -191,7 +189,7 @@ describe("Account Profile repository", () => {
           email_lookup_key: "hosted.player@example.test",
           gamer_name: "Player",
           gamer_tag: "Player",
-          handle: profile.handle,
+          handle: "player",
           profile_id: "profile-private-lookup-4",
         },
       },
@@ -199,10 +197,8 @@ describe("Account Profile repository", () => {
     assert.equal(JSON.stringify(profile).includes("hosted.player@example.test"), false);
   });
 
-  it("looks up Supabase profiles through an invite-safe directory surface", async () => {
-    const supabase = createFakeAccountProfilesSupabase({
-      rejectRawHandleLookup: true,
-    });
+  it("does not expose the obsolete public directory lookup surface", async () => {
+    const supabase = createFakeAccountProfilesSupabase();
     const repository = createSupabaseAccountProfileRepository({
       createProfileId: () => "profile-directory-3",
       supabase,
@@ -211,21 +207,18 @@ describe("Account Profile repository", () => {
     const profile = await repository.ensureOwnProfile({
       accountId: "auth-account-3",
     });
-    const lookup = await repository.lookupProfileByHandle({
-      handle: profile.handle,
-    });
 
-    assert.deepEqual(lookup, {
+    assert.deepEqual(profile, {
       profileId: "profile-directory-3",
-      handle: profile.handle,
-      gamerName: "Player",
+      gamerTag: "Player",
       avatar: {
         type: "built-in",
         key: profile.avatarKey,
       },
       avatarKey: profile.avatarKey,
     });
-    assert.deepEqual(supabase.tableCalls.slice(-1), ["account_profile_directory"]);
+    assert.equal("lookupProfileByHandle" in repository, false);
+    assert.equal(supabase.tableCalls.includes("account_profile_directory"), false);
   });
 
   it("resolves Supabase lookup keys through a private lookup resolver", async () => {
@@ -306,7 +299,7 @@ describe("Account Profile repository", () => {
         }),
     ],
   ]) {
-    it(`updates ${repositoryName} profiles while keeping Handles globally unique`, async () => {
+    it(`updates ${repositoryName} profiles while keeping Gamer Tags globally unique`, async () => {
       const repository = createRepository();
       const first = await repository.ensureOwnProfile({
         accountId: `${repositoryName}-account-1`,
@@ -318,38 +311,32 @@ describe("Account Profile repository", () => {
       const updated = await repository.updateOwnProfile({
         accountId: `${repositoryName}-account-1`,
         profile: {
-          handle: "Captain Spoon",
-          gamerName: "Captain Spoon",
+          gamerTag: "Captain Spoon",
           avatarKey: "moon",
         },
       });
 
       assert.deepEqual(updated, {
         profileId: first.profileId,
-        handle: "captain-spoon",
-        gamerName: "Captain Spoon",
+        gamerTag: "Captain Spoon",
         avatar: {
           type: "built-in",
           key: "yin-yang",
         },
         avatarKey: "yin-yang",
       });
-      assert.equal(await repository.lookupProfileByHandle({ handle: first.handle }), null);
-      assert.deepEqual(
-        await repository.lookupProfileByHandle({ handle: "CAPTAIN SPOON" }),
-        updated,
-      );
+      assert.equal("handle" in updated, false);
+      assert.equal("gamerName" in updated, false);
       await assert.rejects(
         () =>
           repository.updateOwnProfile({
             accountId: `${repositoryName}-account-2`,
             profile: {
-              handle: "captain-spoon",
-              gamerName: "Imposter Spoon",
+              gamerTag: "Captain Spoon",
               avatarKey: "star",
             },
           }),
-        /handle/i,
+        /gamer tag/i,
       );
     });
 
@@ -366,23 +353,19 @@ describe("Account Profile repository", () => {
       const updated = await repository.updateOwnProfile({
         accountId: `${repositoryName}-uploaded-account`,
         profile: {
-          handle: "Uploaded Avatar",
-          gamerName: "Uploaded Avatar",
+          gamerTag: "Uploaded Avatar",
           avatar: uploadedAvatar,
         },
       });
 
       assert.deepEqual(updated, {
         profileId: first.profileId,
-        handle: "uploaded-avatar",
-        gamerName: "Uploaded Avatar",
+        gamerTag: "Uploaded Avatar",
         avatar: uploadedAvatar,
         avatarKey: "dice",
       });
-      assert.deepEqual(
-        await repository.lookupProfileByHandle({ handle: "UPLOADED AVATAR" }),
-        updated,
-      );
+      assert.equal("handle" in updated, false);
+      assert.equal("gamerName" in updated, false);
       assert.equal(JSON.stringify(updated).includes(`${repositoryName}-uploaded-account`), false);
     });
   }
@@ -417,7 +400,6 @@ function createProfileIdSequence(prefix) {
 
 function createFakeAccountProfilesSupabase({
   lookupProfiles = [],
-  rejectRawHandleLookup = false,
 } = {}) {
   const rows = [];
 
@@ -426,13 +408,10 @@ function createFakeAccountProfilesSupabase({
     rpcCalls: [],
     tableCalls: [],
     from(tableName) {
-      assert.ok(
-        ["account_profiles", "account_profile_directory"].includes(tableName),
-      );
+      assert.equal(tableName, "account_profiles");
       this.tableCalls.push(tableName);
       return new FakeAccountProfilesQuery(rows, {
         insertCalls: this.insertCalls,
-        rejectRawHandleLookup,
         tableName,
       });
     },
@@ -473,13 +452,12 @@ function createFakeAccountProfilesSupabase({
 }
 
 class FakeAccountProfilesQuery {
-  constructor(rows, { insertCalls, rejectRawHandleLookup, tableName }) {
+  constructor(rows, { insertCalls, tableName }) {
     this.rows = rows;
     this.filters = {};
     this.operation = "select";
     this.insertedRow = null;
     this.insertCalls = insertCalls;
-    this.rejectRawHandleLookup = rejectRawHandleLookup;
     this.tableName = tableName;
   }
 
@@ -509,26 +487,12 @@ class FakeAccountProfilesQuery {
   }
 
   async maybeSingle() {
-    if (
-      this.rejectRawHandleLookup &&
-      this.tableName === "account_profiles" &&
-      this.operation === "select" &&
-      Object.hasOwn(this.filters, "handle")
-    ) {
-      return {
-        data: null,
-        error: {
-          message: "raw Account Profile table is not a directory lookup surface",
-        },
-      };
-    }
-
     if (this.operation === "insert") {
       if (
         this.rows.some(
           (row) =>
             row.account_id === this.insertedRow.account_id ||
-            row.handle === this.insertedRow.handle,
+            row.gamer_tag === this.insertedRow.gamer_tag,
         )
       ) {
         return {
@@ -563,18 +527,18 @@ class FakeAccountProfilesQuery {
       }
 
       if (
-        this.updatedRow.handle &&
+        this.updatedRow.gamer_tag &&
         this.rows.some(
           (row) =>
             row !== existing &&
-            row.handle === this.updatedRow.handle,
+            row.gamer_tag === this.updatedRow.gamer_tag,
         )
       ) {
         return {
           data: null,
           error: {
             code: "23505",
-            message: "duplicate handle",
+            message: "duplicate gamer tag",
           },
         };
       }

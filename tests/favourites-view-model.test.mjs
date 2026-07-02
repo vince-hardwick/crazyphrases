@@ -32,7 +32,7 @@ describe("favourites view model", () => {
           entries: [],
         },
       },
-      currentHandle: "player-test-account",
+      currentGamerTag: "Player",
     });
 
     assert.equal(model.savedDateText, "26 Jun 2026");
@@ -60,7 +60,7 @@ describe("favourites view model", () => {
           rows: [],
         },
       },
-      currentHandle: "player-test-account",
+      currentGamerTag: "Player",
     });
 
     assert.equal(model.primaryText, "Batch favourite");
@@ -88,5 +88,36 @@ describe("favourites view model", () => {
       getBatchFavouriteCopyText(batchRecord),
       "Crazy Phrases\nBrisk teapot ladder\nCalm pencil umbrella",
     );
+  });
+
+  it("uses Gamer Tags for multiplayer participant indicators", () => {
+    const model = createFavouriteRowModel({
+      kind: "phrase",
+      record: {
+        id: "phrase-2",
+        accountId: "account-1",
+        createdAt: "2026-06-26T15:31:42.000Z",
+        favourite: {
+          type: "phrase",
+          sourceMode: "multiplayer",
+          templateId: "default-adjective-noun-noun",
+          rowIndex: 1,
+          phraseText: "Brisk teapot ladder",
+          entries: [],
+          participants: [
+            {
+              gamerTag: "Player",
+            },
+            {
+              gamerTag: "Invitee Two",
+            },
+          ],
+        },
+      },
+      currentGamerTag: "player",
+    });
+
+    assert.equal(model.participantIndicator, "You + Invitee Two");
+    assert.equal(model.participantIndicator.includes("@"), false);
   });
 });

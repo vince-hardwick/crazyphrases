@@ -633,6 +633,28 @@ must not be executable by `anon` or `public`, it must keep an authenticated-user
 guard, and it must return only invite-safe Gamer Tag and Avatar descriptor data,
 not email addresses or email-backed lookup values.
 
+The Gamer Tag snapshot RPC cleanup migration is:
+
+```text
+supabase/migrations/20260702173000_gamer_tag_snapshot_rpc_cleanup.sql
+```
+
+It replaces the remaining browser-facing Handle/Gamer Name RPC payloads with
+Gamer Tag output for `public.list_multiplayer_dashboard()`,
+`public.list_completed_multiplayer_history(integer, bigint, uuid)`,
+`public.cancel_created_game(uuid)`, and
+`private.multiplayer_participant_message(uuid, text)`. The legacy storage
+columns `handle` and `gamer_name` remain transitional schema internals until the
+deferred physical column cleanup work is taken up.
+
+For multi-function hosted migrations applied through the Supabase MCP
+`apply_migration` path, prefer explicit dollar-quote tags for PL/pgSQL bodies
+instead of generic `$$` delimiters. On 2026-07-02, the hosted apply of this RPC
+cleanup migration failed with generic `$$` delimiters before recording a
+migration-history row and with no partial function changes. Retagging the
+function bodies with explicit names preserved SQL semantics and allowed the
+single hosted migration to apply successfully.
+
 The first private Phrase Favourite migration is:
 
 ```text

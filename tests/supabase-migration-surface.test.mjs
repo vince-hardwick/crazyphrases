@@ -80,6 +80,9 @@ const fixNudgeNotificationAssignmentFkIndexMigrationUrl = findMigrationUrl(
 const uploadedAvatarProfileMigrationUrl = findMigrationUrl(
   "uploaded_avatar_profile",
 );
+const gamerTagSnapshotRpcCleanupMigrationUrl = findMigrationUrl(
+  "gamer_tag_snapshot_rpc_cleanup",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1561,6 +1564,60 @@ describe("Supabase migration surface", () => {
     assert.match(
       migration,
       /drop index if exists public\.in_app_notifications_target_assignment_id_idx/,
+    );
+  });
+
+  it("emits Gamer Tag participant snapshots from dashboard and history RPCs", () => {
+    assert.equal(existsSync(gamerTagSnapshotRpcCleanupMigrationUrl), true);
+
+    const migration = readFileSync(
+      gamerTagSnapshotRpcCleanupMigrationUrl,
+      "utf8",
+    );
+
+    assert.doesNotMatch(migration, /as\s+\$\$/);
+    assert.doesNotMatch(migration, /\n\$\$;/);
+
+    assert.match(
+      migration,
+      /create or replace function private\.multiplayer_participant_message\(/,
+    );
+    assert.match(migration, /participant\.gamer_name/);
+    assert.doesNotMatch(migration, /'@' \|\| participant\.handle/);
+
+    assert.match(
+      migration,
+      /create or replace function public\.list_multiplayer_dashboard\(\)/,
+    );
+    assert.match(
+      migration,
+      /pg_catalog\.jsonb_build_object\('gamerTag', participant\.gamer_name\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /pg_catalog\.jsonb_build_object\('handle', participant\.handle\)/,
+    );
+
+    assert.match(
+      migration,
+      /create or replace function public\.list_completed_multiplayer_history\(/,
+    );
+    assert.match(
+      migration,
+      /creator\.gamer_name \|\| ' cancelled a batch with '/,
+    );
+    assert.doesNotMatch(migration, /'@' \|\| creator\.handle/);
+    assert.match(
+      migration,
+      /grant execute on function public\.list_multiplayer_dashboard\(\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.list_completed_multiplayer_history\(integer, bigint, uuid\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.cancel_created_game\(uuid\)\s+to authenticated/,
     );
   });
 

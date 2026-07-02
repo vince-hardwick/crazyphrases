@@ -200,8 +200,6 @@ const localTestProfiles = [
     accountId: "test-account",
     profileId: "test-profile",
     emailLookupKey: "player@example.test",
-    handle: "player-test-account",
-    gamerName: "Player",
     gamerTag: "Player",
     avatarKey: "spark",
   },
@@ -209,8 +207,6 @@ const localTestProfiles = [
     accountId: "invitee-auth-account",
     profileId: "invitee-profile",
     emailLookupKey: "invitee.two@example.test",
-    handle: "invitee-two",
-    gamerName: "Invitee Two",
     gamerTag: "Invitee Two",
     avatarKey: "paper",
   },
@@ -836,7 +832,7 @@ function renderAccountShell(shell) {
   accountDetail.textContent =
     shell.persistenceAuthority.type === "local-browser"
       ? "Local play in this browser"
-      : shell.profile.gamerName;
+      : shell.profile.gamerTag;
   testSignInButton.hidden =
     shell.mode !== "anonymous-solo" ||
     hostedAuthAvailable ||
@@ -903,15 +899,13 @@ function renderAccountProfilePanel(shell) {
   }
 
   const panel = ensureAccountProfilePanel();
-  const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
-  const handle = panel.querySelector("[data-account-profile-handle]");
+  const gamerTag = panel.querySelector("[data-account-profile-gamer-tag]");
   const avatar = panel.querySelector("[data-account-profile-avatar]");
   const activeAvatar = shell.profile.avatar ?? createBuiltInAvatarDescriptor(
     shell.profile.avatarKey,
   );
 
-  gamerName.value = shell.profile.gamerName;
-  handle.value = shell.profile.handle;
+  gamerTag.value = shell.profile.gamerTag;
   avatar.value =
     activeAvatar.type === "built-in"
       ? activeAvatar.key
@@ -940,14 +934,11 @@ function ensureAccountProfilePanel() {
   form.noValidate = true;
   form.addEventListener("submit", saveAccountProfile);
 
-  const gamerNameField = createProfileInputField({
-    datasetKey: "accountProfileGamerName",
+  const gamerTagField = createProfileInputField({
+    datasetKey: "accountProfileGamerTag",
     label: "Gamer Tag",
     required: false,
   });
-  const handleField = document.createElement("input");
-  handleField.type = "hidden";
-  handleField.dataset.accountProfileHandle = "";
   const avatarField = createProfileAvatarField();
   const status = document.createElement("p");
   const submitButton = document.createElement("button");
@@ -960,8 +951,7 @@ function ensureAccountProfilePanel() {
   submitButton.textContent = "Save profile";
 
   form.append(
-    gamerNameField,
-    handleField,
+    gamerTagField,
     avatarField,
     submitButton,
     status,
@@ -1523,8 +1513,7 @@ async function saveAccountProfile(event) {
   const accountId = accountShell.accountId;
   const profileId = accountShell.profile.profileId;
   const panel = ensureAccountProfilePanel();
-  const gamerName = panel.querySelector("[data-account-profile-gamer-name]");
-  const handle = panel.querySelector("[data-account-profile-handle]");
+  const gamerTag = panel.querySelector("[data-account-profile-gamer-tag]");
   const avatar = panel.querySelector("[data-account-profile-avatar]");
   const status = panel.querySelector("[data-account-profile-status]");
   let uploadedObjectPath = null;
@@ -1556,8 +1545,7 @@ async function saveAccountProfile(event) {
       accountId,
       profile: {
         avatar: avatarDescriptor,
-        gamerName: gamerName.value,
-        handle: handle.value,
+        gamerTag: gamerTag.value,
       },
     });
     if (!isCurrentAccountSession(accountId)) {
@@ -2510,14 +2498,13 @@ function renderPendingGameParticipant(participant) {
 
 function getParticipantDisplayName(participant) {
   const gamerTag = String(
-    participant?.gamerTag ?? participant?.gamerName ?? "",
+    participant?.gamerTag ?? "",
   ).trim();
   if (gamerTag) {
     return gamerTag;
   }
 
-  const handle = String(participant?.handle ?? "").trim();
-  return handle ? `@${handle}` : "Unknown gamer";
+  return "Unknown gamer";
 }
 
 function getPendingGameParticipantStatusLabel(participant) {
@@ -3736,7 +3723,7 @@ function isCurrentAccountPendingGameParticipant(pendingGame, role) {
   return pendingGame.participants.some(
     (participant) =>
       participant.role === role &&
-      participant.handle === accountShell.profile?.handle,
+      participant.profileId === accountShell.profile?.profileId,
   );
 }
 
@@ -3984,7 +3971,7 @@ function renderPhraseFavourite(record) {
   const model = createFavouriteRowModel({
     kind: "phrase",
     record,
-    currentHandle: accountShell.profile?.handle,
+    currentGamerTag: accountShell.profile?.gamerTag,
   });
   const item = document.createElement("li");
   item.className = "favourite-row";
@@ -4021,7 +4008,7 @@ function renderBatchFavourite(record) {
   const model = createFavouriteRowModel({
     kind: "batch",
     record,
-    currentHandle: accountShell.profile?.handle,
+    currentGamerTag: accountShell.profile?.gamerTag,
   });
   const item = document.createElement("li");
   item.className = "favourite-row";
@@ -5555,11 +5542,11 @@ function getPendingGameFailureMessage(error) {
     return "No gamer found under that gamer tag.";
   }
 
-  if (error instanceof Error && /own (handle|profile|gamer)/i.test(error.message)) {
+  if (error instanceof Error && /own (profile|gamer)/i.test(error.message)) {
     return "Choose another gamer; this one belongs to you.";
   }
 
-  if (error instanceof Error && /(lookup|gamer tag|handle)/i.test(error.message)) {
+  if (error instanceof Error && /(lookup|gamer tag)/i.test(error.message)) {
     return "No gamer found under that gamer tag.";
   }
 

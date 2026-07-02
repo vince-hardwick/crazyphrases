@@ -19,13 +19,13 @@ export function formatFavouriteSavedDate(createdAt) {
   return FIXED_UK_DATE_FORMATTER.format(date);
 }
 
-export function createFavouriteRowModel({ kind, record, currentHandle = "" }) {
+export function createFavouriteRowModel({ kind, record, currentGamerTag = "" }) {
   const savedDateText = formatFavouriteSavedDate(record.createdAt);
   const savedDateAccessibleText =
     savedDateText === "" ? "Saved date unavailable" : `Saved ${savedDateText}`;
   const participantIndicator = getParticipantIndicator({
     favourite: record.favourite,
-    currentHandle,
+    currentGamerTag,
   });
 
   if (kind === "phrase") {
@@ -65,7 +65,7 @@ export function getBatchFavouriteCopyText(record) {
   return formatBatchCopyText(record.favourite.phrases);
 }
 
-function getParticipantIndicator({ favourite, currentHandle }) {
+function getParticipantIndicator({ favourite, currentGamerTag }) {
   if (favourite.sourceMode === "signed-in-solo") {
     return "Solo";
   }
@@ -78,12 +78,14 @@ function getParticipantIndicator({ favourite, currentHandle }) {
     return "Solo";
   }
 
-  const normalisedCurrentHandle = normaliseHandle(currentHandle);
+  const normalisedCurrentGamerTag = normaliseGamerTag(currentGamerTag);
   const current = participants.find(
-    (participant) => normaliseHandle(participant.handle) === normalisedCurrentHandle,
+    (participant) =>
+      normaliseGamerTag(participant.gamerTag) === normalisedCurrentGamerTag,
   );
   const others = participants.filter(
-    (participant) => normaliseHandle(participant.handle) !== normalisedCurrentHandle,
+    (participant) =>
+      normaliseGamerTag(participant.gamerTag) !== normalisedCurrentGamerTag,
   );
 
   if (!current) {
@@ -94,7 +96,7 @@ function getParticipantIndicator({ favourite, currentHandle }) {
     return "You";
   }
 
-  return formatParticipantList([{ displayName: "You", handle: "you" }, ...others]);
+  return formatParticipantList([{ displayName: "You", gamerTag: "You" }, ...others]);
 }
 
 function formatParticipantList(participants) {
@@ -112,14 +114,9 @@ function formatParticipantLabel(participant) {
     return "You";
   }
 
-  const handle = normaliseHandle(participant.handle);
-  if (handle !== "") {
-    return `@${handle}`;
-  }
-
-  return String(participant.gamerName ?? "").trim();
+  return String(participant.gamerTag ?? "").trim();
 }
 
-function normaliseHandle(handle) {
-  return String(handle ?? "").trim().replace(/^@/, "").toLowerCase();
+function normaliseGamerTag(gamerTag) {
+  return String(gamerTag ?? "").trim().toLocaleLowerCase("en-GB");
 }

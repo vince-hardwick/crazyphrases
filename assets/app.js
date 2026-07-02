@@ -163,9 +163,14 @@ const ROUTES = {
   playSolo: "#/play/solo",
   playMultiplayer: "#/play/multiplayer",
   favourites: "#/favourites",
+  settings: "#/settings",
 };
 const signedInRouteReconciliationDelaysMs = [0, 100, 500, 1500, 3000, 6000, 10000];
-const signedInOnlyRoutes = new Set([ROUTES.playMultiplayer, ROUTES.favourites]);
+const signedInOnlyRoutes = new Set([
+  ROUTES.playMultiplayer,
+  ROUTES.favourites,
+  ROUTES.settings,
+]);
 const signedInRouteHandoff = createSignedInRouteHandoff({
   allowedRoutes: signedInOnlyRoutes,
   storage: window.localStorage,
@@ -290,6 +295,8 @@ let accountProfilePanel = null;
 let accountProfileDraftAvatar = null;
 let accountProfileCropGuideTimer = null;
 let accountProfilePreviewRequestId = 0;
+let accountProfilePendingExit = null;
+let accountProfileHashRestorationPending = false;
 let favouritesPanel = null;
 
 loadFontAwesomeKit();
@@ -317,6 +324,9 @@ accountMenuToggle.addEventListener("click", (event) => {
 
 accountSettingsButton.addEventListener("click", () => {
   closeAccountMenu({ returnFocus: false });
+  currentRoute = ROUTES.settings;
+  ensureHashRoute(ROUTES.settings);
+  renderRoute();
   focusAccountSettingsPanel();
 });
 
@@ -376,6 +386,15 @@ async function signOutOfAccount() {
   closeAccountMenu({ returnFocus: false });
   closeNotificationPanel({ returnFocus: false });
 
+  if (currentRoute === ROUTES.settings && hasUnsavedAccountProfileChanges()) {
+    showAccountProfileExitConfirmation({ signOut: true });
+    return;
+  }
+
+  await performSignOutOfAccount();
+}
+
+async function performSignOutOfAccount() {
   try {
     if (hostedAuthSession) {
       await hostedAuthSession.signOut();
@@ -604,8 +623,24 @@ revealPanel.addEventListener("click", (event) => {
 
 window.addEventListener("hashchange", () => {
   const requestedHashRoute = window.location.hash;
-  currentRoute = normaliseRoute(requestedHashRoute);
+  const requestedRoute = normaliseRoute(requestedHashRoute);
+
+  if (
+    accountProfileHashRestorationPending &&
+    requestedRoute === ROUTES.settings
+  ) {
+    accountProfileHashRestorationPending = false;
+    return;
+  }
+
   closeAccountMenu({ returnFocus: false });
+
+  if (shouldConfirmAccountProfileExit(requestedRoute)) {
+    showAccountProfileExitConfirmation({ route: requestedRoute });
+    return;
+  }
+
+  currentRoute = requestedRoute;
   if (requestedHashRoute && requestedHashRoute !== currentRoute) {
     ensureHashRoute(currentRoute);
     return;
@@ -634,7 +669,8 @@ function normaliseRoute(hash) {
   if (
     hash === ROUTES.playSolo ||
     hash === ROUTES.playMultiplayer ||
-    hash === ROUTES.favourites
+    hash === ROUTES.favourites ||
+    hash === ROUTES.settings
   ) {
     return hash;
   }
@@ -741,6 +777,7 @@ function renderRoute() {
 
   if (routeNeedsAccount && !isSignedIn) {
     gamePanel.hidden = true;
+    removeAccountProfilePanel();
     removePendingGamePanel();
     removeFavouritesPanel();
     renderSignInRequiredGate(currentRoute);
@@ -750,10 +787,22 @@ function renderRoute() {
   routeGate.hidden = true;
   routeGate.replaceChildren();
 
+  if (currentRoute !== ROUTES.settings) {
+    removeAccountProfilePanel();
+  }
+
   if (currentRoute === ROUTES.favourites) {
     gamePanel.hidden = true;
     removePendingGamePanel();
     renderFavourites();
+    return;
+  }
+
+  if (currentRoute === ROUTES.settings) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    removeFavouritesPanel();
+    renderAccountProfilePanel(accountShell);
     return;
   }
 
@@ -777,10 +826,13 @@ function renderRoute() {
 
 function renderSignInRequiredGate(route) {
   const heading = document.createElement("h2");
-  heading.textContent =
-    route === ROUTES.favourites
-      ? "Sign in to view Favourites"
-      : "Sign in to play Multiplayer";
+  if (route === ROUTES.favourites) {
+    heading.textContent = "Sign in to view Favourites";
+  } else if (route === ROUTES.settings) {
+    heading.textContent = "Sign in to view Settings";
+  } else {
+    heading.textContent = "Sign in to play Multiplayer";
+  }
 
   const copy = document.createElement("p");
   copy.textContent =
@@ -934,7 +986,9 @@ function renderAccountShell(shell) {
     delete accountMenuToggle.dataset.tooltip;
     removeNotificationShell();
   }
-  renderAccountProfilePanel(shell);
+  if (currentRoute !== ROUTES.settings) {
+    removeAccountProfilePanel();
+  }
   updateNotificationToggle();
 }
 
@@ -1015,7 +1069,7 @@ function closeAccountMenu({ returnFocus = false } = {}) {
 }
 
 function focusAccountSettingsPanel() {
-  if (accountShell.mode !== "signed-in") {
+  if (accountShell.mode !== "signed-in" || currentRoute !== ROUTES.settings) {
     return;
   }
 
@@ -1085,6 +1139,122 @@ function renderAccountProfilePanel(shell) {
   void renderAccountProfileAvatarPreview(panel, activeAvatar);
 }
 
+function shouldConfirmAccountProfileExit(nextRoute) {
+  return (
+    currentRoute === ROUTES.settings &&
+    nextRoute !== ROUTES.settings &&
+    hasUnsavedAccountProfileChanges()
+  );
+}
+
+function hasUnsavedAccountProfileChanges() {
+  if (
+    accountShell.persistenceAuthority.type !== "account" ||
+    !accountProfilePanel
+  ) {
+    return false;
+  }
+
+  const gamerTag = accountProfilePanel.querySelector(
+    "[data-account-profile-gamer-tag]",
+  );
+  if (gamerTag && gamerTag.value !== accountShell.profile.gamerTag) {
+    return true;
+  }
+
+  const savedAvatar =
+    accountShell.profile.avatar ??
+    createBuiltInAvatarDescriptor(accountShell.profile.avatarKey);
+
+  if (accountProfileDraftAvatar?.type === "uploaded-draft") {
+    return true;
+  }
+
+  if (accountProfileDraftAvatar?.type === "built-in") {
+    return !areProfileAvatarDescriptorsEqual(accountProfileDraftAvatar, savedAvatar);
+  }
+
+  return false;
+}
+
+function areProfileAvatarDescriptorsEqual(left, right) {
+  if (!left || !right || left.type !== right.type) {
+    return false;
+  }
+
+  if (left.type === "built-in") {
+    return left.key === createBuiltInAvatarDescriptor(right.key).key;
+  }
+
+  if (left.type === "uploaded") {
+    return left.objectPath === right.objectPath;
+  }
+
+  return false;
+}
+
+function showAccountProfileExitConfirmation({ route = null, signOut = false }) {
+  accountProfilePendingExit = { route, signOut };
+  const confirmation = accountProfilePanel?.querySelector(
+    "[data-account-profile-unsaved-confirmation]",
+  );
+  if (confirmation) {
+    confirmation.hidden = false;
+  }
+  if (route) {
+    accountProfileHashRestorationPending = true;
+    ensureHashRoute(ROUTES.settings);
+  }
+}
+
+function hideAccountProfileExitConfirmation() {
+  const confirmation = accountProfilePanel?.querySelector(
+    "[data-account-profile-unsaved-confirmation]",
+  );
+  if (confirmation) {
+    confirmation.hidden = true;
+  }
+}
+
+async function handleAccountProfileUnsavedSave() {
+  const saved = await saveCurrentAccountProfile();
+  if (saved) {
+    continueAccountProfilePendingExit();
+  }
+}
+
+function handleAccountProfileUnsavedDiscard() {
+  renderAccountProfilePanel(accountShell);
+  setAccountProfileStatus("");
+  continueAccountProfilePendingExit();
+}
+
+function handleAccountProfileUnsavedCancel() {
+  accountProfilePendingExit = null;
+  hideAccountProfileExitConfirmation();
+  accountProfilePanel
+    ?.querySelector("[data-account-profile-gamer-tag]")
+    ?.focus({ preventScroll: true });
+}
+
+function continueAccountProfilePendingExit() {
+  const pendingExit = accountProfilePendingExit;
+  accountProfilePendingExit = null;
+  hideAccountProfileExitConfirmation();
+  if (!pendingExit) {
+    return;
+  }
+
+  if (pendingExit.signOut) {
+    void performSignOutOfAccount();
+    return;
+  }
+
+  currentRoute = pendingExit.route;
+  ensureHashRoute(pendingExit.route);
+  renderRoute();
+}
+
 function ensureAccountProfilePanel() {
   if (accountProfilePanel) {
     return accountProfilePanel;
@@ -1093,10 +1263,10 @@ function ensureAccountProfilePanel() {
   accountProfilePanel = document.createElement("section");
   accountProfilePanel.className = "account-profile-panel";
   accountProfilePanel.dataset.accountProfilePanel = "";
-  accountProfilePanel.setAttribute("aria-label", "Profile");
+  accountProfilePanel.setAttribute("aria-label", "Settings");
 
   const heading = document.createElement("h2");
-  heading.textContent = "Profile";
+  heading.textContent = "Settings";
 
   const form = document.createElement("form");
   form.className = "account-profile-form";
@@ -1111,25 +1281,90 @@ function ensureAccountProfilePanel() {
   });
   const avatarField = createProfileAvatarField();
   const status = document.createElement("p");
+  const actions = document.createElement("div");
+  const unsavedConfirmation = createAccountProfileUnsavedConfirmation();
   const submitButton = document.createElement("button");
+  const resetButton = document.createElement("button");
 
   status.className = "account-profile-status";
   status.dataset.accountProfileStatus = "";
   status.setAttribute("aria-live", "polite");
+  actions.className = "account-profile-actions";
   submitButton.type = "submit";
-  submitButton.className = "text-button";
-  submitButton.textContent = "Save profile";
+  submitButton.className =
+    "secondary-button icon-action-button tooltip-action account-profile-action-button";
+  submitButton.dataset.tooltip = "Save profile";
+  submitButton.setAttribute("aria-label", "Save profile");
+  submitButton.replaceChildren(
+    createFontAwesomeIcon("solid", "floppy-disk"),
+    createScreenReaderText("Save profile"),
+  );
+  resetButton.type = "button";
+  resetButton.className =
+    "secondary-button icon-action-button tooltip-action account-profile-action-button";
+  resetButton.dataset.accountProfileResetChanges = "";
+  resetButton.dataset.tooltip = "Reset profile changes";
+  resetButton.setAttribute("aria-label", "Reset profile changes");
+  resetButton.replaceChildren(
+    createFontAwesomeIcon("solid", "arrow-rotate-left"),
+    createScreenReaderText("Reset profile changes"),
+  );
+  resetButton.addEventListener("click", () => {
+    renderAccountProfilePanel(accountShell);
+    setAccountProfileStatus("");
+  });
+  actions.append(resetButton, submitButton);
 
   form.append(
     gamerTagField,
     avatarField,
-    submitButton,
+    actions,
     status,
   );
-  accountProfilePanel.append(heading, form);
-  accountShellElement.append(accountProfilePanel);
+  accountProfilePanel.append(heading, form, unsavedConfirmation);
+  routeGate.after(accountProfilePanel);
 
   return accountProfilePanel;
+}
+
+function createAccountProfileUnsavedConfirmation() {
+  const confirmation = document.createElement("div");
+  const message = document.createElement("p");
+  const actions = document.createElement("div");
+  const saveButton = document.createElement("button");
+  const discardButton = document.createElement("button");
+  const cancelButton = document.createElement("button");
+
+  confirmation.className = "account-profile-unsaved-confirmation";
+  confirmation.dataset.accountProfileUnsavedConfirmation = "";
+  confirmation.hidden = true;
+  message.textContent = "Save changes before leaving Settings?";
+  message.dataset.accountProfileUnsavedMessage = "";
+  actions.className = "confirmation-actions";
+
+  saveButton.type = "button";
+  saveButton.className = "secondary-button";
+  saveButton.textContent = "Save";
+  saveButton.dataset.accountProfileUnsavedSave = "";
+  saveButton.addEventListener("click", () => {
+    void handleAccountProfileUnsavedSave();
+  });
+
+  discardButton.type = "button";
+  discardButton.className = "danger-button";
+  discardButton.textContent = "Discard";
+  discardButton.dataset.accountProfileUnsavedDiscard = "";
+  discardButton.addEventListener("click", handleAccountProfileUnsavedDiscard);
+
+  cancelButton.type = "button";
+  cancelButton.className = "secondary-button";
+  cancelButton.textContent = "Cancel";
+  cancelButton.dataset.accountProfileUnsavedCancel = "";
+  cancelButton.addEventListener("click", handleAccountProfileUnsavedCancel);
+
+  actions.append(saveButton, discardButton, cancelButton);
+  confirmation.append(message, actions);
+  return confirmation;
 }
 
 function createProfileInputField({ datasetKey, label, required = true }) {
@@ -1675,9 +1910,12 @@ function setAccountProfileStatus(message) {
 
 async function saveAccountProfile(event) {
   event.preventDefault();
+  await saveCurrentAccountProfile();
+}
 
+async function saveCurrentAccountProfile() {
   if (accountShell.persistenceAuthority.type !== "account") {
-    return;
+    return false;
   }
 
   const accountId = accountShell.accountId;
@@ -1708,7 +1946,7 @@ async function saveAccountProfile(event) {
       if (uploadedObjectPath) {
         await cleanupUploadedAvatar(uploadedObjectPath);
       }
-      return;
+      return false;
     }
 
     const profile = await accountProfileRepository.updateOwnProfile({
@@ -1722,7 +1960,7 @@ async function saveAccountProfile(event) {
       if (uploadedObjectPath) {
         await cleanupUploadedAvatar(uploadedObjectPath);
       }
-      return;
+      return false;
     }
 
     accountShell = createAccountShell({
@@ -1730,13 +1968,15 @@ async function saveAccountProfile(event) {
       profile,
     });
     renderAccountShell(accountShell);
+    renderAccountProfilePanel(accountShell);
     setAccountProfileStatus("Profile saved.");
+    return true;
   } catch (error) {
     if (!isCurrentAccountSession(accountId)) {
       if (uploadedObjectPath) {
         await cleanupUploadedAvatar(uploadedObjectPath);
       }
-      return;
+      return false;
     }
 
     if (uploadedObjectPath) {
@@ -1745,6 +1985,7 @@ async function saveAccountProfile(event) {
     } else {
       status.textContent = getProfileSaveFailureMessage(error);
     }
+    return false;
   }
 }
 

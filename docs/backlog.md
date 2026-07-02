@@ -76,7 +76,8 @@ preserve their original history.
   [Production word-bank delivery](#production-word-bank-delivery).
 - **UI polish**: deferred. Start with:
   [Celebratory reveal effects](#celebratory-reveal-effects);
-  [Custom keyboard shortcuts](#custom-keyboard-shortcuts).
+  [Custom keyboard shortcuts](#custom-keyboard-shortcuts);
+  [Homepage logo home link](#homepage-logo-home-link).
 - **Operations and platform**: mixed completed and deferred; first signed-in hash
   routing accepted without framework. Start with:
   [Main branch protection ruleset](#main-branch-protection-ruleset);
@@ -522,13 +523,14 @@ preserve their original history.
   icon for `Settings` and the Font Awesome `arrow-right-from-bracket` icon for
   `Sign out`.
 - **Focused editor entry points**: Accepted as part of signed-in navigation design on
-  2026-06-26 and superseded by #142/#151 on 2026-07-02 for Settings consolidation,
-  lookup privacy, and Gamer Tag terminology. `Settings` opens a focused editor view or
-  panel for Gamer Tag and Avatar. The hosted email lookup key is derived from Supabase
-  Auth email and is not public identity or a normal editable profile field unless a
-  later accepted design adds Auth-email change behaviour. The accepted Settings route or
-  panel route is owned by the #145 implementation slice and must preserve signed-in-only
-  DOM gating and the participant's current game context.
+  2026-06-26 and superseded by #142/#151/#145 on 2026-07-02 for Settings
+  consolidation, lookup privacy, and Gamer Tag terminology. `Settings` now routes to
+  `#/settings`, closes the account menu, mounts a signed-in-only focused editor for
+  Gamer Tag and Avatar, and focuses the Gamer Tag field. The hosted email lookup key is
+  derived from Supabase Auth email and is not public identity or a normal editable
+  profile field unless a later accepted design adds Auth-email change behaviour.
+  Anonymous or signed-out sessions that request `#/settings` see a sign-in-required
+  gate and must not mount Settings/Profile/Avatar upload or hidden profile-input DOM.
 - **Legacy identity display migration**: Completed on 2026-07-02 by the
   legacy-identity-remnant cleanup slice. Browser Account Profile display/save, Pending
   Game creation, notification copy generated through the active SQL helpers,
@@ -559,25 +561,23 @@ preserve their original history.
   desktop production smoke, and 390 px mobile production smoke are recorded in
   `docs/planning/supabase-state-ledger.md`. Future fresh hosted environments still
   require the normal runbook approval path before applying schema mutations.
-- **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
-  2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
-  the `Settings` panel with unsaved edits should require confirmation. The confirmation
-  actions are `Save` with the Font Awesome `floppy-disk`
-  icon, `Discard` with the Font Awesome `trash-can` icon, and `Cancel` with the Font
-  Awesome `circle-left` icon when returning to the edit panel. If the participant tries
-  to sign out while the editor has unsaved changes, use the same confirmation before
-  sign-out proceeds: `Save` saves first and then signs out, `Discard` discards edits and
-  then signs out, and `Cancel` returns to the editor and keeps the participant signed
-  in.
+- **Unsaved editor confirmation and controls**: Accepted as part of signed-in navigation
+  design on 2026-06-26 and superseded by #142/#145 on 2026-07-02 for Settings
+  consolidation. Leaving `#/settings` or signing out with unsaved profile edits requires
+  confirmation: `Save` saves first and then continues the pending route change or
+  sign-out, `Discard` discards edits and then continues, and `Cancel` returns to the
+  editor and keeps the participant signed in. The Settings editor `Save profile`
+  control is icon-only with Font Awesome `floppy-disk`; the `Reset profile changes`
+  control is icon-only with Font Awesome `arrow-rotate-left`.
 - **Remaining risk**: Uploaded avatar images are now implemented through #63 / PR #74,
   browser-generated circular crop derivatives through #64 / PR #78, and the visual
   cropper through #79 / PR #92. The avatar-first account menu is owned by #142 and its
-  first implementation slice #144: it uses the current Avatar as the signed-in account
-  affordance, exposes only `Settings` and `Sign out`, closes on keyboard/outside
-  click/route changes/sign-out, and sends `Settings` to the existing Account Profile
-  panel without changing the hash route. Follow-up Settings polish remains under #145,
-  including unsaved-edit confirmation, sign-out-with-unsaved-edits sequencing, and
-  icon-only save/cancel controls.
+  first implementation slices #144/#145: it uses the current Avatar as the signed-in
+  account affordance, exposes only `Settings` and `Sign out`, closes on
+  keyboard/outside click/route changes/sign-out, and sends `Settings` to the
+  signed-in-only `#/settings` editor route. No accepted Settings/profile consolidation
+  scope remains intentionally deferred here after #145 beyond future account or identity
+  features recorded as separate backlog entries.
 
 ### Phrase reactions
 
@@ -840,6 +840,21 @@ preserve their original history.
 - **Revisit when**: Repeated desktop play shows clear speed or ergonomics needs.
 - **Remaining risk**: Form and button structure should not block future shortcut
   handling.
+
+### Homepage logo home link
+
+- **Deferred**: Incorporating one of the owner-provided logo files from `assets/img/`
+  as the main top-left homepage image and making it the home link.
+- **Why deferred**: The current implementation slice is limited to signed-in Settings
+  profile controls. The owner has provided logo-size candidates but has not yet selected
+  the exact asset or requested the homepage integration task.
+- **Revisit when**: The owner asks to incorporate a specific logo file, currently one
+  of `assets/img/crazy_phrases_logo_80px.png`,
+  `assets/img/crazy_phrases_logo_160px.png`, or
+  `assets/img/crazy_phrases_logo_320px.png`, as the top-left home link.
+- **Remaining risk**: Until a dedicated implementation task tracks and references the
+  chosen asset, the local logo files are not part of the deployed site and the homepage
+  continues to use its existing text/brand treatment.
 
 ### Cloudflare Access allow-list documentation
 

@@ -60,7 +60,7 @@ Supabase state ledger.
 - Read: `docs/runbooks/cloudflare-dns-and-access.md`
 - Read: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Confirm branch and draft intent**
+- [x] **Step 1: Confirm branch and draft intent**
 
 Run:
 
@@ -76,7 +76,7 @@ Expected:
 - latest commits include the private lookup implementation and reset-required
   migration update.
 
-- [ ] **Step 2: Verify the source migration still has the empty-table guard**
+- [x] **Step 2: Verify the source migration still has the empty-table guard**
 
 Inspect
 `supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql`.
@@ -88,7 +88,7 @@ Expected:
 - direct browser table grants do not expose `email_lookup_key`;
 - signed-in lookup goes through `public.lookup_account_profile(text, text)`.
 
-- [ ] **Step 3: Run local verification**
+- [x] **Step 3: Run local verification**
 
 Run:
 
@@ -106,7 +106,7 @@ whitespace errors.
 - Read: `docs/runbooks/github-cli-auth-for-codex.md` before interpreting any
   sandboxed `gh` authentication failure.
 
-- [ ] **Step 1: Confirm PR #152 is still draft**
+- [x] **Step 1: Confirm PR #152 is still draft**
 
 Run with GitHub CLI:
 
@@ -121,7 +121,7 @@ Expected:
 - `baseRefName` is `main`;
 - required CI is passing for the current head.
 
-- [ ] **Step 2: Confirm issue #151 remains the owning issue**
+- [x] **Step 2: Confirm issue #151 remains the owning issue**
 
 Run:
 
@@ -132,20 +132,25 @@ gh issue view 151 --repo vince-hardwick/crazyphrases --json number,title,state,l
 Expected: issue #151 remains open until hosted reset, migration, runtime smoke,
 and documentation closeout have completed or the owner explicitly rescope it.
 
+Execution note, 2026-07-02: stale `deploy-dev.yml` run #88
+(`28587504060`) targeted obsolete branch commit `5a6a947` and was cancelled
+after PR #152 advanced to `f877af5`. A fresh final-head `dev` deployment is
+still required later by Task 7.
+
 ## Task 3: Hosted Supabase Read-Only Inventory
 
 **Files:**
 - Read: `docs/runbooks/supabase-auth-and-postgres.md`
 - Read: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Get owner approval for read-only hosted inventory**
+- [x] **Step 1: Get owner approval for read-only hosted inventory**
 
 Ask for explicit approval before running hosted SQL through Supabase MCP,
 Dashboard SQL Editor, or another authenticated route. This approval authorises
 read-only inspection only; it does not authorise data deletion, schema
 mutation, Storage mutation, Auth-user deletion, deployment, or PR readiness.
 
-- [ ] **Step 2: Confirm the hosted project and migration history**
+- [x] **Step 2: Confirm the hosted project and migration history**
 
 Use Supabase MCP `list_migrations` for project `egnudphshvqdhrotxrfs`.
 Expected:
@@ -154,7 +159,7 @@ Expected:
   present;
 - `private_email_lookup_and_gamer_tag` is not already applied.
 
-- [ ] **Step 3: Run a no-PII row-count inventory**
+- [x] **Step 3: Run a no-PII row-count inventory**
 
 Execute read-only SQL and record only counts, not email addresses or raw user
 details:
@@ -186,7 +191,7 @@ Expected:
 - active game, favourite, notification, avatar, and Storage counts are small
   enough to review manually.
 
-- [ ] **Step 4: Pause on unexpected hosted state**
+- [x] **Step 4: Pause on unexpected hosted state**
 
 Pause and replan before any reset if:
 
@@ -195,6 +200,16 @@ Pause and replan before any reset if:
   data the owner did not expect to delete;
 - read-only SQL fails because a table is missing or the hosted schema differs
   from the source-controlled migration history.
+
+Execution note, 2026-07-02: hosted migration history matched the state ledger
+and `private_email_lookup_and_gamer_tag` was not applied. Read-only inventory
+returned one Auth user, one Account Profile row, one Account Profile Directory
+row, seven uploaded-avatar metadata rows, seven `avatars` Storage objects, and
+zero rows across signed-in Solo current games, private favourites, Pending
+Games, Started Games, section rows, Reveals, and in-app notifications.
+Avatar aggregate counts were one live Uploaded Avatar and six historical
+Uploaded Avatars. No email addresses, raw Auth ids, or Storage object paths
+were recorded in this plan.
 
 ## Task 4: Reset Mode Decision Gate
 

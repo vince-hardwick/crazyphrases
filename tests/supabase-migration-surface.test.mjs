@@ -1575,6 +1575,9 @@ describe("Supabase migration surface", () => {
       "utf8",
     );
 
+    assert.doesNotMatch(migration, /as\s+\$\$/);
+    assert.doesNotMatch(migration, /\n\$\$;/);
+
     assert.match(
       migration,
       /create or replace function private\.multiplayer_participant_message\(/,

@@ -7,7 +7,7 @@ language plpgsql
 stable
 security definer
 set search_path = ''
-as $$
+as $multiplayer_participant_message$
 declare
   gamer_tags text[];
 begin
@@ -39,7 +39,7 @@ begin
     || gamer_tags[cardinality(gamer_tags)]
     || '.';
 end;
-$$;
+$multiplayer_participant_message$;
 
 revoke all on function private.multiplayer_participant_message(uuid, text)
   from public;
@@ -53,7 +53,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $list_multiplayer_dashboard$
 declare
   dashboard_account_id uuid := (select auth.uid());
   dashboard jsonb;
@@ -271,7 +271,7 @@ begin
 
   return dashboard;
 end;
-$$;
+$list_multiplayer_dashboard$;
 
 revoke all on function public.list_multiplayer_dashboard()
   from public;
@@ -294,7 +294,7 @@ language plpgsql
 stable
 security definer
 set search_path = ''
-as $$
+as $list_completed_multiplayer_history$
 declare
   history_account_id uuid := (select auth.uid());
   page_limit integer := least(greatest(coalesce(page_size, 20), 1), 50);
@@ -447,7 +447,7 @@ begin
 
   return history;
 end;
-$$;
+$list_completed_multiplayer_history$;
 
 revoke all on function public.list_completed_multiplayer_history(integer, bigint, uuid)
   from public;
@@ -473,7 +473,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $cancel_created_game$
 declare
   caller_account_id uuid := (select auth.uid());
   notification_message text;
@@ -584,7 +584,7 @@ begin
     'cancelled'::text,
     started_game_id;
 end;
-$$;
+$cancel_created_game$;
 
 revoke all on function public.cancel_created_game(uuid)
   from public;

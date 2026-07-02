@@ -575,6 +575,7 @@ h1 {
   font: inherit;
   font-size: 0.82rem;
   font-weight: 500;
+  overflow-wrap: anywhere;
   text-align: left;
   cursor: pointer;
 }

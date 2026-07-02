@@ -3562,14 +3562,6 @@ async function refreshMultiplayerSurfaces() {
   renderPendingGamePanel();
 }
 
-async function markUnreadNotificationsRead() {
-  await Promise.all(
-    inAppNotifications
-      .filter((notification) => notification.status === "unread")
-      .map((notification) => markNotificationRead(notification.id)),
-  );
-}
-
 async function persistNotificationRead(notificationId) {
   const notification = inAppNotifications.find(
     (candidate) => candidate.id === notificationId,

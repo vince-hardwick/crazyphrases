@@ -372,6 +372,10 @@ Anonymous visitors may play `#/play/solo`, but anonymous visits to signed-in-onl
 such as `#/play/multiplayer` and `#/favourites` should show a sign-in-required gate for
 the requested destination, preserve that requested destination through sign-in, and must
 not mount account-only DOM or fetch private data until a valid Account session exists.
+Anonymous sign-in itself is opened from the top-nav account affordance as a compact
+popover rather than a hash route. Opening or closing that popover must not start, clear,
+replace, or hide the current anonymous Solo Game, and it must not clear a preserved
+signed-in-only destination while the participant is on a sign-in-required gate.
 Hosted OAuth and email magic-link starts may preserve only an allowlisted signed-in-only
 destination in a client-side handoff for up to ten minutes. That handoff is consumed
 only after a valid Account session exists, and it is cleared after consumption,
@@ -422,6 +426,11 @@ Use Font Awesome `copy` for copy actions, `share-nodes` for share actions, and
 `heart-circle-minus` for remove-favourite actions in the dedicated Favourites
 destination. Share actions should appear only where an existing supported share path is
 available and Share Consent rules allow it; copy remains available independently.
+Anonymous account sign-in uses Font Awesome `circle-user` for the top-nav account
+affordance, `google` for Google sign-in, `at` before the email address input, and
+`paper-plane` for sending an email magic link. The Google and email magic-link submit
+actions are icon-first controls whose tooltip meaning matches their accessible action
+name and uses default font weight.
 Primary game-flow and confirmation actions, such as `Start batch`, `Reveal phrases`,
 `Keep playing`, `Discard entries`, `View phrases`, and `Start new batch`, remain text
 buttons.

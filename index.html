@@ -68,51 +68,76 @@
         </nav>
         <div class="header-actions">
           <section class="account-shell" aria-label="Account mode" data-account-shell>
+            <button
+              class="icon-button tooltip-action"
+              type="button"
+              aria-expanded="false"
+              aria-label="Account sign in"
+              data-account-sign-in-toggle
+              data-tooltip="Account sign in"
+              hidden
+            >
+              <i class="fa-regular fa-circle-user" aria-hidden="true"></i>
+            </button>
             <p data-account-status></p>
             <span data-account-detail></span>
-            <div class="account-actions">
-              <button
-                class="text-button"
-                type="button"
-                data-test-sign-in-button
-                hidden
-              >
-                Test sign in
-              </button>
-              <button
-                class="text-button"
-                type="button"
-                data-test-invitee-sign-in-button
-                hidden
-              >
-                Test invitee sign in
-              </button>
-              <button
-                class="text-button"
-                type="button"
-                data-google-sign-in-button
-                hidden
-              >
-                Sign in with Google
-              </button>
-              <form class="email-sign-in-form" data-email-sign-in-form hidden>
-                <label class="sr-only" for="email-sign-in">Email address</label>
-                <input
-                  id="email-sign-in"
-                  name="email"
-                  type="email"
-                  autocomplete="email"
-                  placeholder="Email"
-                  data-email-sign-in-input
-                  required
+            <div class="account-sign-in-panel" data-account-sign-in-panel hidden>
+              <div class="account-actions">
+                <button
+                  class="text-button"
+                  type="button"
+                  data-test-sign-in-button
+                  hidden
                 >
-                <button class="text-button" type="submit">Send link</button>
-              </form>
-              <button class="text-button" type="button" data-sign-out-button hidden>
-                Sign out
-              </button>
+                  Test sign in
+                </button>
+                <button
+                  class="text-button"
+                  type="button"
+                  data-test-invitee-sign-in-button
+                  hidden
+                >
+                  Test invitee sign in
+                </button>
+                <button
+                  class="icon-button tooltip-action"
+                  type="button"
+                  aria-label="Sign in with Google"
+                  data-google-sign-in-button
+                  data-tooltip="Sign in with Google"
+                  hidden
+                >
+                  <i class="fa-brands fa-google" aria-hidden="true"></i>
+                </button>
+                <form class="email-sign-in-form" data-email-sign-in-form hidden>
+                  <label class="sr-only" for="email-sign-in">Email address</label>
+                  <span class="email-sign-in-field">
+                    <i class="fa-solid fa-at" aria-hidden="true"></i>
+                    <input
+                      id="email-sign-in"
+                      name="email"
+                      type="email"
+                      autocomplete="email"
+                      placeholder="Email"
+                      data-email-sign-in-input
+                      required
+                    >
+                  </span>
+                  <button
+                    class="icon-button tooltip-action"
+                    type="submit"
+                    aria-label="Send link"
+                    data-tooltip="Send link"
+                  >
+                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                  </button>
+                </form>
+                <button class="text-button" type="button" data-sign-out-button hidden>
+                  Sign out
+                </button>
+              </div>
+              <p class="auth-message" data-auth-message aria-live="polite"></p>
             </div>
-            <p class="auth-message" data-auth-message aria-live="polite"></p>
             <div class="persistence-recovery" data-persistence-recovery hidden>
               <p data-persistence-recovery-message></p>
               <div class="persistence-recovery-actions">

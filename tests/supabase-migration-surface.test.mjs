@@ -1641,6 +1641,16 @@ describe("Supabase migration surface", () => {
     assert.match(migration, /alter table public\.game_participants[\s\S]*add column if not exists gamer_tag text/);
     assert.match(migration, /update public\.pending_game_participants[\s\S]*set gamer_tag = left\(btrim\(gamer_name\), 40\)/);
     assert.match(migration, /update public\.game_participants[\s\S]*set gamer_tag = left\(btrim\(gamer_name\), 40\)/);
+    assert.match(
+      migration,
+      /insert into public\.account_profile_directory \(\s*profile_id,\s*gamer_name,\s*handle,\s*gamer_tag,/,
+    );
+    assert.match(
+      migration,
+      /select\s+profile_id,\s+gamer_name,\s+handle,\s+gamer_tag,/,
+    );
+    assert.match(migration, /gamer_name = excluded\.gamer_name/);
+    assert.match(migration, /handle = excluded\.handle/);
 
     assert.match(migration, /create or replace function private\.sync_account_profile_lookup_identity\(\)/);
     assert.match(migration, /create or replace function private\.sync_account_profile_directory\(\)/);
@@ -1690,8 +1700,6 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(migration, /creator\.handle/);
     assert.doesNotMatch(migration, /new\.gamer_name/);
     assert.doesNotMatch(migration, /new\.handle/);
-    assert.doesNotMatch(migration, /excluded\.gamer_name/);
-    assert.doesNotMatch(migration, /excluded\.handle/);
     assert.doesNotMatch(migration, /public\.cancel_created_game\.started_game_id/);
     assert.doesNotMatch(migration, /grant [^;]*handle[^;]*on table public\.(account_profiles|account_profile_directory)/i);
     assert.doesNotMatch(migration, /grant [^;]*gamer_name[^;]*on table public\.(account_profiles|account_profile_directory)/i);

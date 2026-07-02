@@ -1530,7 +1530,7 @@ function createGameCancelledNotifications({
   );
   const message = createParticipantNotificationMessage({
     participants,
-    text: `@${creatorProfile.handle} cancelled a batch with`,
+    text: `${getParticipantDisplayName(creatorProfile)} cancelled a batch with`,
   });
 
   return acceptedRecipients.map((participant) => ({
@@ -1623,13 +1623,25 @@ function createOverdueNudgeNotifications({
 }
 
 function createParticipantNotificationMessage({ participants, text }) {
-  const handles = participants.map((participant) => `@${participant.handle}`);
+  const displayNames = participants.map(getParticipantDisplayName);
 
-  if (handles.length === 1) {
-    return `${text} ${handles[0]}.`;
+  if (displayNames.length === 1) {
+    return `${text} ${displayNames[0]}.`;
   }
 
-  return `${text} ${handles.slice(0, -1).join(", ")} and ${handles.at(-1)}.`;
+  return `${text} ${displayNames.slice(0, -1).join(", ")} and ${displayNames.at(-1)}.`;
+}
+
+function getParticipantDisplayName(participant) {
+  const gamerTag = String(
+    participant?.gamerTag ?? participant?.gamerName ?? "",
+  ).trim();
+  if (gamerTag) {
+    return gamerTag;
+  }
+
+  const handle = String(participant?.handle ?? "").trim();
+  return handle ? `@${handle}` : "Unknown gamer";
 }
 
 function createEmptyMultiplayerDashboard() {
@@ -1879,6 +1891,8 @@ function findCurrentAssignedSection({
 function toMultiplayerParticipantDto(participant) {
   return {
     handle: participant.handle,
+    gamerName: participant.gamerName,
+    gamerTag: participant.gamerTag,
   };
 }
 
@@ -2422,11 +2436,16 @@ function recoverMultiplayerBatch(
       "A Pending Game id is required.",
     ),
     rowCount: batchRow?.rowCount ?? batchRow?.row_count,
-    participants: (batchRow?.participants ?? []).map((participant) => ({
-      handle: normaliseHandle(
-        assertText(participant?.handle, "A participant Handle is required."),
-      ),
-    })),
+    participants: (batchRow?.participants ?? []).map((participant) => {
+      const gamerTag = recoverOptionalParticipantGamerTag(participant);
+
+      return {
+        handle: normaliseHandle(
+          assertText(participant?.handle, "A participant Handle is required."),
+        ),
+        ...(gamerTag ? { gamerName: gamerTag, gamerTag } : {}),
+      };
+    }),
     ...(includeCurrentSection
       ? {
           currentSection: recoverCurrentMultiplayerSection(
@@ -2447,6 +2466,16 @@ function recoverMultiplayerBatch(
         }
       : {}),
   };
+}
+
+function recoverOptionalParticipantGamerTag(participant) {
+  const value =
+    participant?.gamerTag ??
+    participant?.gamer_tag ??
+    participant?.gamerName ??
+    participant?.gamer_name;
+  const normalised = String(value ?? "").trim();
+  return normalised === "" ? null : normalised;
 }
 
 function recoverCurrentMultiplayerSection(sectionRow) {

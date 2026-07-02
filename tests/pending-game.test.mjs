@@ -551,7 +551,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+            "You can submit entries to a batch with Player Test Account and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -567,7 +567,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+            "You can submit entries to a batch with Player Test Account and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -618,7 +618,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -627,7 +627,7 @@ describe("Pending Game repository", () => {
           type: "nudge",
           status: "unread",
           message:
-            "A batch is waiting for your entries with @creator-one and @invitee-two.",
+            "A batch is waiting for your entries with Creator One and Invitee Two.",
           createdAt: "2026-06-02T13:00:00.000Z",
           targetGameId: "started-game-1",
           targetAssignmentId: "started-game-1-section-invitee-1",
@@ -1114,7 +1114,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "read",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -1122,7 +1122,7 @@ describe("Pending Game repository", () => {
           id: "notification-3",
           type: "game_cancelled",
           status: "unread",
-          message: "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          message: "Creator One cancelled a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -1183,7 +1183,7 @@ describe("Pending Game repository", () => {
           type: "game_cancelled",
           status: "unread",
           message:
-            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+            "Creator One cancelled a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetPendingGameId: "pending-game-1",
         },
@@ -2329,7 +2329,7 @@ describe("Pending Game repository", () => {
         type: "game_cancelled",
         status: "unread",
         message:
-          "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          "Creator One cancelled a batch with Creator One and Invitee Two.",
         createdAt: "2026-01-01T00:00:01.000Z",
         targetPendingGameId: "supabase-pending-game-1",
       },
@@ -2375,7 +2375,7 @@ describe("Pending Game repository", () => {
         type: "nudge",
         status: "unread",
         message:
-          "You can submit entries to a batch with @creator-one and @invitee-two.",
+          "You can submit entries to a batch with Creator One and Invitee Two.",
         createdAt: "2026-01-01T00:00:00.000Z",
         targetGameId: "supabase-started-game-1",
         targetAssignmentId: "supabase-section-1",
@@ -2443,7 +2443,7 @@ describe("Pending Game repository", () => {
           type: "nudge",
           status: "read",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "2026-01-01T00:00:00.000Z",
           targetGameId: "supabase-started-game-1",
           targetAssignmentId: "supabase-section-1",
@@ -2495,7 +2495,7 @@ function createFakePendingGameSupabase({
         account_id: creatorProfile.accountId,
         created_at: "2026-01-01T00:00:00.000Z",
         message:
-          "You can submit entries to a batch with @creator-one and @invitee-two.",
+          "You can submit entries to a batch with Creator One and Invitee Two.",
         notification_status: "unread",
         notification_type: "nudge",
         target_assignment_id: "supabase-section-1",
@@ -2666,7 +2666,7 @@ function createFakePendingGameSupabase({
           account_id: inviteeProfile.accountId,
           created_at: "2026-01-01T00:00:01.000Z",
           message:
-            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+            "Creator One cancelled a batch with Creator One and Invitee Two.",
           notification_status: "unread",
           notification_type: "game_cancelled",
           target_game_id: startedGame?.id ?? null,

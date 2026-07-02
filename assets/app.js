@@ -836,7 +836,7 @@ function renderAccountShell(shell) {
   accountDetail.textContent =
     shell.persistenceAuthority.type === "local-browser"
       ? "Local play in this browser"
-      : `@${shell.profile.handle}`;
+      : shell.profile.gamerName;
   testSignInButton.hidden =
     shell.mode !== "anonymous-solo" ||
     hostedAuthAvailable ||
@@ -942,13 +942,12 @@ function ensureAccountProfilePanel() {
 
   const gamerNameField = createProfileInputField({
     datasetKey: "accountProfileGamerName",
-    label: "Gamer Name",
+    label: "Gamer Tag",
     required: false,
   });
-  const handleField = createProfileInputField({
-    datasetKey: "accountProfileHandle",
-    label: "Handle",
-  });
+  const handleField = document.createElement("input");
+  handleField.type = "hidden";
+  handleField.dataset.accountProfileHandle = "";
   const avatarField = createProfileAvatarField();
   const status = document.createElement("p");
   const submitButton = document.createElement("button");
@@ -1601,11 +1600,11 @@ function getProfileSaveFailureMessage(error) {
   }
 
   if (error instanceof Error && /already in use/i.test(error.message)) {
-    return "Handle is already in use.";
+    return "Gamer Tag is already in use.";
   }
 
   if (error instanceof Error && /at least 3/i.test(error.message)) {
-    return "Handle must be at least 3 characters.";
+    return "Profile could not be saved. Try again.";
   }
 
   return "Profile could not be saved. Try again.";
@@ -2236,7 +2235,7 @@ async function createPendingGameInvite(event) {
     pendingGameLookupKeyInput.value = "";
     renderCreatedPendingGames();
     pendingGameStatus.textContent =
-      `Game invite created. Waiting for @${invitee.handle} to accept.`;
+      `Game invite created. Waiting for ${getParticipantDisplayName(invitee)} to accept.`;
   } catch (error) {
     if (!isCurrentAccountSession(accountId)) {
       return;
@@ -2428,7 +2427,7 @@ function renderPendingGameCancelActions(pendingGame) {
   cancelButton.textContent = "Cancel game";
   cancelButton.setAttribute(
     "aria-label",
-    `Cancel game with @${invitee.handle}`,
+    `Cancel game with ${getParticipantDisplayName(invitee)}`,
   );
   cancelButton.addEventListener("click", () => {
     void cancelCreatedGame(pendingGame.id);
@@ -2451,7 +2450,7 @@ function renderPendingGameResponseActions(pendingGame) {
   acceptButton.textContent = "Accept";
   acceptButton.setAttribute(
     "aria-label",
-    `Accept invite from @${creator.handle}`,
+    `Accept invite from ${getParticipantDisplayName(creator)}`,
   );
   acceptButton.addEventListener("click", () => {
     void respondToPendingGameInvite(pendingGame.id, "accept");
@@ -2463,7 +2462,7 @@ function renderPendingGameResponseActions(pendingGame) {
   declineButton.textContent = "Decline";
   declineButton.setAttribute(
     "aria-label",
-    `Decline invite from @${creator.handle}`,
+    `Decline invite from ${getParticipantDisplayName(creator)}`,
   );
   declineButton.addEventListener("click", () => {
     void respondToPendingGameInvite(pendingGame.id, "decline");
@@ -2486,7 +2485,7 @@ function renderPendingGameStartActions(pendingGame) {
   startButton.textContent = "Start game";
   startButton.setAttribute(
     "aria-label",
-    `Start game with @${invitee.handle}`,
+    `Start game with ${getParticipantDisplayName(invitee)}`,
   );
   startButton.addEventListener("click", () => {
     void startPendingGame(pendingGame.id);
@@ -2499,14 +2498,26 @@ function renderPendingGameStartActions(pendingGame) {
 function renderPendingGameParticipant(participant) {
   const item = document.createElement("li");
 
-  const handle = document.createElement("span");
-  handle.textContent = `@${participant.handle}`;
+  const displayName = document.createElement("span");
+  displayName.textContent = getParticipantDisplayName(participant);
 
   const status = document.createElement("strong");
   status.textContent = getPendingGameParticipantStatusLabel(participant);
 
-  item.append(handle, status);
+  item.append(displayName, status);
   return item;
+}
+
+function getParticipantDisplayName(participant) {
+  const gamerTag = String(
+    participant?.gamerTag ?? participant?.gamerName ?? "",
+  ).trim();
+  if (gamerTag) {
+    return gamerTag;
+  }
+
+  const handle = String(participant?.handle ?? "").trim();
+  return handle ? `@${handle}` : "Unknown gamer";
 }
 
 function getPendingGameParticipantStatusLabel(participant) {
@@ -2969,7 +2980,7 @@ function renderMultiplayerParticipantSummary(batchSummary) {
   const summary = document.createElement("p");
   summary.className = "pending-game-row-count";
   summary.textContent = `Batch with ${batchSummary.participants
-    .map((participant) => `@${participant.handle}`)
+    .map(getParticipantDisplayName)
     .join(" and ")}.`;
   return summary;
 }

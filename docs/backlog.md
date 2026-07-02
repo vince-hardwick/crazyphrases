@@ -534,6 +534,16 @@ preserve their original history.
   before #151 is treated as complete or before any account Settings/navigation polish
   ships. Remaining risk: mixed legacy copy can teach the old identity model even though
   lookup no longer exposes email addresses or public email-backed values.
+- **Post-migration legacy-remnant audit**: Deferred on 2026-07-02 at owner request.
+  After the migration away from public/searchable `Handle` plus `Gamer Name` to
+  public/searchable Gamer Tag plus private non-editable known-email lookup is complete,
+  audit all test scripts and internal logic for obsolete legacy terminology and storage
+  assumptions. Remove or rename remnants that are no longer required, including
+  test-only helper names, DTO field names, internal repository method names, and SQL/RPC
+  helper names where the schema boundary has moved. Revisit when #151 has passed hosted
+  dev/test acceptance or before closing the identity migration issue. Remaining risk:
+  leaving legacy names in tests or internals can lead future agents to reintroduce the
+  superseded public Handle/Gamer Name model even if the browser UI is correct.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
   the `Settings` panel with unsaved edits should require confirmation. The confirmation

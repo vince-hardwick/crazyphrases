@@ -455,6 +455,16 @@ gh workflow run deploy-dev.yml --ref codex/account-identity-docs
 If the run waits for the `dev` GitHub Environment gate, pause until the owner
 confirms approval has been granted.
 
+Execution note, 2026-07-02: deploy-dev run `28597313341` deployed branch
+`codex/account-identity-docs` commit
+`7e8ac90aa32893fc30e0d26b1aa8c02c505fef2a` to `dev` after owner approval.
+Visible smoke then found stale profile terminology, so that deployment is not
+accepted as the final branch-head smoke. Local source was updated to hide the
+legacy Handle editor, present Gamer Tag copy in profile and invite display
+surfaces, and keep handles as internal transitional data only. A fresh
+final-head `dev` deployment is still required after those fixes are committed
+and pushed.
+
 - [ ] **Step 2: Run visible in-app browser smoke on dev**
 
 Use the in-app browser runbook. Verify:
@@ -473,6 +483,21 @@ Use the in-app browser runbook. Verify:
 If only the owner account exists, do not create a second hosted Auth/Profile
 fixture just to test successful invitation unless the owner separately approves
 that write/cleanup smoke.
+
+Execution note, 2026-07-02: initial visible `dev` smoke on deployed commit
+`7e8ac90aa32893fc30e0d26b1aa8c02c505fef2a` confirmed stamped first-party
+assets, Google sign-in to Account-backed mode, automatic recreation of one
+Account Profile row, one lookup field labelled for email or Gamer Tag, exact
+unknown-email copy `No gamer found under that email address`, exact unknown
+Gamer Tag copy `No gamer found under that gamer tag.`, no email address visible
+in the app, no created Pending Game/Game/notification rows, no browser
+warning/error logs, and no mobile horizontal overflow. The smoke failed because
+the profile editor still showed `Gamer Name` and visible `Handle` fields. Local
+TDD follow-up reproduced the failure, updated the app and browser smoke tests,
+and passed `node --test --test-reporter=dot`, `node --test
+tests/pending-game.test.mjs`, the targeted Pending Game browser smoke, and
+`git diff --check`. This step remains open until the fixed branch head is
+deployed to `dev` and the visible smoke passes.
 
 ## Task 8: PR Readiness and Merge
 

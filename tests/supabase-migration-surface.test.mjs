@@ -452,6 +452,22 @@ describe("Supabase migration surface", () => {
       );
     }
 
+    assert.match(
+      migration,
+      /Private email lookup and Gamer Tag migration requires empty account profile tables/,
+    );
+    assert.match(migration, /exists \(select 1 from public\.account_profiles\)/);
+    assert.match(
+      migration,
+      /exists \(select 1 from public\.account_profile_directory\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /update public\.account_profiles as profile\s+set email_lookup_key = lower\(btrim\(auth_user\.email\)\)/,
+    );
+    assert.doesNotMatch(migration, /with profile_gamer_tags as/);
+    assert.doesNotMatch(migration, /profile_gamer_tags\.duplicate_ordinal/);
+
     assert.match(migration, /from auth\.users as auth_user/);
     assert.match(migration, /lower\(btrim\(auth_user\.email\)\)/);
     assert.match(migration, /create or replace function private\.sync_account_profile_lookup_identity\(\)/);

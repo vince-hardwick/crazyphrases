@@ -592,11 +592,16 @@ The private email lookup and Gamer Tag migration is:
 supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql
 ```
 
-It adds `email_lookup_key` and `gamer_tag` compatibility columns to
-`public.account_profiles` and `public.account_profile_directory`, backfills
-`email_lookup_key` from `auth.users.email`, and backfills `gamer_tag` from
-legacy `gamer_name` with deterministic disambiguation before adding lower-case
-lookup indexes. Browser-facing table grants still must not expose
+It adds `email_lookup_key` and `gamer_tag` lookup columns to
+`public.account_profiles` and `public.account_profile_directory`, then adds
+lower-case lookup indexes. It intentionally does not backfill hosted legacy
+Account Profile rows. The migration fails fast if `public.account_profiles` or
+`public.account_profile_directory` contains rows, so any hosted environment must
+clear the owner-approved legacy Account/Profile data before applying it. On
+2026-07-02, the owner confirmed that the only current hosted user account is
+theirs and may be removed because they can re-register via Google sign-in; do
+not perform that hosted deletion outside the documented approval-gated
+environment workflow. Browser-facing table grants still must not expose
 `email_lookup_key` through direct `SELECT`. Signed-in lookup by either known
 email address or Gamer Tag goes through
 `public.lookup_account_profile(text, text)`, a security-definer RPC that returns
@@ -647,9 +652,12 @@ area: `Gamer Name` is now `Gamer Tag`; the legacy public `Handle` model is
 replaced by one signed-in lookup-key input that accepts either a known email
 address or Gamer Tag and never returns email addresses in profile results. The
 migrations below describe the historical hosted schema that still uses legacy
-`handle` and `gamer_name` storage names until #151 migrates or
-compatibility-maps them. Do not introduce new user-facing Handle/Gamer Name copy
-or email display from these historical column names.
+`handle` and `gamer_name` storage names until #151 renames or replaces that
+storage. ADR 0023 does not require hosted compatibility mapping from those
+legacy profile rows; the accepted hosted path is to clear the current
+owner-approved legacy Account/Profile data before applying the private
+lookup-key migration. Do not introduce new user-facing Handle/Gamer Name copy or
+email display from these historical column names.
 
 It creates `public.account_profiles` for one active durable profile per
 Account, with a separate directory `profile_id`, globally unique `handle`,

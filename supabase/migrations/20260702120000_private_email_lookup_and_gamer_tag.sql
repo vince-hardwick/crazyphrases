@@ -6,68 +6,21 @@ alter table public.account_profile_directory
   add column if not exists email_lookup_key text,
   add column if not exists gamer_tag text;
 
-update public.account_profiles as profile
-set email_lookup_key = lower(btrim(auth_user.email))
-from auth.users as auth_user
-where profile.account_id = auth_user.id
-  and auth_user.email is not null
-  and btrim(auth_user.email) <> '';
-
-with profile_gamer_tags as (
-  select
-    profile.account_id,
-    left(
-      coalesce(
-        nullif(btrim(profile.gamer_tag), ''),
-        nullif(btrim(profile.gamer_name), ''),
-        'Player'
-      ),
-      40
-    ) as base_gamer_tag,
-    row_number() over (
-      partition by lower(
-        coalesce(
-          nullif(btrim(profile.gamer_tag), ''),
-          nullif(btrim(profile.gamer_name), ''),
-          'Player'
-        )
-      )
-      order by profile.created_at, profile.account_id
-    ) as duplicate_ordinal,
-    right(profile.profile_id::text, 8) as profile_suffix
-  from public.account_profiles as profile
-)
-update public.account_profiles as profile
-set gamer_tag = case
-  when profile_gamer_tags.duplicate_ordinal = 1 then
-    profile_gamer_tags.base_gamer_tag
-  else
-    left(profile_gamer_tags.base_gamer_tag, 31) || ' ' || profile_gamer_tags.profile_suffix
-  end
-from profile_gamer_tags
-where profile.account_id = profile_gamer_tags.account_id;
-
-update public.account_profile_directory as directory
-set email_lookup_key = profile.email_lookup_key,
-    gamer_tag = profile.gamer_tag
-from public.account_profiles as profile
-where directory.profile_id = profile.profile_id;
+do $$
+begin
+  if exists (select 1 from public.account_profiles)
+     or exists (select 1 from public.account_profile_directory) then
+    raise exception
+      'Private email lookup and Gamer Tag migration requires empty account profile tables; delete hosted legacy Account Profile data before applying this migration.';
+  end if;
+end;
+$$;
 
 alter table public.account_profiles
   alter column gamer_tag set default 'Player';
 
 alter table public.account_profile_directory
   alter column gamer_tag set default 'Player';
-
-update public.account_profiles
-set gamer_tag = 'Player'
-where gamer_tag is null
-   or btrim(gamer_tag) = '';
-
-update public.account_profile_directory
-set gamer_tag = 'Player'
-where gamer_tag is null
-   or btrim(gamer_tag) = '';
 
 alter table public.account_profiles
   alter column gamer_tag set not null;
@@ -236,35 +189,6 @@ revoke all on function private.sync_account_profile_directory()
   from anon;
 revoke all on function private.sync_account_profile_directory()
   from authenticated;
-
-insert into public.account_profile_directory (
-  profile_id,
-  handle,
-  gamer_name,
-  gamer_tag,
-  email_lookup_key,
-  avatar_type,
-  avatar_key,
-  avatar_object_path
-)
-select
-  profile_id,
-  handle,
-  gamer_name,
-  gamer_tag,
-  email_lookup_key,
-  avatar_type,
-  avatar_key,
-  avatar_object_path
-from public.account_profiles
-on conflict (profile_id) do update
-set handle = excluded.handle,
-    gamer_name = excluded.gamer_name,
-    gamer_tag = excluded.gamer_tag,
-    email_lookup_key = excluded.email_lookup_key,
-    avatar_type = excluded.avatar_type,
-    avatar_key = excluded.avatar_key,
-    avatar_object_path = excluded.avatar_object_path;
 
 revoke select on table public.account_profile_directory
   from authenticated;

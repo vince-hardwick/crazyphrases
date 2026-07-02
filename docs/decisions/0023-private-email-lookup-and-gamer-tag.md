@@ -71,14 +71,14 @@ Gamer Tag lookup returns the same invite-safe profile result shape and never
 adds email addresses to the response. A Gamer Tag miss uses the fixed result
 copy `No gamer found under that gamer tag.`.
 
-Existing hosted data and source-controlled migrations may still contain legacy
-`handle` and `gamer_name` storage names until the #151 implementation migrates
-or compatibility-maps them. During that compatibility period, user-facing copy,
-browser DTO semantics, product rules, and new documentation should use Gamer
-Tag, known-email lookup, and Gamer Tag lookup. Any hosted schema or data
-migration required to make the storage contract match the new product contract
-remains a live backend mutation and must follow the documented dev, test, and
-production approval gates.
+Hosted legacy Account Profile preservation is not required for this transition.
+On 2026-07-02, the owner confirmed that only one hosted user account exists and
+that account/profile data may be removed because the owner can re-register via
+Google sign-in. Source-controlled migrations for this identity boundary should
+fail fast if legacy Account Profile rows remain rather than silently
+compatibility-mapping old Handle/Gamer Name values. Any hosted deletion, schema
+migration, or data reset remains a live backend mutation and must follow the
+documented dev, test, and production approval gates.
 
 Hosted Accounts without a usable Auth email are not inviteable by generated
 placeholder email lookup values. The app should fail closed for known-email
@@ -108,9 +108,11 @@ resolution, and privacy expectations behave before it ships.
 - Browser-facing lookup may accept known email or Gamer Tag, but successful
   lookup responses must not expose email addresses, raw Auth ids, or provider
   identity ids.
-- Existing accounts and local test fixtures need a deterministic migration or
-  compatibility path from legacy Handle/Gamer Name values to known-email lookup
-  and Gamer Tag behaviour.
+- Existing hosted Account Profile rows should be cleared through an approved
+  hosted reset before applying the migration; do not preserve them by mapping
+  old Handle/Gamer Name values into the new known-email lookup and Gamer Tag
+  behaviour. Local test fixtures may still carry legacy storage names while they
+  are being renamed.
 - Local tests can use deterministic test email addresses as lookup input
   without requiring real email delivery or exposing those addresses as returned
   profile data.

@@ -57,6 +57,8 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260624094839` | `fix_nudge_notification_assignment_fk_index` | Applied after explicit owner approval as corrective index coverage; schema verified. |
 | `20260624212005` | `uploaded_avatar_profile` | Applied after explicit owner approval; schema and Storage bucket/policy surface verified. |
 | `20260702141616` | `private_email_lookup_and_gamer_tag` | Applied after explicit owner approval; schema, grants, and lookup privacy verified. |
+| `20260702163310` | `gamer_tag_snapshot_rpc_cleanup` | Applied after explicit owner approval; source corrected after failed generic dollar-quote attempt; RPC payloads and grants verified. |
+| `20260702180134` | `legacy_identity_column_cleanup` | Applied after explicit owner approval; source corrected after failed directory backfill attempt; schema, grants, functions, and production smoke verified. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`

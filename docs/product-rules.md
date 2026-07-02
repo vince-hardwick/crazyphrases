@@ -439,22 +439,22 @@ menu for Captain Spoon`.
 The first account menu contains only `Settings` and `Sign out`. Do not add
 `Favourites`, completed history, notifications, social/profile-public links, or separate
 `Profile` and `Avatar` menu items to the account menu in this slice. `Settings` uses
-Font Awesome `gear`, and `Sign out` uses Font Awesome `arrow-right-from-bracket`.
+Font Awesome `sliders`, and `Sign out` uses Font Awesome
+`arrow-right-from-bracket`.
 
-`Settings` opens a focused editor view or panel for Gamer Tag and Avatar. The hosted
-email lookup key is derived from Supabase Auth email and must not be presented as
-public identity or a normal editable profile text field unless a later accepted design
-explicitly adds Auth-email change behaviour. Opening Settings does not change the
-current hash route; the panel overlays or slides over the current
-destination and closes back to the same route.
+`Settings` opens or routes to a signed-in-only focused editor view or panel for Gamer
+Tag and Avatar. The hosted email lookup key is derived from Supabase Auth email and
+must not be presented as public identity or a normal editable profile text field unless
+a later accepted design explicitly adds Auth-email change behaviour. The implementing
+slice must document the accepted Settings route or panel route, preserve signed-in-only
+DOM gating, and avoid disrupting the participant's current game context.
 
-Closing the `Settings` panel with unsaved edits should require confirmation.
-The unsaved-edit confirmation uses `Save`, `Discard`, and `Cancel` actions: `Save` uses
-Font Awesome `floppy-disk`, `Discard` uses Font Awesome `trash-can`, and `Cancel` uses
-Font Awesome `circle-left` when returning to the edit panel. If the participant tries to
-sign out while a panel has unsaved edits, show the same confirmation before sign-out
-proceeds: `Save` saves first and then signs out, `Discard` discards edits and then signs
-out, and `Cancel` returns to the editor and keeps the participant signed in.
+Closing the `Settings` panel with unsaved edits should require confirmation. The
+Settings editor save control uses Font Awesome `floppy-disk`; the profile edit
+undo/cancel control uses Font Awesome `arrow-rotate-left`. If the participant tries to
+sign out while a panel has unsaved edits, show confirmation before sign-out proceeds:
+`Save` saves first and then signs out, `Discard` discards edits and then signs out, and
+`Cancel` returns to the editor and keeps the participant signed in.
 
 #### Notifications
 

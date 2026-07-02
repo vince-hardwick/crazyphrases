@@ -656,6 +656,12 @@ migration-history row and with no partial function changes. Retagging the
 function bodies with explicit names preserved SQL semantics and allowed the
 single hosted migration to apply successfully.
 
+On 2026-07-02, after separate explicit owner approval, this migration was
+applied to hosted Supabase as version
+`20260702163310 gamer_tag_snapshot_rpc_cleanup`; RPC payloads, execute grants,
+and post-migration `dev`, `test`, and production browser smokes are recorded in
+`docs/planning/supabase-state-ledger.md`.
+
 The physical legacy identity column cleanup migration is:
 
 ```text
@@ -685,6 +691,17 @@ static deployment, expect old assets to fail on affected profile or participant
 paths after the migration, and expect new assets to fail before the migration.
 Do not treat the source migration or a branch deployment as hosted application
 evidence; record any hosted apply and verification in
+`docs/planning/supabase-state-ledger.md`.
+
+On 2026-07-02, after separate explicit owner approval and matching static
+promotion through `dev`, `test`, and production, this migration was applied to
+hosted Supabase as version `20260702180134 legacy_identity_column_cleanup`. The
+first hosted apply attempt failed before migration history advanced because the
+one-time Account Profile Directory refresh omitted legacy `gamer_name` and
+`handle` values while those old columns still enforced `NOT NULL`. Source
+correction PR #157 keeps those legacy values only during the one-time backfill
+and drops the columns later in the same migration. Hosted schema, grants,
+function definitions, and production smoke evidence are recorded in
 `docs/planning/supabase-state-ledger.md`.
 
 The first private Phrase Favourite migration is:

@@ -629,22 +629,23 @@ preserve their original history.
   accepted Font Awesome bell states, actual-count accessible labelling, and visual
   unread badge. PR #102 was promoted through `test` and production with visible
   signed-in browser smokes. Issue #123 / PR #124 completed the no-notifications
-  empty-state copy and was promoted through production on 2026-06-30. Bulk `Mark all as
-  read` is now accepted for the next notification-panel hardening slice.
-- **Remaining risk**: Broader notification-panel hardening is tracked by GitHub issue
-  #127 and child issues #128-#132. Issue #128 keeps bell open/close read-only while
-  adding mixed-list ordering, accessible read-state labels, focus-return, and mobile
-  no-overflow regression coverage. Issue #129 adds row-level read actions for target and
-  non-target rows, keeps manual read actions on the current route with the panel open,
-  and covers row-level read failure feedback. The remaining hardening work still covers
-  loaded-list bulk `Mark all as read`, notification selection sequencing under route,
-  render, or read-state failure, multiple-notification exact-target regression coverage,
-  and the broader notification-panel hardening regression pass.
+  empty-state copy and was promoted through production on 2026-06-30. Notification-panel
+  read-state hardening was completed by PRD #127 and child issues #128-#132, with PR
+  #140 promoted through production on 2026-07-02.
+- **Remaining risk**: No accepted notification-panel hardening scope remains open.
+  Future notification work should preserve the completed invariants: opening and
+  closing the bell are read-only, unread/read ordering is stable, explicit row-level and
+  loaded-list bulk read actions are available, target-navigation read requires concrete
+  target proof, failures preserve unread state, the panel remains signed-in only, and
+  mobile layouts avoid horizontal overflow.
 
 ### Notification bulk read management
 
-- **No longer deferred for the next notification-panel hardening slice**: Add a bulk
-  `Mark all as read` action to the notification panel.
+- **Status**: Completed for the notification-panel hardening slice. The loaded-list
+  bulk `Mark all as read` action, row-level read actions, target-proof read sequencing,
+  mixed-list ordering, failure recovery, and regression coverage were delivered through
+  PRD #127 and child issues #128-#132, with PR #140 promoted through production on
+  2026-07-02.
 - **Why brought forward**: The current runtime marks every unread notification read as
   soon as the bell opens the notification panel. That is poor UX because revealing the
   list is not the same as acknowledging every item. The replacement read-state model
@@ -676,7 +677,7 @@ preserve their original history.
   current section can mark unread `entries_needed` and `nudge` notifications for that
   same section or assignment read. Do not mark unrelated notifications read merely
   because they share the same broad route.
-  In the next slice, bulk `Mark all as read` applies only to the currently loaded
+  Bulk `Mark all as read` applies only to the currently loaded
   notification list rendered in the panel, not to unloaded account-wide notification
   history. Show the bulk action only when that loaded list contains at least one unread
   notification; hide it when every loaded notification is already read. Bulk `Mark all
@@ -727,19 +728,25 @@ preserve their original history.
   notifications for the same exact target context, loaded-list bulk `Mark all as read`,
   bulk partial failure, accessible status feedback, and mobile layout with several rows
   without horizontal overflow.
-- **Remaining risk after the row-level read slice**: Future implementation should
-  preserve signed-in-only DOM absence, row-level read failure handling, accessible
-  status feedback, focus recovery, mobile no-overflow behaviour, the open/close
-  read-only invariant, and manual row-level read actions while adding loaded-list bulk
-  read actions and target-proof read sequencing.
+- **Remaining risk after PR #140**: No accepted hardening implementation scope remains
+  open. Hosted `dev` and `test` create/verify/cleanup smokes exercised mixed
+  read/unread target notifications and loaded-list bulk read against live Supabase data;
+  production verification stayed read-only. Current hosted schema requires every live
+  notification row to target either a Pending Game or Started Game, so true non-target
+  rows remain covered by seeded local/CI browser regression tests rather than hosted
+  mutation. Future notification changes should preserve signed-in-only DOM absence,
+  row-level and bulk read failure handling, accessible status feedback, focus recovery,
+  mobile no-overflow behaviour, the open/close read-only invariant, and target-proof
+  read sequencing.
 
 ### Notification pagination
 
 - **Deferred**: Paginating the notification panel list and marking notifications read in
   page-sized batches.
-- **Why deferred**: The next notification-panel hardening slice can correct read-state
-  semantics and add explicit row-level and loaded-list bulk actions without adding
-  notification pagination, cursor contracts, or account-wide mutation semantics.
+- **Why deferred**: The completed notification-panel hardening slice corrected
+  read-state semantics and added explicit row-level plus loaded-list bulk actions
+  without adding notification pagination, cursor contracts, or account-wide mutation
+  semantics.
 - **Revisit when**: Notification volume makes the panel hard to scan, loaded-list bulk
   marking is not enough, or server-side notification history grows beyond a practical
   single panel list.

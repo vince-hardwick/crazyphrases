@@ -521,12 +521,11 @@ Explicit read actions are acknowledgements rather than navigation proof: a row-l
 `Mark as read` action or the bulk `Mark all as read` action may mark notifications read
 without loading their targets. If an explicit read update fails, the affected
 notification or notifications stay unread and the panel shows accessible failure
-feedback. In the next notification-panel hardening slice, bulk `Mark all as read`
-applies to the currently loaded notification list rendered in the panel, not to
-unloaded account-wide notification history. Show the bulk `Mark all as read` action
-only when that loaded list contains at least one unread notification; hide it when every
-loaded notification is already read. Bulk `Mark all as read` does not require a
-confirmation step.
+feedback. Bulk `Mark all as read` applies to the currently loaded notification list
+rendered in the panel, not to unloaded account-wide notification history. Show the bulk
+`Mark all as read` action only when that loaded list contains at least one unread
+notification; hide it when every loaded notification is already read. Bulk `Mark all as
+read` does not require a confirmation step.
 
 Unread notification rows use a Font Awesome `circle-check` icon for the row-level `Mark
 as read` action. Already-read rows do not show a redundant row-level read action, but
@@ -604,16 +603,15 @@ shell display, signed-in Solo Game start/resume, in-progress entry persistence, 
 copy actions, sign-out/sign-back-in restore, anonymous solo regression, persistence
 failure warnings, stale-write conflict warnings, and mobile overflow checks.
 
-The notification-panel hardening slice should add focused regression coverage for mixed
-notification lists, not just one actionable row. Cover unread-first/read-second and
-newest-first ordering, bell open/close without read mutation, keyboard focus entry,
-`Escape`, outside-click close, focus return to the bell on non-navigating close,
-row-level mark-read without routing, target navigation read after rendered target
-presence, route-success/read-failure recovery, stale or mismatched target data staying
-unread, non-target notification read actions staying on the current route, multiple
-notifications for the same exact target context, loaded-list bulk `Mark all as read`,
-bulk partial failure, accessible status feedback, and mobile layout with several rows
-without horizontal overflow.
+Notification-panel regression coverage should include mixed notification lists, not
+just one actionable row. Cover unread-first/read-second and newest-first ordering, bell
+open/close without read mutation, keyboard focus entry, `Escape`, outside-click close,
+focus return to the bell on non-navigating close, row-level mark-read without routing,
+target navigation read after rendered target presence, route-success/read-failure
+recovery, stale or mismatched target data staying unread, non-target notification read
+actions staying on the current route, multiple notifications for the same exact target
+context, loaded-list bulk `Mark all as read`, bulk partial failure, accessible status
+feedback, and mobile layout with several rows without horizontal overflow.
 
 ### Frontend implementation
 

@@ -443,7 +443,7 @@ failure rather than a project performance pass.
 - Read: `docs/runbooks/in-app-browser-verification.md`
 - Update later: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Request final-branch-head dev deployment**
+- [x] **Step 1: Request final-branch-head dev deployment**
 
 After source verification and hosted migration pass, request a fresh `dev`
 deployment for the final PR #152 branch head:
@@ -465,7 +465,15 @@ surfaces, and keep handles as internal transitional data only. A fresh
 final-head `dev` deployment is still required after those fixes are committed
 and pushed.
 
-- [ ] **Step 2: Run visible in-app browser smoke on dev**
+Execution note, 2026-07-02: after commit
+`4842941555e6f1a72da4b33a89cb8cf62d025ae1` was pushed, deploy-dev run
+`28599339472` (`Deploy dev #90`) deployed that fixed runtime branch head to
+`dev` after owner approval. Redundant run `28599358996` (`Deploy dev #91`)
+targets the same commit and remained waiting at the `Deploy branch to dev` gate
+after #90 completed; it should not be approved unless a later need is
+identified.
+
+- [x] **Step 2: Run visible in-app browser smoke on dev**
 
 Use the in-app browser runbook. Verify:
 
@@ -496,8 +504,27 @@ the profile editor still showed `Gamer Name` and visible `Handle` fields. Local
 TDD follow-up reproduced the failure, updated the app and browser smoke tests,
 and passed `node --test --test-reporter=dot`, `node --test
 tests/pending-game.test.mjs`, the targeted Pending Game browser smoke, and
-`git diff --check`. This step remains open until the fixed branch head is
-deployed to `dev` and the visible smoke passes.
+`git diff --check`. The fixed branch head was later deployed and smoke-tested
+successfully as recorded below.
+
+Execution note, 2026-07-02: visible in-app browser smoke on `dev` for deployed
+commit `4842941555e6f1a72da4b33a89cb8cf62d025ae1` passed. The app loaded
+Account-backed mode through the existing Google session, showed account detail
+`Player`, and rendered the profile editor with `Gamer Tag` and no visible
+`Gamer Name` or `Handle` labels. The invite panel rendered one lookup input
+labelled `Email or Gamer Tag`. Unknown-email lookup displayed the exact copy
+`No gamer found under that email address`, then unknown Gamer Tag lookup
+displayed the exact copy `No gamer found under that gamer tag.`. The entered
+test email was not visible after the lookup. Observed first-party assets
+including `site.css`, `app.js`, `account-profile.js`, `pending-game.js`,
+`supabase-config.js`, and `word-bank-seed.json` were stamped with
+`4842941555e6f1a72da4b33a89cb8cf62d025ae1`, with no unstamped first-party
+`.js`, `.css`, or `.json` assets and no `__ASSET_VERSION__` placeholder. A
+390 px mobile viewport smoke had `overflowX = 0`, one lookup input, Gamer Tag
+profile copy, and no visible old identity labels. Browser warning/error logs
+were empty throughout. No second hosted Auth/Profile fixture or successful
+hosted invite was created because only the owner account exists and no separate
+write/cleanup smoke was approved.
 
 ## Task 8: PR Readiness and Merge
 

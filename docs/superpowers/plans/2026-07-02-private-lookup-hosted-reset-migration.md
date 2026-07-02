@@ -1,9 +1,12 @@
 # Private Lookup Hosted Reset and Migration Implementation Plan
 
-> **Status:** Active closeout as of 2026-07-02. Hosted reset, migration,
-> final-head `dev` smoke, PR #152 merge, `test` smoke, and production smoke have
-> completed after the required owner approvals. Documentation, issue, and branch
-> cleanup are the remaining closeout actions.
+> **Status:** Historical/completed as of 2026-07-02. Hosted reset, private
+> lookup migration, legacy identity RPC cleanup, physical legacy column cleanup,
+> PR merges, promotions, production smoke, source correction PR #157, and branch
+> cleanup have completed after the required owner approvals. Do not execute this
+> as an active plan; use ADR 0023, `docs/product-rules.md`, `docs/backlog.md`,
+> `docs/runbooks/supabase-auth-and-postgres.md`, and
+> `docs/planning/supabase-state-ledger.md` as current authority.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

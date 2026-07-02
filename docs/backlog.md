@@ -504,12 +504,13 @@ preserve their original history.
   overflow, and clean console logs. GitHub issues #47 and parent #43 are closed as
   completed.
 - **Account-menu placement**: Accepted as part of signed-in navigation design on
-  2026-06-25. Profile editing, Avatar editing, and sign-out belong under an account
-  affordance built from the signed-in Account's game-facing identity; `Profile` and
-  `Sign out` should not be primary signed-in navigation items. The first account menu
-  contains only `Profile`, `Avatar`, and `Sign out`; do not add `Favourites`, completed
-  history, notifications, settings, or social/profile-public links to the account menu
-  in this slice.
+  2026-06-25 and superseded by #142 on 2026-07-02 for Settings consolidation. Profile
+  editing, Avatar editing, and sign-out belong under an account affordance built from
+  the signed-in Account's game-facing identity; `Settings` and `Sign out` should not be
+  primary signed-in navigation items. The first account menu now contains only
+  `Settings` and `Sign out`; do not add `Favourites`, completed history,
+  notifications, separate `Profile` or `Avatar` menu items, or social/profile-public
+  links to the account menu in this slice.
 - **Account-affordance display**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142/#151 on 2026-07-02 for terminology, privacy, and
   Settings consolidation. The account affordance is avatar-first: the signed-in Avatar
@@ -517,15 +518,17 @@ preserve their original history.
   and narrow layouts may use an avatar-only button with an accessible name such as
   `Account menu for Captain Spoon`.
 - **Account-menu icons**: Accepted as part of signed-in navigation design on 2026-06-26
-  and superseded by #142 on 2026-07-02 for menu shape. Use the Font Awesome `gear` icon
-  for `Settings` and the Font Awesome `arrow-right-from-bracket` icon for `Sign out`.
+  and superseded by #142 on 2026-07-02 for menu shape. Use the Font Awesome `sliders`
+  icon for `Settings` and the Font Awesome `arrow-right-from-bracket` icon for
+  `Sign out`.
 - **Focused editor entry points**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142/#151 on 2026-07-02 for Settings consolidation,
   lookup privacy, and Gamer Tag terminology. `Settings` opens a focused editor view or
   panel for Gamer Tag and Avatar. The hosted email lookup key is derived from Supabase
   Auth email and is not public identity or a normal editable profile field unless a
-  later accepted design adds Auth-email change behaviour. Opening Settings should not
-  change the current hash route; the panel should close back to the same route.
+  later accepted design adds Auth-email change behaviour. The accepted Settings route or
+  panel route is owned by the #145 implementation slice and must preserve signed-in-only
+  DOM gating and the participant's current game context.
 - **Legacy identity display migration**: Completed on 2026-07-02 by the
   legacy-identity-remnant cleanup slice. Browser Account Profile display/save, Pending
   Game creation, notification copy generated through the active SQL helpers,
@@ -541,19 +544,21 @@ preserve their original history.
   comparison, and app-facing participant/profile DTO fields for Handle and Gamer Name.
   Remaining old names are limited to historical migrations/docs and explicit absence or
   cleanup assertions.
-- **Physical legacy identity column cleanup**: No longer deferred for source
-  implementation. Source-controlled migration
+- **Physical legacy identity column cleanup**: Completed on 2026-07-02.
+  Source-controlled migration
   `supabase/migrations/20260702180000_legacy_identity_column_cleanup.sql` runs after the
   Gamer Tag RPC cleanup migration, backfills participant snapshots to `gamer_tag`,
   recreates profile/directory/participant helper functions and RPCs without old
   identity columns, tightens browser grants, and drops `handle`/`gamer_name` from
-  Account Profile, Account Profile Directory, Pending Game participant, and Started Game
-  participant tables. Hosted application is still a live Supabase schema mutation and
-  remains approval-gated through the runbook and environment workflow. Because the
-  shared hosted Supabase schema and static assets must agree on the profile/participant
-  columns, apply the hosted migration only as part of an approved cutover with the
-  matching static deployment and smoke validation; this backlog entry must not be
-  treated as evidence that the hosted migration has already run.
+  Account Profile, Account Profile Directory, Pending Game participant, and Started
+  Game participant tables. The migration was applied to hosted Supabase after explicit
+  owner approval as hosted version `20260702180134 legacy_identity_column_cleanup`,
+  after the matching static deployment promoted through `dev`, `test`, and
+  production. Source correction PR #157 records the one-time directory backfill fix
+  required by the old `NOT NULL` legacy columns. Hosted schema, grants, functions,
+  desktop production smoke, and 390 px mobile production smoke are recorded in
+  `docs/planning/supabase-state-ledger.md`. Future fresh hosted environments still
+  require the normal runbook approval path before applying schema mutations.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
   the `Settings` panel with unsaved edits should require confirmation. The confirmation

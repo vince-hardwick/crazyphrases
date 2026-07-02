@@ -1,6 +1,6 @@
 # Pending Game Foundation Implementation Plan
 
-> **Status:** Historical/completed. Do not execute this plan as active work. The next handle-invite Pending Game work is routed through `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, and `docs/runbooks/supabase-auth-and-postgres.md`.
+> **Status:** Historical/completed. Do not execute this plan as active work. Current lookup-key Pending Game work is routed through `docs/backlog.md` section `Signed-in 2-player asynchronous game`, `docs/product-rules.md`, ADR 0023, and `docs/runbooks/supabase-auth-and-postgres.md`. Historical implementation details below may still use the original Handle terminology.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

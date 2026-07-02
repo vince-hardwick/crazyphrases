@@ -11,8 +11,10 @@ expiry in ADR `0017`.
 ## Context
 
 The first Pending Game slice let a signed-in Game Creator create a handle-based
-Game Invite and see creator/invitee participant rows. It deliberately did not
-let the invitee see, accept, or decline the invite.
+Game Invite and see creator/invitee participant rows. Under ADR `0023`, current
+product copy and follow-up implementation should describe this as lookup-key
+invite behaviour. The first slice deliberately did not let the invitee see,
+accept, or decline the invite.
 
 The next lifecycle slice needs invitee response visibility without expanding
 into game-start conversion, turn storage, Slot Allocation, Slot Order, Reveal,
@@ -45,8 +47,9 @@ clients do not receive `update` grants on `public.pending_games`.
 
 Creator visibility is read-only through the existing creator-owned Pending Game
 select path plus participant rows. The browser-facing DTO continues to expose
-Profile ids, Handles, Gamer Names, Avatars, roles, invite status, row count,
-template id, and Pending Game status, but not raw invited Auth identities.
+Profile ids, Gamer Tags, Avatars, roles, invite status, row count, template id,
+and Pending Game status, but not raw invited Auth identities or email lookup
+values.
 
 ## Consequences
 

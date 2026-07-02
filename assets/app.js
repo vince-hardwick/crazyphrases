@@ -199,15 +199,19 @@ const localTestProfiles = [
   {
     accountId: "test-account",
     profileId: "test-profile",
+    emailLookupKey: "player@example.test",
     handle: "player-test-account",
     gamerName: "Player",
+    gamerTag: "Player",
     avatarKey: "spark",
   },
   {
     accountId: "invitee-auth-account",
     profileId: "invitee-profile",
+    emailLookupKey: "invitee.two@example.test",
     handle: "invitee-two",
     gamerName: "Invitee Two",
+    gamerTag: "Invitee Two",
     avatarKey: "paper",
   },
 ];
@@ -260,7 +264,7 @@ let batchFavouriteToggleButton = null;
 let favouriteToggleRequestId = 0;
 let pendingFavouriteToggleRequests = [];
 let pendingGamePanel = null;
-let pendingGameHandleInput = null;
+let pendingGameLookupKeyInput = null;
 let pendingGameRowCountSelect = null;
 let pendingGameNudgeTimeoutSelect = null;
 let pendingGameStatus = null;
@@ -832,7 +836,7 @@ function renderAccountShell(shell) {
   accountDetail.textContent =
     shell.persistenceAuthority.type === "local-browser"
       ? "Local play in this browser"
-      : `@${shell.profile.handle}`;
+      : shell.profile.gamerName;
   testSignInButton.hidden =
     shell.mode !== "anonymous-solo" ||
     hostedAuthAvailable ||
@@ -938,13 +942,12 @@ function ensureAccountProfilePanel() {
 
   const gamerNameField = createProfileInputField({
     datasetKey: "accountProfileGamerName",
-    label: "Gamer Name",
+    label: "Gamer Tag",
     required: false,
   });
-  const handleField = createProfileInputField({
-    datasetKey: "accountProfileHandle",
-    label: "Handle",
-  });
+  const handleField = document.createElement("input");
+  handleField.type = "hidden";
+  handleField.dataset.accountProfileHandle = "";
   const avatarField = createProfileAvatarField();
   const status = document.createElement("p");
   const submitButton = document.createElement("button");
@@ -1597,11 +1600,11 @@ function getProfileSaveFailureMessage(error) {
   }
 
   if (error instanceof Error && /already in use/i.test(error.message)) {
-    return "Handle is already in use.";
+    return "Gamer Tag is already in use.";
   }
 
   if (error instanceof Error && /at least 3/i.test(error.message)) {
-    return "Handle must be at least 3 characters.";
+    return "Profile could not be saved. Try again.";
   }
 
   return "Profile could not be saved. Try again.";
@@ -2085,23 +2088,23 @@ function ensurePendingGamePanel() {
   kicker.textContent = "Multiplayer";
 
   const title = document.createElement("h2");
-  title.textContent = "Invite by Handle";
+  title.textContent = "Invite by email or Gamer Tag";
 
   const form = document.createElement("form");
   form.className = "pending-game-form";
   form.dataset.pendingGameForm = "";
   form.addEventListener("submit", createPendingGameInvite);
 
-  const handleLabel = document.createElement("label");
-  handleLabel.className = "pending-game-field";
-  handleLabel.textContent = "Handle";
+  const lookupKeyLabel = document.createElement("label");
+  lookupKeyLabel.className = "pending-game-field";
+  lookupKeyLabel.textContent = "Email or Gamer Tag";
 
-  pendingGameHandleInput = document.createElement("input");
-  pendingGameHandleInput.type = "text";
-  pendingGameHandleInput.autocomplete = "off";
-  pendingGameHandleInput.placeholder = "invitee-two";
-  pendingGameHandleInput.dataset.pendingGameHandleInput = "";
-  pendingGameHandleInput.required = true;
+  pendingGameLookupKeyInput = document.createElement("input");
+  pendingGameLookupKeyInput.type = "text";
+  pendingGameLookupKeyInput.autocomplete = "off";
+  pendingGameLookupKeyInput.placeholder = "invitee.two@example.test or Invitee Two";
+  pendingGameLookupKeyInput.dataset.pendingGameLookupKeyInput = "";
+  pendingGameLookupKeyInput.required = true;
 
   const rowCountLabel = document.createElement("label");
   rowCountLabel.className = "pending-game-field";
@@ -2160,10 +2163,10 @@ function ensurePendingGamePanel() {
   completedMultiplayerHistoryPanel.hidden = true;
 
   heading.append(kicker, title);
-  handleLabel.append(pendingGameHandleInput);
+  lookupKeyLabel.append(pendingGameLookupKeyInput);
   rowCountLabel.append(pendingGameRowCountSelect);
   nudgeTimeoutLabel.append(pendingGameNudgeTimeoutSelect);
-  form.append(handleLabel, rowCountLabel, nudgeTimeoutLabel, submitButton);
+  form.append(lookupKeyLabel, rowCountLabel, nudgeTimeoutLabel, submitButton);
   pendingGamePanel.append(
     heading,
     form,
@@ -2180,7 +2183,7 @@ function ensurePendingGamePanel() {
 function removePendingGamePanel() {
   pendingGamePanel?.remove();
   pendingGamePanel = null;
-  pendingGameHandleInput = null;
+  pendingGameLookupKeyInput = null;
   pendingGameRowCountSelect = null;
   pendingGameNudgeTimeoutSelect = null;
   pendingGameStatus = null;
@@ -2207,15 +2210,15 @@ async function createPendingGameInvite(event) {
   }
 
   const accountId = accountShell.accountId;
-  const inviteeHandle = pendingGameHandleInput.value;
+  const lookupKey = pendingGameLookupKeyInput.value;
   const nudgeTimeoutHours = Number(pendingGameNudgeTimeoutSelect.value);
   const rowCount = Number(pendingGameRowCountSelect.value);
   pendingGameStatus.textContent = "";
 
   try {
-    const pendingGame = await pendingGameRepository.createPendingGameFromHandle({
+    const pendingGame = await pendingGameRepository.createPendingGameFromLookupKey({
       creatorAccountId: accountId,
-      inviteeHandle,
+      lookupKey,
       nudgeTimeoutHours,
       rowCount,
     });
@@ -2229,10 +2232,10 @@ async function createPendingGameInvite(event) {
 
     currentPendingGame = pendingGame;
     createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
-    pendingGameHandleInput.value = "";
+    pendingGameLookupKeyInput.value = "";
     renderCreatedPendingGames();
     pendingGameStatus.textContent =
-      `Game invite created. Waiting for @${invitee.handle} to accept.`;
+      `Game invite created. Waiting for ${getParticipantDisplayName(invitee)} to accept.`;
   } catch (error) {
     if (!isCurrentAccountSession(accountId)) {
       return;
@@ -2424,7 +2427,7 @@ function renderPendingGameCancelActions(pendingGame) {
   cancelButton.textContent = "Cancel game";
   cancelButton.setAttribute(
     "aria-label",
-    `Cancel game with @${invitee.handle}`,
+    `Cancel game with ${getParticipantDisplayName(invitee)}`,
   );
   cancelButton.addEventListener("click", () => {
     void cancelCreatedGame(pendingGame.id);
@@ -2447,7 +2450,7 @@ function renderPendingGameResponseActions(pendingGame) {
   acceptButton.textContent = "Accept";
   acceptButton.setAttribute(
     "aria-label",
-    `Accept invite from @${creator.handle}`,
+    `Accept invite from ${getParticipantDisplayName(creator)}`,
   );
   acceptButton.addEventListener("click", () => {
     void respondToPendingGameInvite(pendingGame.id, "accept");
@@ -2459,7 +2462,7 @@ function renderPendingGameResponseActions(pendingGame) {
   declineButton.textContent = "Decline";
   declineButton.setAttribute(
     "aria-label",
-    `Decline invite from @${creator.handle}`,
+    `Decline invite from ${getParticipantDisplayName(creator)}`,
   );
   declineButton.addEventListener("click", () => {
     void respondToPendingGameInvite(pendingGame.id, "decline");
@@ -2482,7 +2485,7 @@ function renderPendingGameStartActions(pendingGame) {
   startButton.textContent = "Start game";
   startButton.setAttribute(
     "aria-label",
-    `Start game with @${invitee.handle}`,
+    `Start game with ${getParticipantDisplayName(invitee)}`,
   );
   startButton.addEventListener("click", () => {
     void startPendingGame(pendingGame.id);
@@ -2495,14 +2498,26 @@ function renderPendingGameStartActions(pendingGame) {
 function renderPendingGameParticipant(participant) {
   const item = document.createElement("li");
 
-  const handle = document.createElement("span");
-  handle.textContent = `@${participant.handle}`;
+  const displayName = document.createElement("span");
+  displayName.textContent = getParticipantDisplayName(participant);
 
   const status = document.createElement("strong");
   status.textContent = getPendingGameParticipantStatusLabel(participant);
 
-  item.append(handle, status);
+  item.append(displayName, status);
   return item;
+}
+
+function getParticipantDisplayName(participant) {
+  const gamerTag = String(
+    participant?.gamerTag ?? participant?.gamerName ?? "",
+  ).trim();
+  if (gamerTag) {
+    return gamerTag;
+  }
+
+  const handle = String(participant?.handle ?? "").trim();
+  return handle ? `@${handle}` : "Unknown gamer";
 }
 
 function getPendingGameParticipantStatusLabel(participant) {
@@ -2965,7 +2980,7 @@ function renderMultiplayerParticipantSummary(batchSummary) {
   const summary = document.createElement("p");
   summary.className = "pending-game-row-count";
   summary.textContent = `Batch with ${batchSummary.participants
-    .map((participant) => `@${participant.handle}`)
+    .map(getParticipantDisplayName)
     .join(" and ")}.`;
   return summary;
 }
@@ -5526,12 +5541,26 @@ function hidePersistenceRecovery() {
 }
 
 function getPendingGameFailureMessage(error) {
-  if (error instanceof Error && /own handle/i.test(error.message)) {
-    return "Choose another Handle; this one belongs to you.";
+  if (
+    error instanceof Error &&
+    /^No gamer found under that email address$/.test(error.message)
+  ) {
+    return "No gamer found under that email address";
   }
 
-  if (error instanceof Error && /handle/i.test(error.message)) {
-    return "Handle not found. Check the Handle and try again.";
+  if (
+    error instanceof Error &&
+    /^No gamer found under that gamer tag\.$/.test(error.message)
+  ) {
+    return "No gamer found under that gamer tag.";
+  }
+
+  if (error instanceof Error && /own (handle|profile|gamer)/i.test(error.message)) {
+    return "Choose another gamer; this one belongs to you.";
+  }
+
+  if (error instanceof Error && /(lookup|gamer tag|handle)/i.test(error.message)) {
+    return "No gamer found under that gamer tag.";
   }
 
   return "Game invite could not be created. Try again.";

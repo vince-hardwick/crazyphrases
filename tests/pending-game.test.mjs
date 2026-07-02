@@ -33,6 +33,43 @@ const otherCreatorProfile = {
 };
 
 describe("Pending Game repository", () => {
+  it("creates Pending Games from one lookup key input by known email or Gamer Tag", async () => {
+    let nextPendingGameId = 1;
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => `pending-game-lookup-${nextPendingGameId++}`,
+      profiles: [
+        {
+          ...creatorProfile,
+          emailLookupKey: "creator.one@example.test",
+          gamerTag: "Creator One",
+        },
+        {
+          ...inviteeProfile,
+          emailLookupKey: "invitee.two@example.test",
+          gamerTag: "Invitee Two",
+        },
+      ],
+    });
+
+    const byEmail = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: " Invitee.Two@Example.test ",
+      rowCount: 10,
+    });
+    const byGamerTag = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: "INVITEE TWO",
+      rowCount: 15,
+    });
+
+    assert.equal(byEmail.id, "pending-game-lookup-1");
+    assert.equal(byGamerTag.id, "pending-game-lookup-2");
+    assert.equal(byEmail.participants[1].profileId, inviteeProfile.profileId);
+    assert.equal(byGamerTag.participants[1].profileId, inviteeProfile.profileId);
+    assert.equal(JSON.stringify(byEmail).includes("invitee.two@example.test"), false);
+    assert.equal(JSON.stringify(byGamerTag).includes("invitee.two@example.test"), false);
+  });
+
   it("creates a browser-safe Pending Game from a handle invite", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -514,7 +551,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+            "You can submit entries to a batch with Player Test Account and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -530,7 +567,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @player-test-account and @invitee-two.",
+            "You can submit entries to a batch with Player Test Account and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -581,7 +618,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "unread",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -590,7 +627,7 @@ describe("Pending Game repository", () => {
           type: "nudge",
           status: "unread",
           message:
-            "A batch is waiting for your entries with @creator-one and @invitee-two.",
+            "A batch is waiting for your entries with Creator One and Invitee Two.",
           createdAt: "2026-06-02T13:00:00.000Z",
           targetGameId: "started-game-1",
           targetAssignmentId: "started-game-1-section-invitee-1",
@@ -1077,7 +1114,7 @@ describe("Pending Game repository", () => {
           type: "entries_needed",
           status: "read",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -1085,7 +1122,7 @@ describe("Pending Game repository", () => {
           id: "notification-3",
           type: "game_cancelled",
           status: "unread",
-          message: "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          message: "Creator One cancelled a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetGameId: "started-game-1",
         },
@@ -1146,7 +1183,7 @@ describe("Pending Game repository", () => {
           type: "game_cancelled",
           status: "unread",
           message:
-            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+            "Creator One cancelled a batch with Creator One and Invitee Two.",
           createdAt: "1970-01-01T00:00:00.000Z",
           targetPendingGameId: "pending-game-1",
         },
@@ -1644,6 +1681,40 @@ describe("Pending Game repository", () => {
       "pending_game_participants",
     ]);
     assert.equal(JSON.stringify(pendingGame).includes(inviteeProfile.accountId), false);
+  });
+
+  it("creates Supabase Pending Games through the private lookup resolver", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile: {
+        ...inviteeProfile,
+        emailLookupKey: "invitee.two@example.test",
+        gamerTag: "Invitee Two",
+      },
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const pendingGame = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: " Invitee.Two@Example.test ",
+      rowCount: 15,
+    });
+
+    assert.equal(pendingGame.id, "supabase-pending-game-1");
+    assert.equal(pendingGame.participants[1].profileId, inviteeProfile.profileId);
+    assert.deepEqual(supabase.rpcCalls, ["lookup_account_profile"]);
+    assert.deepEqual(supabase.rpcParams, [
+      {
+        lookup_key: "invitee.two@example.test",
+        lookup_kind: "email",
+      },
+    ]);
+    assert.deepEqual(supabase.tableCalls, [
+      "account_profiles",
+      "pending_games",
+      "pending_game_participants",
+    ]);
+    assert.equal(JSON.stringify(pendingGame).includes("invitee.two@example.test"), false);
   });
 
   it("lists incoming Pending Game invites through Supabase rows without exposing Auth identities", async () => {
@@ -2258,7 +2329,7 @@ describe("Pending Game repository", () => {
         type: "game_cancelled",
         status: "unread",
         message:
-          "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+          "Creator One cancelled a batch with Creator One and Invitee Two.",
         createdAt: "2026-01-01T00:00:01.000Z",
         targetPendingGameId: "supabase-pending-game-1",
       },
@@ -2304,7 +2375,7 @@ describe("Pending Game repository", () => {
         type: "nudge",
         status: "unread",
         message:
-          "You can submit entries to a batch with @creator-one and @invitee-two.",
+          "You can submit entries to a batch with Creator One and Invitee Two.",
         createdAt: "2026-01-01T00:00:00.000Z",
         targetGameId: "supabase-started-game-1",
         targetAssignmentId: "supabase-section-1",
@@ -2372,7 +2443,7 @@ describe("Pending Game repository", () => {
           type: "nudge",
           status: "read",
           message:
-            "You can submit entries to a batch with @creator-one and @invitee-two.",
+            "You can submit entries to a batch with Creator One and Invitee Two.",
           createdAt: "2026-01-01T00:00:00.000Z",
           targetGameId: "supabase-started-game-1",
           targetAssignmentId: "supabase-section-1",
@@ -2386,19 +2457,25 @@ describe("Pending Game repository", () => {
       createPendingGameId: () => "local-pending-game-1",
       profiles: [creatorProfile, inviteeProfile],
     });
-    const pendingGame = await repository.createPendingGameFromHandle({
+    const pendingGame = await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerName,
       rowCount: 20,
     });
     const appSource = readFileSync(new URL("../assets/app.js", import.meta.url), "utf8");
 
     assert.equal(pendingGame.id, "local-pending-game-1");
     assert.match(appSource, /createLocalTestPendingGameRepository/);
+    assert.match(appSource, /pendingGameLookupKeyInput/);
+    assert.match(appSource, /createPendingGameFromLookupKey/);
+    assert.match(appSource, /No gamer found under that email address/);
+    assert.match(appSource, /No gamer found under that gamer tag\./);
     assert.match(
       appSource,
       /pendingGameRepository = createSupabasePendingGameRepository\(\{ supabase \}\)/,
     );
+    assert.doesNotMatch(appSource, /createPendingGameFromHandle\(\{/);
+    assert.doesNotMatch(appSource, /Handle not found/);
   });
 });
 
@@ -2418,7 +2495,7 @@ function createFakePendingGameSupabase({
         account_id: creatorProfile.accountId,
         created_at: "2026-01-01T00:00:00.000Z",
         message:
-          "You can submit entries to a batch with @creator-one and @invitee-two.",
+          "You can submit entries to a batch with Creator One and Invitee Two.",
         notification_status: "unread",
         notification_type: "nudge",
         target_assignment_id: "supabase-section-1",
@@ -2499,6 +2576,37 @@ function createFakePendingGameSupabase({
         };
       }
 
+      if (functionName === "lookup_account_profile") {
+        assert.deepEqual(Object.keys(params).sort(), [
+          "lookup_key",
+          "lookup_kind",
+        ]);
+
+        const matchesEmail =
+          params.lookup_kind === "email" &&
+          inviteeProfile.emailLookupKey === params.lookup_key;
+        const matchesGamerTag =
+          params.lookup_kind === "gamer-tag" &&
+          inviteeProfile.gamerTag?.toLocaleLowerCase("en-GB") ===
+            params.lookup_key;
+
+        return {
+          data:
+            matchesEmail || matchesGamerTag
+              ? [
+                  {
+                    avatar_key: inviteeProfile.avatarKey,
+                    avatar_object_path: null,
+                    avatar_type: "built-in",
+                    gamer_tag: inviteeProfile.gamerTag,
+                    profile_id: inviteeProfile.profileId,
+                  },
+                ]
+              : [],
+          error: null,
+        };
+      }
+
       if (functionName === "submit_multiplayer_section") {
         assert.deepEqual(Object.keys(params).sort(), [
           "submitted_entries",
@@ -2558,7 +2666,7 @@ function createFakePendingGameSupabase({
           account_id: inviteeProfile.accountId,
           created_at: "2026-01-01T00:00:01.000Z",
           message:
-            "@creator-one cancelled a batch with @creator-one and @invitee-two.",
+            "Creator One cancelled a batch with Creator One and Invitee Two.",
           notification_status: "unread",
           notification_type: "game_cancelled",
           target_game_id: startedGame?.id ?? null,

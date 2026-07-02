@@ -30,10 +30,11 @@ describe("Supabase Auth session", () => {
     const calls = [];
     const session = createSupabaseAuthSession({
       profileRepository: {
-        async ensureOwnProfile({ accountId }) {
+        async ensureOwnProfile({ accountId, email }) {
           calls.push({
             method: "ensureOwnProfile",
             accountId,
+            email,
           });
           return {
             profileId: "profile-directory-1",
@@ -57,6 +58,7 @@ describe("Supabase Auth session", () => {
       {
         method: "ensureOwnProfile",
         accountId: "auth-user-456",
+        email: "private@example.com",
       },
     ]);
     assert.equal(shell.accountId, "auth-user-456");
@@ -71,6 +73,30 @@ describe("Supabase Auth session", () => {
       avatarKey: "yin-yang",
     });
     assert.equal(JSON.stringify(shell).includes("private@example.com"), false);
+  });
+
+  it("fails closed before profile hydration when Auth has no usable email", async () => {
+    const calls = [];
+    const session = createSupabaseAuthSession({
+      profileRepository: {
+        async ensureOwnProfile(request) {
+          calls.push(request);
+          return null;
+        },
+      },
+      supabase: createFakeSupabaseAuthClient({
+        user: {
+          id: "auth-user-without-email",
+          email: "   ",
+        },
+      }),
+    });
+
+    await assert.rejects(
+      () => session.loadAccountShell(),
+      /A usable Auth email is required/,
+    );
+    assert.deepEqual(calls, []);
   });
 
   it("starts Google and email sign-in with the app root redirect URL", async () => {

@@ -221,9 +221,9 @@ _Avoid_: Authorship, source
 Permission from every human participant in a game for a completed phrase from that game to enter public discovery.
 _Avoid_: Share approval, owner permission
 
-**Gamer Name**:
-A human participant's game-facing display name, kept separate from account identity.
-_Avoid_: Real name, email, username
+**Gamer Tag**:
+A human participant's changeable game-facing display name, kept separate from account identity.
+_Avoid_: Real name, email, username, handle
 
 **Avatar**:
 A game-facing visual marker for an account holder in games and social surfaces.
@@ -245,9 +245,9 @@ _Avoid_: Resize frame, selection area
 Temporary alignment guides shown inside the Avatar crop editor while a participant is positioning or zooming an Uploaded Avatar.
 _Avoid_: Decoration, permanent grid
 
-**Handle**:
-A globally unique account-facing identifier used for discovery, mentions, profile URLs, and disambiguation.
-_Avoid_: Gamer name, email
+**Lookup Key**:
+The value entered into signed-in Account lookup. It may be a full email address already known to the participant or a Gamer Tag; lookup results show Gamer Tag and Avatar, not the email address.
+_Avoid_: Public username, editable handle, raw Auth user id, provider identity id
 
 **Anonymous Solo Game**:
 A local solo game played without a user account and without durable social features.
@@ -255,7 +255,7 @@ _Avoid_: Guest account, anonymous multiplayer
 
 **Account**:
 A durable signed-in identity used for multiplayer, persistence, social features, publishing, consent, moderation, and notifications.
-_Avoid_: Gamer name, handle
+_Avoid_: Gamer tag, username
 
 **Account Deletion**:
 The lifecycle action that removes or anonymizes an account holder's identity while preserving collaborative game history where needed.

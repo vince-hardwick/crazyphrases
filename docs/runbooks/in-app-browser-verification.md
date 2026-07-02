@@ -242,7 +242,10 @@ When checking clipboard output from the visible browser on Windows, normalize `\
 For the signed-in foundation, local and deployment smoke should check:
 
 - The page offers the supported sign-in path for the environment: `Test sign in` on localhost, or configured hosted auth in `dev`/`test`.
-- After sign-in, the Account shell shows `Account-backed mode` and a game-facing handle.
+- After sign-in, the Account shell shows `Account-backed mode` and the current
+  Gamer Tag or equivalent game-facing identity for the environment. Do not use
+  email address visibility as smoke evidence unless the specific test is for
+  private known-email lookup input handling.
 - Existing anonymous local play is not imported into the signed-in current game automatically.
 - A signed-in Solo Game can be started, filled, refreshed or revisited, and resumed from account-backed state.
 - A revealed signed-in batch remains the current signed-in game until the participant confirms `Start again`.

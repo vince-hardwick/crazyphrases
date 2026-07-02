@@ -258,7 +258,7 @@ mutation.
 
 Local browser tests may expose a signed-in Pending Game creation fixture after
 `Test sign in`. The app uses `createLocalTestPendingGameRepository()` with
-fixed localhost-only test profiles so the Account shell can exercise Handle
+fixed localhost-only test profiles so the Account shell can exercise lookup-key
 invite creation without calling hosted Supabase. This fixture remains
 signed-in-only, does not create hosted rows, does not configure invites or
 notifications, and does not authorise live mutation. Hosted Pending Game
@@ -301,8 +301,9 @@ assets/supabase-auth-session.js
 It maps `supabase.auth.getUser()` to the existing Account shell, starts Google
 OAuth with `redirectTo` set to the current app root, sends email magic links
 with `emailRedirectTo` set to the current app root, and signs out through
-`supabase.auth.signOut()`. It must not expose user email as the game-facing
-Handle, Gamer Name, or persistence authority.
+`supabase.auth.signOut()`. ADR 0023 derives the private hosted email lookup key
+from the Auth email, but the adapter must not treat email as Gamer Tag,
+display identity, or persistence authority.
 
 Before a hosted Google OAuth or valid email magic-link request leaves the app,
 the adapter runs the app-provided redirect preparation hook. Crazy Phrases uses
@@ -465,7 +466,7 @@ bar.
 ## Uploaded Avatar Storage
 
 ADR 0019 selects Supabase Storage as the media authority for Uploaded Avatar
-image bytes. Supabase Postgres remains the Account Profile and Handle Directory
+image bytes. Supabase Postgres remains the Account Profile and lookup-directory
 source of truth and should store only the avatar choice plus the invite-safe
 reference or metadata needed to render an Avatar.
 
@@ -478,7 +479,7 @@ task-specific plan.
 The uploaded-avatar bucket should be public-read, with owner-scoped upload,
 replacement, and deletion authority. Object paths must be opaque and must not
 encode raw Supabase Auth user ids, email addresses, provider identities,
-Handles, Gamer Names, or other account-identifying values.
+Gamer Tags, lookup keys, or other account-identifying values.
 
 The accepted bucket name is `avatars`. First-slice Uploaded Avatar originals
 should use opaque object paths under `uploaded/`, with the shape
@@ -509,6 +510,18 @@ ownership metadata. Cleanup failure must not report profile-save success; it
 should leave the object marked or discoverable as abandoned for a later cleanup
 path.
 
+Supabase Storage object deletion must go through the Storage API, not SQL
+against `storage.objects`. SQL can inspect Storage metadata for verification and
+policy design, but deleting metadata directly can leave the underlying object
+orphaned in the bucket. Application cleanup should call the Storage client, for
+example `supabase.storage.from("avatars").remove(paths)`, with no more than 1000
+paths per call. The caller still needs a matching `storage.objects` `DELETE` RLS
+policy for the objects being removed, unless the deletion runs through a
+separately approved server-owned route. After Storage API deletion succeeds,
+reconcile `public.uploaded_avatar_objects` metadata in the same user-visible
+cleanup flow; if metadata reconciliation fails after object removal, surface a
+retryable cleanup state instead of reporting silent success.
+
 The first Uploaded Avatar implementation should use direct authenticated browser
 uploads to Supabase Storage. Add an Edge Function or custom server upload path
 only when current Supabase Storage policy support cannot enforce the accepted
@@ -518,7 +531,7 @@ task-specific approved requirement justifies the extra backend surface.
 Uploaded Avatar object paths should be paired with a private Postgres ownership
 row that records the owning Account Profile and object lifecycle metadata. Do
 not expose that ownership table as a browser-facing directory surface; signed-in
-browser profile and Handle Directory reads should still receive only the
+browser profile and lookup-directory reads should still receive only the
 invite-safe Avatar descriptor.
 
 For hosted Storage bucket and policy work, prefer authenticated Supabase MCP
@@ -585,6 +598,41 @@ admin surfaces that need a reliable "last changed" field.
 Hosted application and verification evidence for these migrations is recorded in
 `docs/planning/supabase-state-ledger.md`.
 
+The private email lookup and Gamer Tag migration is:
+
+```text
+supabase/migrations/20260702120000_private_email_lookup_and_gamer_tag.sql
+```
+
+It adds `email_lookup_key` and `gamer_tag` lookup columns to
+`public.account_profiles` and `public.account_profile_directory`, then adds
+lower-case lookup indexes. It intentionally does not backfill hosted legacy
+Account Profile rows. The migration fails fast if `public.account_profiles` or
+`public.account_profile_directory` contains rows, so any hosted environment must
+clear the owner-approved legacy Account/Profile data before applying it. On
+2026-07-02, the owner confirmed that the only current hosted user account is
+theirs and may be removed because they can re-register via Google sign-in; do
+not perform that hosted deletion outside the documented approval-gated
+environment workflow. Browser-facing table grants still must not expose
+`email_lookup_key` through direct `SELECT`. Signed-in lookup by either known
+email address or Gamer Tag goes through
+`public.lookup_account_profile(text, text)`, a security-definer RPC that returns
+only `profile_id`, `gamer_tag`, and the Avatar descriptor columns. Hosted
+application remains a live backend mutation requiring the documented approval
+gates. On 2026-07-02, after separate explicit owner approval and the
+app-profile reset precondition, this migration was applied to hosted Supabase as
+version `20260702141616 private_email_lookup_and_gamer_tag`; schema, grants,
+and lookup privacy were verified.
+
+Supabase security advisors report
+`public.lookup_account_profile(text, text)` as an authenticated-callable
+`SECURITY DEFINER` function. That is expected for the accepted private lookup
+design: authenticated Accounts need exact known-email and Gamer Tag lookup
+without direct `SELECT` access to `email_lookup_key`. Keep this RPC narrow. It
+must not be executable by `anon` or `public`, it must keep an authenticated-user
+guard, and it must return only invite-safe Gamer Tag and Avatar descriptor data,
+not email addresses or email-backed lookup values.
+
 The first private Phrase Favourite migration is:
 
 ```text
@@ -616,11 +664,23 @@ Hosted application, verification, deployment smoke, and cleanup evidence for
 private favourites is recorded in
 `docs/planning/supabase-state-ledger.md`.
 
-The first Account Profile / Handle Directory migration is:
+The first Account Profile / Handle Directory legacy-schema migration is:
 
 ```text
 supabase/migrations/20260615234349_create_account_profiles.sql
 ```
+
+ADR 0023 supersedes the product terminology and authority boundary for this
+area: `Gamer Name` is now `Gamer Tag`; the legacy public `Handle` model is
+replaced by one signed-in lookup-key input that accepts either a known email
+address or Gamer Tag and never returns email addresses in profile results. The
+migrations below describe the historical hosted schema that still uses legacy
+`handle` and `gamer_name` storage names until #151 renames or replaces that
+storage. ADR 0023 does not require hosted compatibility mapping from those
+legacy profile rows; the accepted hosted path is to clear the current
+owner-approved legacy Account/Profile data before applying the private
+lookup-key migration. Do not introduce new user-facing Handle/Gamer Name copy or
+email display from these historical column names.
 
 It creates `public.account_profiles` for one active durable profile per
 Account, with a separate directory `profile_id`, globally unique `handle`,
@@ -646,7 +706,7 @@ The corrective Account Profile directory grant migration is:
 supabase/migrations/20260616092030_tighten_account_profile_directory_grants.sql
 ```
 
-It moves signed-in Handle lookup to the invite-safe
+It moves signed-in legacy Handle lookup to the invite-safe
 `public.account_profile_directory` projection and tightens direct
 `public.account_profiles` browser grants. The raw table keeps owner-only
 profile load/create/update access under Row Level Security, while the directory
@@ -681,13 +741,14 @@ The first Pending Game foundation migration is:
 supabase/migrations/20260616131908_create_pending_games.sql
 ```
 
-It creates source-controlled relational storage for handle-invite Pending Game
-creation. `public.pending_games` stores creator-owned pending setup with
-creator and invitee directory profile ids. A private-schema
+It creates source-controlled relational storage for the original handle-invite
+Pending Game creation. Under ADR 0023, current product copy should describe this
+as lookup-key invite behaviour. `public.pending_games` stores creator-owned
+pending setup with creator and invitee directory profile ids. A private-schema
 `private.create_pending_game_participants()` trigger creates the creator and
-invitee rows in `public.pending_game_participants` from the Account Profile
-Directory so browser code does not manage a multi-table transaction and does
-not supply participant display snapshots directly.
+invitee rows in `public.pending_game_participants` from the Account Profile /
+lookup directory so browser code does not manage a multi-table transaction and
+does not supply participant display snapshots directly.
 
 The migration enables Row Level Security on both public tables, grants no
 `anon` access, grants authenticated browser clients `select` and `insert` on
@@ -945,8 +1006,8 @@ assets/pending-game.js
 `createSupabasePendingGameRepository({ supabase })` accepts an already created
 Supabase browser client. The browser-facing repository can:
 
-- create a Pending Game from a creator Account id, invitee Handle, row count,
-  and nudge timeout;
+- create a Pending Game from a creator Account id, invitee lookup key, row
+  count, and nudge timeout;
 - list Pending Games created by the signed-in Account;
 - list incoming Pending Game invites for the signed-in Account Profile;
 - accept an incoming Pending Game invite;
@@ -958,7 +1019,7 @@ Supabase browser client. The browser-facing repository can:
   direct browser update authority.
 
 Creation resolves the creator through `public.account_profiles`, resolves the
-invitee through `public.account_profile_directory`, inserts one
+invitee through `public.lookup_account_profile(text, text)`, inserts one
 `public.pending_games` row with the selected `nudge_timeout_hours`, and loads
 trigger-created `public.pending_game_participants` rows for the browser-safe
 DTO.

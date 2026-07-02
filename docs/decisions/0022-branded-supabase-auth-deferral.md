@@ -83,7 +83,7 @@ The deferral should be revisited when one of these triggers occurs:
 - Future work must not silently create `auth.crazyphrases.com`, enable a
   Supabase custom domain, or switch to a vanity subdomain without first
   amending or superseding this ADR.
-- No game mechanics, Account Profile fields, Handle rules, Avatar storage,
+- No game mechanics, Account Profile fields, lookup-key rules, Avatar storage,
   Multiplayer lifecycle, Favourites storage, or public discovery behaviour
   changes as part of this decision.
 - The Supabase Auth and Cloudflare runbooks should continue to make clear that

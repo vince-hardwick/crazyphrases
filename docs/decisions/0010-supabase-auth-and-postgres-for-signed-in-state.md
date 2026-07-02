@@ -19,9 +19,9 @@ The project constraints for this slice are:
 - browser-accessible data must be protected by server-enforced authorisation;
 - service/admin credentials must stay server-side and out of the repository;
 - current signed-in Solo Game state needs stale-write protection;
-- the longer-term model is likely relational: Account, Handle, Gamer Name,
-  Avatar, current signed-in Solo Game, later invites, turns, consent records,
-  favourites, account deletion, and collaborative history.
+- the longer-term model is likely relational: Account, private email lookup key,
+  Gamer Tag, Avatar, current signed-in Solo Game, later invites, turns, consent
+  records, favourites, account deletion, and collaborative history.
 
 Research in `docs/research/auth-backend-stack-2026-06-12.md` compared Supabase,
 Firebase, Cloudflare D1 with auth libraries, Appwrite, Clerk, WorkOS, Convex,
@@ -38,7 +38,8 @@ Initial implementation rules:
 1. Supabase Auth owns public Account authentication.
 2. Supabase Postgres owns signed-in game persistence.
 3. App tables key user-owned rows to the immutable Supabase Auth user id, not to
-   mutable Handle, Gamer Name, email, or display-name values.
+   mutable Gamer Tag, private email lookup key, raw email, or display-name
+   values.
 4. Launch auth methods are Google sign-in plus passwordless email magic
    link/OTP, unless provider setup proves impractical during implementation.
 5. SMS/phone sign-in is out of MVP scope because it adds cost and recovery

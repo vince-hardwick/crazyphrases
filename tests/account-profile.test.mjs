@@ -8,6 +8,104 @@ import {
 } from "../assets/account-profile.js";
 
 describe("Account Profile repository", () => {
+  it("resolves one lookup key input by known email or Gamer Tag without exposing email", async () => {
+    const repository = createMemoryAccountProfileRepository({
+      initialProfiles: [
+        {
+          accountId: "auth-account-private-lookup",
+          emailLookupKey: "Captain.Spoon@Example.test",
+          gamerTag: "Captain Spoon",
+          avatarKey: "dragon",
+          profileId: "profile-private-lookup-1",
+        },
+      ],
+    });
+
+    const expectedProfile = {
+      profileId: "profile-private-lookup-1",
+      gamerTag: "Captain Spoon",
+      avatar: {
+        type: "built-in",
+        key: "dragon",
+      },
+      avatarKey: "dragon",
+    };
+
+    const byEmail = await repository.lookupProfileByLookupKey({
+      lookupKey: " captain.spoon@example.test ",
+    });
+    const byGamerTag = await repository.lookupProfileByLookupKey({
+      lookupKey: "Captain Spoon",
+    });
+
+    assert.deepEqual(byEmail, {
+      status: "found",
+      lookupKind: "email",
+      profile: expectedProfile,
+    });
+    assert.deepEqual(byGamerTag, {
+      status: "found",
+      lookupKind: "gamer-tag",
+      profile: expectedProfile,
+    });
+    assert.equal(JSON.stringify(byEmail).includes("captain.spoon@example.test"), false);
+    assert.equal(JSON.stringify(byGamerTag).includes("captain.spoon@example.test"), false);
+    assert.equal("emailLookupKey" in byEmail.profile, false);
+    assert.equal("accountId" in byEmail.profile, false);
+  });
+
+  it("returns lookup-specific miss copy for one lookup key input", async () => {
+    const repository = createMemoryAccountProfileRepository();
+
+    assert.deepEqual(
+      await repository.lookupProfileByLookupKey({
+        lookupKey: "missing@example.test",
+      }),
+      {
+        status: "not-found",
+        lookupKind: "email",
+        message: "No gamer found under that email address",
+      },
+    );
+    assert.deepEqual(
+      await repository.lookupProfileByLookupKey({
+        lookupKey: "Missing Gamer",
+      }),
+      {
+        status: "not-found",
+        lookupKind: "gamer-tag",
+        message: "No gamer found under that gamer tag.",
+      },
+    );
+  });
+
+  it("stores the Auth email as a private lookup key when creating a profile", async () => {
+    const repository = createMemoryAccountProfileRepository({
+      createProfileId: () => "profile-private-lookup-3",
+    });
+
+    const profile = await repository.ensureOwnProfile({
+      accountId: "auth-account-private-lookup-create",
+      email: " Created.Player@Example.test ",
+    });
+    const lookup = await repository.lookupProfileByLookupKey({
+      lookupKey: "created.player@example.test",
+    });
+
+    assert.deepEqual(lookup, {
+      status: "found",
+      lookupKind: "email",
+      profile: {
+        profileId: "profile-private-lookup-3",
+        gamerTag: "Player",
+        avatar: profile.avatar,
+        avatarKey: profile.avatarKey,
+      },
+    });
+    assert.equal(JSON.stringify(profile).includes("created.player@example.test"), false);
+    assert.equal(JSON.stringify(lookup).includes("created.player@example.test"), false);
+  });
+
   it("creates and looks up durable profiles without exposing Auth identity", async () => {
     const repository = createMemoryAccountProfileRepository({
       createProfileId: () => "profile-directory-1",
@@ -70,6 +168,37 @@ describe("Account Profile repository", () => {
     assert.equal(JSON.stringify(lookup).includes("auth-account-2"), false);
   });
 
+  it("stores hosted Auth email as a private Supabase lookup key on profile creation", async () => {
+    const supabase = createFakeAccountProfilesSupabase();
+    const repository = createSupabaseAccountProfileRepository({
+      createProfileId: () => "profile-private-lookup-4",
+      supabase,
+    });
+
+    const profile = await repository.ensureOwnProfile({
+      accountId: "auth-account-private-lookup-hosted",
+      email: " Hosted.Player@Example.test ",
+    });
+
+    assert.deepEqual(supabase.insertCalls, [
+      {
+        tableName: "account_profiles",
+        row: {
+          account_id: "auth-account-private-lookup-hosted",
+          avatar_object_path: null,
+          avatar_key: profile.avatarKey,
+          avatar_type: "built-in",
+          email_lookup_key: "hosted.player@example.test",
+          gamer_name: "Player",
+          gamer_tag: "Player",
+          handle: profile.handle,
+          profile_id: "profile-private-lookup-4",
+        },
+      },
+    ]);
+    assert.equal(JSON.stringify(profile).includes("hosted.player@example.test"), false);
+  });
+
   it("looks up Supabase profiles through an invite-safe directory surface", async () => {
     const supabase = createFakeAccountProfilesSupabase({
       rejectRawHandleLookup: true,
@@ -97,6 +226,67 @@ describe("Account Profile repository", () => {
       avatarKey: profile.avatarKey,
     });
     assert.deepEqual(supabase.tableCalls.slice(-1), ["account_profile_directory"]);
+  });
+
+  it("resolves Supabase lookup keys through a private lookup resolver", async () => {
+    const supabase = createFakeAccountProfilesSupabase({
+      lookupProfiles: [
+        {
+          emailLookupKey: "captain.spoon@example.test",
+          gamerTag: "Captain Spoon",
+          avatarKey: "dragon",
+          profileId: "profile-private-lookup-2",
+        },
+      ],
+    });
+    const repository = createSupabaseAccountProfileRepository({
+      supabase,
+    });
+    const expectedProfile = {
+      profileId: "profile-private-lookup-2",
+      gamerTag: "Captain Spoon",
+      avatar: {
+        type: "built-in",
+        key: "dragon",
+      },
+      avatarKey: "dragon",
+    };
+
+    const byEmail = await repository.lookupProfileByLookupKey({
+      lookupKey: " Captain.Spoon@Example.test ",
+    });
+    const byGamerTag = await repository.lookupProfileByLookupKey({
+      lookupKey: "CAPTAIN SPOON",
+    });
+
+    assert.deepEqual(byEmail, {
+      status: "found",
+      lookupKind: "email",
+      profile: expectedProfile,
+    });
+    assert.deepEqual(byGamerTag, {
+      status: "found",
+      lookupKind: "gamer-tag",
+      profile: expectedProfile,
+    });
+    assert.deepEqual(supabase.rpcCalls, [
+      {
+        functionName: "lookup_account_profile",
+        params: {
+          lookup_key: "captain.spoon@example.test",
+          lookup_kind: "email",
+        },
+      },
+      {
+        functionName: "lookup_account_profile",
+        params: {
+          lookup_key: "captain spoon",
+          lookup_kind: "gamer-tag",
+        },
+      },
+    ]);
+    assert.equal(JSON.stringify(byEmail).includes("captain.spoon@example.test"), false);
+    assert.deepEqual(supabase.tableCalls, []);
   });
 
   for (const [repositoryName, createRepository] of [
@@ -226,11 +416,14 @@ function createProfileIdSequence(prefix) {
 }
 
 function createFakeAccountProfilesSupabase({
+  lookupProfiles = [],
   rejectRawHandleLookup = false,
 } = {}) {
   const rows = [];
 
   return {
+    insertCalls: [],
+    rpcCalls: [],
     tableCalls: [],
     from(tableName) {
       assert.ok(
@@ -238,19 +431,54 @@ function createFakeAccountProfilesSupabase({
       );
       this.tableCalls.push(tableName);
       return new FakeAccountProfilesQuery(rows, {
+        insertCalls: this.insertCalls,
         rejectRawHandleLookup,
         tableName,
       });
+    },
+    async rpc(functionName, params) {
+      assert.equal(functionName, "lookup_account_profile");
+      this.rpcCalls.push({
+        functionName,
+        params,
+      });
+
+      const profile = lookupProfiles.find((candidate) => {
+        if (params.lookup_kind === "email") {
+          return candidate.emailLookupKey === params.lookup_key;
+        }
+
+        return (
+          candidate.gamerTag.trim().toLocaleLowerCase("en-GB") ===
+          params.lookup_key
+        );
+      });
+
+      return {
+        data: profile
+          ? [
+              {
+                avatar_key: profile.avatarKey,
+                avatar_object_path: null,
+                avatar_type: "built-in",
+                gamer_tag: profile.gamerTag,
+                profile_id: profile.profileId,
+              },
+            ]
+          : [],
+        error: null,
+      };
     },
   };
 }
 
 class FakeAccountProfilesQuery {
-  constructor(rows, { rejectRawHandleLookup, tableName }) {
+  constructor(rows, { insertCalls, rejectRawHandleLookup, tableName }) {
     this.rows = rows;
     this.filters = {};
     this.operation = "select";
     this.insertedRow = null;
+    this.insertCalls = insertCalls;
     this.rejectRawHandleLookup = rejectRawHandleLookup;
     this.tableName = tableName;
   }
@@ -258,6 +486,10 @@ class FakeAccountProfilesQuery {
   insert(row) {
     this.operation = "insert";
     this.insertedRow = row;
+    this.insertCalls.push({
+      tableName: this.tableName,
+      row,
+    });
     return this;
   }
 

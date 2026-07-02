@@ -32,9 +32,11 @@ export function createSupabaseAuthSession({
       const account = {
         id: user.id,
       };
+      const email = profileRepository ? normaliseAuthEmail(user.email) : null;
       const profile = profileRepository
         ? await profileRepository.ensureOwnProfile({
             accountId: account.id,
+            email,
           })
         : null;
 
@@ -107,6 +109,16 @@ function normaliseEmail(email) {
 
   if (normalised === "") {
     throw new Error("An email address is required.");
+  }
+
+  return normalised;
+}
+
+function normaliseAuthEmail(email) {
+  const normalised = String(email ?? "").trim();
+
+  if (normalised === "") {
+    throw new Error("A usable Auth email is required.");
   }
 
   return normalised;

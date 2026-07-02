@@ -54,7 +54,8 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
-    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "Player");
+    await assertTextHidden(page, "@player-test-account");
     await assertProfileManagementSurfaceMounted(page);
     await assertNoFavouritesPanelDom(page);
     await openFavouritesRoute(page);
@@ -1377,7 +1378,7 @@ describe("solo browser smoke", () => {
         document.querySelectorAll("[data-pending-game-panel]").length === 1,
     );
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -1438,7 +1439,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("updates a signed-in profile Gamer Name in local test mode", async () => {
+  it("updates a signed-in profile Gamer Tag in local test mode", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -1450,12 +1451,12 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
-    await page.getByLabel("Gamer Name").fill("Captain Spoon");
+    await page.getByLabel("Gamer Tag").fill("Captain Spoon");
     await page.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(page, "Profile saved.");
     assert.equal(
-      await page.getByLabel("Gamer Name").inputValue(),
+      await page.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
     );
 
@@ -1464,7 +1465,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
 
     assert.equal(
-      await page.getByLabel("Gamer Name").inputValue(),
+      await page.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
     );
     await assertNoHorizontalOverflow(page);
@@ -1472,7 +1473,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("normalises blank or whitespace signed-in profile Gamer Name input safely", async () => {
+  it("normalises blank or whitespace signed-in profile Gamer Tag input safely", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -1486,21 +1487,21 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Gamer Name").fill("");
+    await profileRegion.getByLabel("Gamer Tag").fill("");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
     assert.equal(
-      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
       "Player",
     );
 
-    await profileRegion.getByLabel("Gamer Name").fill("   ");
+    await profileRegion.getByLabel("Gamer Tag").fill("   ");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
     assert.equal(
-      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
       "Player",
     );
     await assertNoHorizontalOverflow(page);
@@ -1508,7 +1509,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("truncates overlong signed-in profile Gamer Name input safely", async () => {
+  it("truncates overlong signed-in profile Gamer Tag input safely", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -1517,20 +1518,20 @@ describe("solo browser smoke", () => {
     });
     const page = await context.newPage();
     const assertNoConsoleErrors = trackConsoleErrors(page);
-    const gamerName =
+    const gamerTag =
       "Captain Spoon With A Surprisingly Long Profile Display Name";
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Gamer Name").fill(gamerName);
+    await profileRegion.getByLabel("Gamer Tag").fill(gamerTag);
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
     assert.equal(
-      await profileRegion.getByLabel("Gamer Name").inputValue(),
-      gamerName.slice(0, 40),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
+      gamerTag.slice(0, 40),
     );
     await assertNoHorizontalOverflow(page);
 
@@ -1551,7 +1552,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
+    await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(
@@ -1565,122 +1566,13 @@ describe("solo browser smoke", () => {
     assert.equal(
       await page
         .getByRole("region", { name: "Profile" })
-        .getByLabel("Gamer Name")
+        .getByLabel("Gamer Tag")
         .inputValue(),
       "Player",
     );
-    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "Player");
+    await assertTextHidden(page, "@player-test-account");
     await assertNoHorizontalOverflow(page);
-
-    assertNoConsoleErrors();
-  });
-
-  it("updates a signed-in profile Handle in local test mode", async () => {
-    staticServer ??= await startStaticServer();
-    browser ??= await chromium.launch();
-
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-    });
-    const page = await context.newPage();
-    const assertNoConsoleErrors = trackConsoleErrors(page);
-
-    await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
-    const profileRegion = page.getByRole("region", { name: "Profile" });
-
-    await profileRegion.getByLabel("Handle").fill("Captain Spoon");
-    await profileRegion.getByRole("button", { name: "Save profile" }).click();
-
-    await assertTextVisible(profileRegion, "Profile saved.");
-    assert.equal(
-      await profileRegion.getByLabel("Handle").inputValue(),
-      "captain-spoon",
-    );
-    await assertTextVisible(page, "@captain-spoon");
-
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
-
-    assert.equal(
-      await page
-        .getByRole("region", { name: "Profile" })
-        .getByLabel("Handle")
-        .inputValue(),
-      "captain-spoon",
-    );
-    await assertTextVisible(page, "@captain-spoon");
-    await assertNoHorizontalOverflow(page);
-
-    assertNoConsoleErrors();
-  });
-
-  it("shows a duplicate Handle error without changing the saved profile", async () => {
-    staticServer ??= await startStaticServer();
-    browser ??= await chromium.launch();
-
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-    });
-    const page = await context.newPage();
-    const assertNoConsoleErrors = trackConsoleErrors(page);
-
-    await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
-    const profileRegion = page.getByRole("region", { name: "Profile" });
-
-    await profileRegion.getByLabel("Handle").fill("invitee-two");
-    await profileRegion.getByRole("button", { name: "Save profile" }).click();
-
-    await assertTextVisible(profileRegion, "Handle is already in use.");
-    await assertTextHidden(page, "Profile saved.");
-    await assertTextVisible(page, "@player-test-account");
-
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
-
-    assert.equal(
-      await page
-        .getByRole("region", { name: "Profile" })
-        .getByLabel("Handle")
-        .inputValue(),
-      "player-test-account",
-    );
-    await assertNoHorizontalOverflow(page);
-
-    assertNoConsoleErrors();
-  });
-
-  it("shows an invalid Handle error without changing the saved profile", async () => {
-    staticServer ??= await startStaticServer();
-    browser ??= await chromium.launch();
-
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-    });
-    const page = await context.newPage();
-    const assertNoConsoleErrors = trackConsoleErrors(page);
-
-    await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
-    const profileRegion = page.getByRole("region", { name: "Profile" });
-
-    await profileRegion.getByLabel("Handle").fill("x");
-    await profileRegion.getByRole("button", { name: "Save profile" }).click();
-
-    await assertTextVisible(profileRegion, "Handle must be at least 3 characters.");
-    await assertTextVisible(page, "@player-test-account");
-
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
-
-    assert.equal(
-      await page
-        .getByRole("region", { name: "Profile" })
-        .getByLabel("Handle")
-        .inputValue(),
-      "player-test-account",
-    );
 
     assertNoConsoleErrors();
   });
@@ -1743,8 +1635,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     let profileRegion = page.getByRole("region", { name: "Profile" });
 
-    await profileRegion.getByLabel("Gamer Name").fill("Captain Spoon");
-    await profileRegion.getByLabel("Handle").fill("Captain Spoon");
+    await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
     await profileRegion
       .locator("[data-account-profile-avatar]")
       .selectOption("yin-yang");
@@ -1757,18 +1648,14 @@ describe("solo browser smoke", () => {
     profileRegion = page.getByRole("region", { name: "Profile" });
 
     assert.equal(
-      await profileRegion.getByLabel("Gamer Name").inputValue(),
+      await profileRegion.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
-    );
-    assert.equal(
-      await profileRegion.getByLabel("Handle").inputValue(),
-      "captain-spoon",
     );
     assert.equal(
       await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
       "yin-yang",
     );
-    await assertTextVisible(page, "@captain-spoon");
+    await assertTextVisible(page, "Captain Spoon");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -2146,7 +2033,7 @@ describe("solo browser smoke", () => {
     await saveFailureContext.close();
   });
 
-  it("creates a signed-in Pending Game invite by Handle in local test mode", async () => {
+  it("creates a signed-in Pending Game invite by lookup key in local test mode", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -2166,18 +2053,19 @@ describe("solo browser smoke", () => {
     await assertPendingGameSurfaceMounted(page);
     await assertNoHorizontalOverflow(page);
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
-    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "Player");
     await assertTextVisible(page, "Accepted");
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invitee Two");
+    await assertTextHidden(page, "@invitee-two");
     await assertTextVisible(page, "Invited");
     await assertTextVisible(page, "15 phrases");
     await assertTextVisible(page, "Nudge after 3 days");
@@ -2203,22 +2091,22 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=expire-immediately`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
     await assertTextVisible(page, "Created invites");
     await assertTextVisible(page, "Expired");
     assert.equal(
-      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      await page.getByRole("button", { name: "Start game with Invitee Two" }).count(),
       0,
     );
     assert.equal(
-      await page.getByRole("button", { name: "Cancel game with @invitee-two" }).count(),
+      await page.getByRole("button", { name: "Cancel game with Invitee Two" }).count(),
       0,
     );
 
@@ -2229,13 +2117,13 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Expired");
     assert.equal(
       await page
-        .getByRole("button", { name: "Accept invite from @player-test-account" })
+        .getByRole("button", { name: "Accept invite from Player" })
         .count(),
       0,
     );
     assert.equal(
       await page
-        .getByRole("button", { name: "Decline invite from @player-test-account" })
+        .getByRole("button", { name: "Decline invite from Player" })
         .count(),
       0,
     );
@@ -2258,23 +2146,24 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invitee Two");
+    await assertTextHidden(page, "@invitee-two");
     await assertTextVisible(page, "Incoming invites");
-    await assertTextVisible(page, "@player-test-account");
+    await assertTextVisible(page, "Player");
     await assertTextVisible(page, "15 phrases");
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
     await assertTextVisible(page, "Game invite accepted.");
     await assertTextVisible(page, "Accepted");
@@ -2282,8 +2171,8 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await assertTextVisible(page, "@player-test-account");
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Player");
+    await assertTextVisible(page, "Invitee Two");
     await assertTextVisible(page, "Accepted");
     await assertNoHorizontalOverflow(page);
 
@@ -2303,19 +2192,19 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Decline invite from @player-test-account" })
+      .getByRole("button", { name: "Decline invite from Player" })
       .click();
     await assertTextVisible(page, "Game invite declined.");
 
@@ -2325,7 +2214,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Cancelled");
     await assertTextVisible(page, "Declined");
     assert.equal(
-      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      await page.getByRole("button", { name: "Start game with Invitee Two" }).count(),
       0,
     );
     await assertNoHorizontalOverflow(page);
@@ -2346,26 +2235,26 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
     await assertTextVisible(page, "Game invite accepted.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await assertTextVisible(page, "Game started. Your turn is ready.");
     await assertTextVisible(page, "Started");
@@ -2381,7 +2270,7 @@ describe("solo browser smoke", () => {
     assert.equal(
       await page
         .getByText(
-          "Batch with @player-test-account and @invitee-two is now complete and available to reveal.",
+          "Batch with Player and Invitee Two is now complete and available to reveal.",
         )
         .count(),
       0,
@@ -2390,7 +2279,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Awaiting other player entries");
     await assertNoHorizontalOverflow(page);
     assert.equal(
-      await page.getByRole("button", { name: "Start game with @invitee-two" }).count(),
+      await page.getByRole("button", { name: "Start game with Invitee Two" }).count(),
       0,
     );
 
@@ -2423,7 +2312,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Notifications" }).click();
     await assertTextVisible(
       page,
-      "Batch with @player-test-account and @invitee-two is now complete and available to reveal.",
+      "Batch with Player and Invitee Two is now complete and available to reveal.",
     );
     await assertTextVisible(page, "Read");
     await openMultiplayerRoute(page);
@@ -2446,25 +2335,25 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
     await assertTextVisible(page, "Game invite accepted.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
     await assertTextVisible(page, "Game started. Your turn is ready.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
@@ -2483,7 +2372,7 @@ describe("solo browser smoke", () => {
       .locator("[data-notification-panel] .notification-item")
       .filter({
         hasText:
-          "You can submit entries to a batch with @player-test-account and @invitee-two.",
+          "You can submit entries to a batch with Player and Invitee Two.",
       });
     assert.equal(await notificationItem.count(), 1);
     await notificationItem.click();
@@ -2530,7 +2419,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2538,13 +2427,13 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
@@ -2561,7 +2450,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "View all completed batches" }).click();
 
     await assertTextVisible(page, "Completed multiplayer history");
-    await assertTextVisible(page, "Batch with @player-test-account and @invitee-two.");
+    await assertTextVisible(page, "Batch with Player and Invitee Two.");
     await assertTextVisible(page, "Not revealed yet.");
     await assertTextAbsent(page, "Brisk-0 teapot-0 ladder-0");
     await page.getByRole("button", { name: "Reveal phrases" }).click();
@@ -2593,7 +2482,7 @@ describe("solo browser smoke", () => {
     const historyPanel = page.locator("[data-completed-multiplayer-history]");
     assert.equal(
       await historyPanel
-        .getByText("Batch with @player-test-account and @invitee-two.")
+        .getByText("Batch with Player and Invitee Two.")
         .count(),
       20,
     );
@@ -2606,7 +2495,7 @@ describe("solo browser smoke", () => {
 
     assert.equal(
       await historyPanel
-        .getByText("Batch with @player-test-account and @invitee-two.")
+        .getByText("Batch with Player and Invitee Two.")
         .count(),
       21,
     );
@@ -2636,7 +2525,7 @@ describe("solo browser smoke", () => {
     const historyPanel = page.locator("[data-completed-multiplayer-history]");
     assert.equal(
       await historyPanel
-        .getByText("Batch with @player-test-account and @invitee-two.")
+        .getByText("Batch with Player and Invitee Two.")
         .count(),
       20,
     );
@@ -2649,7 +2538,7 @@ describe("solo browser smoke", () => {
     );
     assert.equal(
       await historyPanel
-        .getByText("Batch with @player-test-account and @invitee-two.")
+        .getByText("Batch with Player and Invitee Two.")
         .count(),
       20,
     );
@@ -2705,7 +2594,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails-once`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2713,13 +2602,13 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
@@ -2761,7 +2650,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2769,17 +2658,17 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
     await assertTextVisible(page, "Awaiting your entries");
 
     await page
-      .getByRole("button", { name: "Cancel game with @invitee-two" })
+      .getByRole("button", { name: "Cancel game with Invitee Two" })
       .click();
 
     await assertTextVisible(page, "Game cancelled.");
@@ -2799,7 +2688,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Notifications, 1 unread" }).click();
     await assertTextVisible(
       page,
-      "@player-test-account cancelled a batch with @player-test-account and @invitee-two.",
+      "Player cancelled a batch with Player and Invitee Two.",
     );
     await assertNoHorizontalOverflow(page);
 
@@ -2819,7 +2708,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2827,13 +2716,13 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
     await openMultiplayerRoute(page);
     await page
-      .getByRole("button", { name: "Accept invite from @player-test-account" })
+      .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "Start game with @invitee-two" }).click();
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
@@ -3007,7 +2896,8 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.getByRole("button", { name: "Test invitee sign in" }).click();
 
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invitee Two");
+    await assertTextAbsent(page, "@invitee-two");
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertFavouriteSurfaceMounted(page);
@@ -3423,16 +3313,16 @@ describe("solo browser smoke", () => {
     await assertPendingGameSurfaceMounted(page);
     await assertNoFavouritesPanelDom(page);
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await assertTextVisible(
       page,
-      "Game invite created. Waiting for @invitee-two to accept.",
+      "Game invite created. Waiting for Invitee Two to accept.",
     );
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invitee Two");
     await assertTextVisible(page, "15 phrases");
 
     await openFavouritesRoute(page);
@@ -3442,9 +3332,9 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
     assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
-    assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+    assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 1);
     await assertNoFavouritesPanelDom(page);
-    await assertTextVisible(page, "@invitee-two");
+    await assertTextVisible(page, "Invitee Two");
     await assertTextVisible(page, "15 phrases");
     await assertTextVisible(page, "Nudge after 3 days");
 
@@ -3480,7 +3370,7 @@ describe("solo browser smoke", () => {
       );
     });
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -4960,6 +4850,10 @@ async function delayLocalTestPendingGameInviteCreation(context) {
       await globalThis.__delayPendingGameCreate();
       return repository.createPendingGameFromHandle(args);
     },
+    async createPendingGameFromLookupKey(args) {
+      await globalThis.__delayPendingGameCreate();
+      return repository.createPendingGameFromLookupKey(args);
+    },
   };
 }`,
     );
@@ -5076,16 +4970,17 @@ async function assertProfileManagementSurfaceMounted(page) {
   assert.equal(await page.locator("[data-account-profile-panel]").count(), 1);
   const profileRegion = page.getByRole("region", { name: "Profile" });
   await assertTextVisible(profileRegion, "Profile");
-  await assertTextVisible(profileRegion, "Gamer Name");
+  await assertTextVisible(profileRegion, "Gamer Tag");
   assert.equal(
-    await profileRegion.getByLabel("Gamer Name").inputValue(),
+    await profileRegion.getByLabel("Gamer Tag").inputValue(),
     "Player",
   );
-  await assertTextVisible(profileRegion, "Handle");
   assert.equal(
-    await profileRegion.getByLabel("Handle").inputValue(),
-    "player-test-account",
+    await profileRegion.locator("[data-account-profile-handle]").count(),
+    1,
   );
+  await assertTextHidden(profileRegion, "Gamer Name");
+  await assertTextHidden(profileRegion, "Handle");
   await assertTextVisible(profileRegion, "Avatar");
   assert.equal(
     await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
@@ -5105,14 +5000,14 @@ async function assertProfileManagementSurfaceMounted(page) {
 
 async function assertNoPendingGameDom(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
-  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 0);
+  assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-summary]").count(), 0);
 }
 
 async function assertPendingGameSurfaceMounted(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
-  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-row-count]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);

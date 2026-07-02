@@ -1,6 +1,6 @@
 # Durable Account Profile and Handle Directory Implementation Plan
 
-> **Status:** Historical/completed. Do not execute this plan as active work. Current authority lives in ADR 0011, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, and GitHub Issues.
+> **Status:** Historical/completed. Do not execute this plan as active work. Current identity authority lives in ADR 0023, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, and GitHub Issues. ADR 0011 remains historical provenance for this completed implementation.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

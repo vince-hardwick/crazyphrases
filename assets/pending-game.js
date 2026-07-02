@@ -21,6 +21,17 @@ export function createTestPendingGameRepository({
   const profilesByHandle = new Map(
     normalisedProfiles.map((profile) => [profile.handle, profile]),
   );
+  const profilesByEmailLookupKey = new Map(
+    normalisedProfiles
+      .filter((profile) => profile.emailLookupKey)
+      .map((profile) => [profile.emailLookupKey, profile]),
+  );
+  const profilesByGamerTag = new Map(
+    normalisedProfiles.map((profile) => [
+      normaliseGamerTagLookupKey(profile.gamerTag),
+      profile,
+    ]),
+  );
   const accountIdsByProfileId = new Map(
     normalisedProfiles.map((profile) => [profile.profileId, profile.accountId]),
   );
@@ -68,6 +79,65 @@ export function createTestPendingGameRepository({
 
       if (creatorProfile.profileId === inviteeProfile.profileId) {
         throw new Error("A creator cannot invite their own Handle.");
+      }
+
+      const pendingGame = createPendingGameDto({
+        id: createPendingGameId(),
+        nudgeTimeoutHours,
+        rowCount,
+        status: "pending",
+        templateId: DEFAULT_TEMPLATE_ID,
+        participants: [
+          createParticipantDto(creatorProfile, {
+            inviteStatus: "accepted",
+            role: "creator",
+          }),
+          createParticipantDto(inviteeProfile, {
+            inviteStatus: "pending",
+            role: "invitee",
+          }),
+        ],
+      });
+      pendingGames.push(pendingGame);
+      pendingGameExpiryTimes.set(
+        pendingGame.id,
+        now().getTime() + pendingGameInviteExpiryMs,
+      );
+      return createEffectivePendingGameDto({
+        now,
+        pendingGame,
+        pendingGameExpiryTimes,
+      });
+    },
+
+    async createPendingGameFromLookupKey({
+      creatorAccountId,
+      lookupKey,
+      nudgeTimeoutHours,
+      rowCount = 20,
+    }) {
+      assertAccountId(creatorAccountId);
+      assertRowCount(rowCount);
+      if (nudgeTimeoutHours !== undefined) {
+        assertNudgeTimeoutHours(nudgeTimeoutHours);
+      }
+
+      const creatorProfile = profilesByAccountId.get(creatorAccountId);
+      if (!creatorProfile) {
+        throw new Error("Creator Account Profile is required.");
+      }
+
+      const lookup = normaliseLookupKey(lookupKey);
+      const inviteeProfile =
+        lookup.kind === "email"
+          ? profilesByEmailLookupKey.get(lookup.value)
+          : profilesByGamerTag.get(lookup.value);
+      if (!inviteeProfile) {
+        throw new Error(missingLookupMessage(lookup.kind));
+      }
+
+      if (creatorProfile.profileId === inviteeProfile.profileId) {
+        throw new Error("A creator cannot invite their own profile.");
       }
 
       const pendingGame = createPendingGameDto({
@@ -613,6 +683,82 @@ export function createSupabasePendingGameRepository({
       const inviteeProfile = recoverProfile(inviteeResponse.data);
       if (creatorProfile.profileId === inviteeProfile.profileId) {
         throw new Error("A creator cannot invite their own Handle.");
+      }
+
+      const pendingGameResponse = await supabase
+        .from("pending_games")
+        .insert({
+          creator_account_id: creatorAccountId,
+          creator_profile_id: creatorProfile.profileId,
+          invitee_profile_id: inviteeProfile.profileId,
+          ...(nudgeTimeoutHours ? { nudge_timeout_hours: nudgeTimeoutHours } : {}),
+          row_count: rowCount,
+          template_id: DEFAULT_TEMPLATE_ID,
+        })
+        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
+        .single();
+      assertNoSupabaseError(pendingGameResponse, "Could not create Pending Game");
+
+      const participantResponse = await supabase
+        .from("pending_game_participants")
+        .select(
+          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+        )
+        .eq("pending_game_id", pendingGameResponse.data.id);
+      assertNoSupabaseError(
+        participantResponse,
+        "Could not load Pending Game participants",
+      );
+
+      return recoverPendingGame({
+        now,
+        participantRows: participantResponse.data,
+        pendingGameRow: pendingGameResponse.data,
+      });
+    },
+
+    async createPendingGameFromLookupKey({
+      creatorAccountId,
+      lookupKey,
+      nudgeTimeoutHours,
+      rowCount = 20,
+    }) {
+      assertAccountId(creatorAccountId);
+      assertRowCount(rowCount);
+      if (nudgeTimeoutHours !== undefined) {
+        assertNudgeTimeoutHours(nudgeTimeoutHours);
+      }
+
+      const creatorResponse = await supabase
+        .from("account_profiles")
+        .select("profile_id, handle, gamer_name, avatar_key")
+        .eq("account_id", creatorAccountId)
+        .maybeSingle();
+      assertNoSupabaseError(
+        creatorResponse,
+        "Could not load creator Account Profile",
+      );
+
+      if (!creatorResponse.data) {
+        throw new Error("Creator Account Profile is required.");
+      }
+
+      const creatorProfile = recoverProfile(creatorResponse.data);
+      const lookup = normaliseLookupKey(lookupKey);
+      const inviteeResponse = await supabase.rpc("lookup_account_profile", {
+        lookup_key: lookup.value,
+        lookup_kind: lookup.kind,
+      });
+      assertNoSupabaseError(inviteeResponse, "Could not look up invitee profile");
+
+      const inviteeRow = firstLookupRow(inviteeResponse.data);
+      if (!inviteeRow) {
+        throw new Error(missingLookupMessage(lookup.kind));
+      }
+
+      const inviteeProfile = recoverLookupProfile(inviteeRow);
+      if (creatorProfile.profileId === inviteeProfile.profileId) {
+        throw new Error("A creator cannot invite their own profile.");
       }
 
       const pendingGameResponse = await supabase
@@ -1384,7 +1530,7 @@ function createGameCancelledNotifications({
   );
   const message = createParticipantNotificationMessage({
     participants,
-    text: `@${creatorProfile.handle} cancelled a batch with`,
+    text: `${getParticipantDisplayName(creatorProfile)} cancelled a batch with`,
   });
 
   return acceptedRecipients.map((participant) => ({
@@ -1477,13 +1623,25 @@ function createOverdueNudgeNotifications({
 }
 
 function createParticipantNotificationMessage({ participants, text }) {
-  const handles = participants.map((participant) => `@${participant.handle}`);
+  const displayNames = participants.map(getParticipantDisplayName);
 
-  if (handles.length === 1) {
-    return `${text} ${handles[0]}.`;
+  if (displayNames.length === 1) {
+    return `${text} ${displayNames[0]}.`;
   }
 
-  return `${text} ${handles.slice(0, -1).join(", ")} and ${handles.at(-1)}.`;
+  return `${text} ${displayNames.slice(0, -1).join(", ")} and ${displayNames.at(-1)}.`;
+}
+
+function getParticipantDisplayName(participant) {
+  const gamerTag = String(
+    participant?.gamerTag ?? participant?.gamerName ?? "",
+  ).trim();
+  if (gamerTag) {
+    return gamerTag;
+  }
+
+  const handle = String(participant?.handle ?? "").trim();
+  return handle ? `@${handle}` : "Unknown gamer";
 }
 
 function createEmptyMultiplayerDashboard() {
@@ -1733,6 +1891,8 @@ function findCurrentAssignedSection({
 function toMultiplayerParticipantDto(participant) {
   return {
     handle: participant.handle,
+    gamerName: participant.gamerName,
+    gamerTag: participant.gamerTag,
   };
 }
 
@@ -1942,9 +2102,16 @@ function findIncomingPendingGameIndex({
 function normaliseProfile(profile) {
   return {
     accountId: profile.accountId,
+    emailLookupKey: normaliseOptionalEmailLookupKey(
+      profile.emailLookupKey ?? profile.email,
+    ),
     profileId: assertText(profile.profileId, "A profile id is required."),
     handle: normaliseHandle(profile.handle),
     gamerName: assertText(profile.gamerName, "A Gamer Name is required."),
+    gamerTag: assertText(
+      profile.gamerTag ?? profile.gamerName,
+      "A Gamer Tag is required.",
+    ),
     avatarKey: assertText(profile.avatarKey, "An Avatar key is required."),
   };
 }
@@ -2013,6 +2180,41 @@ function normaliseHandle(handle) {
     .replace(/^-+|-+$/g, "");
 }
 
+function normaliseLookupKey(lookupKey) {
+  const value = assertText(lookupKey, "A lookup key is required.");
+
+  if (value.includes("@")) {
+    return {
+      kind: "email",
+      value: normaliseEmailLookupKey(value),
+    };
+  }
+
+  return {
+    kind: "gamer-tag",
+    value: normaliseGamerTagLookupKey(value),
+  };
+}
+
+function normaliseOptionalEmailLookupKey(email) {
+  const value = String(email ?? "").trim();
+  return value === "" ? null : normaliseEmailLookupKey(value);
+}
+
+function normaliseEmailLookupKey(email) {
+  return assertText(email, "A lookup email is required.").toLowerCase();
+}
+
+function normaliseGamerTagLookupKey(gamerTag) {
+  return assertText(gamerTag, "A Gamer Tag is required.").toLocaleLowerCase("en-GB");
+}
+
+function missingLookupMessage(lookupKind) {
+  return lookupKind === "email"
+    ? "No gamer found under that email address"
+    : "No gamer found under that gamer tag.";
+}
+
 function defaultCreatePendingGameId() {
   return globalThis.crypto?.randomUUID?.() ?? `pending-game-${Date.now()}`;
 }
@@ -2032,6 +2234,18 @@ function recoverProfile(row) {
     gamerName: assertText(row?.gamer_name, "A Gamer Name is required."),
     avatarKey: assertText(row?.avatar_key, "An Avatar key is required."),
   };
+}
+
+function recoverLookupProfile(row) {
+  return {
+    profileId: assertText(row?.profile_id, "A profile id is required."),
+    gamerTag: assertText(row?.gamer_tag, "A Gamer Tag is required."),
+    avatarKey: assertText(row?.avatar_key, "An Avatar key is required."),
+  };
+}
+
+function firstLookupRow(data) {
+  return Array.isArray(data) ? data[0] ?? null : data;
 }
 
 function recoverPendingGame({
@@ -2222,11 +2436,16 @@ function recoverMultiplayerBatch(
       "A Pending Game id is required.",
     ),
     rowCount: batchRow?.rowCount ?? batchRow?.row_count,
-    participants: (batchRow?.participants ?? []).map((participant) => ({
-      handle: normaliseHandle(
-        assertText(participant?.handle, "A participant Handle is required."),
-      ),
-    })),
+    participants: (batchRow?.participants ?? []).map((participant) => {
+      const gamerTag = recoverOptionalParticipantGamerTag(participant);
+
+      return {
+        handle: normaliseHandle(
+          assertText(participant?.handle, "A participant Handle is required."),
+        ),
+        ...(gamerTag ? { gamerName: gamerTag, gamerTag } : {}),
+      };
+    }),
     ...(includeCurrentSection
       ? {
           currentSection: recoverCurrentMultiplayerSection(
@@ -2247,6 +2466,16 @@ function recoverMultiplayerBatch(
         }
       : {}),
   };
+}
+
+function recoverOptionalParticipantGamerTag(participant) {
+  const value =
+    participant?.gamerTag ??
+    participant?.gamer_tag ??
+    participant?.gamerName ??
+    participant?.gamer_name;
+  const normalised = String(value ?? "").trim();
+  return normalised === "" ? null : normalised;
 }
 
 function recoverCurrentMultiplayerSection(sectionRow) {

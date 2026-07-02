@@ -21,7 +21,8 @@ built-in Avatar key. The profile personalisation slice replaced that with the
 accepted Built-in Avatar key set and allowed an account holder to use an
 Uploaded Avatar, which introduced user-supplied media storage, serving,
 deletion, and access control concerns that were not covered by the existing
-Account Profile / Handle Directory decision.
+Account Profile / Handle Directory decision, now superseded for identity
+terminology by ADR `0023`.
 
 The main alternatives are:
 
@@ -34,16 +35,15 @@ The main alternatives are:
 ## Decision
 
 Uploaded Avatar image bytes belong in Supabase Storage. Supabase Postgres remains
-the Account Profile and Handle Directory source of truth, storing only the
-avatar choice and the invite-safe reference or metadata needed to render an
-Avatar.
+the Account Profile and lookup-directory source of truth, storing only the avatar
+choice and the invite-safe reference or metadata needed to render an Avatar.
 
 Account Profile data should represent the current Avatar as an explicit Avatar
 descriptor rather than overloading the current built-in `avatar_key` string. The
 descriptor distinguishes Built-in Avatars from Uploaded Avatars. Built-in Avatar
 descriptors carry a project-provided avatar key; Uploaded Avatar descriptors
-carry an opaque Storage object path or equivalent opaque reference. The Handle
-Directory may expose the Avatar descriptor only while it remains invite-safe.
+carry an opaque Storage object path or equivalent opaque reference. The lookup
+directory may expose the Avatar descriptor only while it remains invite-safe.
 Completed-game participant snapshots must preserve the Avatar descriptor used at
 play time rather than reading the latest live Account Profile when history is
 rendered.
@@ -55,7 +55,7 @@ account holder's permitted path.
 
 Uploaded Avatars should be served from a public-read Supabase Storage bucket
 using opaque object paths that do not encode raw account ids, email addresses,
-provider identities, Handles, Gamer Names, or other account-identifying values.
+provider identities, Gamer Tags, lookup keys, or other account-identifying values.
 Read access is public because Avatars are game-facing display assets, while
 upload, replacement, and deletion authority remains restricted to the owning
 signed-in Account through Storage policies or an equivalent approved
@@ -126,17 +126,28 @@ surface.
 
 Replacing the live Account Profile's Uploaded Avatar must not delete older
 uploaded objects that may still be referenced by completed-game participant
-snapshots. The first slice should upload the new object, save the new Avatar
-descriptor, and clean up only clearly unreferenced abandoned objects from failed
-or retried uploads where practical. Account-deletion media retention and broader
-garbage collection for historical Uploaded Avatars remain separate lifecycle
-decisions.
+snapshots, batch favourites, or other durable history/favourite snapshots. The
+first slice should upload the new object, save the new Avatar descriptor, and
+clean up only clearly unreferenced abandoned objects from failed or retried
+uploads where practical. The avatar image gallery slice should add cleanup for
+superseded Uploaded Avatar objects once reference checks prove that no current
+profile, completed-game history, batch favourite, or other durable snapshot can
+still render them. Account-deletion media retention remains a separate lifecycle
+decision.
 
 Participants may remove the live Uploaded Avatar from their Account Profile by
 choosing and saving a Built-in Avatar. That changes the live Account Profile
 descriptor back to the selected Built-in Avatar but does not delete older
 uploaded objects that may still be referenced by completed-game participant
 snapshots.
+
+Supabase Storage object deletion must use the Storage API, not direct SQL
+deletion from `storage.objects`. SQL may verify metadata and drive reference
+checks, but application cleanup must remove object bytes through a Storage API
+path such as `supabase.storage.from("avatars").remove(paths)`, then reconcile the
+private uploaded-avatar ownership metadata. Deletion authority must still be
+owner-scoped through Storage RLS or a separately approved narrow server-owned
+route.
 
 The first Uploaded Avatar slice should use direct authenticated browser uploads
 to Supabase Storage rather than adding an Edge Function or custom server upload
@@ -153,8 +164,8 @@ uploaded object. That row records the owning Account Profile, the opaque Storage
 object path or reference, and enough lifecycle metadata to distinguish current
 live-profile references, historical snapshot references, and clearly abandoned
 objects from failed or retried uploads. This ownership table is not a public
-directory surface; browser-facing Account Profile and Handle Directory data
-must expose only the invite-safe Avatar descriptor.
+directory surface; browser-facing Account Profile and lookup-directory data must
+expose only the invite-safe Avatar descriptor.
 
 No Supabase Storage bucket existed for uploaded avatars at decision time. The
 #63 branch creates the public-read `avatars` bucket, ownership metadata table,
@@ -187,6 +198,9 @@ is unavailable for that operation.
   revisited before Uploaded Avatars are used in public discovery surfaces.
 - Replacing a live profile Avatar must not break completed-game history that
   snapshots an older Uploaded Avatar descriptor.
+- Superseded Uploaded Avatar cleanup belongs with the avatar image gallery slice
+  once no completed game, batch favourite, current profile, or other durable
+  snapshot can render the old object.
 - The default upload path is direct authenticated browser upload; adding a
   server-owned upload path requires a concrete policy limitation or other
   approved need.

@@ -43,6 +43,9 @@ const tightenAccountProfileDirectoryGrantsMigrationUrl = findMigrationUrl(
 const replaceAccountProfileDirectoryViewMigrationUrl = findMigrationUrl(
   "replace_account_profile_directory_view",
 );
+const privateEmailLookupAndGamerTagMigrationUrl = findMigrationUrl(
+  "private_email_lookup_and_gamer_tag",
+);
 const createPendingGamesMigrationUrl = findMigrationUrl("create_pending_games");
 const supportPendingGameInviteResponsesMigrationUrl = findMigrationUrl(
   "support_pending_game_invite_responses",
@@ -411,6 +414,95 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(
       replaceAccountProfileDirectoryViewMigration,
       /create or replace function public\.sync_account_profile_directory/i,
+    );
+  });
+
+  it("adds private email lookup and Gamer Tag lookup without exposing emails", () => {
+    assert.equal(existsSync(privateEmailLookupAndGamerTagMigrationUrl), true);
+
+    const migration = readFileSync(
+      privateEmailLookupAndGamerTagMigrationUrl,
+      "utf8",
+    );
+
+    for (const tableName of ["account_profiles", "account_profile_directory"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `alter table public\\.${tableName}[\\s\\S]*add column if not exists email_lookup_key text`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `alter table public\\.${tableName}[\\s\\S]*add column if not exists gamer_tag text`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `create unique index if not exists ${tableName}_email_lookup_key_unique_idx`,
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `create unique index if not exists ${tableName}_gamer_tag_lookup_unique_idx`,
+        ),
+      );
+    }
+
+    assert.match(
+      migration,
+      /Private email lookup and Gamer Tag migration requires empty account profile tables/,
+    );
+    assert.match(migration, /exists \(select 1 from public\.account_profiles\)/);
+    assert.match(
+      migration,
+      /exists \(select 1 from public\.account_profile_directory\)/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /update public\.account_profiles as profile\s+set email_lookup_key = lower\(btrim\(auth_user\.email\)\)/,
+    );
+    assert.doesNotMatch(migration, /with profile_gamer_tags as/);
+    assert.doesNotMatch(migration, /profile_gamer_tags\.duplicate_ordinal/);
+
+    assert.match(migration, /from auth\.users as auth_user/);
+    assert.match(migration, /lower\(btrim\(auth_user\.email\)\)/);
+    assert.match(migration, /create or replace function private\.sync_account_profile_lookup_identity\(\)/);
+    assert.match(migration, /create or replace function private\.sync_account_profile_directory\(\)/);
+    assert.match(migration, /new\.email_lookup_key/);
+    assert.match(migration, /new\.gamer_tag/);
+
+    assert.match(
+      migration,
+      /create or replace function public\.lookup_account_profile\(\s*lookup_key text,\s*lookup_kind text\s*\)/,
+    );
+    assert.match(
+      migration,
+      /returns table \(\s*profile_id uuid,\s*gamer_tag text,\s*avatar_type text,\s*avatar_key text,\s*avatar_object_path text\s*\)/,
+    );
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(migration, /auth\.uid\(\) is not null/);
+    assert.match(migration, /directory\.email_lookup_key = lower\(btrim\(lookup_key\)\)/);
+    assert.match(migration, /lower\(directory\.gamer_tag\) = lower\(btrim\(lookup_key\)\)/);
+    assert.match(migration, /revoke all on function public\.lookup_account_profile\(text, text\)\s+from public/);
+    assert.match(migration, /revoke all on function public\.lookup_account_profile\(text, text\)\s+from anon/);
+    assert.match(migration, /grant execute on function public\.lookup_account_profile\(text, text\)\s+to authenticated/);
+
+    assert.match(
+      migration,
+      /grant select \(profile_id, handle, gamer_name, gamer_tag, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profile_directory\s+to authenticated/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select \([^)]*email_lookup_key[^)]*\)\s+on table public\.account_profile_directory\s+to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant select on table public\.account_profile_directory to authenticated/i,
     );
   });
 

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_BUILT_IN_AVATAR_KEY,
   createAccountShell,
   createDefaultProfile,
 } from "./account-shell.js?v=__ASSET_VERSION__";
@@ -15,17 +16,27 @@ export function createMemoryAccountProfileRepository({
 } = {}) {
   const rowsByAccountId = new Map();
   const accountIdByHandle = new Map();
+  const accountIdByEmailLookupKey = new Map();
+  const accountIdByGamerTag = new Map();
 
   for (const profile of initialProfiles) {
     seedProfile(profile);
   }
 
   return {
-    async ensureOwnProfile({ accountId }) {
+    async ensureOwnProfile({ accountId, email } = {}) {
       assertAccountId(accountId);
 
       const existing = rowsByAccountId.get(accountId);
       if (existing) {
+        const emailLookupKey = normaliseOptionalEmailLookupKey(email);
+        if (emailLookupKey && existing.emailLookupKey !== emailLookupKey) {
+          unindexLookupKeys(existing);
+          existing.emailLookupKey = emailLookupKey;
+          indexLookupKeys(existing, accountId);
+          notifyChange();
+        }
+
         return toOwnProfile(existing);
       }
 
@@ -36,12 +47,19 @@ export function createMemoryAccountProfileRepository({
       });
       const row = {
         accountId,
-        ...normaliseProfile({ accountId, profile }),
+        ...normaliseProfile({
+          accountId,
+          profile: {
+            ...profile,
+            emailLookupKey: email,
+          },
+        }),
         profileId,
       };
 
       rowsByAccountId.set(accountId, row);
       accountIdByHandle.set(row.handle, accountId);
+      indexLookupKeys(row, accountId);
       notifyChange();
 
       return toOwnProfile(row);
@@ -69,6 +87,7 @@ export function createMemoryAccountProfileRepository({
       }
 
       accountIdByHandle.delete(existing.handle);
+      unindexLookupKeys(existing);
 
       const row = {
         ...existing,
@@ -77,9 +96,26 @@ export function createMemoryAccountProfileRepository({
       };
       rowsByAccountId.set(accountId, row);
       accountIdByHandle.set(row.handle, accountId);
+      indexLookupKeys(row, accountId);
       notifyChange();
 
       return toOwnProfile(row);
+    },
+
+    async lookupProfileByLookupKey({ lookupKey }) {
+      const lookup = normaliseLookupKey(lookupKey);
+      const accountId =
+        lookup.kind === "email"
+          ? accountIdByEmailLookupKey.get(lookup.value)
+          : accountIdByGamerTag.get(lookup.value);
+      const row = accountId ? rowsByAccountId.get(accountId) : null;
+
+      return {
+        status: row ? "found" : "not-found",
+        lookupKind: lookup.kind,
+        ...(row ? { profile: toLookupProfile(row) } : {}),
+        ...(!row ? { message: missingLookupMessage(lookup.kind) } : {}),
+      };
     },
 
     async lookupProfileByHandle({ handle }) {
@@ -111,10 +147,31 @@ export function createMemoryAccountProfileRepository({
 
     rowsByAccountId.set(accountId, row);
     accountIdByHandle.set(row.handle, accountId);
+    indexLookupKeys(row, accountId);
   }
 
   function notifyChange() {
     onChange([...rowsByAccountId.values()].map(toStoredProfile));
+  }
+
+  function indexLookupKeys(row, accountId) {
+    if (row.emailLookupKey) {
+      accountIdByEmailLookupKey.set(row.emailLookupKey, accountId);
+    }
+
+    if (row.gamerTag) {
+      accountIdByGamerTag.set(normaliseGamerTagLookupKey(row.gamerTag), accountId);
+    }
+  }
+
+  function unindexLookupKeys(row) {
+    if (row.emailLookupKey) {
+      accountIdByEmailLookupKey.delete(row.emailLookupKey);
+    }
+
+    if (row.gamerTag) {
+      accountIdByGamerTag.delete(normaliseGamerTagLookupKey(row.gamerTag));
+    }
   }
 }
 
@@ -170,7 +227,7 @@ export function createSupabaseAccountProfileRepository({
   }
 
   return {
-    async ensureOwnProfile({ accountId }) {
+    async ensureOwnProfile({ accountId, email } = {}) {
       assertAccountId(accountId);
 
       const existing = await loadOwnProfile({ accountId });
@@ -200,7 +257,9 @@ export function createSupabaseAccountProfileRepository({
             avatar_object_path: null,
             avatar_key: profile.avatarKey,
             avatar_type: profile.avatar.type,
+            email_lookup_key: normaliseOptionalEmailLookupKey(email),
             gamer_name: profile.gamerName,
+            gamer_tag: normaliseGamerTag(profile.gamerName),
             handle: profile.handle,
             profile_id: profileId,
           })
@@ -267,6 +326,31 @@ export function createSupabaseAccountProfileRepository({
 
       return response.data ? recoverSupabaseProfile(response.data) : null;
     },
+
+    async lookupProfileByLookupKey({ lookupKey }) {
+      const lookup = normaliseLookupKey(lookupKey);
+      const response = await supabase.rpc("lookup_account_profile", {
+        lookup_key: lookup.value,
+        lookup_kind: lookup.kind,
+      });
+
+      assertNoSupabaseError(response, "Could not look up Account Profile");
+
+      const lookupRow = firstLookupRow(response.data);
+      if (!lookupRow) {
+        return {
+          status: "not-found",
+          lookupKind: lookup.kind,
+          message: missingLookupMessage(lookup.kind),
+        };
+      }
+
+      return {
+        status: "found",
+        lookupKind: lookup.kind,
+        profile: recoverSupabaseLookupProfile(lookupRow),
+      };
+    },
   };
 }
 
@@ -277,12 +361,25 @@ function assertAccountId(accountId) {
 }
 
 function normaliseProfile({ accountId, profile }) {
-  return createAccountShell({
+  const profileForLegacyShell = {
+    ...profile,
+    gamerName: profile.gamerName ?? profile.gamerTag,
+    handle: profile.handle ?? profile.gamerTag ?? `player-${accountId}`,
+  };
+  const shellProfile = createAccountShell({
     account: {
       id: accountId,
     },
-    profile,
+    profile: profileForLegacyShell,
   }).profile;
+
+  return {
+    ...shellProfile,
+    emailLookupKey: normaliseOptionalEmailLookupKey(
+      profile.emailLookupKey ?? profile.lookupEmail ?? profile.email,
+    ),
+    gamerTag: normaliseGamerTag(profile.gamerTag ?? shellProfile.gamerName),
+  };
 }
 
 function normaliseHandle(handle) {
@@ -291,6 +388,49 @@ function normaliseHandle(handle) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function normaliseLookupKey(lookupKey) {
+  const value = String(lookupKey ?? "").trim();
+  if (value === "") {
+    throw new Error("A lookup key is required.");
+  }
+
+  if (value.includes("@")) {
+    return {
+      kind: "email",
+      value: normaliseEmailLookupKey(value),
+    };
+  }
+
+  return {
+    kind: "gamer-tag",
+    value: normaliseGamerTagLookupKey(value),
+  };
+}
+
+function normaliseOptionalEmailLookupKey(email) {
+  const value = String(email ?? "").trim();
+  return value === "" ? null : normaliseEmailLookupKey(value);
+}
+
+function normaliseEmailLookupKey(email) {
+  return String(email ?? "").trim().toLowerCase();
+}
+
+function normaliseGamerTag(gamerTag) {
+  const value = String(gamerTag ?? "").trim();
+  return value === "" ? "Player" : value.slice(0, 40);
+}
+
+function normaliseGamerTagLookupKey(gamerTag) {
+  return normaliseGamerTag(gamerTag).toLocaleLowerCase("en-GB");
+}
+
+function missingLookupMessage(lookupKind) {
+  return lookupKind === "email"
+    ? "No gamer found under that email address"
+    : "No gamer found under that gamer tag.";
 }
 
 function toOwnProfile(row) {
@@ -313,12 +453,23 @@ function toDirectoryProfile(row) {
   };
 }
 
+function toLookupProfile(row) {
+  return {
+    profileId: row.profileId,
+    gamerTag: row.gamerTag,
+    avatar: row.avatar,
+    avatarKey: row.avatarKey,
+  };
+}
+
 function toStoredProfile(row) {
   return {
     accountId: row.accountId,
     profileId: row.profileId,
+    emailLookupKey: row.emailLookupKey,
     handle: row.handle,
     gamerName: row.gamerName,
+    gamerTag: row.gamerTag,
     avatar: row.avatar,
     avatarKey: row.avatarKey,
   };
@@ -336,17 +487,19 @@ function recoverSupabaseProfile(row) {
           key: row?.avatar_key,
         };
   const profile = {
-    ...normaliseProfile({
-      accountId: "recovered-profile-row",
-      profile: {
-        avatar,
-        avatarKey: row?.avatar_key,
-        gamerName: row?.gamer_name,
-        handle: row?.handle,
-        profileId: row?.profile_id,
-      },
+    ...toOwnProfile({
+      ...normaliseProfile({
+        accountId: "recovered-profile-row",
+        profile: {
+          avatar,
+          avatarKey: row?.avatar_key,
+          gamerName: row?.gamer_name,
+          handle: row?.handle,
+          profileId: row?.profile_id,
+        },
+      }),
+      profileId: row?.profile_id,
     }),
-    profileId: row?.profile_id,
   };
 
   if (
@@ -365,6 +518,45 @@ function recoverSupabaseProfile(row) {
   }
 
   return profile;
+}
+
+function recoverSupabaseLookupProfile(row) {
+  const avatar =
+    row?.avatar_type === "uploaded"
+      ? {
+          type: "uploaded",
+          objectPath: row?.avatar_object_path,
+        }
+      : {
+          type: "built-in",
+          key: row?.avatar_key,
+        };
+
+  const profile = {
+    profileId: row?.profile_id,
+    gamerTag: normaliseGamerTag(row?.gamer_tag),
+    avatar,
+    avatarKey: avatar.type === "built-in" ? avatar.key : DEFAULT_BUILT_IN_AVATAR_KEY,
+  };
+
+  if (
+    typeof profile.profileId !== "string" ||
+    profile.profileId.trim() === "" ||
+    typeof profile.gamerTag !== "string" ||
+    profile.gamerTag.trim() === "" ||
+    !profile.avatar ||
+    typeof profile.avatar.type !== "string" ||
+    typeof profile.avatarKey !== "string" ||
+    profile.avatarKey.trim() === ""
+  ) {
+    throw new Error("A valid Account Profile lookup row is required.");
+  }
+
+  return profile;
+}
+
+function firstLookupRow(data) {
+  return Array.isArray(data) ? data[0] ?? null : data;
 }
 
 function loadStoredProfiles(storage, storageKey) {

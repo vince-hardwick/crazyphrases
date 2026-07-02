@@ -1,10 +1,9 @@
 # Private Lookup Hosted Reset and Migration Implementation Plan
 
-> **Status:** Active execution/closeout as of 2026-07-02. Hosted reset,
-> migration, final-head `dev` smoke, PR #152 merge, and `test` smoke have
-> completed after the required owner approvals. Production promotion remains
-> waiting at the separate GitHub Environment gate and still requires explicit
-> owner approval plus post-deploy verification.
+> **Status:** Active closeout as of 2026-07-02. Hosted reset, migration,
+> final-head `dev` smoke, PR #152 merge, `test` smoke, and production smoke have
+> completed after the required owner approvals. Documentation, issue, and branch
+> cleanup are the remaining closeout actions.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
@@ -601,13 +600,36 @@ Execution note, 2026-07-02: production remained waiting at the separate
 `test` validation completed. The next deployment action is explicit owner
 approval for production, followed by production smoke.
 
-- [ ] **Step 3: Promote to production only after explicit approval**
+- [x] **Step 3: Promote to production only after explicit approval**
 
 After test acceptance, ask for explicit production approval. Then validate
 `https://www.crazyphrases.com/` with a read-only smoke unless the owner
 separately approves production data mutation. Confirm the promoted static
 assets are stamped with the merge commit and that the browser does not expose
 email in identity or lookup results.
+
+Execution note, 2026-07-02: after explicit owner approval, promotion run
+`28600531467` deployed merge commit
+`423fbe09ff14c4ea58a5fde0ce7d1f7910f037e5` to production. The
+`Deploy main to production` job succeeded from 2026-07-02T15:24:09Z to
+2026-07-02T15:24:29Z after strict FTPS target verification, Supabase runtime
+config rendering, asset stamping, and FTPS upload. Visible production browser
+verification at `https://www.crazyphrases.com/#/play/multiplayer` confirmed
+Account-backed mode with account detail `Player`, profile copy `Gamer Tag`, no
+visible `Gamer Name` or `Handle` labels, one invite lookup input labelled
+`Email or Gamer Tag`, zero visible email-like strings in page copy, exact
+unknown-email copy `No gamer found under that email address`, exact unknown
+Gamer Tag copy `No gamer found under that gamer tag.`, no visible submitted
+fake email address after the lookups, no created-invite success state, and no
+Pending Game summary. Observed first-party assets including `site.css`,
+`app.js`, `account-profile.js`, `pending-game.js`, `supabase-config.js`, and
+`word-bank-seed.json` were stamped with the merge commit; all 19 observed
+first-party assets were stamped and no unstamped first-party `.js`, `.css`, or
+`.json` asset was observed. A 390 px mobile viewport had `overflowX = 0`, one
+lookup input, Gamer Tag profile copy, no old identity labels, and zero visible
+email-like strings in page copy. Browser warning/error logs were empty. No
+second hosted Auth/Profile fixture, successful hosted invite, or production
+game-data write/cleanup smoke was created.
 
 ## Task 10: Documentation and Issue Closeout
 
@@ -617,7 +639,7 @@ email in identity or lookup results.
 - Update: issue #151
 - Update: PR #152
 
-- [ ] **Step 1: Record hosted evidence**
+- [x] **Step 1: Record hosted evidence**
 
 Add dated state-ledger entries for:
 
@@ -628,10 +650,8 @@ Add dated state-ledger entries for:
 - dev, test, and production smoke evidence;
 - any intentionally deferred successful hosted lookup with a second account.
 
-Execution note, 2026-07-02: hosted evidence through `test` promotion has been
-recorded in this plan and in `docs/planning/supabase-state-ledger.md`.
-Production evidence remains pending explicit production approval and
-post-deployment smoke.
+Execution note, 2026-07-02: hosted evidence through production promotion has
+been recorded in this plan and in `docs/planning/supabase-state-ledger.md`.
 
 - [ ] **Step 2: Reconcile docs and issues**
 

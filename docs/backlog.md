@@ -211,8 +211,8 @@ preserve their original history.
   and related moderation operations.
 - **Why deferred**: Public discovery requires consent, safety screening, reporting,
   moderation, ranking, and abuse handling; MVP should prove the core game loop first.
-- **Revisit when**: Default-template games, accounts, handle invites, external sharing,
-  and private favourites are working.
+- **Revisit when**: Default-template games, accounts, lookup-key invites, external
+  sharing, and private favourites are working.
 - **Remaining risk**: Sharing, consent, provenance, and reaction concepts should remain
   available for future public discovery.
 
@@ -487,7 +487,7 @@ preserve their original history.
 ### Signed-in Account Profile management surface
 
 - **No longer deferred**: A signed-in profile/account UI for viewing and editing the
-  current Gamer Name, Handle, and preset Avatar.
+  current Gamer Tag and Avatar.
 - **Why previously deferred**: The shipped Account shell created and loaded a durable
   Account Profile and showed the game-facing Handle, while the broader profile/account
   surface design depended on signed-in navigation choices that were not needed to prove
@@ -511,23 +511,33 @@ preserve their original history.
   history, notifications, settings, or social/profile-public links to the account menu
   in this slice.
 - **Account-affordance display**: Accepted as part of signed-in navigation design on
-  2026-06-26. The account affordance is avatar-first: the signed-in Avatar is the stable
-  visual target, the Handle may be shown beside it when space allows, and narrow layouts
-  may use an avatar-only button with an accessible name such as `Account menu for
-  @handle`.
-- **Account-menu icons**: Accepted as part of signed-in navigation design on 2026-06-26.
-  Use the Font Awesome `circle-user` icon for `Profile`, the Font Awesome `image` icon
-  for `Avatar`, and the Font Awesome `arrow-right-from-bracket` icon for `Sign out`.
+  2026-06-26 and superseded by #142/#151 on 2026-07-02 for terminology, privacy, and
+  Settings consolidation. The account affordance is avatar-first: the signed-in Avatar
+  is the stable visual target, the Gamer Tag may be shown beside it when space allows,
+  and narrow layouts may use an avatar-only button with an accessible name such as
+  `Account menu for Captain Spoon`.
+- **Account-menu icons**: Accepted as part of signed-in navigation design on 2026-06-26
+  and superseded by #142 on 2026-07-02 for menu shape. Use the Font Awesome `gear` icon
+  for `Settings` and the Font Awesome `arrow-right-from-bracket` icon for `Sign out`.
 - **Focused editor entry points**: Accepted as part of signed-in navigation design on
-  2026-06-26. `Profile` and `Avatar` open separate focused editor views or panels:
-  `Profile` focuses Gamer Name and Handle editing, while `Avatar` focuses Avatar
-  selection, upload, and cropping. They may share implementation behind the scenes, but
-  the account menu labels should take participants directly to the relevant task.
-  Opening either panel should not change the current hash route; the panel should close
-  back to the same route.
+  2026-06-26 and superseded by #142/#151 on 2026-07-02 for Settings consolidation,
+  lookup privacy, and Gamer Tag terminology. `Settings` opens a focused editor view or
+  panel for Gamer Tag and Avatar. The hosted email lookup key is derived from Supabase
+  Auth email and is not public identity or a normal editable profile field unless a
+  later accepted design adds Auth-email change behaviour. Opening Settings should not
+  change the current hash route; the panel should close back to the same route.
+- **Legacy identity display migration**: Deferred from the first private lookup-key
+  implementation slice on 2026-07-02. This slice updates the lookup resolver, invite
+  creation path, privacy rules, and durable docs, but it does not yet replace every
+  existing `Handle`/`Gamer Name` browser display, notification sentence, favourite
+  participant indicator, or completed-history string with Gamer Tag and Avatar. Revisit
+  before #151 is treated as complete or before any account Settings/navigation polish
+  ships. Remaining risk: mixed legacy copy can teach the old identity model even though
+  lookup no longer exposes email addresses or public email-backed values.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
-  2026-06-26. Closing a `Profile` or `Avatar` panel with unsaved edits should require
-  confirmation. The confirmation actions are `Save` with the Font Awesome `floppy-disk`
+  2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
+  the `Settings` panel with unsaved edits should require confirmation. The confirmation
+  actions are `Save` with the Font Awesome `floppy-disk`
   icon, `Discard` with the Font Awesome `trash-can` icon, and `Cancel` with the Font
   Awesome `circle-left` icon when returning to the edit panel. If the participant tries
   to sign out while the editor has unsaved changes, use the same confirmation before
@@ -884,7 +894,7 @@ preserve their original history.
 ### Friend relationships
 
 - **Deferred**: Mutual friend relationships and friend-based invite shortcuts.
-- **Why deferred**: MVP can support 2-player games through handle invites without
+- **Why deferred**: MVP can support 2-player games through lookup-key invites without
   building the full social graph first.
 - **Revisit when**: Players repeatedly invite the same accounts or need a faster
   trusted-player workflow.
@@ -893,9 +903,9 @@ preserve their original history.
 
 ### Signed-in 2-player asynchronous game
 
-- **Deferred**: The first signed-in 2-player asynchronous Game slice, including handle
-  invites, Pending Game lifecycle, multi-participant Slot Allocation, Slot Order, Turn
-  completion, Reveal, Share Consent, Nudges, and In-App Notifications.
+- **Deferred**: The first signed-in 2-player asynchronous Game slice, including
+  lookup-key invites, Pending Game lifecycle, multi-participant Slot Allocation, Slot
+  Order, Turn completion, Reveal, Share Consent, Nudges, and In-App Notifications.
 - **Why deferred**: The product needs a working Account, identity, and backend-backed
   persistence boundary before collaborative game state is designed.
 - **Revisit when**: Signed-in solo current-game save/resume has passed automated and
@@ -1203,8 +1213,8 @@ preserve their original history.
 - **Deferred**: Adding external social profile URLs to player profiles.
 - **Why deferred**: Social links are not needed for play, invites, consent, sharing, or
   leaderboards, and they add moderation, impersonation, privacy, and link-safety work.
-- **Revisit when**: Player profiles need richer public identity beyond gamer name,
-  handle, and avatar.
+- **Revisit when**: Player profiles need richer public identity beyond Gamer Tag and
+  Avatar.
 - **Remaining risk**: Profile models should leave room for verified or moderated
   external links later.
 

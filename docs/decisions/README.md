@@ -14,7 +14,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0008-static-first-anonymous-solo.md` - static-first anonymous solo implementation boundary.
 - `0009-branch-based-dev-and-main-promotion.md` - feature-branch dev deployment and main-line test/production promotion.
 - `0010-supabase-auth-and-postgres-for-signed-in-state.md` - Supabase Auth and Postgres source-of-truth boundary for signed-in accounts and game state.
-- `0011-account-profile-handle-directory.md` - durable Account Profile and Handle Directory boundary.
+- `0011-account-profile-handle-directory.md` - superseded Account Profile and Handle Directory boundary.
 - `0012-pending-game-invite-response-authority.md` - Pending Game invitee response authority, visibility, and decline cancellation boundary.
 - `0013-pending-game-start-conversion-authority.md` - Pending Game to Started Game conversion authority and durable setup boundary.
 - `0014-started-game-turn-submission-authority.md` - historical Started Game Turn storage and submission authority boundary; global active-turn sequencing is superseded by ADR 0015.
@@ -26,6 +26,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0020-font-awesome-kit-for-built-in-avatars.md` - Font Awesome Kit integration boundary for Built-in Avatar visuals.
 - `0021-derived-cropped-images-for-uploaded-avatars.md` - Derived-image storage authority for circular Uploaded Avatar cropping.
 - `0022-branded-supabase-auth-deferral.md` - documented deferral and accepted risk for branded hosted Auth trust.
+- `0023-private-email-lookup-and-gamer-tag.md` - private email lookup and Gamer Tag account identity boundary.
 
 ## Status Values
 

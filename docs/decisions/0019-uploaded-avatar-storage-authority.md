@@ -21,7 +21,8 @@ built-in Avatar key. The profile personalisation slice replaced that with the
 accepted Built-in Avatar key set and allowed an account holder to use an
 Uploaded Avatar, which introduced user-supplied media storage, serving,
 deletion, and access control concerns that were not covered by the existing
-Account Profile / Handle Directory decision.
+Account Profile / Handle Directory decision, now superseded for identity
+terminology by ADR `0023`.
 
 The main alternatives are:
 
@@ -34,16 +35,15 @@ The main alternatives are:
 ## Decision
 
 Uploaded Avatar image bytes belong in Supabase Storage. Supabase Postgres remains
-the Account Profile and Handle Directory source of truth, storing only the
-avatar choice and the invite-safe reference or metadata needed to render an
-Avatar.
+the Account Profile and lookup-directory source of truth, storing only the avatar
+choice and the invite-safe reference or metadata needed to render an Avatar.
 
 Account Profile data should represent the current Avatar as an explicit Avatar
 descriptor rather than overloading the current built-in `avatar_key` string. The
 descriptor distinguishes Built-in Avatars from Uploaded Avatars. Built-in Avatar
 descriptors carry a project-provided avatar key; Uploaded Avatar descriptors
-carry an opaque Storage object path or equivalent opaque reference. The Handle
-Directory may expose the Avatar descriptor only while it remains invite-safe.
+carry an opaque Storage object path or equivalent opaque reference. The lookup
+directory may expose the Avatar descriptor only while it remains invite-safe.
 Completed-game participant snapshots must preserve the Avatar descriptor used at
 play time rather than reading the latest live Account Profile when history is
 rendered.
@@ -55,7 +55,7 @@ account holder's permitted path.
 
 Uploaded Avatars should be served from a public-read Supabase Storage bucket
 using opaque object paths that do not encode raw account ids, email addresses,
-provider identities, Handles, Gamer Names, or other account-identifying values.
+provider identities, Gamer Tags, lookup keys, or other account-identifying values.
 Read access is public because Avatars are game-facing display assets, while
 upload, replacement, and deletion authority remains restricted to the owning
 signed-in Account through Storage policies or an equivalent approved
@@ -153,8 +153,8 @@ uploaded object. That row records the owning Account Profile, the opaque Storage
 object path or reference, and enough lifecycle metadata to distinguish current
 live-profile references, historical snapshot references, and clearly abandoned
 objects from failed or retried uploads. This ownership table is not a public
-directory surface; browser-facing Account Profile and Handle Directory data
-must expose only the invite-safe Avatar descriptor.
+directory surface; browser-facing Account Profile and lookup-directory data must
+expose only the invite-safe Avatar descriptor.
 
 No Supabase Storage bucket existed for uploaded avatars at decision time. The
 #63 branch creates the public-read `avatars` bucket, ownership metadata table,

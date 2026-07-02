@@ -323,14 +323,14 @@ ago`. Browser timezone detection is display-only and does not grant data ownersh
 mutation authority.
 
 Favourite row participant indicators are brief and text-first. Use `Solo` for solo
-batches, `You` for the current Account, and other participants' Handle or Gamer Name
-where available. In compact rows, show `Solo` for solo batches; for multiplayer
-favourites involving the current Account, show `You` plus up to one named other
-participant and then a count, such as `You + @alex + 2`. If the current Account was not
-a participant in an older saved snapshot, show the first known Handle or Gamer Name plus
-a remaining count, such as `@alex + 3`. Keep the full participant list out of the
-compact row. Avatar images are not required in the first slice unless they are already
-available from existing saved snapshot data without adding data-loading scope.
+batches, `You` for the current Account, and other participants' Gamer Tag where
+available. In compact rows, show `Solo` for solo batches; for multiplayer favourites
+involving the current Account, show `You` plus up to one named other participant and
+then a count, such as `You + Captain Spoon + 2`. If the current Account was not a
+participant in an older saved snapshot, show the first known Gamer Tag plus a remaining
+count, such as `Captain Spoon + 3`. Keep the full participant list out of the compact
+row. Avatar images are not required in the first slice unless they are already available
+from existing saved snapshot data without adding data-loading scope.
 
 #### Header controls
 
@@ -428,27 +428,27 @@ buttons.
 
 #### Account menu and panels
 
-Profile editing, Avatar editing, and sign-out belong under an account affordance built
-from the signed-in Account's game-facing identity, such as Avatar, Handle, and Gamer
-Name context. `Profile` and `Sign out` should not be primary signed-in navigation items
-in the first signed-in navigation shape. The account affordance is avatar-first: the
-signed-in Avatar is the stable visual target, the Handle may be shown beside it when
-space allows, and narrow layouts may use an avatar-only button with an accessible name
-such as `Account menu for @handle`.
+Settings, Avatar editing, and sign-out belong under an account affordance built from
+the signed-in Account's game-facing identity, such as Avatar and Gamer Tag context.
+`Settings` and `Sign out` should not be primary signed-in navigation items in the first
+signed-in navigation shape. The account affordance is avatar-first: the signed-in Avatar
+is the stable visual target, the Gamer Tag may be shown beside it when space allows, and
+narrow layouts may use an avatar-only button with an accessible name such as `Account
+menu for Captain Spoon`.
 
-The first account menu contains only `Profile`, `Avatar`, and `Sign out`. Do not add
-`Favourites`, completed history, notifications, settings, or social/profile-public links
-to the account menu in this slice. `Profile` uses Font Awesome `circle-user`, `Avatar`
-uses Font Awesome `image`, and `Sign out` uses Font Awesome `arrow-right-from-bracket`.
+The first account menu contains only `Settings` and `Sign out`. Do not add
+`Favourites`, completed history, notifications, social/profile-public links, or separate
+`Profile` and `Avatar` menu items to the account menu in this slice. `Settings` uses
+Font Awesome `gear`, and `Sign out` uses Font Awesome `arrow-right-from-bracket`.
 
-`Profile` and `Avatar` open separate focused editor views or panels: `Profile` focuses
-Gamer Name and Handle editing, while `Avatar` focuses Avatar selection, upload, and
-cropping. They may share implementation behind the scenes, but the account menu labels
-should take participants directly to the relevant task. Opening either panel does not
-change the current hash route; each panel overlays or slides over the current
+`Settings` opens a focused editor view or panel for Gamer Tag and Avatar. The hosted
+email lookup key is derived from Supabase Auth email and must not be presented as
+public identity or a normal editable profile text field unless a later accepted design
+explicitly adds Auth-email change behaviour. Opening Settings does not change the
+current hash route; the panel overlays or slides over the current
 destination and closes back to the same route.
 
-Closing a `Profile` or `Avatar` panel with unsaved edits should require confirmation.
+Closing the `Settings` panel with unsaved edits should require confirmation.
 The unsaved-edit confirmation uses `Save`, `Discard`, and `Cancel` actions: `Save` uses
 Font Awesome `floppy-disk`, `Discard` uses Font Awesome `trash-can`, and `Cancel` uses
 Font Awesome `circle-left` when returning to the edit panel. If the participant tries to
@@ -800,9 +800,10 @@ to its creator until they deliberately publish it for wider use.
 
 ### Template attribution
 
-Published templates are attributed to the creator's current gamer name and handle,
-without exposing email addresses or real names. Phrases generated from a template may
-show template attribution in detail views rather than every compact discovery surface.
+Published templates are attributed to the creator's current Gamer Tag by default.
+Showing email-backed account lookup values in public template attribution is not
+allowed. Phrases generated from a template may show template attribution in detail views
+rather than every compact discovery surface.
 
 ### Template remixing
 
@@ -931,8 +932,9 @@ in.
 
 ### Participant attribution
 
-Public discovery may show the gamer names of human participants after share consent, but
-must not expose email addresses, real names, or authentication identities. CPU
+Public discovery may show the Gamer Tags of human participants after share consent, but
+must not expose real names, raw authentication identities, provider identity ids, or
+email addresses, email-backed lookup values, or other private Account data. CPU
 participants are shown using their configured display names. Participant attribution
 should use intuitively understood icons to distinguish CPU participants from human
 participants.
@@ -1029,9 +1031,9 @@ collections. They should be deleted when the Account is deleted. This does not c
 future collaborative game-history preservation, participant snapshot, or consent-record
 rules.
 
-Public attribution for a deleted account shows "Deleted user" and removes the old gamer
-name and handle from public surfaces. Collaborative records may still indicate that a
-deleted participant or creator existed.
+Public attribution for a deleted account shows "Deleted user" and removes the old Gamer
+Tag from public surfaces. Collaborative records may still indicate that a deleted
+participant or creator existed.
 
 Prior share consent from a deleted account remains valid for content that was already
 shared before deletion, unless the account explicitly unshared or reported the content
@@ -1043,16 +1045,19 @@ private game history or favourites.
 
 ### Player identity
 
-Accounts have a globally unique handle for discovery, mentions, profile URLs, and
-disambiguation. Gamer names are changeable display names used in games and social
-surfaces.
+Accounts have a private email-backed lookup key for exact known-email lookup and a
+Gamer Tag for game-facing display. For hosted Auth Accounts, the private lookup key is
+derived from the Supabase Auth email address used for magic-link sign-in or returned by
+a third-party Auth provider. It is not a public profile field, participant display
+value, profile URL value, mention value, or normal editable profile field. Gamer Tags
+are changeable display names used in games and social surfaces, and they are also valid
+lookup keys.
 
-MVP profiles use gamer name, handle, and a built-in Avatar selected from a
-generated/default or modest project-provided visual set. The first shipped profile
-surface may store only a built-in Avatar key until avatar images are rendered, but the
-accepted Avatar model distinguishes Built-in Avatars from Uploaded Avatars. Uploaded
-Avatars are a follow-up profile-personalisation slice, not part of the first
-profile-management implementation.
+MVP profiles use Gamer Tag and a built-in Avatar selected from a generated/default or
+modest project-provided visual set. The first shipped profile surface may store only a
+built-in Avatar key until avatar images are rendered, but the accepted Avatar model
+distinguishes Built-in Avatars from Uploaded Avatars. Uploaded Avatars are a follow-up
+profile-personalisation slice, not part of the first profile-management implementation.
 
 Uploaded Avatars accept only raster JPEG, PNG, and WebP image files. SVG, GIF,
 HEIC/HEIF, video, animated formats, and non-image uploads are out of scope for the first
@@ -1182,15 +1187,21 @@ unknown or invalid built-in keys fall back to `dice`.
 MVP accounts have one active gamer profile. Multiple personas or profiles per account
 are deferred.
 
-The Account Profile / Handle Directory is a signed-in discovery surface. Handle lookup
-must not be available to anonymous visitors, and it must not expose email addresses,
-provider identities, raw authentication user ids, or non-opaque uploaded-avatar storage
-identifiers. Browser-facing lookup returns invite-safe profile data such as directory
-profile id, handle, gamer name, and Avatar descriptor.
+The Account Profile / lookup directory is a signed-in lookup surface. Lookup must not
+be available to anonymous visitors, and it must not expose raw authentication user ids,
+provider identity ids, email addresses, email-backed lookup values, or non-opaque
+uploaded-avatar storage identifiers. Browser-facing lookup uses one lookup-key input
+that accepts either a full email address already known to the participant or a Gamer
+Tag, without requiring the participant to choose a lookup mode. Successful lookup
+returns invite-safe profile data such as directory profile id, Gamer Tag, and Avatar
+descriptor. An email miss displays `No gamer found under that email address`. A Gamer
+Tag miss displays `No gamer found under that gamer tag.`.
 
-Completed games snapshot the participant gamer name and Avatar descriptor used at the
-time of play. Current profiles and new games use the latest gamer name and Avatar.
-Handles remain the stable disambiguator while the account exists.
+Completed games snapshot the participant Gamer Tag and Avatar descriptor used at the
+time of play. Current profiles and new games use the latest Gamer Tag and Avatar.
+Private email-backed lookup values are not participant display values and must not be
+snapshotted for display. Any future Auth-email change feature must define how
+known-email lookup, invite resolution, and privacy expectations behave before it ships.
 
 Replacing the current Uploaded Avatar must not break completed-game history that already
 snapshots an older Uploaded Avatar descriptor. The first Uploaded Avatar slice should
@@ -1211,16 +1222,17 @@ of the first product shape.
 
 ### Game invites
 
-Multiplayer games can invite friends or accounts found by handle. Friend invites should
-be the low-friction path. Non-friend handle invites are allowed but need anti-spam
-limits and recipient controls.
+Multiplayer games can invite friends or accounts found through signed-in lookup. Friend
+invites should be the low-friction path. Non-friend lookup-key invites are allowed but
+need anti-spam limits and recipient controls.
 
-MVP multiplayer invites use handles. Friend relationships and friend-based invite
-shortcuts are deferred.
+MVP multiplayer invites use one lookup-key input that accepts either a known email
+address or a Gamer Tag. Friend relationships and friend-based invite shortcuts are
+deferred.
 
-The handle-invite UI is signed-in only. It lets the Game Creator select the
-batch row count, enter another account's Handle, create a Game Invite, and see
-the invited participant's response state. Signed-in invitees can see incoming
+The invite UI is signed-in only. It lets the Game Creator select the batch row count,
+enter another account's email address or Gamer Tag, create a Game Invite, and see the
+invited participant's response state. Signed-in invitees can see incoming
 Pending Game invites for their Account Profile, accept an invite, or decline an
 invite. Once every invited human participant accepts, the Game Creator can start
 the Pending Game and see that the Game shell has started. Decline cancels the
@@ -1311,7 +1323,7 @@ Signed-in participants can open a dedicated completed multiplayer history view
 from the `Batches completed` dashboard bucket. The dashboard keeps its five-item
 cap. The history view lists completed multiplayer batches for the current
 Account in pages of up to 20, newest first, with deterministic cursor
-pagination and invite-safe participant Handles and row count context. `Load
+pagination and invite-safe participant Gamer Tags and row count context. `Load
 more` appears only when older completed batches are available and appends older
 batches without replacing already loaded results. Cancelled Games are excluded.
 Unrevealed completed batches show that they have not been revealed yet, offer

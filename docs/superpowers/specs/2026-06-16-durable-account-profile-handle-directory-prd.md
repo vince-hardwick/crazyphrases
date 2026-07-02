@@ -1,6 +1,6 @@
 # PRD: Durable Account Profile and Handle Directory
 
-> **Status:** Published PRD provenance. Accepted durable authority lives in ADR 0011, `docs/product-rules.md`, and `docs/runbooks/supabase-auth-and-postgres.md`. MVP profile-management UI shipped through #47 / PR #62; avatar-upload personalisation shipped through #63 / PR #74; circular avatar crop derivatives shipped through #64 / PR #78; visual cropper UX shipped through #79 / PR #92.
+> **Status:** Published PRD provenance. Current identity authority lives in ADR 0023, `docs/product-rules.md`, and `docs/runbooks/supabase-auth-and-postgres.md`; ADR 0011 remains historical provenance for this completed implementation. MVP profile-management UI shipped through #47 / PR #62; avatar-upload personalisation shipped through #63 / PR #74; circular avatar crop derivatives shipped through #64 / PR #78; visual cropper UX shipped through #79 / PR #92.
 
 Published as GitHub Issue: https://github.com/vince-hardwick/crazyphrases/issues/43
 

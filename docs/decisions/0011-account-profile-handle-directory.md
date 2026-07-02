@@ -2,7 +2,13 @@
 
 ## Status
 
-Accepted
+Superseded by ADR `0023`.
+
+This ADR records the original accepted Account Profile / Handle Directory
+decision. ADR `0023` deliberately replaces the user-facing terminology and
+identity authority: `Gamer Name` becomes `Gamer Tag`, `Handle` no longer remains
+the public directory model, and signed-in lookup now accepts either a known email
+address or Gamer Tag without exposing email addresses in lookup results.
 
 ## Context
 

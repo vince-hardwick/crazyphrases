@@ -33,6 +33,43 @@ const otherCreatorProfile = {
 };
 
 describe("Pending Game repository", () => {
+  it("creates Pending Games from one lookup key input by known email or Gamer Tag", async () => {
+    let nextPendingGameId = 1;
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => `pending-game-lookup-${nextPendingGameId++}`,
+      profiles: [
+        {
+          ...creatorProfile,
+          emailLookupKey: "creator.one@example.test",
+          gamerTag: "Creator One",
+        },
+        {
+          ...inviteeProfile,
+          emailLookupKey: "invitee.two@example.test",
+          gamerTag: "Invitee Two",
+        },
+      ],
+    });
+
+    const byEmail = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: " Invitee.Two@Example.test ",
+      rowCount: 10,
+    });
+    const byGamerTag = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: "INVITEE TWO",
+      rowCount: 15,
+    });
+
+    assert.equal(byEmail.id, "pending-game-lookup-1");
+    assert.equal(byGamerTag.id, "pending-game-lookup-2");
+    assert.equal(byEmail.participants[1].profileId, inviteeProfile.profileId);
+    assert.equal(byGamerTag.participants[1].profileId, inviteeProfile.profileId);
+    assert.equal(JSON.stringify(byEmail).includes("invitee.two@example.test"), false);
+    assert.equal(JSON.stringify(byGamerTag).includes("invitee.two@example.test"), false);
+  });
+
   it("creates a browser-safe Pending Game from a handle invite", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -1646,6 +1683,40 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(pendingGame).includes(inviteeProfile.accountId), false);
   });
 
+  it("creates Supabase Pending Games through the private lookup resolver", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile: {
+        ...inviteeProfile,
+        emailLookupKey: "invitee.two@example.test",
+        gamerTag: "Invitee Two",
+      },
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const pendingGame = await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: " Invitee.Two@Example.test ",
+      rowCount: 15,
+    });
+
+    assert.equal(pendingGame.id, "supabase-pending-game-1");
+    assert.equal(pendingGame.participants[1].profileId, inviteeProfile.profileId);
+    assert.deepEqual(supabase.rpcCalls, ["lookup_account_profile"]);
+    assert.deepEqual(supabase.rpcParams, [
+      {
+        lookup_key: "invitee.two@example.test",
+        lookup_kind: "email",
+      },
+    ]);
+    assert.deepEqual(supabase.tableCalls, [
+      "account_profiles",
+      "pending_games",
+      "pending_game_participants",
+    ]);
+    assert.equal(JSON.stringify(pendingGame).includes("invitee.two@example.test"), false);
+  });
+
   it("lists incoming Pending Game invites through Supabase rows without exposing Auth identities", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,
@@ -2386,19 +2457,25 @@ describe("Pending Game repository", () => {
       createPendingGameId: () => "local-pending-game-1",
       profiles: [creatorProfile, inviteeProfile],
     });
-    const pendingGame = await repository.createPendingGameFromHandle({
+    const pendingGame = await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerName,
       rowCount: 20,
     });
     const appSource = readFileSync(new URL("../assets/app.js", import.meta.url), "utf8");
 
     assert.equal(pendingGame.id, "local-pending-game-1");
     assert.match(appSource, /createLocalTestPendingGameRepository/);
+    assert.match(appSource, /pendingGameLookupKeyInput/);
+    assert.match(appSource, /createPendingGameFromLookupKey/);
+    assert.match(appSource, /No gamer found under that email address/);
+    assert.match(appSource, /No gamer found under that gamer tag\./);
     assert.match(
       appSource,
       /pendingGameRepository = createSupabasePendingGameRepository\(\{ supabase \}\)/,
     );
+    assert.doesNotMatch(appSource, /createPendingGameFromHandle\(\{/);
+    assert.doesNotMatch(appSource, /Handle not found/);
   });
 });
 
@@ -2495,6 +2572,37 @@ function createFakePendingGameSupabase({
             inviteeProfile,
             paginated: Boolean(params),
           }),
+          error: null,
+        };
+      }
+
+      if (functionName === "lookup_account_profile") {
+        assert.deepEqual(Object.keys(params).sort(), [
+          "lookup_key",
+          "lookup_kind",
+        ]);
+
+        const matchesEmail =
+          params.lookup_kind === "email" &&
+          inviteeProfile.emailLookupKey === params.lookup_key;
+        const matchesGamerTag =
+          params.lookup_kind === "gamer-tag" &&
+          inviteeProfile.gamerTag?.toLocaleLowerCase("en-GB") ===
+            params.lookup_key;
+
+        return {
+          data:
+            matchesEmail || matchesGamerTag
+              ? [
+                  {
+                    avatar_key: inviteeProfile.avatarKey,
+                    avatar_object_path: null,
+                    avatar_type: "built-in",
+                    gamer_tag: inviteeProfile.gamerTag,
+                    profile_id: inviteeProfile.profileId,
+                  },
+                ]
+              : [],
           error: null,
         };
       }

@@ -1377,7 +1377,7 @@ describe("solo browser smoke", () => {
         document.querySelectorAll("[data-pending-game-panel]").length === 1,
     );
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -2146,7 +2146,7 @@ describe("solo browser smoke", () => {
     await saveFailureContext.close();
   });
 
-  it("creates a signed-in Pending Game invite by Handle in local test mode", async () => {
+  it("creates a signed-in Pending Game invite by lookup key in local test mode", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -2166,7 +2166,7 @@ describe("solo browser smoke", () => {
     await assertPendingGameSurfaceMounted(page);
     await assertNoHorizontalOverflow(page);
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -2203,7 +2203,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=expire-immediately`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2258,7 +2258,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
@@ -2303,7 +2303,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
@@ -2346,7 +2346,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Test sign in" }).click();
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
@@ -2446,7 +2446,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.getByRole("button", { name: "Create invite" }).click();
     await assertTextVisible(
       page,
@@ -2530,7 +2530,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2705,7 +2705,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails-once`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2761,7 +2761,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -2819,7 +2819,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails`);
     await page.getByRole("button", { name: "Test sign in" }).click();
     await openMultiplayerRoute(page);
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
@@ -3423,7 +3423,7 @@ describe("solo browser smoke", () => {
     await assertPendingGameSurfaceMounted(page);
     await assertNoFavouritesPanelDom(page);
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -3442,7 +3442,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
     assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
-    assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+    assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 1);
     await assertNoFavouritesPanelDom(page);
     await assertTextVisible(page, "@invitee-two");
     await assertTextVisible(page, "15 phrases");
@@ -3480,7 +3480,7 @@ describe("solo browser smoke", () => {
       );
     });
 
-    await page.locator("[data-pending-game-handle-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -4960,6 +4960,10 @@ async function delayLocalTestPendingGameInviteCreation(context) {
       await globalThis.__delayPendingGameCreate();
       return repository.createPendingGameFromHandle(args);
     },
+    async createPendingGameFromLookupKey(args) {
+      await globalThis.__delayPendingGameCreate();
+      return repository.createPendingGameFromLookupKey(args);
+    },
   };
 }`,
     );
@@ -5105,14 +5109,14 @@ async function assertProfileManagementSurfaceMounted(page) {
 
 async function assertNoPendingGameDom(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
-  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 0);
+  assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 0);
   assert.equal(await page.locator("[data-pending-game-summary]").count(), 0);
 }
 
 async function assertPendingGameSurfaceMounted(page) {
   assert.equal(await page.locator("[data-pending-game-panel]").count(), 1);
-  assert.equal(await page.locator("[data-pending-game-handle-input]").count(), 1);
+  assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-row-count]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);

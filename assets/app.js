@@ -128,6 +128,8 @@ const phraseList = document.querySelector("[data-phrase-list]");
 const revealDetails = document.querySelector("[data-reveal-details]");
 const copyStatus = document.querySelector("[data-copy-status]");
 const accountShellElement = document.querySelector("[data-account-shell]");
+const accountSignInToggle = document.querySelector("[data-account-sign-in-toggle]");
+const accountSignInPanel = document.querySelector("[data-account-sign-in-panel]");
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
 const testSignInButton = document.querySelector("[data-test-sign-in-button]");
@@ -178,6 +180,7 @@ let wordBank = null;
 let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
 let hostedAuthAvailable = false;
+let accountSignInPanelOpen = false;
 const localTestSignedInGameSession = createSignedInGameSession({
   repository: createLocalTestSignedInSoloGameRepository(window.localStorage, {
     failureMode: getLocalTestPersistenceFailureMode(),
@@ -291,6 +294,11 @@ testSignInButton.addEventListener("click", async () => {
 
 testInviteeSignInButton.addEventListener("click", async () => {
   await applyLocalTestAccountShell(localTestInviteeProfile);
+});
+
+accountSignInToggle.addEventListener("click", () => {
+  accountSignInPanelOpen = !accountSignInPanelOpen;
+  renderAccountShell(accountShell);
 });
 
 async function applyLocalTestAccountShell(profile) {
@@ -828,22 +836,35 @@ function renderGame() {
 }
 
 function renderAccountShell(shell) {
-  accountStatus.textContent = shell.statusLabel;
-  accountDetail.textContent =
-    shell.persistenceAuthority.type === "local-browser"
+  const isAnonymous = shell.mode === "anonymous-solo";
+  const isSignInPanelOpen = isAnonymous && accountSignInPanelOpen;
+
+  if (!isAnonymous) {
+    accountSignInPanelOpen = false;
+  }
+
+  accountShellElement.classList.toggle("is-anonymous", isAnonymous);
+  accountShellElement.classList.toggle("is-sign-in-open", isSignInPanelOpen);
+  accountSignInToggle.hidden = !isAnonymous;
+  accountSignInToggle.setAttribute("aria-expanded", String(isSignInPanelOpen));
+  accountSignInPanel.hidden = isAnonymous ? !isSignInPanelOpen : false;
+  accountStatus.hidden = isAnonymous;
+  accountDetail.hidden = isAnonymous;
+  accountStatus.textContent = isAnonymous ? "" : shell.statusLabel;
+  accountDetail.textContent = isAnonymous
+    ? ""
+    : shell.persistenceAuthority.type === "local-browser"
       ? "Local play in this browser"
       : shell.profile.gamerTag;
   testSignInButton.hidden =
-    shell.mode !== "anonymous-solo" ||
-    hostedAuthAvailable ||
+    !isSignInPanelOpen ||
     !isLocalTestAuthAvailable();
   testInviteeSignInButton.hidden =
-    shell.mode !== "anonymous-solo" ||
-    hostedAuthAvailable ||
+    !isSignInPanelOpen ||
     !isLocalTestAuthAvailable();
   googleSignInButton.hidden =
-    shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
-  emailSignInForm.hidden = shell.mode !== "anonymous-solo" || !hostedAuthAvailable;
+    !isSignInPanelOpen || !hostedAuthAvailable;
+  emailSignInForm.hidden = !isSignInPanelOpen || !hostedAuthAvailable;
   signOutButton.hidden = shell.mode !== "signed-in";
   if (shell.mode === "signed-in") {
     ensureNotificationShell();

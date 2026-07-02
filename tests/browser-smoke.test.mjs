@@ -46,13 +46,13 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
     await assertTextVisible(page, "Crazy Phrases");
-    await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "Local play in this browser");
+    await assertAnonymousAccountIconVisible(page);
+    await assertAnonymousSignInSurfaceClosed(page);
     assert.equal(await page.locator(".site-domain").count(), 0);
     await assertNoFavouriteDom(page);
     await assertNoProfileEditorDom(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Player");
     await assertTextHidden(page, "@player-test-account");
@@ -65,8 +65,8 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-toggle-phrase-favourite-index]").count(), 0);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "Local play in this browser");
+    await assertAnonymousAccountIconVisible(page);
+    await assertAnonymousSignInSurfaceClosed(page);
     await assertNoFavouriteDom(page);
     await assertNoProfileEditorDom(page);
 
@@ -160,6 +160,122 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("routes anonymous sign-in through the top-nav account icon", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertNoHorizontalOverflow(page);
+
+    const accountSignIn = page.getByRole("button", { name: "Account sign in" });
+    await expectFontAwesomeClass(accountSignIn, "fa-regular", "fa-circle-user");
+    assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), false);
+    assert.equal(await page.locator("[data-google-sign-in-button]").isVisible(), false);
+    assert.equal(await page.locator("[data-email-sign-in-form]").isVisible(), false);
+
+    await accountSignIn.click();
+
+    assert.equal(await accountSignIn.getAttribute("aria-expanded"), "true");
+    assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), true);
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
+  it("renders hosted sign-in controls as icon-first actions", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeHostedAuthConfig(context);
+    await context.addInitScript(() => {
+      window.__hostedAuthCalls = [];
+      window.supabase = {
+        createClient: () => ({
+          auth: {
+            getUser: async () => ({
+              data: { user: null },
+              error: { name: "AuthSessionMissingError" },
+            }),
+            signInWithOAuth: async (request) => {
+              window.__hostedAuthCalls.push({
+                method: "signInWithOAuth",
+                request,
+              });
+              return { data: {}, error: null };
+            },
+            signInWithOtp: async (request) => {
+              window.__hostedAuthCalls.push({
+                method: "signInWithOtp",
+                request,
+              });
+              return { data: {}, error: null };
+            },
+            signOut: async () => ({ error: null }),
+          },
+          from: () => ({}),
+          rpc: async () => ({ data: [], error: null }),
+          storage: {
+            from: () => ({}),
+          },
+        }),
+      };
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await openAnonymousAccountSignIn(page);
+
+    const googleSignIn = page.getByRole("button", { name: "Sign in with Google" });
+    await expectFontAwesomeClass(googleSignIn, "fa-brands", "fa-google");
+    assert.equal(await googleSignIn.getAttribute("data-tooltip"), "Sign in with Google");
+    assert.equal(await visibleTextContent(googleSignIn), "");
+
+    const emailFieldIcon = page.locator(".email-sign-in-field i");
+    const emailFieldIconClass = await emailFieldIcon.getAttribute("class");
+    assert.equal(emailFieldIconClass.includes("fa-at"), true);
+
+    const sendLink = page.getByRole("button", { name: "Send link" });
+    await expectFontAwesomeClass(sendLink, "fa-solid", "fa-paper-plane");
+    assert.equal(await sendLink.getAttribute("data-tooltip"), "Send link");
+    assert.equal(await visibleTextContent(sendLink), "");
+
+    await page.locator("[data-email-sign-in-input]").fill("player@example.test");
+    await sendLink.click();
+    await googleSignIn.click();
+
+    assert.deepEqual(await page.evaluate(() => window.__hostedAuthCalls), [
+      {
+        method: "signInWithOtp",
+        request: {
+          email: "player@example.test",
+          options: {
+            emailRedirectTo: `${staticServer.origin}/`,
+          },
+        },
+      },
+      {
+        method: "signInWithOAuth",
+        request: {
+          provider: "google",
+          options: {
+            redirectTo: `${staticServer.origin}/`,
+          },
+        },
+      },
+    ]);
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
   it("shows a regular notification bell when there are no unread notifications", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -171,7 +287,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     const notificationButton = page.getByRole("button", { name: "Notifications" });
     assert.equal(await notificationButton.isVisible(), true);
@@ -207,7 +323,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
     assert.equal(
@@ -244,7 +360,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.locator("[data-notification-toggle]").click();
 
     const notificationItems = page.locator("[data-notification-panel] .notification-item");
@@ -309,7 +425,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
     assert.equal(
@@ -397,7 +513,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
 
@@ -471,7 +587,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
 
@@ -566,7 +682,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
@@ -625,7 +741,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
@@ -712,7 +828,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
@@ -793,7 +909,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
 
@@ -857,7 +973,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
     await page
@@ -899,7 +1015,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
     await page
@@ -954,7 +1070,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
     await page
@@ -1003,7 +1119,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
     await page
@@ -1043,7 +1159,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
     await page
@@ -1083,7 +1199,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
 
     await page.waitForFunction(
@@ -1120,7 +1236,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     const notificationToggle = page.locator("[data-notification-toggle]");
     const notificationPanel = page.locator("[data-notification-panel]");
@@ -1171,7 +1287,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
     await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
     assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
@@ -1180,7 +1296,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Sign out" }).focus();
     await page.keyboard.press("Enter");
 
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoNotificationDom(page);
     await assertNoFavouriteDom(page);
@@ -1201,7 +1317,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     await page.getByRole("button", { name: "Play", exact: true }).click();
     const playMenu = page.getByRole("menu", { name: "Play Game Modes" });
@@ -1233,7 +1349,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     await page.getByRole("button", { name: "Play", exact: true }).click();
     let playMenu = page.getByRole("menu", { name: "Play Game Modes" });
@@ -1275,7 +1391,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await page.locator("[data-row-index='0']").fill("brisk");
@@ -1319,7 +1435,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
     const fillState = createFillState(10);
@@ -1366,7 +1482,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "Play", exact: true }).click();
     await page
       .getByRole("menu", { name: "Play Game Modes" })
@@ -1413,7 +1529,7 @@ describe("solo browser smoke", () => {
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertRowCountSelected(page, "20");
     await assertTextHidden(page, "20 phrases selected");
@@ -1426,10 +1542,10 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-row-index]").count(), 10);
 
     await page.reload();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await waitForDice(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(await page.locator("[data-section-title]").innerText(), signedInSectionTitle);
@@ -1450,7 +1566,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.getByLabel("Gamer Tag").fill("Captain Spoon");
     await page.getByRole("button", { name: "Save profile" }).click();
 
@@ -1462,7 +1578,7 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Sign out" }).click();
     await assertNoProfileEditorDom(page);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     assert.equal(
       await page.getByLabel("Gamer Tag").inputValue(),
@@ -1484,7 +1600,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("");
@@ -1522,7 +1638,7 @@ describe("solo browser smoke", () => {
       "Captain Spoon With A Surprisingly Long Profile Display Name";
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion.getByLabel("Gamer Tag").fill(gamerTag);
@@ -1549,7 +1665,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testAccountProfile=save-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
@@ -1561,7 +1677,7 @@ describe("solo browser smoke", () => {
     );
     await assertTextHidden(profileRegion, "Profile saved.");
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     assert.equal(
       await page
@@ -1588,7 +1704,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     const profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion.locator("[data-account-profile-avatar]").selectOption("dragon");
@@ -1607,7 +1723,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     assert.equal(
       await page
@@ -1632,7 +1748,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     let profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
@@ -1643,8 +1759,8 @@ describe("solo browser smoke", () => {
     await assertTextVisible(profileRegion, "Profile saved.");
 
     await page.reload();
-    await assertTextVisible(page, "Anonymous solo");
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await assertAnonymousAccountIconVisible(page);
+    await signInWithLocalTestAccount(page);
     profileRegion = page.getByRole("region", { name: "Profile" });
 
     assert.equal(
@@ -1688,7 +1804,7 @@ describe("solo browser smoke", () => {
     });
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     let profileRegion = page.getByRole("region", { name: "Profile" });
 
     await profileRegion
@@ -1871,7 +1987,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.reload();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     profileRegion = page.getByRole("region", { name: "Profile" });
     assert.match(
       await profileRegion
@@ -1919,7 +2035,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     const profileRegion = page.getByRole("region", { name: "Profile" });
     const uploadInput = profileRegion.locator(
       "[data-account-profile-uploaded-avatar-input]",
@@ -1981,7 +2097,7 @@ describe("solo browser smoke", () => {
       trackConsoleErrors(uploadFailurePage);
 
     await uploadFailurePage.goto(`${staticServer.origin}/?testAvatarStorage=upload-fails`);
-    await uploadFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(uploadFailurePage);
     let profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
@@ -1993,7 +2109,7 @@ describe("solo browser smoke", () => {
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
     await uploadFailurePage.getByRole("button", { name: "Sign out" }).click();
-    await uploadFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(uploadFailurePage);
     profileRegion = uploadFailurePage.getByRole("region", { name: "Profile" });
     assert.equal(
       await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
@@ -2011,7 +2127,7 @@ describe("solo browser smoke", () => {
     await saveFailurePage.goto(
       `${staticServer.origin}/?testAccountProfile=save-fails`,
     );
-    await saveFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(saveFailurePage);
     profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-input]")
@@ -2023,7 +2139,7 @@ describe("solo browser smoke", () => {
       .waitFor({ state: "visible" });
     await assertTextHidden(profileRegion, "Profile saved.");
     await saveFailurePage.getByRole("button", { name: "Sign out" }).click();
-    await saveFailurePage.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(saveFailurePage);
     profileRegion = saveFailurePage.getByRole("region", { name: "Profile" });
     assert.equal(
       await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
@@ -2046,7 +2162,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoPendingGameDom(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertNoPendingGameDom(page);
     await openMultiplayerRoute(page);
@@ -2072,7 +2188,7 @@ describe("solo browser smoke", () => {
     await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
 
     assertNoConsoleErrors();
@@ -2089,7 +2205,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPendingGame=expire-immediately`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
@@ -2111,7 +2227,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Incoming invites");
     await assertTextVisible(page, "Expired");
@@ -2143,7 +2259,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
@@ -2155,7 +2271,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Invitee Two");
     await assertTextHidden(page, "@invitee-two");
@@ -2169,7 +2285,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Accepted");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Player");
     await assertTextVisible(page, "Invitee Two");
@@ -2190,7 +2306,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
@@ -2201,7 +2317,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Decline invite from Player" })
@@ -2209,7 +2325,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Game invite declined.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Cancelled");
     await assertTextVisible(page, "Declined");
@@ -2232,7 +2348,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
@@ -2244,7 +2360,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
@@ -2252,7 +2368,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Game invite accepted.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
@@ -2262,7 +2378,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting your entries");
     await submitMultiplayerSection(page, "teapot");
@@ -2284,7 +2400,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await assertTextVisible(page, "Batches completed");
@@ -2292,7 +2408,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Your crazy phrases");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openFavouritesRoute(page);
     assert.equal(
       await page
@@ -2333,7 +2449,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.getByRole("button", { name: "Create invite" }).click();
@@ -2343,7 +2459,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
@@ -2351,13 +2467,13 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Game invite accepted.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
     await assertTextVisible(page, "Game started. Your turn is ready.");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
     assert.equal(
@@ -2417,32 +2533,32 @@ describe("solo browser smoke", () => {
       0,
     );
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await assertTextVisible(page, "Batches completed");
@@ -2474,7 +2590,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "View all completed batches" }).click();
 
@@ -2518,7 +2634,7 @@ describe("solo browser smoke", () => {
     await page.goto(
       `${staticServer.origin}/?testPendingGame=history-load-more-fails`,
     );
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "View all completed batches" }).click();
 
@@ -2563,7 +2679,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPendingGame=history-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Batches completed");
 
@@ -2592,32 +2708,32 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails-once`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await page.getByRole("button", { name: "View all completed batches" }).click();
@@ -2648,21 +2764,21 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
     await assertTextVisible(page, "Awaiting your entries");
@@ -2679,7 +2795,7 @@ describe("solo browser smoke", () => {
     );
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     assert.equal(
       await page.getByRole("button", { name: "Submit section" }).count(),
@@ -2706,32 +2822,32 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPendingGame=reveal-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
     await page.getByRole("button", { name: "Create invite" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await page
       .getByRole("button", { name: "Accept invite from Player" })
       .click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "teapot");
     await submitMultiplayerSection(page, "ladder");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await page.getByRole("button", { name: "Reveal phrases" }).click();
@@ -2760,7 +2876,7 @@ describe("solo browser smoke", () => {
     await assertNoNotificationDom(page);
     assert.equal(await page.locator("[data-favourites-route]").count(), 0);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertTextVisible(page, "Favourites");
@@ -2795,7 +2911,7 @@ describe("solo browser smoke", () => {
     });
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     assert.equal(
       await page.evaluate(() =>
@@ -2820,7 +2936,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails#/favourites`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     await assertTextVisible(page, "Could not load phrase favourites.");
     assert.equal(
@@ -2849,7 +2965,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails-once#/favourites`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     await assertTextVisible(page, "Could not load phrase favourites.");
     assert.equal(
@@ -2892,9 +3008,9 @@ describe("solo browser smoke", () => {
       phraseText: stalePhrase,
     });
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "Sign out" }).click();
-    await page.getByRole("button", { name: "Test invitee sign in" }).click();
+    await signInWithLocalTestAccount(page, { invitee: true });
 
     await assertTextVisible(page, "Invitee Two");
     await assertTextAbsent(page, "@invitee-two");
@@ -2943,7 +3059,7 @@ describe("solo browser smoke", () => {
       null,
     );
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoFavouritesPanelDom(page);
@@ -2975,10 +3091,10 @@ describe("solo browser smoke", () => {
     await page.reload();
 
     assert.equal(new URL(page.url()).hash, "");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoFavouritesPanelDom(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertFavouriteSurfaceMounted(page);
@@ -3016,7 +3132,7 @@ describe("solo browser smoke", () => {
       `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
     );
     await page.waitForFunction(() => window.location.hash === "#/play/solo");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoFavouritesPanelDom(page);
     const preservedHandoff = await page.evaluate(() =>
       JSON.parse(
@@ -3026,7 +3142,7 @@ describe("solo browser smoke", () => {
     assert.equal(preservedHandoff.route, "#/favourites");
     assert.equal(Number.isFinite(preservedHandoff.createdAt), true);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertFavouriteSurfaceMounted(page);
@@ -3095,7 +3211,7 @@ describe("solo browser smoke", () => {
     await page.goto(
       `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
     );
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
 
     await page.evaluate(() => {
@@ -3109,7 +3225,7 @@ describe("solo browser smoke", () => {
     assert.notEqual(preservedHandoff, null);
     assert.equal(JSON.parse(preservedHandoff).route, "#/play/multiplayer");
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await page.waitForFunction(
       () =>
@@ -3144,7 +3260,7 @@ describe("solo browser smoke", () => {
     });
     await page.reload();
     assert.equal(new URL(page.url()).hash, "");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
 
     await page.evaluate(() => {
@@ -3163,7 +3279,7 @@ describe("solo browser smoke", () => {
       );
     });
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await page.waitForFunction(
       () => window.__hostedAuthUrlCleanupApplied === true,
@@ -3211,7 +3327,7 @@ describe("solo browser smoke", () => {
     });
     await page.reload();
     assert.equal(new URL(page.url()).hash, "");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
 
     await page.evaluate(() => {
@@ -3232,7 +3348,7 @@ describe("solo browser smoke", () => {
       );
     });
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await page.waitForFunction(
       () => window.__hostedAuthDelayedUrlCleanupApplied === true,
@@ -3274,7 +3390,7 @@ describe("solo browser smoke", () => {
     });
     await page.goto(`${staticServer.origin}/#/account/settings`);
     await page.waitForFunction(() => window.location.hash === "#/play/solo");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     assert.equal(
       await page.evaluate(() =>
         window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
@@ -3306,7 +3422,7 @@ describe("solo browser smoke", () => {
     await assertNoFavouriteDom(page);
     await assertNoNotificationDom(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
@@ -3353,7 +3469,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/#/play/multiplayer`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
     await assertPendingGameSurfaceMounted(page);
@@ -3378,8 +3494,8 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "Sign out" }).focus();
     await page.keyboard.press("Enter");
-    await assertTextVisible(page, "Anonymous solo");
-    await assertTextVisible(page, "Local play in this browser");
+    await assertAnonymousAccountIconVisible(page);
+    await assertAnonymousSignInSurfaceClosed(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     assert.equal(
       await page.evaluate(() =>
@@ -3395,13 +3511,13 @@ describe("solo browser smoke", () => {
     await releaseDelayedPendingGameInviteCreation(page);
     await page.waitForTimeout(100);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertNoPendingGameDom(page);
     await assertNoFavouriteDom(page);
     await assertNoProfileEditorDom(page);
     await assertNoNotificationDom(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(new URL(page.url()).hash, "#/play/solo");
 
@@ -3428,7 +3544,7 @@ describe("solo browser smoke", () => {
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "10" }).click();
@@ -3617,21 +3733,21 @@ describe("solo browser smoke", () => {
     await restoreClipboardWrite(page);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
     await assertNoFavouriteDom(page);
     await assertNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
 
     await page.reload();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
@@ -3678,15 +3794,15 @@ describe("solo browser smoke", () => {
 
     await openPlayRoute(page);
     await page.reload();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
     assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
     assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await assertTextVisible(page, "Anonymous solo");
+    await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
 
     assertNoConsoleErrors();
@@ -3703,7 +3819,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=save-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3728,7 +3844,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3788,7 +3904,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3835,7 +3951,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=save-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3871,7 +3987,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=load-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
 
     await assertTextVisible(page, "Account-backed mode");
     await assertTextVisible(
@@ -3906,7 +4022,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=conflict-save`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3931,7 +4047,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=remove-fails`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -3998,7 +4114,7 @@ describe("solo browser smoke", () => {
     await page.goto(
       `${staticServer.origin}/?testPrivateFavourites=remove-fails-after-delay`,
     );
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -4040,7 +4156,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -4087,7 +4203,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
-    await page.getByRole("button", { name: "Test sign in" }).click();
+    await signInWithLocalTestAccount(page);
     await assertTextVisible(page, "Account-backed mode");
 
     await page.getByRole("button", { name: "10" }).click();
@@ -4387,6 +4503,72 @@ async function expectFontAwesomeClass(locator, ...classNames) {
 async function expectFavouriteToggleState(locator, { pressed, style }) {
   assert.equal(await locator.getAttribute("aria-pressed"), String(pressed));
   await expectFontAwesomeClass(locator, `fa-${style}`, "fa-heart");
+}
+
+async function routeHostedAuthConfig(context) {
+  await context.route("**/assets/supabase-config.js*", async (route) => {
+    await route.fulfill({
+      contentType: "text/javascript; charset=utf-8",
+      body: `
+        export const SUPABASE_RUNTIME_CONFIG = Object.freeze({
+          publishableKey: "sb_publishable_test",
+          url: "https://example.supabase.co",
+        });
+
+        export function getSupabaseRuntimeConfig(config = SUPABASE_RUNTIME_CONFIG) {
+          return {
+            configured: true,
+            publishableKey: config.publishableKey,
+            url: config.url,
+          };
+        }
+      `,
+    });
+  });
+}
+
+async function visibleTextContent(locator) {
+  return locator.evaluate((element) =>
+    Array.from(element.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent)
+      .join("")
+      .trim(),
+  );
+}
+
+async function assertAnonymousAccountIconVisible(page) {
+  const accountSignIn = page.getByRole("button", { name: "Account sign in" });
+  await expectFontAwesomeClass(accountSignIn, "fa-regular", "fa-circle-user");
+  assert.equal(await accountSignIn.isVisible(), true);
+}
+
+async function assertAnonymousSignInSurfaceClosed(page) {
+  assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), false);
+  assert.equal(
+    await page.locator("[data-test-invitee-sign-in-button]").isVisible(),
+    false,
+  );
+  assert.equal(await page.locator("[data-google-sign-in-button]").isVisible(), false);
+  assert.equal(await page.locator("[data-email-sign-in-form]").isVisible(), false);
+}
+
+async function openAnonymousAccountSignIn(page) {
+  const accountSignIn = page.getByRole("button", { name: "Account sign in" });
+  assert.equal(await accountSignIn.isVisible(), true);
+
+  if ((await accountSignIn.getAttribute("aria-expanded")) !== "true") {
+    await accountSignIn.click();
+  }
+}
+
+async function signInWithLocalTestAccount(page, { invitee = false } = {}) {
+  await openAnonymousAccountSignIn(page);
+  await page
+    .getByRole("button", {
+      name: invitee ? "Test invitee sign in" : "Test sign in",
+    })
+    .click();
 }
 
 async function assertTextHidden(page, text) {

@@ -252,14 +252,14 @@ Auth user.
 - Read: `docs/runbooks/supabase-auth-and-postgres.md`
 - Update later: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Reconfirm the mutation scope immediately before reset**
+- [x] **Step 1: Reconfirm the mutation scope immediately before reset**
 
 State the exact approved mode, the Supabase project ref
 `egnudphshvqdhrotxrfs`, and the current counts. Confirm that this is a hosted
 backend mutation that may affect all static hostnames using the shared
 Supabase project.
 
-- [ ] **Step 2: Delete approved avatar Storage objects if required**
+- [x] **Step 2: Delete approved avatar Storage objects if required**
 
 Only if approved in Task 4, delete avatar Storage objects whose paths are
 listed by `public.uploaded_avatar_objects`. Record counts before and after.
@@ -272,7 +272,13 @@ available Supabase connector exposes SQL and migration tools but no Storage API
 object-removal tool. No Storage objects, Account Profile rows, Account Profile
 Directory rows, app data, or Auth users were deleted.
 
-- [ ] **Step 3: Run the approved app-profile reset transaction**
+Execution note, 2026-07-02: the owner deleted the seven metadata-linked Uploaded
+Avatar Storage objects through the Supabase Dashboard. A follow-up read-only
+SQL check found one remaining `avatars` Storage object with no matching
+`public.uploaded_avatar_objects` metadata row; that object was outside the
+approved metadata-linked avatar reset scope and was left untouched.
+
+- [x] **Step 3: Run the approved app-profile reset transaction**
 
 For the preferred app-profile reset, execute this as an approved hosted SQL
 mutation:
@@ -300,7 +306,7 @@ Expected:
   and `public.uploaded_avatar_objects`;
 - `auth.users` remains intact in the preferred reset mode.
 
-- [ ] **Step 4: Run full Auth deletion only if separately approved**
+- [x] **Step 4: Run full Auth deletion only if separately approved**
 
 If the owner chose full Auth reset, delete the Auth user only after app data and
 approved Storage objects have been cleared. Use Supabase Dashboard/Auth Admin or
@@ -308,7 +314,11 @@ another approved admin route. Record that existing JWTs may remain usable until
 expiry and require the browser session to sign out or be cleared before
 validation.
 
-- [ ] **Step 5: Verify the migration precondition**
+Execution note, 2026-07-02: not applicable to the approved reset mode. The owner
+approved app-profile reset plus avatar Storage deletion while keeping the Auth
+user, so no Auth deletion was performed.
+
+- [x] **Step 5: Verify the migration precondition**
 
 Run read-only SQL:
 
@@ -322,6 +332,18 @@ from public.account_profile_directory;
 
 Expected: both counts are `0`. If either count is non-zero, do not apply the
 migration.
+
+Execution note, 2026-07-02: after explicit owner approval, Codex ran the
+app-profile reset transaction against hosted Supabase project
+`egnudphshvqdhrotxrfs`. Post-reset read-only verification returned these counts:
+`public.account_profiles` `0`, `public.account_profile_directory` `0`,
+`public.uploaded_avatar_objects` `0`, `storage.objects:avatars` `1`,
+`auth.users` `1`, `public.signed_in_solo_current_games` `0`,
+`public.private_phrase_favourites` `0`, `public.private_batch_favourites` `0`,
+`public.pending_games` `0`, `public.games` `0`, and
+`public.in_app_notifications` `0`. The hosted migration precondition is
+satisfied, but Task 6 remains blocked until the owner gives separate explicit
+approval to apply the migration.
 
 ## Task 6: Hosted Migration Application
 

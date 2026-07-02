@@ -510,6 +510,18 @@ ownership metadata. Cleanup failure must not report profile-save success; it
 should leave the object marked or discoverable as abandoned for a later cleanup
 path.
 
+Supabase Storage object deletion must go through the Storage API, not SQL
+against `storage.objects`. SQL can inspect Storage metadata for verification and
+policy design, but deleting metadata directly can leave the underlying object
+orphaned in the bucket. Application cleanup should call the Storage client, for
+example `supabase.storage.from("avatars").remove(paths)`, with no more than 1000
+paths per call. The caller still needs a matching `storage.objects` `DELETE` RLS
+policy for the objects being removed, unless the deletion runs through a
+separately approved server-owned route. After Storage API deletion succeeds,
+reconcile `public.uploaded_avatar_objects` metadata in the same user-visible
+cleanup flow; if metadata reconciliation fails after object removal, surface a
+retryable cleanup state instead of reporting silent success.
+
 The first Uploaded Avatar implementation should use direct authenticated browser
 uploads to Supabase Storage. Add an Edge Function or custom server upload path
 only when current Supabase Storage policy support cannot enforce the accepted

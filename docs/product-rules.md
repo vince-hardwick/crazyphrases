@@ -1204,11 +1204,13 @@ snapshotted for display. Any future Auth-email change feature must define how
 known-email lookup, invite resolution, and privacy expectations behave before it ships.
 
 Replacing the current Uploaded Avatar must not break completed-game history that already
-snapshots an older Uploaded Avatar descriptor. The first Uploaded Avatar slice should
-clean up clearly abandoned objects from failed or retried uploads where practical, but
-it must not delete older uploaded objects merely because the live Account Profile now
-points at a different Avatar. Account-deletion media retention and broader
-uploaded-avatar garbage collection remain separate lifecycle decisions.
+snapshots an older Uploaded Avatar descriptor, or batch favourites and other durable
+history/favourite snapshots that still render an older Avatar. The first Uploaded Avatar
+slice should clean up clearly abandoned objects from failed or retried uploads where
+practical. The avatar image gallery slice should add cleanup for superseded uploaded
+objects once the app can prove no current profile, completed-game history, batch
+favourite, or other durable snapshot still references them. Account-deletion media
+retention remains a separate lifecycle decision.
 
 Participants may remove the live Uploaded Avatar from their Account Profile by choosing
 and saving a Built-in Avatar. This switches the live Account Profile descriptor back to

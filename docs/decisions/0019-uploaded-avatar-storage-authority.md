@@ -126,17 +126,28 @@ surface.
 
 Replacing the live Account Profile's Uploaded Avatar must not delete older
 uploaded objects that may still be referenced by completed-game participant
-snapshots. The first slice should upload the new object, save the new Avatar
-descriptor, and clean up only clearly unreferenced abandoned objects from failed
-or retried uploads where practical. Account-deletion media retention and broader
-garbage collection for historical Uploaded Avatars remain separate lifecycle
-decisions.
+snapshots, batch favourites, or other durable history/favourite snapshots. The
+first slice should upload the new object, save the new Avatar descriptor, and
+clean up only clearly unreferenced abandoned objects from failed or retried
+uploads where practical. The avatar image gallery slice should add cleanup for
+superseded Uploaded Avatar objects once reference checks prove that no current
+profile, completed-game history, batch favourite, or other durable snapshot can
+still render them. Account-deletion media retention remains a separate lifecycle
+decision.
 
 Participants may remove the live Uploaded Avatar from their Account Profile by
 choosing and saving a Built-in Avatar. That changes the live Account Profile
 descriptor back to the selected Built-in Avatar but does not delete older
 uploaded objects that may still be referenced by completed-game participant
 snapshots.
+
+Supabase Storage object deletion must use the Storage API, not direct SQL
+deletion from `storage.objects`. SQL may verify metadata and drive reference
+checks, but application cleanup must remove object bytes through a Storage API
+path such as `supabase.storage.from("avatars").remove(paths)`, then reconcile the
+private uploaded-avatar ownership metadata. Deletion authority must still be
+owner-scoped through Storage RLS or a separately approved narrow server-owned
+route.
 
 The first Uploaded Avatar slice should use direct authenticated browser uploads
 to Supabase Storage rather than adding an Edge Function or custom server upload
@@ -187,6 +198,9 @@ is unavailable for that operation.
   revisited before Uploaded Avatars are used in public discovery surfaces.
 - Replacing a live profile Avatar must not break completed-game history that
   snapshots an older Uploaded Avatar descriptor.
+- Superseded Uploaded Avatar cleanup belongs with the avatar image gallery slice
+  once no completed game, batch favourite, current profile, or other durable
+  snapshot can render the old object.
 - The default upload path is direct authenticated browser upload; adding a
   server-owned upload path requires a concrete policy limitation or other
   approved need.

@@ -1,9 +1,9 @@
 # Private Lookup Hosted Reset and Migration Implementation Plan
 
-> **Status:** Draft/active planning as of 2026-07-02. Do not execute hosted
-> reads, writes, resets, migrations, deployments, or PR readiness changes from
-> this plan until the owner approves the plan and then approves each named gate.
-> PR #152 must remain draft while this planning status is active.
+> **Status:** Active closeout as of 2026-07-02. Hosted reset, migration,
+> final-head `dev` smoke, PR #152 merge, `test` smoke, and production smoke have
+> completed after the required owner approvals. Documentation, issue, and branch
+> cleanup are the remaining closeout actions.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or
@@ -36,7 +36,9 @@ Supabase state ledger.
 ## Non-Negotiables
 
 - PR #152 stays draft until the owner explicitly approves moving it out of
-  planning and into merge readiness.
+  planning and into merge readiness. This gate was satisfied before the
+  protected PR merge; future reruns of this plan must preserve the same approval
+  boundary.
 - Detecting the branch, hostname, Supabase project ref, or GitHub Environment
   does not authorise mutation.
 - Do not commit, paste into chat, or store the owner's email address, service
@@ -531,13 +533,19 @@ write/cleanup smoke was approved.
 **Files:**
 - Update later: PR #152 and issue #151
 
-- [ ] **Step 1: Ask whether to mark PR #152 ready**
+- [x] **Step 1: Ask whether to mark PR #152 ready**
 
 Only after Tasks 1-7 pass, ask the owner to approve marking PR #152 ready for
 review/merge. Do not mark the PR ready while this draft plan is still awaiting
 approval.
 
-- [ ] **Step 2: Merge only through the protected PR path**
+Execution note, 2026-07-02: after the fixed `dev` deployment smoke passed and
+the owner confirmed PR #152 was reviewed and OK, PR #152 was marked ready for
+review. Redundant deploy-dev run `28599358996` (`Deploy dev #91`) was cancelled
+instead of approved because run `28599339472` (`Deploy dev #90`) had already
+deployed and passed smoke for the same final branch head.
+
+- [x] **Step 2: Merge only through the protected PR path**
 
 Merge only when:
 
@@ -547,6 +555,9 @@ Merge only when:
 - the final branch head received fresh approved `dev` deployment and visible
   smoke.
 
+Execution note, 2026-07-02: PR #152 merged through the protected PR path as
+merge commit `423fbe09ff14c4ea58a5fde0ce7d1f7910f037e5`.
+
 ## Task 9: Main to Test and Production Promotion
 
 **Files:**
@@ -554,25 +565,71 @@ Merge only when:
 - Read: `docs/runbooks/in-app-browser-verification.md`
 - Update later: `docs/planning/supabase-state-ledger.md`
 
-- [ ] **Step 1: Validate the merged main commit in test**
+- [x] **Step 1: Validate the merged main commit in test**
 
 After merge, let the promotion workflow deploy the exact `main` merge commit to
 `test`. If it waits for the `test` GitHub Environment gate, pause until the
 owner confirms approval. Then run visible in-app browser smoke against
 `https://test.crazyphrases.com/` with the same behavioural checks from Task 7.
 
-- [ ] **Step 2: Keep production waiting until test acceptance passes**
+Execution note, 2026-07-02: promotion run `28600531467` deployed merge commit
+`423fbe09ff14c4ea58a5fde0ce7d1f7910f037e5` to `test` after owner approval for
+the `Deploy main to test` GitHub Environment gate. The `Deploy main to test`
+job succeeded from 2026-07-02T15:13:40Z to 2026-07-02T15:13:57Z. Visible
+in-app browser smoke on `https://test.crazyphrases.com/#/play/multiplayer`
+passed: the app was Account-backed with account detail `Player`; the profile
+editor showed `Gamer Tag` and no visible `Gamer Name` or `Handle` labels; the
+invite form rendered one lookup input labelled `Email or Gamer Tag`; unknown
+email lookup showed `No gamer found under that email address`; unknown Gamer
+Tag lookup showed `No gamer found under that gamer tag.`; the submitted fake
+email address was not visible after the lookups; observed first-party assets
+including `site.css`, `app.js`, `account-profile.js`, `pending-game.js`,
+`supabase-config.js`, and `word-bank-seed.json` were stamped with the merge
+commit and no unstamped first-party `.js`, `.css`, or `.json` assets were
+observed; a 390 px mobile viewport had `overflowX = 0`; and browser
+warning/error logs were empty. No second hosted Auth/Profile fixture, successful
+hosted invite, or production deployment was created during this smoke.
+
+- [x] **Step 2: Keep production waiting until test acceptance passes**
 
 Do not approve production while `test` validation is incomplete or failing. A
 waiting production gate does not block test validation.
 
-- [ ] **Step 3: Promote to production only after explicit approval**
+Execution note, 2026-07-02: production remained waiting at the separate
+`Deploy main to production` GitHub Environment gate, job `84808527755`, while
+`test` validation completed. The next deployment action is explicit owner
+approval for production, followed by production smoke.
+
+- [x] **Step 3: Promote to production only after explicit approval**
 
 After test acceptance, ask for explicit production approval. Then validate
 `https://www.crazyphrases.com/` with a read-only smoke unless the owner
 separately approves production data mutation. Confirm the promoted static
 assets are stamped with the merge commit and that the browser does not expose
 email in identity or lookup results.
+
+Execution note, 2026-07-02: after explicit owner approval, promotion run
+`28600531467` deployed merge commit
+`423fbe09ff14c4ea58a5fde0ce7d1f7910f037e5` to production. The
+`Deploy main to production` job succeeded from 2026-07-02T15:24:09Z to
+2026-07-02T15:24:29Z after strict FTPS target verification, Supabase runtime
+config rendering, asset stamping, and FTPS upload. Visible production browser
+verification at `https://www.crazyphrases.com/#/play/multiplayer` confirmed
+Account-backed mode with account detail `Player`, profile copy `Gamer Tag`, no
+visible `Gamer Name` or `Handle` labels, one invite lookup input labelled
+`Email or Gamer Tag`, zero visible email-like strings in page copy, exact
+unknown-email copy `No gamer found under that email address`, exact unknown
+Gamer Tag copy `No gamer found under that gamer tag.`, no visible submitted
+fake email address after the lookups, no created-invite success state, and no
+Pending Game summary. Observed first-party assets including `site.css`,
+`app.js`, `account-profile.js`, `pending-game.js`, `supabase-config.js`, and
+`word-bank-seed.json` were stamped with the merge commit; all 19 observed
+first-party assets were stamped and no unstamped first-party `.js`, `.css`, or
+`.json` asset was observed. A 390 px mobile viewport had `overflowX = 0`, one
+lookup input, Gamer Tag profile copy, no old identity labels, and zero visible
+email-like strings in page copy. Browser warning/error logs were empty. No
+second hosted Auth/Profile fixture, successful hosted invite, or production
+game-data write/cleanup smoke was created.
 
 ## Task 10: Documentation and Issue Closeout
 
@@ -582,7 +639,7 @@ email in identity or lookup results.
 - Update: issue #151
 - Update: PR #152
 
-- [ ] **Step 1: Record hosted evidence**
+- [x] **Step 1: Record hosted evidence**
 
 Add dated state-ledger entries for:
 
@@ -592,6 +649,9 @@ Add dated state-ledger entries for:
 - Supabase advisor result summary;
 - dev, test, and production smoke evidence;
 - any intentionally deferred successful hosted lookup with a second account.
+
+Execution note, 2026-07-02: hosted evidence through production promotion has
+been recorded in this plan and in `docs/planning/supabase-state-ledger.md`.
 
 - [ ] **Step 2: Reconcile docs and issues**
 

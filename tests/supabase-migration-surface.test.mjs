@@ -83,6 +83,9 @@ const uploadedAvatarProfileMigrationUrl = findMigrationUrl(
 const gamerTagSnapshotRpcCleanupMigrationUrl = findMigrationUrl(
   "gamer_tag_snapshot_rpc_cleanup",
 );
+const legacyIdentityColumnCleanupMigrationUrl = findMigrationUrl(
+  "legacy_identity_column_cleanup",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1619,6 +1622,80 @@ describe("Supabase migration surface", () => {
       migration,
       /grant execute on function public\.cancel_created_game\(uuid\)\s+to authenticated/,
     );
+  });
+
+  it("removes legacy identity storage columns from active profile and participant surfaces", () => {
+    assert.equal(existsSync(legacyIdentityColumnCleanupMigrationUrl), true);
+    assert.ok(
+      legacyIdentityColumnCleanupMigrationUrl.pathname >
+        gamerTagSnapshotRpcCleanupMigrationUrl.pathname,
+      "legacy identity column cleanup must run after Gamer Tag RPC cleanup",
+    );
+
+    const migration = readFileSync(
+      legacyIdentityColumnCleanupMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(migration, /alter table public\.pending_game_participants[\s\S]*add column if not exists gamer_tag text/);
+    assert.match(migration, /alter table public\.game_participants[\s\S]*add column if not exists gamer_tag text/);
+    assert.match(migration, /update public\.pending_game_participants[\s\S]*set gamer_tag = left\(btrim\(gamer_name\), 40\)/);
+    assert.match(migration, /update public\.game_participants[\s\S]*set gamer_tag = left\(btrim\(gamer_name\), 40\)/);
+
+    assert.match(migration, /create or replace function private\.sync_account_profile_lookup_identity\(\)/);
+    assert.match(migration, /create or replace function private\.sync_account_profile_directory\(\)/);
+    assert.match(migration, /create or replace function private\.create_pending_game_participants\(\)/);
+    assert.match(migration, /create or replace function private\.create_started_game_participants\(\)/);
+    assert.match(migration, /create or replace function private\.multiplayer_participant_message\(/);
+    assert.match(migration, /create or replace function public\.list_multiplayer_dashboard\(\)/);
+    assert.match(migration, /create or replace function public\.list_completed_multiplayer_history\(/);
+    assert.match(migration, /create or replace function public\.cancel_created_game\(/);
+
+    assert.match(
+      migration,
+      /grant select \(account_id, profile_id, gamer_tag, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant insert \(account_id, profile_id, gamer_tag, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant update \(gamer_tag, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profiles\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /grant select \(profile_id, gamer_tag, avatar_type, avatar_key, avatar_object_path\)\s+on table public\.account_profile_directory\s+to authenticated/,
+    );
+
+    for (const tableName of [
+      "account_profiles",
+      "account_profile_directory",
+      "pending_game_participants",
+      "game_participants",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`alter table public\\.${tableName}[\\s\\S]*drop column if exists handle`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`alter table public\\.${tableName}[\\s\\S]*drop column if exists gamer_name`),
+      );
+    }
+
+    assert.doesNotMatch(migration, /participant\.gamer_name/);
+    assert.doesNotMatch(migration, /participant\.handle/);
+    assert.doesNotMatch(migration, /creator\.gamer_name/);
+    assert.doesNotMatch(migration, /creator\.handle/);
+    assert.doesNotMatch(migration, /new\.gamer_name/);
+    assert.doesNotMatch(migration, /new\.handle/);
+    assert.doesNotMatch(migration, /excluded\.gamer_name/);
+    assert.doesNotMatch(migration, /excluded\.handle/);
+    assert.doesNotMatch(migration, /public\.cancel_created_game\.started_game_id/);
+    assert.doesNotMatch(migration, /grant [^;]*handle[^;]*on table public\.(account_profiles|account_profile_directory)/i);
+    assert.doesNotMatch(migration, /grant [^;]*gamer_name[^;]*on table public\.(account_profiles|account_profile_directory)/i);
+    assert.doesNotMatch(migration, /grant [^;]*email_lookup_key[^;]*on table public\.account_profiles/i);
   });
 
   it("adds Uploaded Avatar storage, descriptor, and snapshot authority", () => {

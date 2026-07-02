@@ -598,7 +598,7 @@ export function createSupabasePendingGameRepository({
 
       const creatorResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, gamer_tag, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, avatar_key")
         .eq("account_id", creatorAccountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -645,7 +645,7 @@ export function createSupabasePendingGameRepository({
       const participantResponse = await supabase
         .from("pending_game_participants")
         .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+          "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
         )
         .eq("pending_game_id", pendingGameResponse.data.id);
       assertNoSupabaseError(
@@ -677,7 +677,7 @@ export function createSupabasePendingGameRepository({
           const participantResponse = await supabase
             .from("pending_game_participants")
             .select(
-              "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+              "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
             )
             .eq("pending_game_id", pendingGameRow.id);
           assertNoSupabaseError(
@@ -705,7 +705,7 @@ export function createSupabasePendingGameRepository({
 
       const inviteeResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, gamer_tag, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, avatar_key")
         .eq("account_id", accountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -733,7 +733,7 @@ export function createSupabasePendingGameRepository({
           const participantResponse = await supabase
             .from("pending_game_participants")
             .select(
-              "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+              "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
             )
             .eq("pending_game_id", pendingGameRow.id);
           assertNoSupabaseError(
@@ -762,7 +762,7 @@ export function createSupabasePendingGameRepository({
 
       const inviteeResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, avatar_key")
         .eq("account_id", accountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -805,7 +805,7 @@ export function createSupabasePendingGameRepository({
       const participantResponse = await supabase
         .from("pending_game_participants")
         .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+          "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
         )
         .eq("pending_game_id", pendingGameId);
       assertNoSupabaseError(
@@ -826,7 +826,7 @@ export function createSupabasePendingGameRepository({
 
       const inviteeResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, avatar_key")
         .eq("account_id", accountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -869,7 +869,7 @@ export function createSupabasePendingGameRepository({
       const participantResponse = await supabase
         .from("pending_game_participants")
         .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+          "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
         )
         .eq("pending_game_id", pendingGameId);
       assertNoSupabaseError(
@@ -900,7 +900,7 @@ export function createSupabasePendingGameRepository({
       const participantResponse = await supabase
         .from("game_participants")
         .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role",
+          "profile_id, gamer_tag, avatar_key, participant_role",
         )
         .eq("game_id", startedGameResponse.data.id);
       assertNoSupabaseError(
@@ -930,7 +930,7 @@ export function createSupabasePendingGameRepository({
       const participantResponse = await supabase
         .from("pending_game_participants")
         .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
+          "profile_id, gamer_tag, avatar_key, participant_role, invite_status",
         )
         .eq("pending_game_id", pendingGameId);
       assertNoSupabaseError(
@@ -2077,10 +2077,7 @@ function defaultCreateNotificationId() {
 function recoverProfile(row) {
   return {
     profileId: assertText(row?.profile_id, "A profile id is required."),
-    gamerTag: assertText(
-      row?.gamer_tag ?? row?.gamer_name,
-      "A Gamer Tag is required.",
-    ),
+    gamerTag: assertText(row?.gamer_tag, "A Gamer Tag is required."),
     avatarKey: assertText(row?.avatar_key, "An Avatar key is required."),
   };
 }
@@ -2108,10 +2105,7 @@ function recoverPendingGame({
       role: row.participant_role,
       inviteStatus: row.invite_status,
       profileId: row.profile_id,
-      gamerTag: assertText(
-        row.gamer_tag ?? row.gamer_name,
-        "A participant Gamer Tag is required.",
-      ),
+      gamerTag: assertText(row.gamer_tag, "A participant Gamer Tag is required."),
       avatarKey: row.avatar_key,
     }))
     .toSorted((left, right) => roleOrder(left.role) - roleOrder(right.role));
@@ -2157,10 +2151,7 @@ function recoverStartedGame({ participantRows, startedGameRow }) {
     .map((row) => ({
       role: row.participant_role,
       profileId: row.profile_id,
-      gamerTag: assertText(
-        row.gamer_tag ?? row.gamer_name,
-        "A participant Gamer Tag is required.",
-      ),
+      gamerTag: assertText(row.gamer_tag, "A participant Gamer Tag is required."),
       avatarKey: row.avatar_key,
     }))
     .toSorted((left, right) => roleOrder(left.role) - roleOrder(right.role));
@@ -2321,8 +2312,7 @@ function recoverMultiplayerBatch(
 function recoverOptionalParticipantGamerTag(participant) {
   const value =
     participant?.gamerTag ??
-    participant?.gamer_tag ??
-    participant?.gamer_name;
+    participant?.gamer_tag;
   const normalised = String(value ?? "").trim();
   return normalised === "" ? null : normalised;
 }

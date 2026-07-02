@@ -166,7 +166,7 @@ describe("Account Profile repository", () => {
     assert.equal(JSON.stringify(profile).includes("auth-account-2"), false);
   });
 
-  it("stores hosted Auth email as a private Supabase lookup key on profile creation", async () => {
+  it("does not transmit private email lookup or legacy identity columns from the browser", async () => {
     const supabase = createFakeAccountProfilesSupabase();
     const repository = createSupabaseAccountProfileRepository({
       createProfileId: () => "profile-private-lookup-4",
@@ -186,14 +186,14 @@ describe("Account Profile repository", () => {
           avatar_object_path: null,
           avatar_key: profile.avatarKey,
           avatar_type: "built-in",
-          email_lookup_key: "hosted.player@example.test",
-          gamer_name: "Player",
           gamer_tag: "Player",
-          handle: "player",
           profile_id: "profile-private-lookup-4",
         },
       },
     ]);
+    assert.equal("email_lookup_key" in supabase.insertCalls[0].row, false);
+    assert.equal("handle" in supabase.insertCalls[0].row, false);
+    assert.equal("gamer_name" in supabase.insertCalls[0].row, false);
     assert.equal(JSON.stringify(profile).includes("hosted.player@example.test"), false);
   });
 

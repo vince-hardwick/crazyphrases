@@ -6,7 +6,7 @@ import {
 
 const ACCOUNT_PROFILES_TABLE = "account_profiles";
 const PROFILE_SELECT_COLUMNS =
-  "profile_id, gamer_tag, handle, gamer_name, avatar_type, avatar_key, avatar_object_path";
+  "profile_id, gamer_tag, avatar_type, avatar_key, avatar_object_path";
 
 export function createMemoryAccountProfileRepository({
   createProfileId = defaultCreateProfileId,
@@ -245,10 +245,7 @@ export function createSupabaseAccountProfileRepository({
             avatar_object_path: null,
             avatar_key: normalisedProfile.avatarKey,
             avatar_type: normalisedProfile.avatar.type,
-            email_lookup_key: normaliseOptionalEmailLookupKey(email),
-            gamer_name: normalisedProfile.schemaMirror.gamerNameColumn,
             gamer_tag: normalisedProfile.gamerTag,
-            handle: normalisedProfile.schemaMirror.handleColumn,
             profile_id: profileId,
           })
           .select(PROFILE_SELECT_COLUMNS)
@@ -283,9 +280,7 @@ export function createSupabaseAccountProfileRepository({
               : null,
           avatar_key: normalisedProfile.avatarKey,
           avatar_type: normalisedProfile.avatar.type,
-          gamer_name: normalisedProfile.schemaMirror.gamerNameColumn,
           gamer_tag: normalisedProfile.gamerTag,
-          handle: normalisedProfile.schemaMirror.handleColumn,
         })
         .eq("account_id", accountId)
         .select(PROFILE_SELECT_COLUMNS)
@@ -348,10 +343,6 @@ function normaliseProfile({ accountId, profile }) {
     },
   }).profile;
   const gamerTag = normaliseGamerTag(shellProfile.gamerTag);
-  const schemaMirror = {
-    gamerNameColumn: gamerTag,
-    handleColumn: createLegacyStorageHandle(gamerTag),
-  };
 
   return {
     ...shellProfile,
@@ -359,20 +350,7 @@ function normaliseProfile({ accountId, profile }) {
       profile.emailLookupKey ?? profile.lookupEmail ?? profile.email,
     ),
     gamerTag,
-    // The current hosted schema still has legacy columns. Keep them isolated
-    // from app-facing profile DTOs until a later schema migration removes them.
-    schemaMirror,
   };
-}
-
-function createLegacyStorageHandle(gamerTag) {
-  const normalised = String(gamerTag ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return normalised.length >= 3 ? normalised.slice(0, 30) : "player";
 }
 
 function normaliseLookupKey(lookupKey) {

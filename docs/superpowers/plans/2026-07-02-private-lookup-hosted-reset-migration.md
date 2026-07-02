@@ -217,7 +217,7 @@ were recorded in this plan.
 - Read: `docs/decisions/0023-private-email-lookup-and-gamer-tag.md`
 - Read: `docs/runbooks/supabase-auth-and-postgres.md`
 
-- [ ] **Step 1: Present the reset choice to the owner**
+- [x] **Step 1: Present the reset choice to the owner**
 
 Present these options with the read-only counts:
 
@@ -235,12 +235,16 @@ Present these options with the read-only counts:
 Do not proceed until the owner chooses one mode and explicitly approves the
 hosted reset.
 
-- [ ] **Step 2: Confirm Storage treatment if avatar objects exist**
+- [x] **Step 2: Confirm Storage treatment if avatar objects exist**
 
 If `public.uploaded_avatar_objects` or `storage.objects:avatars` has rows,
 present the object count and ask whether to delete those avatar Storage objects
 as part of the reset. Storage deletion is a live hosted mutation and needs
 separate approval from SQL row deletion.
+
+Execution note, 2026-07-02: the owner approved the preferred app-profile reset
+plus deletion of the seven avatar Storage objects, while keeping the Supabase
+Auth user.
 
 ## Task 5: Hosted Reset Execution
 
@@ -260,6 +264,13 @@ Supabase project.
 Only if approved in Task 4, delete avatar Storage objects whose paths are
 listed by `public.uploaded_avatar_objects`. Record counts before and after.
 If Storage deletion fails, stop before deleting profile metadata.
+
+Execution note, 2026-07-02: stopped before hosted deletion. Current Supabase
+Storage docs say deleting objects should use the Storage API and not SQL,
+because SQL deletion from `storage.objects` can orphan bucket files. The
+available Supabase connector exposes SQL and migration tools but no Storage API
+object-removal tool. No Storage objects, Account Profile rows, Account Profile
+Directory rows, app data, or Auth users were deleted.
 
 - [ ] **Step 3: Run the approved app-profile reset transaction**
 

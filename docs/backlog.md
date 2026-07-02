@@ -526,24 +526,31 @@ preserve their original history.
   Auth email and is not public identity or a normal editable profile field unless a
   later accepted design adds Auth-email change behaviour. Opening Settings should not
   change the current hash route; the panel should close back to the same route.
-- **Legacy identity display migration**: Deferred from the first private lookup-key
-  implementation slice on 2026-07-02. This slice updates the lookup resolver, invite
-  creation path, privacy rules, and durable docs, but it does not yet replace every
-  existing `Handle`/`Gamer Name` browser display, notification sentence, favourite
-  participant indicator, or completed-history string with Gamer Tag and Avatar. Revisit
-  before #151 is treated as complete or before any account Settings/navigation polish
-  ships. Remaining risk: mixed legacy copy can teach the old identity model even though
-  lookup no longer exposes email addresses or public email-backed values.
-- **Post-migration legacy-remnant audit**: Deferred on 2026-07-02 at owner request.
-  After the migration away from public/searchable `Handle` plus `Gamer Name` to
-  public/searchable Gamer Tag plus private non-editable known-email lookup is complete,
-  audit all test scripts and internal logic for obsolete legacy terminology and storage
-  assumptions. Remove or rename remnants that are no longer required, including
-  test-only helper names, DTO field names, internal repository method names, and SQL/RPC
-  helper names where the schema boundary has moved. Revisit when #151 has passed hosted
-  dev/test acceptance or before closing the identity migration issue. Remaining risk:
-  leaving legacy names in tests or internals can lead future agents to reintroduce the
-  superseded public Handle/Gamer Name model even if the browser UI is correct.
+- **Legacy identity display migration**: Completed on 2026-07-02 by the
+  legacy-identity-remnant cleanup slice. Browser Account Profile display/save, Pending
+  Game creation, notification copy generated through the active SQL helpers,
+  favourite participant indicators, dashboard participant JSON, completed-history
+  participant JSON, repository DTOs, and active test fixtures now use Gamer Tag as the
+  game-facing identity. The cleanup deliberately preserves current hosted storage
+  columns where the physical schema still names snapshot mirrors `handle` or
+  `gamer_name`; those columns are treated as storage implementation detail, not product
+  terminology.
+- **Post-migration legacy-remnant audit**: Completed on 2026-07-02 by the
+  legacy-identity-remnant cleanup slice after hosted dev/test/prod acceptance of the
+  private lookup and Gamer Tag migration. The audit removed the old public
+  `createPendingGameFromHandle` path, raw directory lookup exposure from active
+  repository tests, browser hidden-handle profile editing, `currentHandle` favourite
+  comparison, and app-facing participant/profile DTO fields for Handle and Gamer Name.
+  Remaining old names are limited to historical migrations/docs, absence assertions, and
+  storage-column mirrors pending the schema cleanup deferral below.
+- **Physical legacy identity column cleanup**: Deferred on 2026-07-02 after the
+  app-facing cleanup. Current hosted tables still include legacy-named storage columns
+  such as `handle` and `gamer_name` on Account Profile, directory, Pending Game
+  participant, and Started Game participant snapshots. The app and active RPC JSON now
+  translate those values to Gamer Tag at the boundary. Revisit after the new identity
+  model has settled in production and before any larger profile/history schema
+  redesign. Remaining risk: physical column names can confuse future schema work if an
+  agent treats them as product authority instead of storage mirrors.
 - **Unsaved editor confirmation**: Accepted as part of signed-in navigation design on
   2026-06-26 and superseded by #142 on 2026-07-02 for Settings consolidation. Closing
   the `Settings` panel with unsaved edits should require confirmation. The confirmation

@@ -11,24 +11,21 @@ import {
 const creatorProfile = {
   accountId: "creator-auth-account",
   profileId: "creator-profile-id",
-  handle: "creator-one",
-  gamerName: "Creator One",
+  gamerTag: "Creator One",
   avatarKey: "spark",
 };
 
 const inviteeProfile = {
   accountId: "invitee-auth-account",
   profileId: "invitee-profile-id",
-  handle: "invitee-two",
-  gamerName: "Invitee Two",
+  gamerTag: "Invitee Two",
   avatarKey: "paper",
 };
 
 const otherCreatorProfile = {
   accountId: "other-creator-auth-account",
   profileId: "other-creator-profile-id",
-  handle: "other-creator",
-  gamerName: "Other Creator",
+  gamerTag: "Other Creator",
   avatarKey: "moon",
 };
 
@@ -70,15 +67,15 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(byGamerTag).includes("invitee.two@example.test"), false);
   });
 
-  it("creates a browser-safe Pending Game from a handle invite", async () => {
+  it("creates a browser-safe Pending Game from a lookup key invite", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    const pendingGame = await repository.createPendingGameFromHandle({
+    const pendingGame = await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: "INVITEE-TWO",
+      lookupKey: "INVITEE TWO",
       rowCount: 10,
     });
 
@@ -92,16 +89,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: "creator-profile-id",
-          handle: "creator-one",
-          gamerName: "Creator One",
+          gamerTag: "Creator One",
           avatarKey: "spark",
         },
         {
           role: "invitee",
           inviteStatus: "pending",
           profileId: "invitee-profile-id",
-          handle: "invitee-two",
-          gamerName: "Invitee Two",
+          gamerTag: "Invitee Two",
           avatarKey: "paper",
         },
       ],
@@ -115,9 +110,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -136,16 +131,14 @@ describe("Pending Game repository", () => {
             role: "creator",
             inviteStatus: "accepted",
             profileId: "creator-profile-id",
-            handle: "creator-one",
-            gamerName: "Creator One",
+            gamerTag: "Creator One",
             avatarKey: "spark",
           },
           {
             role: "invitee",
             inviteStatus: "pending",
             profileId: "invitee-profile-id",
-            handle: "invitee-two",
-            gamerName: "Invitee Two",
+            gamerTag: "Invitee Two",
             avatarKey: "paper",
           },
         ],
@@ -162,9 +155,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -183,9 +176,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -204,16 +197,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: "creator-profile-id",
-          handle: "creator-one",
-          gamerName: "Creator One",
+          gamerTag: "Creator One",
           avatarKey: "spark",
         },
         {
           role: "invitee",
           inviteStatus: "accepted",
           profileId: "invitee-profile-id",
-          handle: "invitee-two",
-          gamerName: "Invitee Two",
+          gamerTag: "Invitee Two",
           avatarKey: "paper",
         },
       ],
@@ -229,9 +220,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -253,9 +244,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -274,16 +265,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: "creator-profile-id",
-          handle: "creator-one",
-          gamerName: "Creator One",
+          gamerTag: "Creator One",
           avatarKey: "spark",
         },
         {
           role: "invitee",
           inviteStatus: "declined",
           profileId: "invitee-profile-id",
-          handle: "invitee-two",
-          gamerName: "Invitee Two",
+          gamerTag: "Invitee Two",
           avatarKey: "paper",
         },
       ],
@@ -297,9 +286,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -322,16 +311,14 @@ describe("Pending Game repository", () => {
             role: "creator",
             inviteStatus: "accepted",
             profileId: "creator-profile-id",
-            handle: "creator-one",
-            gamerName: "Creator One",
+            gamerTag: "Creator One",
             avatarKey: "spark",
           },
           {
             role: "invitee",
             inviteStatus: "accepted",
             profileId: "invitee-profile-id",
-            handle: "invitee-two",
-            gamerName: "Invitee Two",
+            gamerTag: "Invitee Two",
             avatarKey: "paper",
           },
         ],
@@ -348,9 +335,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -370,9 +357,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -395,15 +382,13 @@ describe("Pending Game repository", () => {
         {
           role: "creator",
           profileId: "creator-profile-id",
-          handle: "creator-one",
-          gamerName: "Creator One",
+          gamerTag: "Creator One",
           avatarKey: "spark",
         },
         {
           role: "invitee",
           profileId: "invitee-profile-id",
-          handle: "invitee-two",
-          gamerName: "Invitee Two",
+          gamerTag: "Invitee Two",
           avatarKey: "paper",
         },
       ],
@@ -424,9 +409,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       nudgeTimeoutHours: 48,
       rowCount: 10,
     });
@@ -453,9 +438,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -484,9 +469,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -585,9 +570,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       nudgeTimeoutHours: 24,
       rowCount: 10,
     });
@@ -1069,16 +1054,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: "creator-profile-id",
-          handle: "creator-one",
-          gamerName: "Creator One",
+          gamerTag: "Creator One",
           avatarKey: "spark",
         },
         {
           role: "invitee",
           inviteStatus: "accepted",
           profileId: "invitee-profile-id",
-          handle: "invitee-two",
-          gamerName: "Invitee Two",
+          gamerTag: "Invitee Two",
           avatarKey: "paper",
         },
       ],
@@ -1150,9 +1133,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -1199,9 +1182,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -1383,9 +1366,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -1425,9 +1408,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -1488,9 +1471,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
 
@@ -1510,9 +1493,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.declinePendingGameInvite({
@@ -1536,9 +1519,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile, otherCreatorProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -1563,9 +1546,9 @@ describe("Pending Game repository", () => {
       profiles: [creatorProfile, inviteeProfile],
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 10,
     });
     await repository.acceptPendingGameInvite({
@@ -1587,35 +1570,35 @@ describe("Pending Game repository", () => {
     );
   });
 
-  it("rejects an unknown invitee Handle", async () => {
+  it("rejects an unknown invitee Gamer Tag", async () => {
     const repository = createTestPendingGameRepository({
       profiles: [creatorProfile],
     });
 
     await assert.rejects(
       () =>
-        repository.createPendingGameFromHandle({
+        repository.createPendingGameFromLookupKey({
           creatorAccountId: creatorProfile.accountId,
-          inviteeHandle: "missing-handle",
+          lookupKey: "Missing Gamer",
           rowCount: 10,
         }),
-      /handle/i,
+      /gamer tag/i,
     );
   });
 
-  it("rejects inviting the creator's own Handle", async () => {
+  it("rejects inviting the creator's own profile", async () => {
     const repository = createTestPendingGameRepository({
       profiles: [creatorProfile],
     });
 
     await assert.rejects(
       () =>
-        repository.createPendingGameFromHandle({
+        repository.createPendingGameFromLookupKey({
           creatorAccountId: creatorProfile.accountId,
-          inviteeHandle: creatorProfile.handle,
+          lookupKey: creatorProfile.gamerTag,
           rowCount: 10,
         }),
-      /own handle/i,
+      /own profile/i,
     );
   });
 
@@ -1626,9 +1609,9 @@ describe("Pending Game repository", () => {
 
     await assert.rejects(
       () =>
-        repository.createPendingGameFromHandle({
+        repository.createPendingGameFromLookupKey({
           creatorAccountId: creatorProfile.accountId,
-          inviteeHandle: inviteeProfile.handle,
+          lookupKey: inviteeProfile.gamerTag,
           rowCount: 12,
         }),
       /row count/i,
@@ -1642,9 +1625,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    const pendingGame = await repository.createPendingGameFromHandle({
+    const pendingGame = await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle.toUpperCase(),
+      lookupKey: inviteeProfile.gamerTag.toUpperCase(),
       nudgeTimeoutHours: 48,
       rowCount: 15,
     });
@@ -1660,23 +1643,20 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: creatorProfile.profileId,
-          handle: creatorProfile.handle,
-          gamerName: creatorProfile.gamerName,
+          gamerTag: creatorProfile.gamerTag,
           avatarKey: creatorProfile.avatarKey,
         },
         {
           role: "invitee",
           inviteStatus: "pending",
           profileId: inviteeProfile.profileId,
-          handle: inviteeProfile.handle,
-          gamerName: inviteeProfile.gamerName,
+          gamerTag: inviteeProfile.gamerTag,
           avatarKey: inviteeProfile.avatarKey,
         },
       ],
     });
     assert.deepEqual(supabase.tableCalls, [
       "account_profiles",
-      "account_profile_directory",
       "pending_games",
       "pending_game_participants",
     ]);
@@ -1724,9 +1704,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
 
@@ -1745,16 +1725,14 @@ describe("Pending Game repository", () => {
             role: "creator",
             inviteStatus: "accepted",
             profileId: creatorProfile.profileId,
-            handle: creatorProfile.handle,
-            gamerName: creatorProfile.gamerName,
+            gamerTag: creatorProfile.gamerTag,
             avatarKey: creatorProfile.avatarKey,
           },
           {
             role: "invitee",
             inviteStatus: "pending",
             profileId: inviteeProfile.profileId,
-            handle: inviteeProfile.handle,
-            gamerName: inviteeProfile.gamerName,
+            gamerTag: inviteeProfile.gamerTag,
             avatarKey: inviteeProfile.avatarKey,
           },
         ],
@@ -1774,9 +1752,9 @@ describe("Pending Game repository", () => {
       supabase,
     });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
 
@@ -1795,9 +1773,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
 
@@ -1816,16 +1794,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: creatorProfile.profileId,
-          handle: creatorProfile.handle,
-          gamerName: creatorProfile.gamerName,
+          gamerTag: creatorProfile.gamerTag,
           avatarKey: creatorProfile.avatarKey,
         },
         {
           role: "invitee",
           inviteStatus: "accepted",
           profileId: inviteeProfile.profileId,
-          handle: inviteeProfile.handle,
-          gamerName: inviteeProfile.gamerName,
+          gamerTag: inviteeProfile.gamerTag,
           avatarKey: inviteeProfile.avatarKey,
         },
       ],
@@ -1840,9 +1816,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
 
@@ -1861,16 +1837,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: creatorProfile.profileId,
-          handle: creatorProfile.handle,
-          gamerName: creatorProfile.gamerName,
+          gamerTag: creatorProfile.gamerTag,
           avatarKey: creatorProfile.avatarKey,
         },
         {
           role: "invitee",
           inviteStatus: "declined",
           profileId: inviteeProfile.profileId,
-          handle: inviteeProfile.handle,
-          gamerName: inviteeProfile.gamerName,
+          gamerTag: inviteeProfile.gamerTag,
           avatarKey: inviteeProfile.avatarKey,
         },
       ],
@@ -1885,9 +1859,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -1910,16 +1884,14 @@ describe("Pending Game repository", () => {
             role: "creator",
             inviteStatus: "accepted",
             profileId: creatorProfile.profileId,
-            handle: creatorProfile.handle,
-            gamerName: creatorProfile.gamerName,
+            gamerTag: creatorProfile.gamerTag,
             avatarKey: creatorProfile.avatarKey,
           },
           {
             role: "invitee",
             inviteStatus: "accepted",
             profileId: inviteeProfile.profileId,
-            handle: inviteeProfile.handle,
-            gamerName: inviteeProfile.gamerName,
+            gamerTag: inviteeProfile.gamerTag,
             avatarKey: inviteeProfile.avatarKey,
           },
         ],
@@ -1935,9 +1907,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       nudgeTimeoutHours: 48,
       rowCount: 15,
     });
@@ -1962,15 +1934,13 @@ describe("Pending Game repository", () => {
         {
           role: "creator",
           profileId: creatorProfile.profileId,
-          handle: creatorProfile.handle,
-          gamerName: creatorProfile.gamerName,
+          gamerTag: creatorProfile.gamerTag,
           avatarKey: creatorProfile.avatarKey,
         },
         {
           role: "invitee",
           profileId: inviteeProfile.profileId,
-          handle: inviteeProfile.handle,
-          gamerName: inviteeProfile.gamerName,
+          gamerTag: inviteeProfile.gamerTag,
           avatarKey: inviteeProfile.avatarKey,
         },
       ],
@@ -2006,9 +1976,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -2048,9 +2018,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -2080,7 +2050,10 @@ describe("Pending Game repository", () => {
       gameId: "supabase-started-game-1",
       status: "submitted",
     });
-    assert.deepEqual(supabase.rpcCalls, ["submit_started_game_turn"]);
+    assert.deepEqual(supabase.rpcCalls, [
+      "lookup_account_profile",
+      "submit_started_game_turn",
+    ]);
     assert.equal(supabase.submittedEntryRows.length, 15);
     assert.equal(
       await repository.loadActiveStartedGameTurn({
@@ -2133,8 +2106,8 @@ describe("Pending Game repository", () => {
         pendingGameId: "supabase-completed-pending-game-1",
         rowCount: 1,
         participants: [
-          { handle: creatorProfile.handle },
-          { handle: inviteeProfile.handle },
+          { gamerTag: creatorProfile.gamerTag },
+          { gamerTag: inviteeProfile.gamerTag },
         ],
         phrases: ["Brisk teapot cloud"],
         revealed: true,
@@ -2247,9 +2220,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -2281,16 +2254,14 @@ describe("Pending Game repository", () => {
           role: "creator",
           inviteStatus: "accepted",
           profileId: creatorProfile.profileId,
-          handle: creatorProfile.handle,
-          gamerName: creatorProfile.gamerName,
+          gamerTag: creatorProfile.gamerTag,
           avatarKey: creatorProfile.avatarKey,
         },
         {
           role: "invitee",
           inviteStatus: "accepted",
           profileId: inviteeProfile.profileId,
-          handle: inviteeProfile.handle,
-          gamerName: inviteeProfile.gamerName,
+          gamerTag: inviteeProfile.gamerTag,
           avatarKey: inviteeProfile.avatarKey,
         },
       ],
@@ -2305,9 +2276,9 @@ describe("Pending Game repository", () => {
     });
     const repository = createSupabasePendingGameRepository({ supabase });
 
-    await repository.createPendingGameFromHandle({
+    await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      inviteeHandle: inviteeProfile.handle,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 15,
     });
     await repository.acceptPendingGameInvite({
@@ -2459,7 +2430,7 @@ describe("Pending Game repository", () => {
     });
     const pendingGame = await repository.createPendingGameFromLookupKey({
       creatorAccountId: creatorProfile.accountId,
-      lookupKey: inviteeProfile.gamerName,
+      lookupKey: inviteeProfile.gamerTag,
       rowCount: 20,
     });
     const appSource = readFileSync(new URL("../assets/app.js", import.meta.url), "utf8");
@@ -2475,7 +2446,7 @@ describe("Pending Game repository", () => {
       /pendingGameRepository = createSupabasePendingGameRepository\(\{ supabase \}\)/,
     );
     assert.doesNotMatch(appSource, /createPendingGameFromHandle\(\{/);
-    assert.doesNotMatch(appSource, /Handle not found/);
+    assert.doesNotMatch(appSource, /Gamer Tag not found/);
   });
 });
 
@@ -2851,12 +2822,6 @@ class FakePendingGameQuery {
         .map(toAccountProfileRow);
     }
 
-    if (this.tableName === "account_profile_directory") {
-      return this.filters.handle === this.state.inviteeProfile.handle
-        ? [toDirectoryProfileRow(this.state.inviteeProfile)]
-        : [];
-    }
-
     if (this.tableName === "pending_games" && this.insertedRow) {
       this.state.pendingGame = {
         id: "supabase-pending-game-1",
@@ -3024,22 +2989,19 @@ class FakePendingGameQuery {
 function toAccountProfileRow(profile) {
   return {
     profile_id: profile.profileId,
-    handle: profile.handle,
-    gamer_name: profile.gamerName,
+    handle: legacyStorageHandle(profile.gamerTag),
+    gamer_name: profile.gamerTag,
+    gamer_tag: profile.gamerTag,
     avatar_key: profile.avatarKey,
   };
-}
-
-function toDirectoryProfileRow(profile) {
-  return toAccountProfileRow(profile);
 }
 
 function toParticipantRow(profile, { inviteStatus, pendingGameId, role }) {
   return {
     pending_game_id: pendingGameId,
     profile_id: profile.profileId,
-    handle: profile.handle,
-    gamer_name: profile.gamerName,
+    handle: legacyStorageHandle(profile.gamerTag),
+    gamer_name: profile.gamerTag,
     avatar_key: profile.avatarKey,
     participant_role: role,
     invite_status: inviteStatus,
@@ -3057,6 +3019,14 @@ function toStartedParticipantRow(participant, { gameId }) {
   };
 }
 
+function legacyStorageHandle(gamerTag) {
+  return String(gamerTag ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
   return {
     awaitingYourEntries: [
@@ -3065,8 +3035,8 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
         pendingGameId: "supabase-pending-game-1",
         rowCount: 1,
         participants: [
-          { handle: creatorProfile.handle },
-          { handle: inviteeProfile.handle },
+          { gamerTag: creatorProfile.gamerTag },
+          { gamerTag: inviteeProfile.gamerTag },
         ],
         currentSection: {
           id: "supabase-section-1",
@@ -3084,8 +3054,8 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
         pendingGameId: "supabase-completed-pending-game-1",
         rowCount: 1,
         participants: [
-          { handle: creatorProfile.handle },
-          { handle: inviteeProfile.handle },
+          { gamerTag: creatorProfile.gamerTag },
+          { gamerTag: inviteeProfile.gamerTag },
         ],
         phrases: ["Brisk teapot cloud"],
         revealed: true,
@@ -3208,8 +3178,7 @@ function createSequenceId(prefix) {
 function createPlayerTestCreatorProfile() {
   return {
     ...creatorProfile,
-    handle: "player-test-account",
-    gamerName: "Player Test Account",
+    gamerTag: "Player Test Account",
   };
 }
 
@@ -3221,9 +3190,9 @@ function createSubmittedEntries(rows, prefix) {
 }
 
 async function startAcceptedLocalGame(repository) {
-  const pendingGame = await repository.createPendingGameFromHandle({
+  const pendingGame = await repository.createPendingGameFromLookupKey({
     creatorAccountId: creatorProfile.accountId,
-    inviteeHandle: inviteeProfile.handle,
+    lookupKey: inviteeProfile.gamerTag,
     rowCount: 10,
   });
   await repository.acceptPendingGameInvite({
@@ -3272,3 +3241,4 @@ async function completeAcceptedLocalGame(
     adjectivePrefix,
   );
 }
+

@@ -5,9 +5,8 @@ import {
 } from "./account-shell.js?v=__ASSET_VERSION__";
 
 const ACCOUNT_PROFILES_TABLE = "account_profiles";
-const ACCOUNT_PROFILE_DIRECTORY_TABLE = "account_profile_directory";
 const PROFILE_SELECT_COLUMNS =
-  "profile_id, handle, gamer_name, avatar_type, avatar_key, avatar_object_path";
+  "profile_id, gamer_tag, handle, gamer_name, avatar_type, avatar_key, avatar_object_path";
 
 export function createMemoryAccountProfileRepository({
   createProfileId = defaultCreateProfileId,
@@ -15,7 +14,6 @@ export function createMemoryAccountProfileRepository({
   onChange = () => {},
 } = {}) {
   const rowsByAccountId = new Map();
-  const accountIdByHandle = new Map();
   const accountIdByEmailLookupKey = new Map();
   const accountIdByGamerTag = new Map();
 
@@ -42,8 +40,9 @@ export function createMemoryAccountProfileRepository({
 
       const profileId = createProfileId();
       const profile = createDefaultProfile({
-        accountId: profileId,
-        existingHandles: [...accountIdByHandle.keys()],
+        existingGamerTags: [...rowsByAccountId.values()].map(
+          (row) => row.gamerTag,
+        ),
       });
       const row = {
         accountId,
@@ -58,7 +57,6 @@ export function createMemoryAccountProfileRepository({
       };
 
       rowsByAccountId.set(accountId, row);
-      accountIdByHandle.set(row.handle, accountId);
       indexLookupKeys(row, accountId);
       notifyChange();
 
@@ -81,12 +79,13 @@ export function createMemoryAccountProfileRepository({
       }
 
       const updatedProfile = normaliseProfile({ accountId, profile });
-      const ownerOfHandle = accountIdByHandle.get(updatedProfile.handle);
-      if (ownerOfHandle && ownerOfHandle !== accountId) {
-        throw new Error("Handle is already in use.");
+      const ownerOfGamerTag = accountIdByGamerTag.get(
+        normaliseGamerTagLookupKey(updatedProfile.gamerTag),
+      );
+      if (ownerOfGamerTag && ownerOfGamerTag !== accountId) {
+        throw new Error("Gamer Tag is already in use.");
       }
 
-      accountIdByHandle.delete(existing.handle);
       unindexLookupKeys(existing);
 
       const row = {
@@ -95,7 +94,6 @@ export function createMemoryAccountProfileRepository({
         profileId: existing.profileId,
       };
       rowsByAccountId.set(accountId, row);
-      accountIdByHandle.set(row.handle, accountId);
       indexLookupKeys(row, accountId);
       notifyChange();
 
@@ -117,13 +115,6 @@ export function createMemoryAccountProfileRepository({
         ...(!row ? { message: missingLookupMessage(lookup.kind) } : {}),
       };
     },
-
-    async lookupProfileByHandle({ handle }) {
-      const accountId = accountIdByHandle.get(normaliseHandle(handle));
-      const row = accountId ? rowsByAccountId.get(accountId) : null;
-
-      return row ? toDirectoryProfile(row) : null;
-    },
   };
 
   function seedProfile(profile) {
@@ -141,12 +132,11 @@ export function createMemoryAccountProfileRepository({
       profileId,
     };
 
-    if (accountIdByHandle.has(row.handle)) {
-      throw new Error("Handle is already in use.");
+    if (accountIdByGamerTag.has(normaliseGamerTagLookupKey(row.gamerTag))) {
+      throw new Error("Gamer Tag is already in use.");
     }
 
     rowsByAccountId.set(accountId, row);
-    accountIdByHandle.set(row.handle, accountId);
     indexLookupKeys(row, accountId);
   }
 
@@ -236,10 +226,7 @@ export function createSupabaseAccountProfileRepository({
       }
 
       const profileId = createProfileId();
-      const baseProfile = createDefaultProfile({
-        accountId: profileId,
-        existingHandles: [],
-      });
+      const baseProfile = createDefaultProfile();
 
       for (let index = 0; index < 20; index += 1) {
         const profile =
@@ -247,20 +234,21 @@ export function createSupabaseAccountProfileRepository({
             ? baseProfile
             : {
                 ...baseProfile,
-                handle: `${baseProfile.handle}-${index + 1}`,
+                gamerTag: `${baseProfile.gamerTag} ${index + 1}`,
               };
+        const normalisedProfile = normaliseProfile({ accountId, profile });
 
         const response = await supabase
           .from(ACCOUNT_PROFILES_TABLE)
           .insert({
             account_id: accountId,
             avatar_object_path: null,
-            avatar_key: profile.avatarKey,
-            avatar_type: profile.avatar.type,
+            avatar_key: normalisedProfile.avatarKey,
+            avatar_type: normalisedProfile.avatar.type,
             email_lookup_key: normaliseOptionalEmailLookupKey(email),
-            gamer_name: profile.gamerName,
-            gamer_tag: normaliseGamerTag(profile.gamerName),
-            handle: profile.handle,
+            gamer_name: normalisedProfile.schemaMirror.gamerNameColumn,
+            gamer_tag: normalisedProfile.gamerTag,
+            handle: normalisedProfile.schemaMirror.handleColumn,
             profile_id: profileId,
           })
           .select(PROFILE_SELECT_COLUMNS)
@@ -277,7 +265,7 @@ export function createSupabaseAccountProfileRepository({
         }
       }
 
-      throw new Error("No available Account Profile Handle candidate.");
+      throw new Error("No available Account Profile Gamer Tag candidate.");
     },
 
     loadOwnProfile,
@@ -295,15 +283,16 @@ export function createSupabaseAccountProfileRepository({
               : null,
           avatar_key: normalisedProfile.avatarKey,
           avatar_type: normalisedProfile.avatar.type,
-          gamer_name: normalisedProfile.gamerName,
-          handle: normalisedProfile.handle,
+          gamer_name: normalisedProfile.schemaMirror.gamerNameColumn,
+          gamer_tag: normalisedProfile.gamerTag,
+          handle: normalisedProfile.schemaMirror.handleColumn,
         })
         .eq("account_id", accountId)
         .select(PROFILE_SELECT_COLUMNS)
         .maybeSingle();
 
       if (isUniqueConstraintError(response?.error)) {
-        throw new Error("Handle is already in use.");
+        throw new Error("Gamer Tag is already in use.");
       }
 
       assertNoSupabaseError(response, "Could not update Account Profile");
@@ -313,18 +302,6 @@ export function createSupabaseAccountProfileRepository({
       }
 
       return recoverSupabaseProfile(response.data);
-    },
-
-    async lookupProfileByHandle({ handle }) {
-      const response = await supabase
-        .from(ACCOUNT_PROFILE_DIRECTORY_TABLE)
-        .select(PROFILE_SELECT_COLUMNS)
-        .eq("handle", normaliseHandle(handle))
-        .maybeSingle();
-
-      assertNoSupabaseError(response, "Could not look up Account Profile");
-
-      return response.data ? recoverSupabaseProfile(response.data) : null;
     },
 
     async lookupProfileByLookupKey({ lookupKey }) {
@@ -361,33 +338,41 @@ function assertAccountId(accountId) {
 }
 
 function normaliseProfile({ accountId, profile }) {
-  const profileForLegacyShell = {
-    ...profile,
-    gamerName: profile.gamerName ?? profile.gamerTag,
-    handle: profile.handle ?? profile.gamerTag ?? `player-${accountId}`,
-  };
   const shellProfile = createAccountShell({
     account: {
       id: accountId,
     },
-    profile: profileForLegacyShell,
+    profile: {
+      ...profile,
+      gamerTag: profile.gamerTag,
+    },
   }).profile;
+  const gamerTag = normaliseGamerTag(shellProfile.gamerTag);
+  const schemaMirror = {
+    gamerNameColumn: gamerTag,
+    handleColumn: createLegacyStorageHandle(gamerTag),
+  };
 
   return {
     ...shellProfile,
     emailLookupKey: normaliseOptionalEmailLookupKey(
       profile.emailLookupKey ?? profile.lookupEmail ?? profile.email,
     ),
-    gamerTag: normaliseGamerTag(profile.gamerTag ?? shellProfile.gamerName),
+    gamerTag,
+    // The current hosted schema still has legacy columns. Keep them isolated
+    // from app-facing profile DTOs until a later schema migration removes them.
+    schemaMirror,
   };
 }
 
-function normaliseHandle(handle) {
-  return String(handle ?? "")
+function createLegacyStorageHandle(gamerTag) {
+  const normalised = String(gamerTag ?? "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+  return normalised.length >= 3 ? normalised.slice(0, 30) : "player";
 }
 
 function normaliseLookupKey(lookupKey) {
@@ -436,18 +421,7 @@ function missingLookupMessage(lookupKind) {
 function toOwnProfile(row) {
   return {
     profileId: row.profileId,
-    handle: row.handle,
-    gamerName: row.gamerName,
-    avatar: row.avatar,
-    avatarKey: row.avatarKey,
-  };
-}
-
-function toDirectoryProfile(row) {
-  return {
-    profileId: row.profileId,
-    handle: row.handle,
-    gamerName: row.gamerName,
+    gamerTag: row.gamerTag,
     avatar: row.avatar,
     avatarKey: row.avatarKey,
   };
@@ -467,8 +441,6 @@ function toStoredProfile(row) {
     accountId: row.accountId,
     profileId: row.profileId,
     emailLookupKey: row.emailLookupKey,
-    handle: row.handle,
-    gamerName: row.gamerName,
     gamerTag: row.gamerTag,
     avatar: row.avatar,
     avatarKey: row.avatarKey,
@@ -486,6 +458,10 @@ function recoverSupabaseProfile(row) {
           type: "built-in",
           key: row?.avatar_key,
         };
+  if (typeof row?.gamer_tag !== "string" || row.gamer_tag.trim() === "") {
+    throw new Error("A valid Account Profile row is required.");
+  }
+  const gamerTag = row.gamer_tag;
   const profile = {
     ...toOwnProfile({
       ...normaliseProfile({
@@ -493,8 +469,7 @@ function recoverSupabaseProfile(row) {
         profile: {
           avatar,
           avatarKey: row?.avatar_key,
-          gamerName: row?.gamer_name,
-          handle: row?.handle,
+          gamerTag,
           profileId: row?.profile_id,
         },
       }),
@@ -505,10 +480,8 @@ function recoverSupabaseProfile(row) {
   if (
     typeof profile.profileId !== "string" ||
     profile.profileId.trim() === "" ||
-    typeof profile.handle !== "string" ||
-    profile.handle.trim() === "" ||
-    typeof profile.gamerName !== "string" ||
-    profile.gamerName.trim() === "" ||
+    typeof profile.gamerTag !== "string" ||
+    profile.gamerTag.trim() === "" ||
     !profile.avatar ||
     typeof profile.avatar.type !== "string" ||
     typeof profile.avatarKey !== "string" ||
@@ -582,10 +555,8 @@ function recoverStoredProfile(profile) {
     profile.accountId.trim() === "" ||
     typeof profile?.profileId !== "string" ||
     profile.profileId.trim() === "" ||
-    typeof profile?.handle !== "string" ||
-    profile.handle.trim() === "" ||
-    typeof profile?.gamerName !== "string" ||
-    profile.gamerName.trim() === ""
+    typeof profile?.gamerTag !== "string" ||
+    profile.gamerTag.trim() === ""
   ) {
     throw new Error("A valid stored Account Profile is required.");
   }
@@ -598,8 +569,7 @@ function recoverStoredProfile(profile) {
   return {
     accountId: profile.accountId,
     profileId: profile.profileId,
-    handle: normalisedProfile.handle,
-    gamerName: normalisedProfile.gamerName,
+    gamerTag: normalisedProfile.gamerTag,
     avatar: normalisedProfile.avatar,
     avatarKey: normalisedProfile.avatarKey,
   };

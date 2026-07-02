@@ -18,9 +18,6 @@ export function createTestPendingGameRepository({
   const profilesByAccountId = new Map(
     normalisedProfiles.map((profile) => [profile.accountId, profile]),
   );
-  const profilesByHandle = new Map(
-    normalisedProfiles.map((profile) => [profile.handle, profile]),
-  );
   const profilesByEmailLookupKey = new Map(
     normalisedProfiles
       .filter((profile) => profile.emailLookupKey)
@@ -55,61 +52,6 @@ export function createTestPendingGameRepository({
   multiplayerCompletionOrder = completedMultiplayerBatches.length;
 
   return {
-    async createPendingGameFromHandle({
-      creatorAccountId,
-      inviteeHandle,
-      nudgeTimeoutHours,
-      rowCount = 20,
-    }) {
-      assertAccountId(creatorAccountId);
-      assertRowCount(rowCount);
-      if (nudgeTimeoutHours !== undefined) {
-        assertNudgeTimeoutHours(nudgeTimeoutHours);
-      }
-
-      const creatorProfile = profilesByAccountId.get(creatorAccountId);
-      if (!creatorProfile) {
-        throw new Error("Creator Account Profile is required.");
-      }
-
-      const inviteeProfile = profilesByHandle.get(normaliseHandle(inviteeHandle));
-      if (!inviteeProfile) {
-        throw new Error("Invitee Handle was not found.");
-      }
-
-      if (creatorProfile.profileId === inviteeProfile.profileId) {
-        throw new Error("A creator cannot invite their own Handle.");
-      }
-
-      const pendingGame = createPendingGameDto({
-        id: createPendingGameId(),
-        nudgeTimeoutHours,
-        rowCount,
-        status: "pending",
-        templateId: DEFAULT_TEMPLATE_ID,
-        participants: [
-          createParticipantDto(creatorProfile, {
-            inviteStatus: "accepted",
-            role: "creator",
-          }),
-          createParticipantDto(inviteeProfile, {
-            inviteStatus: "pending",
-            role: "invitee",
-          }),
-        ],
-      });
-      pendingGames.push(pendingGame);
-      pendingGameExpiryTimes.set(
-        pendingGame.id,
-        now().getTime() + pendingGameInviteExpiryMs,
-      );
-      return createEffectivePendingGameDto({
-        now,
-        pendingGame,
-        pendingGameExpiryTimes,
-      });
-    },
-
     async createPendingGameFromLookupKey({
       creatorAccountId,
       lookupKey,
@@ -642,81 +584,6 @@ export function createSupabasePendingGameRepository({
   }
 
   return {
-    async createPendingGameFromHandle({
-      creatorAccountId,
-      inviteeHandle,
-      nudgeTimeoutHours,
-      rowCount = 20,
-    }) {
-      assertAccountId(creatorAccountId);
-      assertRowCount(rowCount);
-      if (nudgeTimeoutHours !== undefined) {
-        assertNudgeTimeoutHours(nudgeTimeoutHours);
-      }
-
-      const creatorResponse = await supabase
-        .from("account_profiles")
-        .select("profile_id, handle, gamer_name, avatar_key")
-        .eq("account_id", creatorAccountId)
-        .maybeSingle();
-      assertNoSupabaseError(
-        creatorResponse,
-        "Could not load creator Account Profile",
-      );
-
-      if (!creatorResponse.data) {
-        throw new Error("Creator Account Profile is required.");
-      }
-
-      const creatorProfile = recoverProfile(creatorResponse.data);
-      const inviteeResponse = await supabase
-        .from("account_profile_directory")
-        .select("profile_id, handle, gamer_name, avatar_key")
-        .eq("handle", normaliseHandle(inviteeHandle))
-        .maybeSingle();
-      assertNoSupabaseError(inviteeResponse, "Could not look up invitee Handle");
-
-      if (!inviteeResponse.data) {
-        throw new Error("Invitee Handle was not found.");
-      }
-
-      const inviteeProfile = recoverProfile(inviteeResponse.data);
-      if (creatorProfile.profileId === inviteeProfile.profileId) {
-        throw new Error("A creator cannot invite their own Handle.");
-      }
-
-      const pendingGameResponse = await supabase
-        .from("pending_games")
-        .insert({
-          creator_account_id: creatorAccountId,
-          creator_profile_id: creatorProfile.profileId,
-          invitee_profile_id: inviteeProfile.profileId,
-          ...(nudgeTimeoutHours ? { nudge_timeout_hours: nudgeTimeoutHours } : {}),
-          row_count: rowCount,
-          template_id: DEFAULT_TEMPLATE_ID,
-        })
-        .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
-        .single();
-      assertNoSupabaseError(pendingGameResponse, "Could not create Pending Game");
-
-      const participantResponse = await supabase
-        .from("pending_game_participants")
-        .select(
-          "profile_id, handle, gamer_name, avatar_key, participant_role, invite_status",
-        )
-        .eq("pending_game_id", pendingGameResponse.data.id);
-      assertNoSupabaseError(
-        participantResponse,
-        "Could not load Pending Game participants",
-      );
-
-      return recoverPendingGame({
-        now,
-        participantRows: participantResponse.data,
-        pendingGameRow: pendingGameResponse.data,
-      });
-    },
-
     async createPendingGameFromLookupKey({
       creatorAccountId,
       lookupKey,
@@ -731,7 +598,7 @@ export function createSupabasePendingGameRepository({
 
       const creatorResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, gamer_name, avatar_key")
         .eq("account_id", creatorAccountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -838,7 +705,7 @@ export function createSupabasePendingGameRepository({
 
       const inviteeResponse = await supabase
         .from("account_profiles")
-        .select("profile_id, handle, gamer_name, avatar_key")
+        .select("profile_id, gamer_tag, gamer_name, avatar_key")
         .eq("account_id", accountId)
         .maybeSingle();
       assertNoSupabaseError(
@@ -1272,8 +1139,7 @@ function createParticipantDto(profile, { inviteStatus, role }) {
     role,
     inviteStatus,
     profileId: profile.profileId,
-    handle: profile.handle,
-    gamerName: profile.gamerName,
+    gamerTag: profile.gamerTag,
     avatarKey: profile.avatarKey,
   };
 }
@@ -1300,8 +1166,7 @@ function createStartedParticipantDto(participant) {
   return {
     role: participant.role,
     profileId: participant.profileId,
-    handle: participant.handle,
-    gamerName: participant.gamerName,
+    gamerTag: participant.gamerTag,
     avatarKey: participant.avatarKey,
   };
 }
@@ -1633,15 +1498,12 @@ function createParticipantNotificationMessage({ participants, text }) {
 }
 
 function getParticipantDisplayName(participant) {
-  const gamerTag = String(
-    participant?.gamerTag ?? participant?.gamerName ?? "",
-  ).trim();
+  const gamerTag = String(participant?.gamerTag ?? "").trim();
   if (gamerTag) {
     return gamerTag;
   }
 
-  const handle = String(participant?.handle ?? "").trim();
-  return handle ? `@${handle}` : "Unknown gamer";
+  return "Unknown gamer";
 }
 
 function createEmptyMultiplayerDashboard() {
@@ -1890,8 +1752,6 @@ function findCurrentAssignedSection({
 
 function toMultiplayerParticipantDto(participant) {
   return {
-    handle: participant.handle,
-    gamerName: participant.gamerName,
     gamerTag: participant.gamerTag,
   };
 }
@@ -2106,12 +1966,7 @@ function normaliseProfile(profile) {
       profile.emailLookupKey ?? profile.email,
     ),
     profileId: assertText(profile.profileId, "A profile id is required."),
-    handle: normaliseHandle(profile.handle),
-    gamerName: assertText(profile.gamerName, "A Gamer Name is required."),
-    gamerTag: assertText(
-      profile.gamerTag ?? profile.gamerName,
-      "A Gamer Tag is required.",
-    ),
+    gamerTag: assertText(profile.gamerTag, "A Gamer Tag is required."),
     avatarKey: assertText(profile.avatarKey, "An Avatar key is required."),
   };
 }
@@ -2172,14 +2027,6 @@ function assertText(value, message) {
   return value.trim();
 }
 
-function normaliseHandle(handle) {
-  return String(handle ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function normaliseLookupKey(lookupKey) {
   const value = assertText(lookupKey, "A lookup key is required.");
 
@@ -2230,8 +2077,10 @@ function defaultCreateNotificationId() {
 function recoverProfile(row) {
   return {
     profileId: assertText(row?.profile_id, "A profile id is required."),
-    handle: normaliseHandle(row?.handle),
-    gamerName: assertText(row?.gamer_name, "A Gamer Name is required."),
+    gamerTag: assertText(
+      row?.gamer_tag ?? row?.gamer_name,
+      "A Gamer Tag is required.",
+    ),
     avatarKey: assertText(row?.avatar_key, "An Avatar key is required."),
   };
 }
@@ -2259,8 +2108,10 @@ function recoverPendingGame({
       role: row.participant_role,
       inviteStatus: row.invite_status,
       profileId: row.profile_id,
-      handle: row.handle,
-      gamerName: row.gamer_name,
+      gamerTag: assertText(
+        row.gamer_tag ?? row.gamer_name,
+        "A participant Gamer Tag is required.",
+      ),
       avatarKey: row.avatar_key,
     }))
     .toSorted((left, right) => roleOrder(left.role) - roleOrder(right.role));
@@ -2306,8 +2157,10 @@ function recoverStartedGame({ participantRows, startedGameRow }) {
     .map((row) => ({
       role: row.participant_role,
       profileId: row.profile_id,
-      handle: row.handle,
-      gamerName: row.gamer_name,
+      gamerTag: assertText(
+        row.gamer_tag ?? row.gamer_name,
+        "A participant Gamer Tag is required.",
+      ),
       avatarKey: row.avatar_key,
     }))
     .toSorted((left, right) => roleOrder(left.role) - roleOrder(right.role));
@@ -2440,10 +2293,7 @@ function recoverMultiplayerBatch(
       const gamerTag = recoverOptionalParticipantGamerTag(participant);
 
       return {
-        handle: normaliseHandle(
-          assertText(participant?.handle, "A participant Handle is required."),
-        ),
-        ...(gamerTag ? { gamerName: gamerTag, gamerTag } : {}),
+        gamerTag: assertText(gamerTag, "A participant Gamer Tag is required."),
       };
     }),
     ...(includeCurrentSection
@@ -2472,7 +2322,6 @@ function recoverOptionalParticipantGamerTag(participant) {
   const value =
     participant?.gamerTag ??
     participant?.gamer_tag ??
-    participant?.gamerName ??
     participant?.gamer_name;
   const normalised = String(value ?? "").trim();
   return normalised === "" ? null : normalised;

@@ -38,8 +38,7 @@ describe("Supabase Auth session", () => {
           });
           return {
             profileId: "profile-directory-1",
-            handle: "captain-spoon",
-            gamerName: "Captain Spoon",
+            gamerTag: "Captain Spoon",
             avatarKey: "moon",
           };
         },
@@ -64,8 +63,7 @@ describe("Supabase Auth session", () => {
     assert.equal(shell.accountId, "auth-user-456");
     assert.deepEqual(shell.profile, {
       profileId: "profile-directory-1",
-      handle: "captain-spoon",
-      gamerName: "Captain Spoon",
+      gamerTag: "Captain Spoon",
       avatar: {
         type: "built-in",
         key: "yin-yang",

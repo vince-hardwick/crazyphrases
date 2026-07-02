@@ -4594,8 +4594,8 @@ async function routeSeededNotificationRepository(
             pendingGameId: "pending-game-newest",
             rowCount: 10,
             participants: [
-              { handle: "player-test-account" },
-              { handle: "invitee-two" },
+              { gamerTag: "Player" },
+              { gamerTag: "Invitee Two" },
             ],
             currentSection: {
               id: "started-game-newest-section",
@@ -4616,8 +4616,8 @@ async function routeSeededNotificationRepository(
             pendingGameId: "pending-game-completed",
             rowCount: 10,
             participants: [
-              { handle: "player-test-account" },
-              { handle: "invitee-two" },
+              { gamerTag: "Player" },
+              { gamerTag: "Invitee Two" },
             ],
             revealed: false,
           },`
@@ -4648,12 +4648,12 @@ ${completedBatchSeed}
           nudgeTimeoutHours: 48,
           participants: [
             {
-              handle: "player-test-account",
+              gamerTag: "Player",
               inviteStatus: "accepted",
               role: "creator",
             },
             {
-              handle: "invitee-two",
+              gamerTag: "Invitee Two",
               inviteStatus: "pending",
               role: "invitee",
             },
@@ -4846,10 +4846,6 @@ async function delayLocalTestPendingGameInviteCreation(context) {
 
   return {
     ...repository,
-    async createPendingGameFromHandle(args) {
-      await globalThis.__delayPendingGameCreate();
-      return repository.createPendingGameFromHandle(args);
-    },
     async createPendingGameFromLookupKey(args) {
       await globalThis.__delayPendingGameCreate();
       return repository.createPendingGameFromLookupKey(args);
@@ -4928,7 +4924,7 @@ async function seedLocalTestPhraseFavourite(
 
 async function assertNoProfileEditorDom(page) {
   assert.equal(await page.locator("[data-account-profile-panel]").count(), 0);
-  assert.equal(await page.locator("[data-account-profile-gamer-name]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-gamer-tag]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-handle]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-avatar]").count(), 0);
   assert.equal(
@@ -4977,7 +4973,7 @@ async function assertProfileManagementSurfaceMounted(page) {
   );
   assert.equal(
     await profileRegion.locator("[data-account-profile-handle]").count(),
-    1,
+    0,
   );
   await assertTextHidden(profileRegion, "Gamer Name");
   await assertTextHidden(profileRegion, "Handle");

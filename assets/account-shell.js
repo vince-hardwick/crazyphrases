@@ -1,4 +1,4 @@
-const DEFAULT_GAMER_NAME = "Player";
+const DEFAULT_GAMER_TAG = "Player";
 export const DEFAULT_BUILT_IN_AVATAR_KEY = "dice";
 export const BUILT_IN_AVATAR_KEYS = [
   "dice",
@@ -25,12 +25,16 @@ const LEGACY_BUILT_IN_AVATAR_KEYS = new Map([
   ["kite", "dragon"],
 ]);
 
-export function createAccountShell({ account, profile, existingHandles = [] } = {}) {
+export function createAccountShell({
+  account,
+  profile,
+  existingGamerTags = [],
+} = {}) {
   assertAccount(account);
 
   const accountId = account.id;
   const resolvedProfile =
-    profile ?? createDefaultProfile({ accountId, existingHandles });
+    profile ?? createDefaultProfile({ existingGamerTags });
 
   return {
     mode: "signed-in",
@@ -44,19 +48,18 @@ export function createAccountShell({ account, profile, existingHandles = [] } = 
   };
 }
 
-export function createDefaultProfile({ accountId, existingHandles = [] }) {
-  const handle = createUniqueHandle(`player-${handleSeed(accountId)}`, {
-    existingHandles,
+export function createDefaultProfile({ existingGamerTags = [] } = {}) {
+  const gamerTag = createUniqueGamerTag(DEFAULT_GAMER_TAG, {
+    existingGamerTags,
   });
 
   return {
-    handle,
-    gamerName: DEFAULT_GAMER_NAME,
+    gamerTag,
     avatar: createBuiltInAvatarDescriptor(
-      BUILT_IN_AVATAR_KEYS[stableIndex(accountId, BUILT_IN_AVATAR_KEYS.length)],
+      BUILT_IN_AVATAR_KEYS[stableIndex(gamerTag, BUILT_IN_AVATAR_KEYS.length)],
     ),
     avatarKey:
-      BUILT_IN_AVATAR_KEYS[stableIndex(accountId, BUILT_IN_AVATAR_KEYS.length)],
+      BUILT_IN_AVATAR_KEYS[stableIndex(gamerTag, BUILT_IN_AVATAR_KEYS.length)],
   };
 }
 
@@ -83,8 +86,7 @@ function normaliseProfile(profile) {
 
   return {
     profileId: normaliseProfileId(profile.profileId),
-    handle: normaliseHandle(profile.handle),
-    gamerName: normaliseGamerName(profile.gamerName),
+    gamerTag: normaliseGamerTag(profile.gamerTag),
     avatar,
     avatarKey:
       avatar.type === "built-in" ? avatar.key : DEFAULT_BUILT_IN_AVATAR_KEY,
@@ -96,19 +98,9 @@ function normaliseProfileId(profileId) {
   return normalised === "" ? null : normalised;
 }
 
-function normaliseHandle(handle) {
-  const normalised = slugify(handle).slice(0, 30);
-
-  if (normalised.length < 3) {
-    throw new Error("Handle must be at least 3 characters.");
-  }
-
-  return normalised;
-}
-
-function normaliseGamerName(gamerName) {
-  const normalised = String(gamerName ?? "").trim();
-  return normalised === "" ? DEFAULT_GAMER_NAME : normalised.slice(0, 40);
+function normaliseGamerTag(gamerTag) {
+  const normalised = String(gamerTag ?? "").trim();
+  return normalised === "" ? DEFAULT_GAMER_TAG : normalised.slice(0, 40);
 }
 
 export function normaliseBuiltInAvatarKey(avatarKey) {
@@ -165,29 +157,28 @@ function isUploadedAvatarObjectPath(objectPath) {
   );
 }
 
-function createUniqueHandle(baseHandle, { existingHandles }) {
+function createUniqueGamerTag(baseGamerTag, { existingGamerTags }) {
   const existing = new Set(
-    existingHandles.map((handle) => String(handle).trim().toLowerCase()),
+    existingGamerTags.map((gamerTag) =>
+      String(gamerTag).trim().toLocaleLowerCase("en-GB"),
+    ),
   );
-  const base = normaliseHandle(baseHandle);
+  const base = normaliseGamerTag(baseGamerTag);
+  const baseKey = base.toLocaleLowerCase("en-GB");
 
-  if (!existing.has(base)) {
+  if (!existing.has(baseKey)) {
     return base;
   }
 
   for (let suffix = 2; suffix < 1000; suffix += 1) {
-    const candidate = `${base}-${suffix}`;
+    const candidate = `${base} ${suffix}`;
 
-    if (!existing.has(candidate)) {
+    if (!existing.has(candidate.toLocaleLowerCase("en-GB"))) {
       return candidate;
     }
   }
 
-  throw new Error("No available handle candidate.");
-}
-
-function handleSeed(accountId) {
-  return slugify(accountId).slice(0, 18) || "account";
+  throw new Error("No available Gamer Tag candidate.");
 }
 
 function slugify(value) {

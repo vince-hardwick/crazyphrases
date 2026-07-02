@@ -134,6 +134,8 @@ revoke all on function private.sync_account_profile_directory()
 
 insert into public.account_profile_directory (
   profile_id,
+  gamer_name,
+  handle,
   gamer_tag,
   email_lookup_key,
   avatar_type,
@@ -142,6 +144,8 @@ insert into public.account_profile_directory (
 )
 select
   profile_id,
+  gamer_name,
+  handle,
   gamer_tag,
   email_lookup_key,
   avatar_type,
@@ -150,6 +154,8 @@ select
 from public.account_profiles
 on conflict (profile_id) do update
 set gamer_tag = excluded.gamer_tag,
+    gamer_name = excluded.gamer_name,
+    handle = excluded.handle,
     email_lookup_key = excluded.email_lookup_key,
     avatar_type = excluded.avatar_type,
     avatar_key = excluded.avatar_key,

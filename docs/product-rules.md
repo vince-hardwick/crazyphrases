@@ -336,6 +336,13 @@ from existing saved snapshot data without adding data-loading scope.
 
 Across viewport sizes, `Play` and `Favourites` remain visible as primary signed-in
 navigation controls rather than moving behind a hamburger or generic menu button.
+The top-level `Play` control is an icon-only Font Awesome Classic Solid `play`
+button with accessible name and hover/focus tooltip `Play`; it keeps a
+mobile-safe hit area and opens the Game Mode menu directly on keyboard, pointer,
+or touch activation.
+The Play menu options use default font weight, not bold text. `Solo play` is
+preceded by Font Awesome Classic Solid `user`, and `Multiplayer` is preceded by
+Font Awesome Classic Solid `user-group`.
 `Favourites` may be denoted by a Font Awesome Classic Solid `heart` icon instead of
 visible `Favourites` text on any device, provided the control keeps an accessible name
 of `Favourites`, mobile-safe hit area, and active-route state. When the control is
@@ -353,6 +360,11 @@ state after the participant chooses Favourites.
 The Notifications bell remains a utility control, and the account affordance remains the
 identity control. The `Play` dropdown and account menu may open as full-width mobile
 popovers or sheets on narrow screens.
+Header tooltip text should match the control's accessible action name in meaning and use
+default font weight. This applies to `Play`, `Favourites`, `Notifications`, `How to
+play`, account sign-in, the signed-in account affordance, `Settings`, `Sign out`, and
+new icon-only header controls added by later slices. Touch activation performs the action
+directly rather than requiring a tooltip-preview tap.
 
 #### Route model and account gates
 
@@ -449,7 +461,8 @@ The first account menu contains only `Settings` and `Sign out`. Do not add
 `Favourites`, completed history, notifications, social/profile-public links, or separate
 `Profile` and `Avatar` menu items to the account menu in this slice. `Settings` uses
 Font Awesome `sliders`, and `Sign out` uses Font Awesome
-`arrow-right-from-bracket`.
+`arrow-right-from-bracket`. Their visible menu text and hover/focus tooltip text use
+default font weight.
 
 `Settings` routes to `#/settings`, a signed-in-only focused editor view or panel for
 Gamer Tag and Avatar. Choosing `Settings` closes the account menu, updates the hash

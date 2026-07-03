@@ -1089,7 +1089,7 @@ function ensureNotificationShell() {
   notificationShell.dataset.notificationShell = "";
 
   notificationToggle = document.createElement("button");
-  notificationToggle.className = "icon-button notification-button";
+  notificationToggle.className = "icon-button tooltip-action notification-button";
   notificationToggle.type = "button";
   notificationToggle.setAttribute("aria-expanded", "false");
   notificationToggle.setAttribute("aria-controls", "notification-panel");
@@ -4079,6 +4079,7 @@ function updateNotificationToggle() {
       ? "Notifications"
       : `Notifications, ${unreadCount} unread`;
   notificationToggle.setAttribute("aria-label", label);
+  notificationToggle.dataset.tooltip = label;
   notificationToggle.dataset.unreadCount = String(unreadCount);
 
   const children = [

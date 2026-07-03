@@ -71,16 +71,16 @@ Gamer Tag lookup returns the same invite-safe profile result shape and never
 adds email addresses to the response. A Gamer Tag miss uses the fixed result
 copy `No gamer found under that gamer tag.`.
 
-The accepted hosted implementation may use a narrow authenticated
-`SECURITY DEFINER` lookup RPC to resolve the private `email_lookup_key` without
-granting direct browser `SELECT` access to that column. This is intentionally an
-authenticated lookup surface, not an anonymous or public browsing surface. The
-RPC must keep an authenticated-user guard, must not be executable by `anon` or
+The accepted hosted implementation resolves the private `email_lookup_key`
+without granting direct browser `SELECT` access to that column. This is
+intentionally an authenticated lookup surface, not an anonymous or public
+browsing surface. The public browser RPC must not be executable by `anon` or
 `public`, and must return only invite-safe fields such as opaque profile id,
-Gamer Tag, and Avatar descriptor data. Supabase security advisors may flag this
-shape as an authenticated-callable `SECURITY DEFINER` function; that warning is
-expected unless and until the lookup is redesigned through an equivalent
-narrower server-owned path that preserves the same privacy boundary.
+Gamer Tag, and Avatar descriptor data. After
+`20260703163721_remediate_supabase_advisor_lints.sql`, the public lookup RPC is
+a `SECURITY INVOKER` wrapper over a private helper; keep the privacy authority
+behind that private helper rather than reintroducing authenticated-callable
+public `SECURITY DEFINER` warnings.
 
 Hosted legacy Account Profile preservation is not required for this transition.
 On 2026-07-02, the owner confirmed that only one hosted user account exists and

@@ -191,6 +191,113 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("lets anonymous users toggle and reload a local dark theme from top nav", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+
+    const themeToggle = page.getByRole("button", { name: "Enable dark mode" });
+    await expectFontAwesomeClass(themeToggle, "fa-solid", "fa-moon");
+    await expectDefaultTooltip(themeToggle, "Enable dark mode");
+    assert.equal(await visibleTextContent(themeToggle), "");
+    assert.ok(
+      parseFloat(await themeToggle.evaluate((button) => getComputedStyle(button).minHeight)) >=
+        44,
+    );
+    assert.ok(
+      parseFloat(await themeToggle.evaluate((button) => getComputedStyle(button).minWidth)) >=
+        44,
+    );
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "light");
+    assert.equal(
+      await page.evaluate(() => document.querySelector('meta[name="color-scheme"]')?.content),
+      "light",
+    );
+    await assertAnonymousSignInSurfaceClosed(page);
+
+    await themeToggle.click();
+
+    const lightToggle = page.getByRole("button", { name: "Enable light mode" });
+    await expectFontAwesomeClass(lightToggle, "fa-solid", "fa-sun");
+    await expectDefaultTooltip(lightToggle, "Enable light mode");
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
+    assert.equal(
+      await page.evaluate(() => document.querySelector('meta[name="color-scheme"]')?.content),
+      "dark",
+    );
+
+    await page.reload();
+
+    const restoredToggle = page.getByRole("button", { name: "Enable light mode" });
+    await expectFontAwesomeClass(restoredToggle, "fa-solid", "fa-sun");
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
+    assert.equal(await page.locator("[data-account-menu-toggle]").isVisible(), false);
+    await assertAnonymousSignInSurfaceClosed(page);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("applies dark theme colours to signed-in Settings Avatar surfaces", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    await page.getByRole("button", { name: "Enable dark mode" }).click();
+    await openSettingsRouteFromAccountMenu(page);
+
+    await expectDarkBackground(page.locator("[data-account-profile-avatar-preview]"));
+    await expectDarkBackground(page.locator("[data-account-profile-avatar-option]").first());
+    await expectDarkBackground(page.locator("[data-account-profile-avatar-upload-button]"));
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("applies dark theme colours to signed-in Play and Multiplayer surfaces", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await page.getByRole("button", { name: "Enable dark mode" }).click();
+
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.locator("[data-row-index='0']").waitFor({ state: "visible" });
+    await expectDarkBackground(page.locator("[data-row-index='0']"));
+
+    await openMultiplayerRoute(page);
+    await expectDarkBackground(page.locator("[data-pending-game-lookup-key-input]"));
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+    await expectDarkBackground(page.locator("[data-pending-game-summary]"));
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("renders hosted sign-in controls as icon-first actions", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -5414,6 +5521,29 @@ async function expectFontAwesomeClass(locator, ...classNames) {
   for (const expectedClass of classNames) {
     assert.equal(className.includes(expectedClass), true);
   }
+}
+
+async function expectDarkBackground(locator) {
+  const backgroundColor = await locator.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  assert.ok(
+    getCssRgbBrightness(backgroundColor) < 96,
+    `Expected a dark background, got ${backgroundColor}`,
+  );
+}
+
+function getCssRgbBrightness(cssColor) {
+  const channels = cssColor
+    .match(/\d+(\.\d+)?/g)
+    ?.slice(0, 3)
+    .map(Number);
+  if (!channels || channels.length < 3) {
+    return 255;
+  }
+
+  const [red, green, blue] = channels;
+  return (red * 299 + green * 587 + blue * 114) / 1000;
 }
 
 async function expectFavouritesNavHeartState(page, style) {

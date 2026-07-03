@@ -105,6 +105,9 @@ const cancelStartAgainButton = document.querySelector("[data-cancel-start-again]
 const helpToggle = document.querySelector("[data-help-toggle]");
 const helpPanel = document.querySelector("#help-panel");
 const headerActions = document.querySelector(".header-actions");
+const themeToggle = document.querySelector("[data-theme-toggle]");
+const themeToggleIcon = document.querySelector("[data-theme-toggle-icon]");
+const themeMeta = document.querySelector('meta[name="color-scheme"]');
 let notificationShell = document.querySelector("[data-notification-shell]");
 let notificationToggle = document.querySelector("[data-notification-toggle]");
 let notificationPanel = document.querySelector("[data-notification-panel]");
@@ -159,6 +162,7 @@ const startNewCurrentGameButton = document.querySelector(
 
 const loadFailureMessage =
   "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.";
+const THEME_STORAGE_KEY = "crazyphrases.theme";
 const ROUTES = {
   playSolo: "#/play/solo",
   playMultiplayer: "#/play/multiplayer",
@@ -300,9 +304,16 @@ let accountProfileHashRestorationPending = false;
 let favouritesPanel = null;
 
 loadFontAwesomeKit();
+applyTheme(loadLocalTheme());
 loadWordBank();
 renderAccountShell(accountShell);
 void initialiseHostedAuth();
+
+themeToggle.addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", {
+    persist: true,
+  });
+});
 
 testSignInButton.addEventListener("click", async () => {
   await applyLocalTestAccountShell(localTestCreatorProfile);
@@ -663,6 +674,31 @@ if (window.location.hash && window.location.hash !== currentRoute) {
   }
 } else {
   renderRoute();
+}
+
+function loadLocalTheme() {
+  return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+}
+
+function applyTheme(theme, { persist = false } = {}) {
+  const selectedTheme = theme === "dark" ? "dark" : "light";
+  const nextAction =
+    selectedTheme === "dark" ? "Enable light mode" : "Enable dark mode";
+  const nextIcon = selectedTheme === "dark" ? "sun" : "moon";
+
+  document.documentElement.dataset.theme = selectedTheme;
+  if (themeMeta) {
+    themeMeta.content = selectedTheme;
+  }
+
+  themeToggle.setAttribute("aria-label", nextAction);
+  themeToggle.dataset.tooltip = nextAction;
+  themeToggle.querySelector(".sr-only").textContent = nextAction;
+  themeToggleIcon.className = `fa-solid fa-${nextIcon}`;
+
+  if (persist) {
+    window.localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
+  }
 }
 
 function normaliseRoute(hash) {

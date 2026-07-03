@@ -361,6 +361,14 @@ Anonymous mode must not mount or fetch account-scoped favourite-existence state.
 destination tabs own saved-output loading, empty, and error state after the participant
 chooses Favourites.
 
+The theme toggle is an always-available top-nav utility control. It uses Font Awesome
+Classic Solid `moon` with accessible name and tooltip `Enable dark mode` when the
+current presentation is light, and Font Awesome Classic Solid `sun` with accessible name
+and tooltip `Enable light mode` when the current presentation is dark. Theme choice is a
+local browser UI preference stored outside Account data; it does not require sign-in,
+does not mutate hosted Account records, and is restored from local browser storage on
+reload. If no local preference exists, the app starts in light mode.
+
 The Notifications bell remains a utility control, and the account affordance remains the
 identity control. The `Play` dropdown and account menu may open as full-width mobile
 popovers or sheets on narrow screens.

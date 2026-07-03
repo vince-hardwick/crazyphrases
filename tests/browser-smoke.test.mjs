@@ -105,10 +105,14 @@ describe("solo browser smoke", () => {
     assertDefaultTemplatePhrase(copiedPhrase);
     assert.doesNotMatch(copiedPhrase, /^\d+[\s.)-]/);
 
-    await page.getByRole("button", { name: "Copy phrase 2" }).click();
+    const copyPhraseButton = page.getByRole("button", { name: "Copy phrase 2" });
+    await expectFontAwesomeClass(copyPhraseButton, "fa-solid", "fa-copy");
+    await copyPhraseButton.click();
     assert.equal(await readClipboard(page), copiedPhrase);
 
-    await page.getByRole("button", { name: "Copy all" }).click();
+    const copyAllButton = page.getByRole("button", { name: "Copy all" });
+    await expectFontAwesomeClass(copyAllButton, "fa-solid", "fa-copy");
+    await copyAllButton.click();
     const batchCopy = normalizeLineEndings(await readClipboard(page));
     const batchLines = batchCopy.split("\n");
     assert.equal(batchLines[0], "Crazy Phrases");
@@ -1310,6 +1314,11 @@ describe("solo browser smoke", () => {
       await notificationItems.nth(1).getAttribute("aria-label"),
       "Unread: Older unread notification. Open Multiplayer",
     );
+    await expectFontAwesomeClass(
+      notificationItems.nth(1),
+      "fa-solid",
+      "fa-envelope-open-text",
+    );
     assert.equal(
       await notificationItems.nth(2).getAttribute("aria-label"),
       "Read: Already read notification. Open Multiplayer",
@@ -2433,7 +2442,9 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    const createInviteButton = page.getByRole("button", { name: "Create invite" });
+    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-envelope");
+    await createInviteButton.click();
     await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
 
     await openPlayRoute(page);
@@ -3165,7 +3176,9 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    const createInviteButton = page.getByRole("button", { name: "Create invite" });
+    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-envelope");
+    await createInviteButton.click();
 
     await assertTextVisible(
       page,
@@ -3271,9 +3284,15 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Incoming invites");
     await assertTextVisible(page, "Player");
     await assertTextVisible(page, "15 phrases");
-    await page
-      .getByRole("button", { name: "Accept invite from Player" })
-      .click();
+    const acceptInviteButton = page.getByRole("button", {
+      name: "Accept invite from Player",
+    });
+    await expectFontAwesomeClass(
+      acceptInviteButton,
+      "fa-solid",
+      "fa-envelope-circle-check",
+    );
+    await acceptInviteButton.click();
     await assertTextVisible(page, "Game invite accepted.");
     await assertTextVisible(page, "Accepted");
 
@@ -3312,9 +3331,15 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
-    await page
-      .getByRole("button", { name: "Decline invite from Player" })
-      .click();
+    const declineInviteButton = page.getByRole("button", {
+      name: "Decline invite from Player",
+    });
+    await expectFontAwesomeClass(
+      declineInviteButton,
+      "fa-solid",
+      "fa-rectangle-xmark",
+    );
+    await declineInviteButton.click();
     await assertTextVisible(page, "Game invite declined.");
 
     await signOutFromAccountMenu(page);
@@ -4688,7 +4713,16 @@ describe("solo browser smoke", () => {
     await openFavouritesRoute(page);
     const phraseFavouriteRow = await assertFavouriteVisible(page, copiedPhrase);
     await assertFavouriteRowParticipantVisible(phraseFavouriteRow, "Solo");
-    await page.getByRole("button", { name: "Copy phrase" }).click();
+    const favouritePhraseCopyButton = page.getByRole("button", {
+      name: "Copy phrase",
+    });
+    await expectFontAwesomeClass(
+      favouritePhraseCopyButton,
+      "fa-solid",
+      "fa-copy",
+    );
+    await expectDefaultTooltip(favouritePhraseCopyButton, "Copy phrase");
+    await favouritePhraseCopyButton.click();
     await waitForTextVisible(page, "Phrase copied.");
     await assertActiveElementMatches(page, {
       selector: "[data-copy-phrase-favourite-id]",
@@ -4697,7 +4731,15 @@ describe("solo browser smoke", () => {
     assert.equal(await readClipboard(page), copiedPhrase);
     const batchFavouriteRow = await assertBatchFavouriteVisible(page, batchCopy);
     await assertFavouriteRowParticipantVisible(batchFavouriteRow, "Solo");
-    await page.getByRole("button", { name: "View phrases" }).click();
+    const viewBatchPhrasesButton = page.getByRole("button", {
+      name: "View phrases",
+    });
+    await expectFontAwesomeClass(
+      viewBatchPhrasesButton,
+      "fa-solid",
+      "fa-table-list",
+    );
+    await viewBatchPhrasesButton.click();
     const expandedBatch = page.locator("[data-expanded-batch-favourite]");
     assert.equal(await expandedBatch.isVisible(), true);
     assert.equal(await expandedBatch.locator("li").count(), 10);
@@ -4719,7 +4761,24 @@ describe("solo browser smoke", () => {
       await page.getByRole("button", { name: "Hide phrases" }).isVisible(),
       true,
     );
-    await page.getByRole("button", { name: "Copy batch" }).click();
+    const hideBatchPhrasesButton = page.getByRole("button", {
+      name: "Hide phrases",
+    });
+    await expectFontAwesomeClass(
+      hideBatchPhrasesButton,
+      "fa-solid",
+      "fa-table-list",
+    );
+    const favouriteBatchCopyButton = page.getByRole("button", {
+      name: "Copy batch",
+    });
+    await expectFontAwesomeClass(
+      favouriteBatchCopyButton,
+      "fa-solid",
+      "fa-copy",
+    );
+    await expectDefaultTooltip(favouriteBatchCopyButton, "Copy batch");
+    await favouriteBatchCopyButton.click();
     await waitForTextVisible(page, "Batch copied.");
     await assertActiveElementMatches(page, {
       selector: "[data-copy-batch-favourite-id]",

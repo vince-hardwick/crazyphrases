@@ -1961,7 +1961,7 @@ describe("solo browser smoke", () => {
         document.querySelectorAll("[data-pending-game-panel]").length === 1,
     );
     await assertTextVisible(page, "Awaiting your entries");
-    await assertTextVisible(page, "Notification could not be marked read. Try again.");
+    await waitForTextVisible(page, "Notification could not be marked read. Try again.");
     assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
       {
         accountId: "test-account",
@@ -5512,7 +5512,11 @@ async function assertTextVisible(page, text) {
 }
 
 async function waitForTextVisible(page, text) {
-  await page.getByText(text).first().waitFor({ state: "visible" });
+  await page.waitForFunction(
+    (expectedText) => document.body?.innerText.includes(expectedText),
+    text,
+  );
+  await assertTextVisible(page, text);
 }
 
 async function expectFontAwesomeClass(locator, ...classNames) {

@@ -1239,7 +1239,7 @@ preserve their original history.
   Uploaded Avatars appear in public discovery surfaces or if abuse appears in signed-in
   game/profile contexts.
 
-- **Deferred to the avatar image gallery slice**: Programmatic cleanup of superseded
+- **Deferred beyond the Settings Avatar gallery slice**: Programmatic cleanup of superseded
   Uploaded Avatar objects that are no longer referenced by the current Account Profile,
   Account Profile Directory, active Pending Game participants, completed game history, or
   future favourite/history snapshots. The cleanup path must delete object bytes through
@@ -1251,9 +1251,13 @@ preserve their original history.
   owner-scoped delete authority for provably unreferenced historical objects or route the
   deletion through a narrow server-owned operation.
 - **Why deferred**: Superseded uploaded avatars are harmless at the current one-account
-  scale, and the correct deletion rule depends on the gallery/history reference model.
-- **Revisit when**: The avatar image gallery work begins, or storage accumulation,
-  billing, privacy, account deletion, or stale-media concerns become material earlier.
+  scale. Issue #146 deliberately changed only the Settings Avatar choice UI and kept the
+  existing rule that choosing a Built-in Avatar must not delete older Uploaded Avatar
+  objects that history or favourites may still render.
+- **Revisit when**: Storage accumulation, billing, privacy, account deletion, or
+  stale-media concerns become material, or when a dedicated media-retention cleanup issue
+  defines how to prove no current profile, completed game, favourite, or other durable
+  snapshot references an uploaded object.
 - **Remaining risk**: Historical avatar objects can accumulate until the gallery cleanup
   lifecycle exists. SQL-only cleanup is not acceptable because it can orphan bucket files
   in Supabase Storage.

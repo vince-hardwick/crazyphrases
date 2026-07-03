@@ -469,7 +469,10 @@ describe("solo browser smoke", () => {
     assert.equal(await visibleTextContent(resetChanges), "");
 
     await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
-    await settingsPanel.locator("[data-account-profile-avatar]").selectOption("dragon");
+    await settingsPanel
+      .getByRole("radiogroup", { name: "Avatar" })
+      .getByRole("radio", { name: "Dragon" })
+      .click();
     await resetChanges.click();
 
     assert.equal(
@@ -477,10 +480,188 @@ describe("solo browser smoke", () => {
       "Player",
     );
     assert.equal(
-      await settingsPanel.locator("[data-account-profile-avatar]").inputValue(),
-      "dice",
+      await settingsPanel
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dice" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     await assertTextHidden(settingsPanel, "Profile saved.");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders Settings Avatar choices as a circular gallery with an upload affordance", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    const avatarGallery = settingsPanel.getByRole("radiogroup", {
+      name: "Avatar",
+    });
+    await avatarGallery.waitFor({ state: "visible" });
+    assert.equal(
+      await settingsPanel.locator("[data-account-profile-avatar]").count(),
+      0,
+    );
+    assert.equal(
+      await settingsPanel
+        .locator("[data-account-profile-uploaded-avatar-input]")
+        .isVisible(),
+      false,
+    );
+    await assertTextHidden(settingsPanel, "Choose File");
+
+    const builtInAvatars = [
+      ["dice", "Dice"],
+      ["hat-wizard", "Hat Wizard"],
+      ["gamepad", "Gamepad"],
+      ["ghost", "Ghost"],
+      ["puzzle-piece", "Puzzle Piece"],
+      ["biohazard", "Biohazard"],
+      ["dragon", "Dragon"],
+      ["hurricane", "Hurricane"],
+      ["jedi", "Jedi"],
+      ["pizza-slice", "Pizza Slice"],
+      ["spaghetti-monster-flying", "Spaghetti Monster Flying"],
+      ["user-astronaut", "User Astronaut"],
+      ["yin-yang", "Yin Yang"],
+    ];
+    assert.equal(
+      await avatarGallery.locator("[data-account-profile-avatar-option]").count(),
+      builtInAvatars.length,
+    );
+
+    for (const [avatarKey, avatarLabel] of builtInAvatars) {
+      const option = avatarGallery.getByRole("radio", { name: avatarLabel });
+      assert.equal(await option.count(), 1);
+      assert.equal(await option.getAttribute("data-avatar-key"), avatarKey);
+      await expectFontAwesomeClass(option, "fa-solid", `fa-${avatarKey}`);
+    }
+
+    const selectedDice = avatarGallery.getByRole("radio", { name: "Dice" });
+    assert.equal(await selectedDice.getAttribute("aria-checked"), "true");
+    assert.equal(
+      await selectedDice
+        .locator("[data-account-profile-avatar-selected-check]")
+        .count(),
+      1,
+    );
+
+    const uploadImage = avatarGallery.getByRole("button", { name: "Upload image" });
+    assert.equal(await uploadImage.count(), 1);
+    assert.equal(await uploadImage.getAttribute("data-tooltip"), "Upload image");
+    assert.equal(await visibleTextContent(uploadImage), "");
+    await expectFontAwesomeClass(uploadImage, "fa-solid", "fa-file-arrow-up");
+    assert.equal(
+      await settingsPanel
+        .locator(
+          "[data-account-profile-avatar-gallery] > :last-child[data-account-profile-avatar-upload-button]",
+        )
+        .count(),
+      1,
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("selects Built-in Avatars from the Settings gallery with keyboard arrows", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    const avatarGallery = settingsPanel.getByRole("radiogroup", {
+      name: "Avatar",
+    });
+    const dice = avatarGallery.getByRole("radio", { name: "Dice" });
+    const hatWizard = avatarGallery.getByRole("radio", { name: "Hat Wizard" });
+    assert.equal(await dice.getAttribute("aria-checked"), "true");
+
+    await dice.focus();
+    await page.keyboard.press("ArrowRight");
+
+    assert.equal(await dice.getAttribute("aria-checked"), "false");
+    assert.equal(await hatWizard.getAttribute("aria-checked"), "true");
+    await assertActiveElementMatches(page, {
+      selector: "[data-account-profile-avatar-option][data-avatar-key=\"hat-wizard\"]",
+      accessibleName: "Hat Wizard",
+    });
+    assert.equal(
+      await settingsPanel
+        .locator("[data-account-profile-built-in-avatar-icon]")
+        .getAttribute("data-avatar-key"),
+      "hat-wizard",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps a saved Uploaded Avatar option in the Settings gallery while choosing a Built-in Avatar", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openSettingsRouteFromAccountMenu(page);
+
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    await settingsPanel
+      .locator("[data-account-profile-uploaded-avatar-input]")
+      .setInputFiles(createPngFilePayload({ height: 180, width: 300 }));
+    await settingsPanel.getByRole("button", { name: "Save profile" }).click();
+    await settingsPanel.getByText("Profile saved.").waitFor({ state: "visible" });
+
+    const avatarGallery = settingsPanel.getByRole("radiogroup", {
+      name: "Avatar",
+    });
+    const uploadedAvatar = avatarGallery.getByRole("radio", {
+      name: "Uploaded Avatar",
+    });
+    assert.equal(await uploadedAvatar.count(), 1);
+    assert.equal(await uploadedAvatar.getAttribute("aria-checked"), "true");
+    assert.match(
+      await uploadedAvatar
+        .locator("[data-account-profile-uploaded-avatar-option-image]")
+        .getAttribute("src"),
+      /^data:image\/png;base64,/,
+    );
+
+    const gamepad = avatarGallery.getByRole("radio", { name: "Gamepad" });
+    await gamepad.click();
+
+    assert.equal(await gamepad.getAttribute("aria-checked"), "true");
+    assert.equal(await uploadedAvatar.count(), 1);
+    assert.equal(await uploadedAvatar.getAttribute("aria-checked"), "false");
+    await expectFontAwesomeClass(gamepad, "fa-solid", "fa-gamepad");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -2098,13 +2279,19 @@ describe("solo browser smoke", () => {
     await openSettingsRouteFromAccountMenu(page);
     const profileRegion = page.getByRole("region", { name: "Settings" });
 
-    await profileRegion.locator("[data-account-profile-avatar]").selectOption("dragon");
+    await profileRegion
+      .getByRole("radiogroup", { name: "Avatar" })
+      .getByRole("radio", { name: "Dragon" })
+      .click();
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
 
     await assertTextVisible(profileRegion, "Profile saved.");
     assert.equal(
-      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-      "dragon",
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dragon" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     assert.equal(
       await profileRegion
@@ -2120,9 +2307,10 @@ describe("solo browser smoke", () => {
     assert.equal(
       await page
         .getByRole("region", { name: "Settings" })
-        .locator("[data-account-profile-avatar]")
-        .inputValue(),
-      "dragon",
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dragon" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     await assertNoHorizontalOverflow(page);
 
@@ -2146,8 +2334,9 @@ describe("solo browser smoke", () => {
 
     await profileRegion.getByLabel("Gamer Tag").fill("Captain Spoon");
     await profileRegion
-      .locator("[data-account-profile-avatar]")
-      .selectOption("yin-yang");
+      .getByRole("radiogroup", { name: "Avatar" })
+      .getByRole("radio", { name: "Yin Yang" })
+      .click();
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await assertTextVisible(profileRegion, "Profile saved.");
 
@@ -2162,8 +2351,11 @@ describe("solo browser smoke", () => {
       "Captain Spoon",
     );
     assert.equal(
-      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-      "yin-yang",
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Yin Yang" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     await assertTextVisible(page, "Captain Spoon");
     await assertNoHorizontalOverflow(page);
@@ -2209,6 +2401,13 @@ describe("solo browser smoke", () => {
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
+    assert.equal(
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Uploaded Avatar" })
+        .count(),
+      1,
+    );
     await profileRegion
       .locator("[data-account-profile-crop-editor]")
       .waitFor({ state: "visible" });
@@ -2281,8 +2480,9 @@ describe("solo browser smoke", () => {
     assert.match(draftPreviewUrl, /^blob:/);
 
     await profileRegion
-      .locator("[data-account-profile-avatar]")
-      .selectOption("gamepad");
+      .getByRole("radiogroup", { name: "Avatar" })
+      .getByRole("radio", { name: "Gamepad" })
+      .click();
     assert.equal(
       await profileRegion
         .locator("[data-account-profile-built-in-avatar-icon]")
@@ -2304,6 +2504,13 @@ describe("solo browser smoke", () => {
     await profileRegion
       .locator("[data-account-profile-uploaded-avatar-image]")
       .waitFor({ state: "visible" });
+    assert.equal(
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Uploaded Avatar" })
+        .count(),
+      1,
+    );
     assert.equal(await profileRegion.locator("[data-account-profile-crop-scale]").count(), 0);
     assert.equal(await profileRegion.locator("[data-account-profile-crop-x]").count(), 0);
     assert.equal(await profileRegion.locator("[data-account-profile-crop-y]").count(), 0);
@@ -2404,7 +2611,10 @@ describe("solo browser smoke", () => {
       },
     );
 
-    await profileRegion.locator("[data-account-profile-avatar]").selectOption("dice");
+    await profileRegion
+      .getByRole("radiogroup", { name: "Avatar" })
+      .getByRole("radio", { name: "Dice" })
+      .click();
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
     assert.equal(
@@ -2412,8 +2622,11 @@ describe("solo browser smoke", () => {
       0,
     );
     assert.equal(
-      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-      "dice",
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dice" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     await assertNoHorizontalOverflow(page);
 
@@ -2511,8 +2724,11 @@ describe("solo browser smoke", () => {
     await openSettingsRouteFromAccountMenu(uploadFailurePage);
     profileRegion = uploadFailurePage.getByRole("region", { name: "Settings" });
     assert.equal(
-      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-      "dice",
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dice" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     assertNoUploadFailureConsoleErrors();
     await uploadFailureContext.close();
@@ -2543,8 +2759,11 @@ describe("solo browser smoke", () => {
     await openSettingsRouteFromAccountMenu(saveFailurePage);
     profileRegion = saveFailurePage.getByRole("region", { name: "Settings" });
     assert.equal(
-      await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-      "dice",
+      await profileRegion
+        .getByRole("radiogroup", { name: "Avatar" })
+        .getByRole("radio", { name: "Dice" })
+        .getAttribute("aria-checked"),
+      "true",
     );
     assertNoSaveFailureConsoleErrors();
     await saveFailureContext.close();
@@ -5583,6 +5802,8 @@ async function assertNoProfileEditorDom(page) {
   assert.equal(await page.locator("[data-account-profile-gamer-tag]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-handle]").count(), 0);
   assert.equal(await page.locator("[data-account-profile-avatar]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-avatar-gallery]").count(), 0);
+  assert.equal(await page.locator("[data-account-profile-avatar-option]").count(), 0);
   assert.equal(
     await page.locator("[data-account-profile-uploaded-avatar-input]").count(),
     0,
@@ -5635,8 +5856,15 @@ async function assertProfileManagementSurfaceMounted(page) {
   await assertTextHidden(profileRegion, "Handle");
   await assertTextVisible(profileRegion, "Avatar");
   assert.equal(
-    await profileRegion.locator("[data-account-profile-avatar]").inputValue(),
-    "dice",
+    await profileRegion.locator("[data-account-profile-avatar]").count(),
+    0,
+  );
+  const avatarGallery = profileRegion.getByRole("radiogroup", { name: "Avatar" });
+  assert.equal(
+    await avatarGallery.getByRole("radio", { name: "Dice" }).getAttribute(
+      "aria-checked",
+    ),
+    "true",
   );
   assert.equal(
     await profileRegion

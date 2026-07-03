@@ -11,8 +11,27 @@
   --accent-contrast: #ffffff;
   --warm: #dd5f3e;
   --danger: #8f331f;
+  --danger-soft: #fff1ed;
   --ring: rgba(15, 118, 110, 0.28);
   --shadow: 0 24px 70px rgba(23, 33, 31, 0.12);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101616;
+  --surface: #182222;
+  --surface-soft: #21302d;
+  --ink: #f3f7f4;
+  --muted: #b6c4bf;
+  --line: #344743;
+  --accent: #46c5b4;
+  --accent-strong: #8be4d7;
+  --accent-contrast: #071210;
+  --warm: #ff8a66;
+  --danger: #ff9b83;
+  --danger-soft: #3a211e;
+  --ring: rgba(70, 197, 180, 0.34);
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
 }
 
 * {
@@ -392,7 +411,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 50%;
   color: var(--accent-strong);
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
   font-size: 1.9rem;
   overflow: hidden;
 }
@@ -424,7 +443,7 @@ body {
   border-radius: 50%;
   padding: 0;
   color: var(--accent-strong);
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
   cursor: pointer;
   font: inherit;
   overflow: hidden;
@@ -432,7 +451,7 @@ body {
 
 .account-profile-avatar-option.is-selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(35, 122, 93, 0.16);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .account-profile-avatar-option-visual {
@@ -479,7 +498,7 @@ body {
   aspect-ratio: 1;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
   cursor: grab;
   overflow: hidden;
   touch-action: none;
@@ -680,6 +699,8 @@ h1 {
 .icon-button {
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1038,7 +1059,7 @@ h1 {
   border-radius: 8px;
   padding: 10px 12px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface);
   font: inherit;
   font-size: 1rem;
 }
@@ -1172,8 +1193,8 @@ h1 {
   border: 1px solid rgba(221, 95, 62, 0.34);
   border-radius: 8px;
   padding: 0 16px;
-  color: #8f331f;
-  background: #fff1ed;
+  color: var(--danger);
+  background: var(--danger-soft);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
@@ -1196,7 +1217,7 @@ h1 {
   border: 1px solid rgba(221, 95, 62, 0.28);
   border-radius: 8px;
   padding: 12px;
-  background: #fff8f5;
+  background: var(--danger-soft);
 }
 
 .start-again-confirmation p {
@@ -1228,7 +1249,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px 16px;
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
   font-size: 1.05rem;
   font-weight: 700;
 }
@@ -1365,7 +1386,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
 }
 
 .pending-game-row-count {
@@ -1479,7 +1500,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
-  background: rgba(238, 246, 243, 0.72);
+  background: var(--surface-soft);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1646,7 +1667,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 10px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--surface);
   overflow-wrap: anywhere;
 }
 

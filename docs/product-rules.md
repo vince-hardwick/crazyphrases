@@ -343,19 +343,23 @@ or touch activation.
 The Play menu options use default font weight, not bold text. `Solo play` is
 preceded by Font Awesome Classic Solid `user`, and `Multiplayer` is preceded by
 Font Awesome Classic Solid `user-group`.
-`Favourites` may be denoted by a Font Awesome Classic Solid `heart` icon instead of
-visible `Favourites` text on any device, provided the control keeps an accessible name
-of `Favourites`, mobile-safe hit area, and active-route state. When the control is
+`Favourites` may be denoted by a Font Awesome Classic `heart` icon instead of visible
+`Favourites` text on any device, provided the control keeps an accessible name of
+`Favourites`, mobile-safe hit area, and active-route state. When the control is
 icon-only, show a lightweight visible tooltip on hover and focus with the text
 `Favourites`; do not include counts, saved-state wording, or route explanations in that
-tooltip. The `Favourites` nav heart uses stable icon style; active route state is shown
-through nav-control styling and `aria-current`, not by switching the nav icon between
-regular and solid styles.
-Regular-vs-solid heart changes remain reserved for item-level favourite actions. Do not
-show a saved-count badge on the `Favourites` nav heart in the first slice; saved counts
-are not urgent notifications and should not force account-scoped favourite-count loading
-into the global header. The destination tabs own saved-output loading, empty, and error
-state after the participant chooses Favourites.
+tooltip. In signed-in sessions, the `Favourites` nav heart uses Classic Regular when
+the Account has no Phrase Favourites or Batch Favourites, and Classic Solid when at
+least one Phrase Favourite or Batch Favourite exists. Active-route state is shown
+through nav-control styling and `aria-current`, not only by heart weight.
+Do not show a saved-count badge on the `Favourites` nav heart; saved counts are not
+urgent notifications and should not force account-scoped favourite-count loading into
+the global header. Load only the minimum account-scoped favourite-existence state
+needed to choose regular or solid. If favourite loading fails, keep the nav heart
+regular and leave `Play`, `Notifications`, the account menu, and sign-out usable.
+Anonymous mode must not mount or fetch account-scoped favourite-existence state. The
+destination tabs own saved-output loading, empty, and error state after the participant
+chooses Favourites.
 
 The Notifications bell remains a utility control, and the account affordance remains the
 identity control. The `Play` dropdown and account menu may open as full-width mobile

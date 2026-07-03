@@ -314,6 +314,145 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("renders an empty signed-in Favourites nav heart as regular without count copy", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    const favouritesNav = await expectFavouritesNavHeartState(page, "regular");
+    assert.equal(await favouritesNav.getAttribute("aria-current"), null);
+
+    await openFavouritesRoute(page);
+
+    await expectFavouritesNavHeartState(page, "regular");
+    assert.equal(await favouritesNav.getAttribute("aria-current"), "page");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders a signed-in Favourites nav heart as solid when stored favourites exist", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await seedLocalTestPhraseFavourite(page, {
+      accountId: "test-account",
+      favouriteId: "nav-seeded-phrase-favourite",
+      phraseText: "cosmic marmalade lighthouse",
+    });
+    await signInWithLocalTestAccount(page);
+
+    const favouritesNav = await expectFavouritesNavHeartState(page, "solid");
+    assert.equal(await favouritesNav.getAttribute("aria-current"), null);
+
+    await openFavouritesRoute(page);
+
+    await expectFavouritesNavHeartState(page, "solid");
+    assert.equal(await favouritesNav.getAttribute("aria-current"), "page");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("updates the Favourites nav heart after successful save and remove mutations", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await expectFavouritesNavHeartState(page, "regular");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    const fillState = createFillState(10);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+    await fillActiveSection(page, fillState);
+
+    const phraseFavouriteButton = page.getByRole("button", {
+      name: "Save phrase 2 as favourite",
+    });
+    await phraseFavouriteButton.click();
+    await waitForTextVisible(page, "Phrase favourite saved.");
+    await expectFavouritesNavHeartState(page, "solid");
+
+    await page
+      .getByRole("button", { name: "Remove phrase 2 from favourites" })
+      .click();
+    await waitForTextVisible(page, "Phrase favourite removed.");
+    await expectFavouritesNavHeartState(page, "regular");
+
+    await page.getByRole("button", { name: "Save batch as favourite" }).click();
+    await waitForTextVisible(page, "Batch favourite saved.");
+    await expectFavouritesNavHeartState(page, "solid");
+
+    await page.getByRole("button", { name: "Remove batch from favourites" }).click();
+    await waitForTextVisible(page, "Batch favourite removed.");
+    await expectFavouritesNavHeartState(page, "regular");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps signed-in navigation usable when favourite existence loading fails", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPrivateFavourites=load-fails`);
+    await seedLocalTestPhraseFavourite(page, {
+      accountId: "test-account",
+      favouriteId: "nav-load-failure-seeded-favourite",
+      phraseText: "emerald tuba constellation",
+    });
+    await signInWithLocalTestAccount(page);
+
+    await expectFavouritesNavHeartState(page, "regular");
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    await play.click();
+    await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
+      state: "visible",
+    });
+    await page.keyboard.press("Escape");
+
+    await page.getByRole("button", { name: "Notifications" }).click();
+    assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
+
+    await signOutFromAccountMenu(page);
+
+    await assertAnonymousAccountIconVisible(page);
+    assert.equal(await page.getByRole("link", { name: "Favourites" }).count(), 0);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("renders Play menu destinations with default-weight text and icons", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -5275,6 +5414,29 @@ async function expectFontAwesomeClass(locator, ...classNames) {
   for (const expectedClass of classNames) {
     assert.equal(className.includes(expectedClass), true);
   }
+}
+
+async function expectFavouritesNavHeartState(page, style) {
+  const link = page.getByRole("link", { name: "Favourites" });
+  const expectedStyleClass = `fa-${style}`;
+  await page.waitForFunction(
+    (expectedClass) =>
+      document
+        .querySelector('[data-route-link="favourites"] i')
+        ?.classList.contains(expectedClass),
+    expectedStyleClass,
+    { timeout: 3000 },
+  );
+  await expectFontAwesomeClass(link, expectedStyleClass, "fa-heart");
+  const className = await link.locator("i").first().getAttribute("class");
+  assert.equal(
+    className.includes(style === "solid" ? "fa-regular" : "fa-solid"),
+    false,
+  );
+  assert.equal(await link.getAttribute("data-tooltip"), "Favourites");
+  assert.equal(await visibleTextContent(link), "");
+  assert.equal(await link.locator("[data-favourites-count]").count(), 0);
+  return link;
 }
 
 async function expectDefaultTooltip(locator, label) {

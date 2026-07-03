@@ -866,6 +866,51 @@ function updatePrimaryNavState() {
 
     item.removeAttribute("aria-current");
   });
+
+  updateFavouritesNavHeartState();
+}
+
+function updateFavouritesNavHeartState() {
+  const link = primaryNav.querySelector('[data-route-link="favourites"]');
+  const icon = link?.querySelector("[data-favourites-nav-heart], i, svg");
+  if (!icon) {
+    return;
+  }
+
+  const hasAccountFavourites =
+    accountShell.persistenceAuthority.type === "account" &&
+    (phraseFavourites.length > 0 || batchFavourites.length > 0);
+  const style = hasAccountFavourites ? "solid" : "regular";
+
+  if (getFavouritesNavHeartStyle(icon) === style) {
+    return;
+  }
+
+  icon.replaceWith(createFavouritesNavHeartIcon(style));
+}
+
+function getFavouritesNavHeartStyle(icon) {
+  if (
+    icon.classList.contains("fa-solid") ||
+    icon.getAttribute("data-prefix") === "fas"
+  ) {
+    return "solid";
+  }
+
+  if (
+    icon.classList.contains("fa-regular") ||
+    icon.getAttribute("data-prefix") === "far"
+  ) {
+    return "regular";
+  }
+
+  return null;
+}
+
+function createFavouritesNavHeartIcon(style) {
+  const icon = createFontAwesomeIcon(style, "heart");
+  icon.dataset.favouritesNavHeart = "";
+  return icon;
 }
 
 function renderGame() {
@@ -5470,6 +5515,8 @@ function renderSuccessfulFavouriteMutationResult(context, statusText) {
     return;
   }
 
+  updateFavouritesNavHeartState();
+
   if (currentRoute === ROUTES.favourites) {
     renderFavourites();
     return;
@@ -5662,6 +5709,8 @@ async function removeFavouriteFromRoute({ tab, favouriteId }) {
         expandedBatchFavouriteId = null;
       }
     }
+
+    updateFavouritesNavHeartState();
 
     if (!isCurrentFavouriteRemoveUiRequest(request)) {
       clearFavouriteRemoveRequest(request);

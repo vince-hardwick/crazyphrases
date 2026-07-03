@@ -18,64 +18,65 @@
         <div>
           <h1 id="site-title">Crazy Phrases</h1>
         </div>
-        <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>
-          <div class="primary-nav-menu" data-play-menu-root>
-            <button
-              class="primary-nav-link primary-nav-button primary-nav-icon-link tooltip-action"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              aria-label="Play"
-              data-route-link="play"
-              data-play-menu-toggle
-              data-tooltip="Play"
-            >
-              <i class="fa-solid fa-play" aria-hidden="true"></i>
-              <span class="sr-only">Play</span>
-            </button>
-            <div
-              class="play-menu"
-              role="menu"
-              aria-label="Play Game Modes"
-              data-play-menu
-              hidden
-            >
-              <a
-                class="play-menu-item"
-                href="#/play/solo"
-                role="menuitem"
-                data-play-menu-item
+        <div class="top-nav-actions">
+          <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>
+            <div class="primary-nav-menu" data-play-menu-root>
+              <button
+                class="primary-nav-link primary-nav-button primary-nav-icon-link tooltip-action"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-label="Play"
+                data-route-link="play"
+                data-play-menu-toggle
+                data-tooltip="Play"
               >
-                <i class="fa-solid fa-user" aria-hidden="true"></i>
-                <span>Solo play</span>
-              </a>
-              <a
-                class="play-menu-item"
-                href="#/play/multiplayer"
-                role="menuitem"
-                data-play-menu-item
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
+                <span class="sr-only">Play</span>
+              </button>
+              <div
+                class="play-menu"
+                role="menu"
+                aria-label="Play Game Modes"
+                data-play-menu
+                hidden
               >
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-                <span>Multiplayer</span>
-              </a>
+                <a
+                  class="play-menu-item"
+                  href="#/play/solo"
+                  role="menuitem"
+                  data-play-menu-item
+                >
+                  <i class="fa-solid fa-user" aria-hidden="true"></i>
+                  <span>Solo play</span>
+                </a>
+                <a
+                  class="play-menu-item"
+                  href="#/play/multiplayer"
+                  role="menuitem"
+                  data-play-menu-item
+                >
+                  <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                  <span>Multiplayer</span>
+                </a>
+              </div>
             </div>
-          </div>
-          <a
-            class="primary-nav-link primary-nav-icon-link"
-            href="#/favourites"
-            aria-label="Favourites"
-            data-route-link="favourites"
-            data-tooltip="Favourites"
-          >
-            <i
-              class="fa-regular fa-heart"
-              aria-hidden="true"
-              data-favourites-nav-heart
-            ></i>
-            <span class="sr-only">Favourites</span>
-          </a>
-        </nav>
-        <div class="header-actions">
+            <a
+              class="primary-nav-link primary-nav-icon-link"
+              href="#/favourites"
+              aria-label="Favourites"
+              data-route-link="favourites"
+              data-tooltip="Favourites"
+            >
+              <i
+                class="fa-regular fa-heart"
+                aria-hidden="true"
+                data-favourites-nav-heart
+              ></i>
+              <span class="sr-only">Favourites</span>
+            </a>
+          </nav>
+          <div class="header-actions">
           <button
             class="icon-button tooltip-action"
             type="button"
@@ -85,6 +86,17 @@
           >
             <i class="fa-solid fa-moon" aria-hidden="true" data-theme-toggle-icon></i>
             <span class="sr-only">Enable dark mode</span>
+          </button>
+          <button
+            class="icon-button tooltip-action"
+            type="button"
+            aria-expanded="false"
+            aria-controls="help-panel"
+            data-help-toggle
+            data-tooltip="How to play"
+          >
+            <span aria-hidden="true">?</span>
+            <span class="sr-only">How to play</span>
           </button>
           <section class="account-shell" aria-label="Account mode" data-account-shell>
             <button
@@ -101,6 +113,7 @@
             <button
               class="icon-button tooltip-action account-menu-toggle"
               type="button"
+              aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="account-menu"
               data-account-menu-toggle
@@ -207,17 +220,7 @@
               </div>
             </div>
           </section>
-          <button
-            class="icon-button tooltip-action"
-            type="button"
-            aria-expanded="false"
-            aria-controls="help-panel"
-            data-help-toggle
-            data-tooltip="How to play"
-          >
-            <span aria-hidden="true">?</span>
-            <span class="sr-only">How to play</span>
-          </button>
+          </div>
         </div>
       </header>
 

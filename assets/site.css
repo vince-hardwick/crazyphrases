@@ -69,10 +69,18 @@ body {
   margin: 10px 0 22px;
 }
 
+.top-nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .header-actions {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
 .primary-nav {
@@ -166,20 +174,13 @@ body {
 
 .account-shell {
   position: relative;
-  min-width: 132px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--surface);
-  box-shadow: 0 8px 24px rgba(23, 33, 31, 0.08);
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .account-shell.is-anonymous {
-  min-width: 44px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
+  width: 44px;
 }
 
 .account-shell p {
@@ -189,8 +190,9 @@ body {
   font-weight: 800;
 }
 
+.account-shell [data-account-status],
 .account-shell [data-account-detail] {
-  display: block;
+  display: none;
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.76rem;
@@ -198,21 +200,28 @@ body {
 }
 
 .account-feedback {
-  max-width: 240px;
-  margin: 6px 0 0;
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(240px, calc(100vw - 24px));
+  border: 1px solid rgba(221, 95, 62, 0.28);
+  border-radius: 8px;
+  padding: 10px;
   color: var(--danger);
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(23, 33, 31, 0.16);
   font-size: 0.76rem;
   font-weight: 700;
   line-height: 1.25;
 }
 
-.account-sign-in-panel[hidden] {
+.account-feedback[hidden] {
   display: none;
 }
 
-.account-menu-toggle {
-  margin-bottom: 6px;
-  overflow: hidden;
+.account-sign-in-panel[hidden] {
+  display: none;
 }
 
 .account-menu-avatar-image {
@@ -655,7 +664,20 @@ body {
 }
 
 .persistence-recovery {
-  margin-top: 6px;
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(280px, calc(100vw - 24px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(23, 33, 31, 0.16);
+}
+
+.persistence-recovery[hidden] {
+  display: none;
 }
 
 .persistence-recovery p {
@@ -1163,6 +1185,13 @@ h1 {
   gap: 6px;
 }
 
+.top-nav-actions .primary-nav-link,
+.header-actions > .icon-button,
+.header-actions .notification-button,
+.account-shell > .icon-button {
+  border-radius: 8px;
+}
+
 .tooltip-action,
 .primary-nav-icon-link[data-tooltip] {
   position: relative;
@@ -1199,6 +1228,38 @@ h1 {
 .primary-nav-icon-link[data-tooltip]:focus-visible::after {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+.top-nav-actions .primary-nav-icon-link[data-tooltip]::after,
+.header-actions > .tooltip-action::after,
+.header-actions .notification-button::after,
+.account-shell > .tooltip-action::after {
+  inset: calc(100% + 8px) auto auto 50%;
+  transform: translate(-50%, -4px);
+}
+
+.top-nav-actions .primary-nav-icon-link[data-tooltip]:hover::after,
+.top-nav-actions .primary-nav-icon-link[data-tooltip]:focus-visible::after,
+.header-actions > .tooltip-action:hover::after,
+.header-actions > .tooltip-action:focus-visible::after,
+.header-actions .notification-button:hover::after,
+.header-actions .notification-button:focus-visible::after,
+.account-shell > .tooltip-action:hover::after,
+.account-shell > .tooltip-action:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.account-shell > [data-account-sign-in-toggle]::after,
+.account-shell > [data-account-menu-toggle]::after {
+  inset: calc(100% + 8px) 0 auto auto;
+  transform: translate(0, -4px);
+}
+
+.account-shell > [data-account-sign-in-toggle]:hover::after,
+.account-shell > [data-account-sign-in-toggle]:focus-visible::after,
+.account-shell > [data-account-menu-toggle]:hover::after,
+.account-shell > [data-account-menu-toggle]:focus-visible::after {
+  transform: translate(0, 0);
 }
 
 .danger-button {
@@ -1705,13 +1766,19 @@ h1 {
     flex-direction: column;
   }
 
+  .top-nav-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .header-actions {
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   .account-shell {
-    min-width: 0;
-    flex: 1;
+    width: 44px;
+    min-width: 44px;
+    flex: 0 0 44px;
   }
 
   .game-panel {

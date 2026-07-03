@@ -280,6 +280,133 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("renders the top-level Play control as an icon-only action", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    await expectFontAwesomeClass(play, "fa-solid", "fa-play");
+    assert.equal(await play.getAttribute("data-tooltip"), "Play");
+    assert.equal(await visibleTextContent(play), "");
+    assert.ok(
+      parseFloat(await play.evaluate((button) => getComputedStyle(button).minHeight)) >= 44,
+    );
+    assert.ok(
+      parseFloat(await play.evaluate((button) => getComputedStyle(button).minWidth)) >= 44,
+    );
+
+    await play.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
+      state: "visible",
+    });
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders Play menu destinations with default-weight text and icons", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    const playMenu = page.getByRole("menu", { name: "Play Game Modes" });
+    const soloPlay = playMenu.getByRole("menuitem", { name: "Solo play" });
+    const multiplayer = playMenu.getByRole("menuitem", { name: "Multiplayer" });
+
+    await expectFontAwesomeClass(soloPlay, "fa-solid", "fa-user");
+    await expectFontAwesomeClass(multiplayer, "fa-solid", "fa-user-group");
+    assert.ok(
+      Number(await soloPlay.evaluate((item) => getComputedStyle(item).fontWeight)) < 600,
+    );
+    assert.ok(
+      Number(await multiplayer.evaluate((item) => getComputedStyle(item).fontWeight)) < 600,
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("exposes default-weight header tooltips without blocking direct activation", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+
+    const accountSignIn = page.getByRole("button", { name: "Account sign in" });
+    await expectDefaultTooltip(accountSignIn, "Account sign in");
+    await accountSignIn.click();
+    assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), true);
+
+    await page.getByRole("button", { name: "Test sign in" }).click();
+
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    await expectDefaultTooltip(play, "Play");
+    await play.click();
+    await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
+      state: "visible",
+    });
+
+    const favourites = page.getByRole("link", { name: "Favourites" });
+    await expectDefaultTooltip(favourites, "Favourites");
+
+    const notifications = page.getByRole("button", { name: "Notifications" });
+    await expectDefaultTooltip(notifications, "Notifications");
+    await notifications.click();
+    assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
+
+    const help = page.getByRole("button", { name: "How to play" });
+    await expectDefaultTooltip(help, "How to play");
+    await help.click();
+    assert.equal(await page.locator("#help-panel").isVisible(), true);
+
+    const accountMenuButton = page.getByRole("button", {
+      name: "Account menu for Player",
+    });
+    await expectDefaultTooltip(accountMenuButton, "Account menu for Player");
+    await accountMenuButton.click();
+
+    const accountMenu = page.getByRole("menu", { name: "Account menu" });
+    await accountMenu.waitFor({ state: "visible" });
+    await expectDefaultTooltip(
+      accountMenu.getByRole("menuitem", { name: "Settings" }),
+      "Settings",
+    );
+    await expectDefaultTooltip(
+      accountMenu.getByRole("menuitem", { name: "Sign out" }),
+      "Sign out",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("opens a signed-in Avatar account menu with Settings and Sign out only", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -5148,6 +5275,17 @@ async function expectFontAwesomeClass(locator, ...classNames) {
   for (const expectedClass of classNames) {
     assert.equal(className.includes(expectedClass), true);
   }
+}
+
+async function expectDefaultTooltip(locator, label) {
+  assert.equal(await locator.getAttribute("data-tooltip"), label);
+  assert.ok(
+    Number(
+      await locator.evaluate((element) =>
+        getComputedStyle(element, "::after").fontWeight,
+      ),
+    ) < 600,
+  );
 }
 
 async function expectFavouriteToggleState(locator, { pressed, style }) {

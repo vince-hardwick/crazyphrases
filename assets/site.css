@@ -112,12 +112,13 @@ body {
 .play-menu-item {
   display: flex;
   align-items: center;
+  gap: 10px;
   min-height: 38px;
   border-radius: 6px;
   padding: 0 10px;
   color: var(--accent-strong);
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 400;
   text-decoration: none;
 }
 
@@ -135,6 +136,7 @@ body {
 .primary-nav-icon-link {
   position: relative;
   width: 44px;
+  min-width: 44px;
   padding: 0;
 }
 

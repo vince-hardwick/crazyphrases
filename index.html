@@ -21,14 +21,17 @@
         <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>
           <div class="primary-nav-menu" data-play-menu-root>
             <button
-              class="primary-nav-link primary-nav-button"
+              class="primary-nav-link primary-nav-button primary-nav-icon-link tooltip-action"
               type="button"
               aria-haspopup="menu"
               aria-expanded="false"
+              aria-label="Play"
               data-route-link="play"
               data-play-menu-toggle
+              data-tooltip="Play"
             >
-              Play
+              <i class="fa-solid fa-play" aria-hidden="true"></i>
+              <span class="sr-only">Play</span>
             </button>
             <div
               class="play-menu"
@@ -43,7 +46,8 @@
                 role="menuitem"
                 data-play-menu-item
               >
-                Solo play
+                <i class="fa-solid fa-user" aria-hidden="true"></i>
+                <span>Solo play</span>
               </a>
               <a
                 class="play-menu-item"
@@ -51,7 +55,8 @@
                 role="menuitem"
                 data-play-menu-item
               >
-                Multiplayer
+                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                <span>Multiplayer</span>
               </a>
             </div>
           </div>
@@ -98,19 +103,21 @@
               hidden
             >
               <button
-                class="account-menu-item"
+                class="account-menu-item tooltip-action"
                 type="button"
                 role="menuitem"
                 data-account-settings-button
+                data-tooltip="Settings"
               >
                 <i class="fa-solid fa-sliders" aria-hidden="true"></i>
                 <span>Settings</span>
               </button>
               <button
-                class="account-menu-item"
+                class="account-menu-item tooltip-action"
                 type="button"
                 role="menuitem"
                 data-account-menu-sign-out-button
+                data-tooltip="Sign out"
               >
                 <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                 <span>Sign out</span>
@@ -187,11 +194,12 @@
             </div>
           </section>
           <button
-            class="icon-button"
+            class="icon-button tooltip-action"
             type="button"
             aria-expanded="false"
             aria-controls="help-panel"
             data-help-toggle
+            data-tooltip="How to play"
           >
             <span aria-hidden="true">?</span>
             <span class="sr-only">How to play</span>

@@ -467,6 +467,19 @@ game/session state. The save control is an icon-only button using Font Awesome
 reset/cancel control is an icon-only button using Font Awesome `arrow-rotate-left`,
 with accessible name and tooltip `Reset profile changes`.
 
+The Settings Avatar editor uses a circular selectable gallery instead of a dropdown as
+the primary Built-in Avatar choice UI. Each accepted Built-in Avatar renders as a
+circular `radio` option labelled with that Avatar's display name. The current selected
+Avatar option shows a Font Awesome `check` overlay and dims the underlying icon or image
+so the selected state is visible. If the Account currently has an Uploaded Avatar, that
+image appears as a single circular `Uploaded Avatar` option alongside the Built-in
+Avatar options; selecting a new valid upload replaces any existing uploaded option in
+the draft gallery rather than adding another uploaded image option. The rightmost
+gallery control is an icon-only circular upload action using Font Awesome
+`file-arrow-up`, with accessible name and tooltip `Upload image`; the backing file input
+remains keyboard-accessible through that control but must not be shown as a visible
+`Choose File` control.
+
 Leaving `#/settings` or signing out with unsaved profile edits requires confirmation.
 `Save` saves first and then continues the pending route change or sign-out, `Discard`
 discards edits and then continues, and `Cancel` returns to the editor and keeps the
@@ -1173,11 +1186,13 @@ test validation becomes required if implementation changes Storage upload behavi
 Account Profile persistence, Supabase schema or policies, or the derived-image save
 contract. Production Uploaded Avatar write smoke remains separately approval-gated.
 
-The first Uploaded Avatar slice must render a basic Avatar preview in the existing
-Profile editor for both Built-in Avatars and Uploaded Avatars, and existing participant
-or profile identity surfaces should consume the Avatar descriptor where they already
-show avatar identity. It must not add new public profile pages, friend cards,
-leaderboard identity, or broader social surfaces.
+The first Uploaded Avatar slice rendered a basic Avatar preview in the profile editor
+for both Built-in Avatars and Uploaded Avatars. The Settings Avatar gallery is now the
+primary choice UI, while the selected Avatar preview and crop editor remain the result
+and adjustment surfaces. Existing participant or profile identity surfaces should
+consume the Avatar descriptor where they already show avatar identity. It must not add
+new public profile pages, friend cards, leaderboard identity, or broader social
+surfaces.
 
 Anonymous users must not receive Uploaded Avatar controls, hidden file inputs, upload
 preview DOM, upload event wiring, or browser storage-upload paths. Uploaded Avatar
@@ -1223,10 +1238,12 @@ Replacing the current Uploaded Avatar must not break completed-game history that
 snapshots an older Uploaded Avatar descriptor, or batch favourites and other durable
 history/favourite snapshots that still render an older Avatar. The first Uploaded Avatar
 slice should clean up clearly abandoned objects from failed or retried uploads where
-practical. The avatar image gallery slice should add cleanup for superseded uploaded
-objects once the app can prove no current profile, completed-game history, batch
-favourite, or other durable snapshot still references them. Account-deletion media
-retention remains a separate lifecycle decision.
+practical. The Settings Avatar gallery deliberately does not delete superseded uploaded
+objects when a participant chooses or saves a Built-in Avatar; a later cleanup slice
+should add deletion for superseded uploaded objects once the app can prove no current
+profile, completed-game history, batch favourite, or other durable snapshot still
+references them. Account-deletion media retention remains a separate lifecycle
+decision.
 
 Participants may remove the live Uploaded Avatar from their Account Profile by choosing
 and saving a Built-in Avatar. This switches the live Account Profile descriptor back to

@@ -1124,16 +1124,11 @@ function renderAccountProfilePanel(shell) {
 
   const panel = ensureAccountProfilePanel();
   const gamerTag = panel.querySelector("[data-account-profile-gamer-tag]");
-  const avatar = panel.querySelector("[data-account-profile-avatar]");
   const activeAvatar = shell.profile.avatar ?? createBuiltInAvatarDescriptor(
     shell.profile.avatarKey,
   );
 
   gamerTag.value = shell.profile.gamerTag;
-  avatar.value =
-    activeAvatar.type === "built-in"
-      ? activeAvatar.key
-      : DEFAULT_BUILT_IN_AVATAR_KEY;
   clearDraftAvatarPreviewUrl();
   accountProfileDraftAvatar = null;
   void renderAccountProfileAvatarPreview(panel, activeAvatar);
@@ -1382,48 +1377,120 @@ function createProfileInputField({ datasetKey, label, required = true }) {
 
 function createProfileAvatarField() {
   const field = document.createElement("div");
-  const selectLabel = document.createElement("label");
-  const select = document.createElement("select");
+  const galleryLabel = document.createElement("p");
+  const gallery = document.createElement("div");
   const preview = document.createElement("div");
-  const uploadLabel = document.createElement("label");
   const uploadInput = document.createElement("input");
+  const uploadButton = document.createElement("button");
   const cropControls = createAvatarCropControls();
 
   field.className = "account-profile-avatar-field";
-  selectLabel.className = "account-profile-field";
-  selectLabel.textContent = "Avatar";
-  select.dataset.accountProfileAvatar = "";
-  select.addEventListener("change", () => {
-    const panel = ensureAccountProfilePanel();
-    clearAccountProfileUploadInput(panel);
-    accountProfileDraftAvatar = createBuiltInAvatarDescriptor(select.value);
-    setAccountProfileStatus("");
-    void renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
-  });
-  for (const avatarKey of BUILT_IN_AVATAR_KEYS) {
-    const option = document.createElement("option");
-    option.value = avatarKey;
-    option.textContent = formatProfileLabel(avatarKey);
-    select.append(option);
-  }
-  selectLabel.append(select);
+  galleryLabel.className = "account-profile-avatar-label";
+  galleryLabel.id = "account-profile-avatar-label";
+  galleryLabel.textContent = "Avatar";
+
+  gallery.className = "account-profile-avatar-gallery";
+  gallery.dataset.accountProfileAvatarGallery = "";
+  gallery.role = "radiogroup";
+  gallery.setAttribute("aria-labelledby", galleryLabel.id);
+  gallery.addEventListener("keydown", handleAccountProfileAvatarGalleryKeydown);
 
   preview.className = "account-profile-avatar-preview";
   preview.dataset.accountProfileAvatarPreview = "";
   preview.setAttribute("aria-live", "polite");
 
-  uploadLabel.className = "account-profile-upload-field";
-  uploadLabel.textContent = "Upload image";
   uploadInput.type = "file";
   uploadInput.accept = "image/jpeg,image/png,image/webp";
+  uploadInput.hidden = true;
   uploadInput.dataset.accountProfileUploadedAvatarInput = "";
   uploadInput.addEventListener("change", () => {
     void selectUploadedAvatarFile(uploadInput.files?.[0] ?? null);
   });
-  uploadLabel.append(uploadInput);
 
-  field.append(selectLabel, preview, uploadLabel, cropControls);
+  uploadButton.type = "button";
+  uploadButton.className =
+    "account-profile-avatar-upload-button tooltip-action";
+  uploadButton.dataset.accountProfileAvatarUploadButton = "";
+  uploadButton.dataset.tooltip = "Upload image";
+  uploadButton.setAttribute("aria-label", "Upload image");
+  uploadButton.replaceChildren(
+    createFontAwesomeIcon("solid", "file-arrow-up"),
+    createScreenReaderText("Upload image"),
+  );
+  uploadButton.addEventListener("click", () => {
+    uploadInput.click();
+  });
+
+  for (const avatarKey of BUILT_IN_AVATAR_KEYS) {
+    gallery.append(createBuiltInAvatarOption(avatarKey));
+  }
+  gallery.append(uploadButton);
+
+  field.append(galleryLabel, preview, gallery, uploadInput, cropControls);
   return field;
+}
+
+function createBuiltInAvatarOption(avatarKey) {
+  const option = document.createElement("button");
+  const icon = createFontAwesomeIcon("solid", avatarKey);
+
+  option.type = "button";
+  option.className = "account-profile-avatar-option";
+  option.dataset.accountProfileAvatarOption = "";
+  option.dataset.avatarKey = avatarKey;
+  option.role = "radio";
+  option.setAttribute("aria-label", formatProfileLabel(avatarKey));
+  option.setAttribute("aria-checked", "false");
+  icon.classList.add("account-profile-avatar-option-visual");
+  icon.dataset.avatarKey = avatarKey;
+  option.append(icon);
+  option.addEventListener("click", () => {
+    selectBuiltInAccountProfileAvatar(avatarKey);
+  });
+
+  return option;
+}
+
+function selectBuiltInAccountProfileAvatar(avatarKey) {
+  const panel = ensureAccountProfilePanel();
+  clearAccountProfileUploadInput(panel);
+  accountProfileDraftAvatar = createBuiltInAvatarDescriptor(avatarKey);
+  setAccountProfileStatus("");
+  void renderAccountProfileAvatarPreview(panel, accountProfileDraftAvatar);
+}
+
+function handleAccountProfileAvatarGalleryKeydown(event) {
+  const option = event.target.closest("button[role='radio']");
+  if (!option) {
+    return;
+  }
+
+  const options = [
+    ...event.currentTarget.querySelectorAll("button[role='radio']"),
+  ];
+  const currentIndex = options.indexOf(option);
+  if (currentIndex === -1) {
+    return;
+  }
+
+  const keyActions = {
+    ArrowDown: 1,
+    ArrowLeft: -1,
+    ArrowRight: 1,
+    ArrowUp: -1,
+    End: options.length - 1 - currentIndex,
+    Home: -currentIndex,
+  };
+  const offset = keyActions[event.key];
+  if (offset === undefined) {
+    return;
+  }
+
+  event.preventDefault();
+  const nextIndex = (currentIndex + offset + options.length) % options.length;
+  const nextOption = options[nextIndex];
+  nextOption.focus({ preventScroll: true });
+  nextOption.click();
 }
 
 function createAvatarCropControls() {
@@ -1561,6 +1628,9 @@ async function renderAccountProfileAvatarPreview(panel, avatarDescriptor) {
   preview.removeAttribute("aria-label");
 
   if (avatarDescriptor?.type === "uploaded-draft") {
+    renderAccountProfileAvatarGallery(panel, avatarDescriptor, {
+      uploadedImageUrl: avatarDescriptor.previewUrl,
+    });
     renderUploadedAvatarPreview(preview, avatarDescriptor.previewUrl, {
       crop: avatarDescriptor.crop,
     });
@@ -1575,11 +1645,15 @@ async function renderAccountProfileAvatarPreview(panel, avatarDescriptor) {
       return;
     }
 
+    renderAccountProfileAvatarGallery(panel, avatarDescriptor, {
+      uploadedImageUrl: publicUrl,
+    });
     renderUploadedAvatarPreview(preview, publicUrl);
     return;
   }
 
   const builtInAvatar = createBuiltInAvatarDescriptor(avatarDescriptor?.key);
+  renderAccountProfileAvatarGallery(panel, builtInAvatar);
   const icon = document.createElement("i");
   icon.className = `fa-solid fa-${builtInAvatar.key}`;
   icon.dataset.accountProfileBuiltInAvatarIcon = "";
@@ -1604,6 +1678,148 @@ function renderUploadedAvatarPreview(preview, imageUrl, { crop = null } = {}) {
   preview.setAttribute("role", "img");
   preview.setAttribute("aria-label", "Selected uploaded image");
   preview.append(image);
+}
+
+function renderAccountProfileAvatarGallery(
+  panel,
+  selectedAvatar,
+  { uploadedImageUrl = null } = {},
+) {
+  const gallery = panel.querySelector("[data-account-profile-avatar-gallery]");
+  if (!gallery) {
+    return;
+  }
+
+  gallery
+    .querySelector("[data-account-profile-uploaded-avatar-option]")
+    ?.remove();
+
+  if (selectedAvatar?.type === "uploaded-draft" && uploadedImageUrl) {
+    insertUploadedAvatarOption(panel, {
+      imageUrl: uploadedImageUrl,
+      selected: true,
+    });
+  } else if (accountShell.profile?.avatar?.type === "uploaded") {
+    if (uploadedImageUrl && selectedAvatar?.type === "uploaded") {
+      insertUploadedAvatarOption(panel, {
+        imageUrl: uploadedImageUrl,
+        selected: true,
+        selectSavedUpload: true,
+      });
+    } else {
+      void renderSavedUploadedAvatarGalleryOption(panel, selectedAvatar);
+    }
+  }
+
+  for (const option of gallery.querySelectorAll(
+    "[data-account-profile-avatar-option]",
+  )) {
+    const isSelected =
+      selectedAvatar?.type === "built-in" &&
+      option.dataset.avatarKey === selectedAvatar.key;
+    option.setAttribute("aria-checked", String(isSelected));
+    option.classList.toggle("is-selected", isSelected);
+    renderAccountProfileAvatarOptionCheck(option, isSelected);
+  }
+}
+
+async function renderSavedUploadedAvatarGalleryOption(panel, selectedAvatar) {
+  const savedAvatar = accountShell.profile?.avatar;
+  if (savedAvatar?.type !== "uploaded" || selectedAvatar?.type === "uploaded-draft") {
+    return;
+  }
+
+  const requestId = accountProfilePreviewRequestId;
+  const publicUrl = await avatarStorageRepository.getPublicUrl({
+    objectPath: savedAvatar.objectPath,
+  });
+  if (
+    requestId !== accountProfilePreviewRequestId ||
+    accountShell.profile?.avatar?.objectPath !== savedAvatar.objectPath ||
+    !publicUrl
+  ) {
+    return;
+  }
+
+  insertUploadedAvatarOption(panel, {
+    imageUrl: publicUrl,
+    selected: selectedAvatar?.type === "uploaded",
+    selectSavedUpload: true,
+  });
+}
+
+function insertUploadedAvatarOption(
+  panel,
+  { imageUrl, selected, selectSavedUpload = false },
+) {
+  const gallery = panel.querySelector("[data-account-profile-avatar-gallery]");
+  const uploadButton = gallery?.querySelector(
+    "[data-account-profile-avatar-upload-button]",
+  );
+  if (!gallery || !uploadButton) {
+    return;
+  }
+
+  gallery
+    .querySelector("[data-account-profile-uploaded-avatar-option]")
+    ?.remove();
+  gallery.insertBefore(
+    createUploadedAvatarOption({
+      imageUrl,
+      onSelect: selectSavedUpload
+        ? () => {
+            accountProfileDraftAvatar = accountShell.profile.avatar;
+            setAccountProfileStatus("");
+            void renderAccountProfileAvatarPreview(
+              ensureAccountProfilePanel(),
+              accountProfileDraftAvatar,
+            );
+          }
+        : null,
+      selected,
+    }),
+    uploadButton,
+  );
+}
+
+function createUploadedAvatarOption({ imageUrl, onSelect = null, selected }) {
+  const option = document.createElement("button");
+  const image = document.createElement("img");
+
+  option.type = "button";
+  option.className = "account-profile-avatar-option";
+  option.dataset.accountProfileUploadedAvatarOption = "";
+  option.role = "radio";
+  option.setAttribute("aria-label", "Uploaded Avatar");
+  option.setAttribute("aria-checked", String(selected));
+  option.classList.toggle("is-selected", selected);
+  image.alt = "";
+  image.className = "account-profile-avatar-option-visual";
+  image.dataset.accountProfileUploadedAvatarOptionImage = "";
+  image.src = imageUrl;
+  option.append(image);
+  renderAccountProfileAvatarOptionCheck(option, selected);
+  if (onSelect) {
+    option.addEventListener("click", onSelect);
+  }
+
+  return option;
+}
+
+function renderAccountProfileAvatarOptionCheck(option, selected) {
+  option
+    .querySelector("[data-account-profile-avatar-selected-check]")
+    ?.remove();
+  if (!selected) {
+    return;
+  }
+
+  const check = document.createElement("span");
+  check.className = "account-profile-avatar-selected-check";
+  check.dataset.accountProfileAvatarSelectedCheck = "";
+  check.setAttribute("aria-hidden", "true");
+  check.append(createFontAwesomeIcon("solid", "check"));
+  option.append(check);
 }
 
 function renderAvatarCropControls(panel, avatarDescriptor) {
@@ -1922,7 +2138,6 @@ async function saveCurrentAccountProfile() {
   const profileId = accountShell.profile.profileId;
   const panel = ensureAccountProfilePanel();
   const gamerTag = panel.querySelector("[data-account-profile-gamer-tag]");
-  const avatar = panel.querySelector("[data-account-profile-avatar]");
   const status = panel.querySelector("[data-account-profile-status]");
   let uploadedObjectPath = null;
 
@@ -1938,7 +2153,8 @@ async function saveCurrentAccountProfile() {
           })
         : accountProfileDraftAvatar?.type === "built-in"
           ? accountProfileDraftAvatar
-          : createBuiltInAvatarDescriptor(avatar.value);
+          : accountShell.profile.avatar ??
+            createBuiltInAvatarDescriptor(accountShell.profile.avatarKey);
     if (avatarDescriptor.type === "uploaded") {
       uploadedObjectPath = avatarDescriptor.objectPath;
     }

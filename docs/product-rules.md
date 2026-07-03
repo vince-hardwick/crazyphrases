@@ -446,9 +446,13 @@ tap-to-preview tooltips for these utility actions; tapping the control performs 
 action directly, with meaning carried by the accessible name, familiar icon, hit area,
 and subsequent state or status feedback.
 
-Use Font Awesome `copy` for copy actions, `share-nodes` for share actions, and
-`heart-circle-minus` for remove-favourite actions in the dedicated Favourites
-destination. Share actions should appear only where an existing supported share path is
+Use Font Awesome `copy` for copy actions, `share-nodes` for share actions,
+`table-list` for batch actions or batch disclosure affordances, `envelope` for
+creating or sending a Game Invite, `envelope-open-text` for opening an incoming
+invite, `envelope-circle-check` for accepting an incoming invite, and
+`rectangle-xmark` for rejecting or declining an incoming invite. The dedicated
+Favourites destination continues to use `heart-circle-minus` for remove-favourite
+actions. Share actions should appear only where an existing supported share path is
 available and Share Consent rules allow it; copy remains available independently.
 Anonymous account sign-in uses Font Awesome `circle-user` for the top-nav account
 affordance, `google` for Google sign-in, `at` before the email address input, and
@@ -456,8 +460,10 @@ affordance, `google` for Google sign-in, `at` before the email address input, an
 actions are icon-first controls whose tooltip meaning matches their accessible action
 name and uses default font weight.
 Primary game-flow and confirmation actions, such as `Start batch`, `Reveal phrases`,
-`Keep playing`, `Discard entries`, `View phrases`, and `Start new batch`, remain text
-buttons.
+`Keep playing`, `Discard entries`, `View phrases`, and `Start new batch`, remain
+text-labelled buttons. When one of these text-labelled controls has an assigned action
+icon, the icon precedes the text and the accessible name remains the action label rather
+than the icon name.
 
 #### Account menu and panels
 

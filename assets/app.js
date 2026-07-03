@@ -2507,9 +2507,9 @@ function renderPhraseItem(phrase, phraseIndex) {
 
   const copyButton = document.createElement("button");
   copyButton.type = "button";
-  copyButton.className = "secondary-button phrase-copy-button";
+  copyButton.className = "secondary-button phrase-copy-button icon-action-button";
   copyButton.dataset.copyPhraseIndex = String(phraseIndex);
-  copyButton.textContent = "Copy";
+  copyButton.replaceChildren(createFontAwesomeIcon("solid", "copy"), "Copy");
   copyButton.ariaLabel = `Copy phrase ${phraseIndex + 1}`;
 
   actions.append(copyButton);
@@ -2753,6 +2753,10 @@ function createFontAwesomeIcon(style, name) {
   return icon;
 }
 
+function replaceWithLeadingIconText(element, style, iconName, text) {
+  element.replaceChildren(createFontAwesomeIcon(style, iconName), text);
+}
+
 function createScreenReaderText(text) {
   const element = document.createElement("span");
   element.className = "sr-only";
@@ -2831,9 +2835,14 @@ function ensurePendingGamePanel() {
   }
 
   const submitButton = document.createElement("button");
-  submitButton.className = "primary-button pending-game-submit";
+  submitButton.className = "primary-button pending-game-submit icon-action-button";
   submitButton.type = "submit";
-  submitButton.textContent = "Create invite";
+  replaceWithLeadingIconText(
+    submitButton,
+    "solid",
+    "envelope",
+    "Create invite",
+  );
 
   pendingGameStatus = document.createElement("p");
   pendingGameStatus.className = "pending-game-status";
@@ -3142,8 +3151,13 @@ function renderPendingGameResponseActions(pendingGame) {
 
   const acceptButton = document.createElement("button");
   acceptButton.type = "button";
-  acceptButton.className = "secondary-button";
-  acceptButton.textContent = "Accept";
+  acceptButton.className = "secondary-button icon-action-button";
+  replaceWithLeadingIconText(
+    acceptButton,
+    "solid",
+    "envelope-circle-check",
+    "Accept",
+  );
   acceptButton.setAttribute(
     "aria-label",
     `Accept invite from ${getParticipantDisplayName(creator)}`,
@@ -3154,8 +3168,13 @@ function renderPendingGameResponseActions(pendingGame) {
 
   const declineButton = document.createElement("button");
   declineButton.type = "button";
-  declineButton.className = "danger-button";
-  declineButton.textContent = "Decline";
+  declineButton.className = "danger-button icon-action-button";
+  replaceWithLeadingIconText(
+    declineButton,
+    "solid",
+    "rectangle-xmark",
+    "Decline",
+  );
   declineButton.setAttribute(
     "aria-label",
     `Decline invite from ${getParticipantDisplayName(creator)}`,
@@ -3813,7 +3832,13 @@ function renderNotificationRow(notification) {
   item.className = "notification-item";
   item.dataset.notificationItemId = notification.id;
   item.dataset.notificationStatus = notification.status;
-  item.textContent = message;
+  const openIconName = getNotificationOpenIconName(notification);
+  if (openIconName && targetRoute) {
+    item.classList.add("notification-item-with-icon");
+    replaceWithLeadingIconText(item, "solid", openIconName, message);
+  } else {
+    item.textContent = message;
+  }
   item.setAttribute("aria-label", getNotificationAccessibleLabel(notification, message));
   row.append(item);
 
@@ -3836,6 +3861,14 @@ function renderNotificationRow(notification) {
   }
 
   return row;
+}
+
+function getNotificationOpenIconName(notification) {
+  if (notification.targetPendingGameId) {
+    return "envelope-open-text";
+  }
+
+  return null;
 }
 
 function openNotificationPanel() {
@@ -4918,10 +4951,11 @@ function createBatchFavouriteDisclosureButton(recordId) {
   const label = isExpanded ? "Hide phrases" : "View phrases";
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "secondary-button favourite-disclosure-button";
+  button.className =
+    "secondary-button favourite-disclosure-button icon-action-button";
   button.dataset.toggleBatchFavouritePhrases = recordId;
   button.setAttribute("aria-expanded", String(isExpanded));
-  button.textContent = label;
+  replaceWithLeadingIconText(button, "solid", "table-list", label);
   button.ariaLabel = label;
   return button;
 }

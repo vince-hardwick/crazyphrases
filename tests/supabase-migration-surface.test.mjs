@@ -86,6 +86,9 @@ const gamerTagSnapshotRpcCleanupMigrationUrl = findMigrationUrl(
 const legacyIdentityColumnCleanupMigrationUrl = findMigrationUrl(
   "legacy_identity_column_cleanup",
 );
+const remediateSupabaseAdvisorLintsMigrationUrl = findMigrationUrl(
+  "remediate_supabase_advisor_lints",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1704,6 +1707,144 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(migration, /grant [^;]*handle[^;]*on table public\.(account_profiles|account_profile_directory)/i);
     assert.doesNotMatch(migration, /grant [^;]*gamer_name[^;]*on table public\.(account_profiles|account_profile_directory)/i);
     assert.doesNotMatch(migration, /grant [^;]*email_lookup_key[^;]*on table public\.account_profiles/i);
+  });
+
+  it("remediates Supabase advisor lints without broadening table access", () => {
+    assert.equal(existsSync(remediateSupabaseAdvisorLintsMigrationUrl), true);
+    assert.ok(
+      remediateSupabaseAdvisorLintsMigrationUrl.pathname >
+        legacyIdentityColumnCleanupMigrationUrl.pathname,
+      "advisor remediation must run after the current public RPC definitions",
+    );
+
+    const migration = readFileSync(
+      remediateSupabaseAdvisorLintsMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /alter default privileges in schema public\s+revoke execute on functions from public/,
+    );
+    assert.match(
+      migration,
+      /alter default privileges in schema public\s+revoke execute on functions from anon, authenticated/,
+    );
+    assert.match(migration, /grant usage on schema private to authenticated/);
+
+    for (const signature of [
+      "cancel_created_game\\(uuid\\)",
+      "list_completed_multiplayer_history\\(integer, bigint, uuid\\)",
+      "list_multiplayer_dashboard\\(\\)",
+      "lookup_account_profile\\(text, text\\)",
+      "reveal_multiplayer_batch\\(uuid\\)",
+      "submit_multiplayer_section\\(uuid, jsonb\\)",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`alter function public\\.${signature}\\s+set schema private`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`revoke all on function private\\.${signature}\\s+from public, anon, service_role`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`grant execute on function private\\.${signature}\\s+to authenticated`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`revoke all on function public\\.${signature}\\s+from public, anon, authenticated, service_role`),
+      );
+      assert.match(
+        migration,
+        new RegExp(`grant execute on function public\\.${signature}\\s+to authenticated`),
+      );
+    }
+
+    for (const functionName of [
+      "lookup_account_profile",
+      "list_multiplayer_dashboard",
+      "list_completed_multiplayer_history",
+      "submit_multiplayer_section",
+      "reveal_multiplayer_batch",
+      "cancel_created_game",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`create or replace function public\\.${functionName}`),
+      );
+    }
+    assert.match(migration, /security invoker/g);
+    assert.doesNotMatch(
+      migration,
+      /create or replace function public\.[\s\S]*?security definer/i,
+    );
+
+    for (const tableName of [
+      "game_entries",
+      "game_section_assignments",
+      "game_section_entries",
+      "game_turns",
+      "multiplayer_batch_reveals",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`create policy "No direct browser access to ${tableName}"[\\s\\S]*?on public\\.${tableName}[\\s\\S]*?for all[\\s\\S]*?to anon, authenticated[\\s\\S]*?using \\(false\\)[\\s\\S]*?with check \\(false\\)`),
+      );
+    }
+
+    assert.match(
+      migration,
+      /drop policy if exists "Account holders can view their created Pending Games"/,
+    );
+    assert.match(
+      migration,
+      /drop policy if exists "Invitees can view their Pending Game invites"/,
+    );
+    assert.match(
+      migration,
+      /create policy "Account holders can view relevant Pending Games"/,
+    );
+    assert.match(
+      migration,
+      /pending_game\.creator_account_id = \(select auth\.uid\(\)\)/,
+    );
+
+    assert.match(
+      migration,
+      /drop policy if exists\s+"Account holders can view participant rows for their created Pending Games"/,
+    );
+    assert.match(
+      migration,
+      /drop policy if exists\s+"Invitees can view participant rows for their Pending Game invites"/,
+    );
+    assert.match(
+      migration,
+      /create policy "Account holders can view relevant Pending Game participants"/,
+    );
+
+    for (const droppedIndex of [
+      "game_section_entries_assignment_id_idx",
+      "game_turns_participant_profile_id_idx",
+      "games_creator_profile_id_idx",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(`drop index if exists public\\.${droppedIndex}`),
+      );
+    }
+
+    for (const retainedIndex of [
+      "game_turns_game_id_idx",
+      "in_app_notifications_target_assignment_game_idx",
+      "in_app_notifications_target_pending_game_id_idx",
+    ]) {
+      assert.doesNotMatch(
+        migration,
+        new RegExp(`drop index if exists public\\.${retainedIndex}`),
+      );
+    }
   });
 
   it("adds Uploaded Avatar storage, descriptor, and snapshot authority", () => {

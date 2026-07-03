@@ -624,14 +624,14 @@ app-profile reset precondition, this migration was applied to hosted Supabase as
 version `20260702141616 private_email_lookup_and_gamer_tag`; schema, grants,
 and lookup privacy were verified.
 
-Supabase security advisors report
+Before the advisor remediation migration, Supabase security advisors reported
 `public.lookup_account_profile(text, text)` as an authenticated-callable
-`SECURITY DEFINER` function. That is expected for the accepted private lookup
-design: authenticated Accounts need exact known-email and Gamer Tag lookup
-without direct `SELECT` access to `email_lookup_key`. Keep this RPC narrow. It
-must not be executable by `anon` or `public`, it must keep an authenticated-user
-guard, and it must return only invite-safe Gamer Tag and Avatar descriptor data,
-not email addresses or email-backed lookup values.
+`SECURITY DEFINER` function. The accepted privacy rule remains: authenticated
+Accounts need exact known-email and Gamer Tag lookup without direct `SELECT`
+access to `email_lookup_key`, and the lookup must return only invite-safe Gamer
+Tag and Avatar descriptor data. After
+`20260703163721_remediate_supabase_advisor_lints.sql`, keep that authority in
+the private helper and expose only the authenticated public wrapper.
 
 The Gamer Tag snapshot RPC cleanup migration is:
 
@@ -703,6 +703,41 @@ correction PR #157 keeps those legacy values only during the one-time backfill
 and drops the columns later in the same migration. Hosted schema, grants,
 function definitions, and production smoke evidence are recorded in
 `docs/planning/supabase-state-ledger.md`.
+
+The Supabase advisor remediation migration is:
+
+```text
+supabase/migrations/20260703163721_remediate_supabase_advisor_lints.sql
+```
+
+It resolves database-side Supabase advisor WARN/ERROR findings without widening
+browser data access. It moves the existing authenticated browser RPC
+implementations into `private`, recreates the public RPCs as `SECURITY INVOKER`
+wrappers, keeps `search_path` empty, and grants execute only to
+`authenticated`. It also adds explicit false direct-access policies for
+RPC-owned game execution tables, merges duplicate Pending Game select policies,
+and drops only unused indexes that are redundant with existing access paths.
+
+Do not replace the retained FK-support indexes merely because the performance
+advisor reports INFO-level unused-index notices immediately after low-traffic
+schema work. `game_turns_game_id_idx`,
+`in_app_notifications_target_assignment_game_idx`, and
+`in_app_notifications_target_pending_game_id_idx` are intentionally retained for
+foreign-key cleanup and cascade paths. If future workload evidence shows they
+remain unused and the constraints or cleanup model have changed, reassess them
+as a separate schema decision.
+
+On 2026-07-03, after the owner's task-specific advisor-remediation request, the
+migration was applied to hosted Supabase as version
+`20260703163721 remediate_supabase_advisor_lints`. Hosted verification
+confirmed authenticated RPC smoke, cleared database security advisor findings,
+and cleared performance advisor WARN/ERROR findings. The remaining advisor
+warning is project-level Auth leaked-password protection, which is not a
+database migration and is tracked in `docs/backlog.md` because Supabase's
+current docs restrict the setting to Pro Plan and above and enabling it changes
+Auth configuration/cost posture. On 2026-07-03, the owner confirmed there will
+be no Supabase Pro Plan+ upgrade at this stage, so do not route routine advisor
+cleanup through that upgrade path.
 
 The first private Phrase Favourite migration is:
 

@@ -37,6 +37,7 @@ preserve their original history.
   [Auth-gated favourites DOM loading](#auth-gated-favourites-dom-loading);
   [Anonymous solo import to signed-in state](#anonymous-solo-import-to-signed-in-state);
   [Email OTP code entry](#email-otp-code-entry);
+  [Supabase Auth leaked-password protection](#supabase-auth-leaked-password-protection);
   [Additional hosted Auth providers](#additional-hosted-auth-providers);
   [Branded Supabase Auth domain](#branded-supabase-auth-domain);
   [Uploaded Avatars](#uploaded-avatars);
@@ -1363,6 +1364,27 @@ preserve their original history.
 - **Remaining risk**: Some users prefer typing a code instead of clicking a link, so the
   Auth adapter should keep email sign-in isolated from game persistence to allow an OTP
   path later.
+
+### Supabase Auth leaked-password protection
+
+- **Deferred with accepted risk**: Enabling Supabase Auth leaked-password protection to
+  clear the project-level security advisor warning.
+- **Why deferred**: The current MVP sign-in surface uses Google OAuth and email
+  magic-link authentication, not password signup or password changes. Supabase's current
+  password-security documentation says leaked-password protection is available on Pro
+  Plan and above, so enabling it changes Auth configuration and cost posture rather than
+  database schema. Codex had no dashboard or Management API write surface for this Auth
+  setting during the 2026-07-03 database advisor remediation.
+- **Revisit when**: Password-based sign-in enters accepted scope, the project upgrades
+  to a plan that includes leaked-password protection, broader public onboarding raises
+  the Auth hardening bar, or the owner explicitly approves a Supabase Auth configuration
+  hardening pass with any required plan/cost changes.
+- **Status**: The 2026-07-03 advisor remediation cleared the database-side Supabase
+  advisor WARN/ERROR findings. Supabase security advisors still report only this
+  project-level Auth warning.
+- **Remaining risk**: If password-based Auth is later enabled before this setting is
+  revisited, Supabase would not reject passwords known to be compromised through the
+  leaked-password protection feature.
 
 ### Additional hosted Auth providers
 

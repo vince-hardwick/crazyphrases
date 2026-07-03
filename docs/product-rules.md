@@ -71,6 +71,12 @@ The Account/Profile icon uses a hover/focus tooltip. If no Gamer Tag is availabl
 tooltip text is `Profile`. If a Gamer Tag is available, the tooltip text is
 `<Gamer Tag>’s profile`, for example `vhCoder’s profile`.
 
+Top-nav icon affordances use one consistent 44px icon-button footprint, 8px radius,
+and 8px spacing across Play, Favourites, theme, Notifications, Help, and
+Account/Profile. Opening one top-nav menu or popover must close the other top-nav menu
+or popover first, so Play, Notifications, and Account/Profile panels cannot remain open
+and overlap each other.
+
 #### Signed-in Favourites
 
 Private Phrase Favourites and Batch Favourites are signed-in, Account-backed

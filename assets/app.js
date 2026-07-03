@@ -440,7 +440,12 @@ helpToggle.addEventListener("click", () => {
 
 playMenuToggle.addEventListener("click", (event) => {
   event.stopPropagation();
-  setPlayMenuOpen(playMenu.hidden);
+  const isOpening = playMenu.hidden;
+  if (isOpening) {
+    closeAccountMenu({ returnFocus: false });
+    closeNotificationPanel({ returnFocus: false });
+  }
+  setPlayMenuOpen(isOpening);
 });
 
 playMenu.addEventListener("click", (event) => {

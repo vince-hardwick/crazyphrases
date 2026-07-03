@@ -682,7 +682,9 @@ describe("solo browser smoke", () => {
     await expectFontAwesomeClass(accountMenuButton, "fa-solid", "fa-dice");
     assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
     await assertSignedInAccountAffordance(page);
+    await expectVisibleHeaderTooltip(accountMenuButton, LOCAL_TEST_PROFILE_TOOLTIP);
     await assertAccountProfileButtonIsTopRightPeer(page);
+    await assertConsistentTopNavIconLayout(page);
 
     const hashBeforeOpen = new URL(page.url()).hash;
     await accountMenuButton.click();
@@ -748,6 +750,22 @@ describe("solo browser smoke", () => {
       window.location.hash = "#/favourites";
     });
     await page.waitForFunction(() => window.location.hash === "#/favourites");
+    assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
+
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    await play.click();
+    await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
+      state: "visible",
+    });
+    await accountMenuButton.click();
+    await page.getByRole("menu", { name: "Account menu" }).waitFor({
+      state: "visible",
+    });
+    await page.locator("[data-play-menu]").waitFor({ state: "hidden" });
+    await play.click();
+    await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
+      state: "visible",
+    });
     assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
     await assertNoHorizontalOverflow(page);
 
@@ -5657,6 +5675,29 @@ async function expectDefaultTooltip(locator, label) {
   );
 }
 
+async function expectVisibleHeaderTooltip(locator, label) {
+  await locator.hover();
+  await locator.evaluate(
+    () => new Promise((resolve) => window.setTimeout(resolve, 160)),
+  );
+  const tooltip = await locator.evaluate((element) => {
+    const elementStyle = getComputedStyle(element);
+    const tooltipStyle = getComputedStyle(element, "::after");
+
+    return {
+      content: tooltipStyle.content,
+      opacity: Number(tooltipStyle.opacity),
+      overflow: elementStyle.overflow,
+      top: tooltipStyle.top,
+    };
+  });
+
+  assert.equal(tooltip.content.includes(label), true);
+  assert.ok(tooltip.opacity > 0.9);
+  assert.notEqual(tooltip.overflow, "hidden");
+  assert.notEqual(tooltip.top, "auto");
+}
+
 async function expectFavouriteToggleState(locator, { pressed, style }) {
   assert.equal(await locator.getAttribute("aria-pressed"), String(pressed));
   await expectFontAwesomeClass(locator, `fa-${style}`, "fa-heart");
@@ -5753,6 +5794,53 @@ async function assertAccountProfileButtonIsTopRightPeer(page) {
   assert.ok(metrics.accountShell.height <= metrics.accountButton.height + 2);
   assert.ok(metrics.accountButton.right > metrics.helpButton.right);
   assert.ok(metrics.viewportWidth - metrics.accountButton.right <= 14);
+}
+
+async function assertConsistentTopNavIconLayout(page) {
+  const metrics = await page.evaluate(() => {
+    const selectors = [
+      '[data-play-menu-toggle]',
+      '[data-route-link="favourites"]',
+      '[data-theme-toggle]',
+      '[data-notification-toggle]',
+      '[data-help-toggle]',
+      '[data-account-menu-toggle]',
+    ];
+
+    return selectors.map((selector) => {
+      const element = document.querySelector(selector);
+      const rect = element.getBoundingClientRect();
+      const styles = getComputedStyle(element);
+
+      return {
+        borderRadius: styles.borderRadius,
+        height: rect.height,
+        left: rect.left,
+        selector,
+        top: rect.top,
+        width: rect.width,
+      };
+    });
+  });
+
+  assert.equal(metrics.length, 6);
+  for (const metric of metrics) {
+    assert.equal(Math.round(metric.width), 44, metric.selector);
+    assert.equal(Math.round(metric.height), 44, metric.selector);
+    assert.equal(metric.borderRadius, "8px", metric.selector);
+    assert.ok(Math.abs(metric.top - metrics[0].top) <= 1, metric.selector);
+  }
+
+  const sorted = [...metrics].sort((left, right) => left.left - right.left);
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1];
+    const current = sorted[index];
+    const gap = current.left - (previous.left + previous.width);
+    assert.ok(
+      Math.abs(gap - 8) <= 1,
+      `Expected 8px top-nav icon gap, got ${gap} between ${previous.selector} and ${current.selector}`,
+    );
+  }
 }
 
 async function assertAccountMenuRightAligned(page) {

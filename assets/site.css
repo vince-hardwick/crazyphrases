@@ -69,10 +69,18 @@ body {
   margin: 10px 0 22px;
 }
 
+.top-nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .header-actions {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
 .primary-nav {
@@ -214,10 +222,6 @@ body {
 
 .account-sign-in-panel[hidden] {
   display: none;
-}
-
-.account-menu-toggle {
-  overflow: hidden;
 }
 
 .account-menu-avatar-image {
@@ -1181,6 +1185,13 @@ h1 {
   gap: 6px;
 }
 
+.top-nav-actions .primary-nav-link,
+.header-actions > .icon-button,
+.header-actions .notification-button,
+.account-shell > .icon-button {
+  border-radius: 8px;
+}
+
 .tooltip-action,
 .primary-nav-icon-link[data-tooltip] {
   position: relative;
@@ -1219,16 +1230,35 @@ h1 {
   transform: translate(-50%, 0);
 }
 
-[data-account-sign-in-toggle]::after,
-[data-account-menu-toggle]::after {
-  inset: auto 0 calc(100% + 8px) auto;
-  transform: translate(0, 4px);
+.top-nav-actions .primary-nav-icon-link[data-tooltip]::after,
+.header-actions > .tooltip-action::after,
+.header-actions .notification-button::after,
+.account-shell > .tooltip-action::after {
+  inset: calc(100% + 8px) auto auto 50%;
+  transform: translate(-50%, -4px);
 }
 
-[data-account-sign-in-toggle]:hover::after,
-[data-account-sign-in-toggle]:focus-visible::after,
-[data-account-menu-toggle]:hover::after,
-[data-account-menu-toggle]:focus-visible::after {
+.top-nav-actions .primary-nav-icon-link[data-tooltip]:hover::after,
+.top-nav-actions .primary-nav-icon-link[data-tooltip]:focus-visible::after,
+.header-actions > .tooltip-action:hover::after,
+.header-actions > .tooltip-action:focus-visible::after,
+.header-actions .notification-button:hover::after,
+.header-actions .notification-button:focus-visible::after,
+.account-shell > .tooltip-action:hover::after,
+.account-shell > .tooltip-action:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.account-shell > [data-account-sign-in-toggle]::after,
+.account-shell > [data-account-menu-toggle]::after {
+  inset: calc(100% + 8px) 0 auto auto;
+  transform: translate(0, -4px);
+}
+
+.account-shell > [data-account-sign-in-toggle]:hover::after,
+.account-shell > [data-account-sign-in-toggle]:focus-visible::after,
+.account-shell > [data-account-menu-toggle]:hover::after,
+.account-shell > [data-account-menu-toggle]:focus-visible::after {
   transform: translate(0, 0);
 }
 
@@ -1736,8 +1766,13 @@ h1 {
     flex-direction: column;
   }
 
+  .top-nav-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .header-actions {
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   .account-shell {

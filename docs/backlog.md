@@ -1375,13 +1375,14 @@ preserve their original history.
   Plan and above, so enabling it changes Auth configuration and cost posture rather than
   database schema. Codex had no dashboard or Management API write surface for this Auth
   setting during the 2026-07-03 database advisor remediation.
-- **Revisit when**: Password-based sign-in enters accepted scope, the project upgrades
-  to a plan that includes leaked-password protection, broader public onboarding raises
-  the Auth hardening bar, or the owner explicitly approves a Supabase Auth configuration
-  hardening pass with any required plan/cost changes.
+- **Revisit when**: Password-based sign-in enters accepted scope, broader public
+  onboarding raises the Auth hardening bar, Supabase makes leaked-password protection
+  available without a Pro Plan+ upgrade, or the owner explicitly approves a Supabase
+  Auth configuration hardening pass with any required plan/cost changes.
 - **Status**: The 2026-07-03 advisor remediation cleared the database-side Supabase
   advisor WARN/ERROR findings. Supabase security advisors still report only this
-  project-level Auth warning.
+  project-level Auth warning. On 2026-07-03, the owner confirmed they will not upgrade
+  to Supabase Pro Plan+ at this stage.
 - **Remaining risk**: If password-based Auth is later enabled before this setting is
   revisited, Supabase would not reject passwords known to be compromised through the
   leaked-password protection feature.

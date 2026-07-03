@@ -735,7 +735,9 @@ and cleared performance advisor WARN/ERROR findings. The remaining advisor
 warning is project-level Auth leaked-password protection, which is not a
 database migration and is tracked in `docs/backlog.md` because Supabase's
 current docs restrict the setting to Pro Plan and above and enabling it changes
-Auth configuration/cost posture.
+Auth configuration/cost posture. On 2026-07-03, the owner confirmed there will
+be no Supabase Pro Plan+ upgrade at this stage, so do not route routine advisor
+cleanup through that upgrade path.
 
 The first private Phrase Favourite migration is:
 

@@ -19,6 +19,8 @@ const LONG_TARGET_NOTIFICATION_MESSAGE =
   "Target notification with abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.";
 const LONG_STATIC_NOTIFICATION_MESSAGE =
   "Static notification with zyxwvutsrqponmlkjihgfedcbazyxwvutsrqponmlkjihgfedcbazyxwvutsrqponmlkjihgfedcba.";
+const LOCAL_TEST_PROFILE_TOOLTIP = "Player\u2019s profile";
+const LOCAL_TEST_INVITEE_PROFILE_TOOLTIP = "Invitee Two\u2019s profile";
 
 describe("solo browser smoke", () => {
   let staticServer;
@@ -53,8 +55,8 @@ describe("solo browser smoke", () => {
     await assertNoProfileEditorDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
-    await assertTextVisible(page, "Player");
+    await assertSignedInAccountAffordance(page);
+    await assertTextHidden(page, "Player");
     await assertTextHidden(page, "@player-test-account");
     await assertNoProfileEditorDom(page);
     await openSettingsRouteFromAccountMenu(page);
@@ -622,6 +624,8 @@ describe("solo browser smoke", () => {
     await page.getByRole("menu", { name: "Play Game Modes" }).waitFor({
       state: "visible",
     });
+    await page.keyboard.press("Escape");
+    await page.locator("[data-play-menu]").waitFor({ state: "hidden" });
 
     const favourites = page.getByRole("link", { name: "Favourites" });
     await expectDefaultTooltip(favourites, "Favourites");
@@ -637,9 +641,10 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("#help-panel").isVisible(), true);
 
     const accountMenuButton = page.getByRole("button", {
-      name: "Account menu for Player",
+      name: LOCAL_TEST_PROFILE_TOOLTIP,
     });
-    await expectDefaultTooltip(accountMenuButton, "Account menu for Player");
+    await expectDefaultTooltip(accountMenuButton, LOCAL_TEST_PROFILE_TOOLTIP);
+    assert.equal(await visibleTextContent(accountMenuButton), "");
     await accountMenuButton.click();
 
     const accountMenu = page.getByRole("menu", { name: "Account menu" });
@@ -671,11 +676,13 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
 
     const accountMenuButton = page.getByRole("button", {
-      name: "Account menu for Player",
+      name: LOCAL_TEST_PROFILE_TOOLTIP,
     });
     assert.equal(await accountMenuButton.isVisible(), true);
     await expectFontAwesomeClass(accountMenuButton, "fa-solid", "fa-dice");
     assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
+    await assertSignedInAccountAffordance(page);
+    await assertAccountProfileButtonIsTopRightPeer(page);
 
     const hashBeforeOpen = new URL(page.url()).hash;
     await accountMenuButton.click();
@@ -685,6 +692,7 @@ describe("solo browser smoke", () => {
 
     const accountMenu = page.getByRole("menu", { name: "Account menu" });
     await accountMenu.waitFor({ state: "visible" });
+    await assertAccountMenuRightAligned(page);
     const settings = accountMenu.getByRole("menuitem", { name: "Settings" });
     const signOut = accountMenu.getByRole("menuitem", { name: "Sign out" });
     assert.equal(await settings.isVisible(), true);
@@ -716,7 +724,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
 
     const accountMenuButton = page.getByRole("button", {
-      name: "Account menu for Player",
+      name: LOCAL_TEST_PROFILE_TOOLTIP,
     });
     await accountMenuButton.focus();
     await page.keyboard.press("Enter");
@@ -728,7 +736,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-account-menu-panel]").isHidden(), true);
     await assertActiveElementMatches(page, {
       selector: "[data-account-menu-toggle]",
-      accessibleName: "Account menu for Player",
+      accessibleName: LOCAL_TEST_PROFILE_TOOLTIP,
     });
 
     await accountMenuButton.click();
@@ -760,7 +768,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openFavouritesRoute(page);
 
-    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page.getByRole("button", { name: LOCAL_TEST_PROFILE_TOOLTIP }).click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Sign out" })
@@ -792,7 +800,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await assertNoProfileEditorDom(page);
 
-    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page.getByRole("button", { name: LOCAL_TEST_PROFILE_TOOLTIP }).click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Settings" })
@@ -1167,7 +1175,7 @@ describe("solo browser smoke", () => {
 
     const settingsPanel = page.getByRole("region", { name: "Settings" });
     await settingsPanel.getByLabel("Gamer Tag").fill("Captain Spoon");
-    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page.getByRole("button", { name: LOCAL_TEST_PROFILE_TOOLTIP }).click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Sign out" })
@@ -1189,9 +1197,9 @@ describe("solo browser smoke", () => {
       await settingsPanel.getByLabel("Gamer Tag").inputValue(),
       "Captain Spoon",
     );
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
-    await page.getByRole("button", { name: "Account menu for Player" }).click();
+    await page.getByRole("button", { name: LOCAL_TEST_PROFILE_TOOLTIP }).click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Sign out" })
@@ -2234,7 +2242,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-notification-panel]").isVisible(), true);
     assert.equal(await page.locator("[data-notification-row]").count(), 5);
 
-    await page.getByRole("button", { name: /^Account menu for / }).click();
+    await page.locator("[data-account-menu-toggle]").click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Sign out" })
@@ -2477,7 +2485,7 @@ describe("solo browser smoke", () => {
     await assertRowCountSelected(page, "15");
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertRowCountSelected(page, "20");
     await assertTextHidden(page, "20 phrases selected");
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
@@ -2494,7 +2502,7 @@ describe("solo browser smoke", () => {
 
     await signInWithLocalTestAccount(page);
     await waitForDice(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(await page.locator("[data-section-title]").innerText(), signedInSectionTitle);
     assert.equal(await page.locator("[data-row-index]").count(), 10);
     await assertNoHorizontalOverflow(page);
@@ -2641,7 +2649,7 @@ describe("solo browser smoke", () => {
         .inputValue(),
       "Player",
     );
-    await assertTextVisible(page, "Player");
+    await assertSignedInAccountAffordance(page);
     await assertTextHidden(page, "@player-test-account");
     await assertNoHorizontalOverflow(page);
 
@@ -2741,7 +2749,10 @@ describe("solo browser smoke", () => {
         .getAttribute("aria-checked"),
       "true",
     );
-    await assertTextVisible(page, "Captain Spoon");
+    await expectDefaultTooltip(
+      page.locator("[data-account-menu-toggle]"),
+      "Captain Spoon\u2019s profile",
+    );
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -3167,7 +3178,7 @@ describe("solo browser smoke", () => {
     await assertNoPendingGameDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertNoPendingGameDom(page);
     await openMultiplayerRoute(page);
     await assertPendingGameSurfaceMounted(page);
@@ -3266,7 +3277,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
@@ -3367,7 +3378,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
@@ -3895,7 +3906,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-favourites-route]").count(), 0);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertTextVisible(page, "Favourites");
     await assertFavouriteSurfaceMounted(page);
@@ -4030,7 +4041,10 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
 
-    await assertTextVisible(page, "Invitee Two");
+    await expectDefaultTooltip(
+      page.locator("[data-account-menu-toggle]"),
+      LOCAL_TEST_INVITEE_PROFILE_TOOLTIP,
+    );
     await assertTextAbsent(page, "@invitee-two");
     await openFavouritesRoute(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
@@ -4078,7 +4092,7 @@ describe("solo browser smoke", () => {
     );
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
     await assertNoFavouritesPanelDom(page);
     assert.equal(await page.locator("[data-game-panel]").isHidden(), false);
@@ -4113,7 +4127,7 @@ describe("solo browser smoke", () => {
     await assertNoFavouritesPanelDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertFavouriteSurfaceMounted(page);
     await assertTextVisible(page, "No phrase favourites yet.");
@@ -4161,7 +4175,7 @@ describe("solo browser smoke", () => {
     assert.equal(Number.isFinite(preservedHandoff.createdAt), true);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/favourites");
     await assertFavouriteSurfaceMounted(page);
     assert.equal(
@@ -4244,7 +4258,7 @@ describe("solo browser smoke", () => {
     assert.equal(JSON.parse(preservedHandoff).route, "#/play/multiplayer");
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await page.waitForFunction(
       () =>
         window.location.hash === "#/play/multiplayer" &&
@@ -4298,7 +4312,7 @@ describe("solo browser smoke", () => {
     });
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await page.waitForFunction(
       () => window.__hostedAuthUrlCleanupApplied === true,
     );
@@ -4367,7 +4381,7 @@ describe("solo browser smoke", () => {
     });
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await page.waitForFunction(
       () => window.__hostedAuthDelayedUrlCleanupApplied === true,
     );
@@ -4404,7 +4418,7 @@ describe("solo browser smoke", () => {
     await assertNoNotificationDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/settings");
     await assertProfileManagementSurfaceMounted(page);
     await assertNoHorizontalOverflow(page);
@@ -4467,7 +4481,7 @@ describe("solo browser smoke", () => {
     await assertNoNotificationDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
     await assertPendingGameSurfaceMounted(page);
@@ -4514,7 +4528,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/#/play/multiplayer`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
     await assertPendingGameSurfaceMounted(page);
 
@@ -4536,7 +4550,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Create invite" }).click();
     await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
 
-    await page.getByRole("button", { name: /^Account menu for / }).click();
+    await page.locator("[data-account-menu-toggle]").click();
     await page
       .getByRole("menu", { name: "Account menu" })
       .getByRole("menuitem", { name: "Sign out" })
@@ -4566,7 +4580,7 @@ describe("solo browser smoke", () => {
     await assertNoNotificationDom(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(new URL(page.url()).hash, "#/play/solo");
 
     assertNoConsoleErrors();
@@ -4593,7 +4607,7 @@ describe("solo browser smoke", () => {
     await assertRowCountSelected(page, "15");
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -4821,7 +4835,7 @@ describe("solo browser smoke", () => {
     await assertNoHorizontalOverflow(page);
 
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
@@ -4830,7 +4844,7 @@ describe("solo browser smoke", () => {
     await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertTextVisible(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
@@ -4879,7 +4893,7 @@ describe("solo browser smoke", () => {
     await assertAnonymousAccountIconVisible(page);
     await assertRowCountSelected(page, "15");
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
     assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
 
@@ -4902,7 +4916,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=save-fails`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -4927,7 +4941,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -4987,7 +5001,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5034,7 +5048,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=save-fails`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5071,7 +5085,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=load-fails`);
     await signInWithLocalTestAccount(page);
 
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
     await assertTextVisible(
       page,
       "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
@@ -5105,7 +5119,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testSignedInPersistence=conflict-save`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5130,7 +5144,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=remove-fails`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5197,7 +5211,7 @@ describe("solo browser smoke", () => {
       `${staticServer.origin}/?testPrivateFavourites=remove-fails-after-delay`,
     );
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5239,7 +5253,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5286,7 +5300,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(`${staticServer.origin}/?testPrivateFavourites=mutation-delays`);
     await signInWithLocalTestAccount(page);
-    await assertTextVisible(page, "Account-backed mode");
+    await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
@@ -5686,6 +5700,82 @@ async function assertAnonymousAccountIconVisible(page) {
   assert.equal(await accountSignIn.isVisible(), true);
 }
 
+async function assertSignedInAccountAffordance(page) {
+  const accountMenuButton = page.locator("[data-account-menu-toggle]");
+  await accountMenuButton.waitFor({ state: "visible" });
+
+  const tooltip = await accountMenuButton.getAttribute("data-tooltip");
+  assert.match(tooltip ?? "", /^(Profile|.+\u2019s profile)$/);
+  assert.equal(await accountMenuButton.getAttribute("aria-haspopup"), "menu");
+  assert.equal(await visibleTextContent(accountMenuButton), "");
+  assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
+  assert.equal(await page.locator("[data-account-status]").isVisible(), false);
+  assert.equal(await page.locator("[data-account-detail]").isVisible(), false);
+
+  const accountShellText = await page
+    .locator("[data-account-shell]")
+    .evaluate((shell) => shell.innerText);
+  assert.equal(accountShellText.includes("Account-backed mode"), false);
+}
+
+async function assertAccountProfileButtonIsTopRightPeer(page) {
+  const metrics = await page.evaluate(() => {
+    const accountShell = document.querySelector("[data-account-shell]");
+    const accountButton = document.querySelector("[data-account-menu-toggle]");
+    const helpButton = document.querySelector("[data-help-toggle]");
+
+    const accountShellRect = accountShell.getBoundingClientRect();
+    const accountButtonRect = accountButton.getBoundingClientRect();
+    const helpButtonRect = helpButton.getBoundingClientRect();
+
+    return {
+      accountButton: {
+        width: accountButtonRect.width,
+        height: accountButtonRect.height,
+        right: accountButtonRect.right,
+      },
+      accountShell: {
+        width: accountShellRect.width,
+        height: accountShellRect.height,
+      },
+      helpButton: {
+        width: helpButtonRect.width,
+        height: helpButtonRect.height,
+        right: helpButtonRect.right,
+      },
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  assert.equal(Math.round(metrics.accountButton.width), Math.round(metrics.helpButton.width));
+  assert.equal(Math.round(metrics.accountButton.height), Math.round(metrics.helpButton.height));
+  assert.ok(metrics.accountShell.width <= metrics.accountButton.width + 2);
+  assert.ok(metrics.accountShell.height <= metrics.accountButton.height + 2);
+  assert.ok(metrics.accountButton.right > metrics.helpButton.right);
+  assert.ok(metrics.viewportWidth - metrics.accountButton.right <= 14);
+}
+
+async function assertAccountMenuRightAligned(page) {
+  const metrics = await page.evaluate(() => {
+    const accountButton = document.querySelector("[data-account-menu-toggle]");
+    const accountMenu = document.querySelector("[data-account-menu-panel]");
+
+    const accountButtonRect = accountButton.getBoundingClientRect();
+    const accountMenuRect = accountMenu.getBoundingClientRect();
+
+    return {
+      buttonRight: accountButtonRect.right,
+      menuLeft: accountMenuRect.left,
+      menuRight: accountMenuRect.right,
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  assert.ok(Math.abs(metrics.menuRight - metrics.buttonRight) <= 1);
+  assert.ok(metrics.menuLeft >= 0);
+  assert.ok(metrics.menuRight <= metrics.viewportWidth);
+}
+
 async function assertAnonymousSignInSurfaceClosed(page) {
   assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), false);
   assert.equal(
@@ -5712,10 +5802,12 @@ async function signInWithLocalTestAccount(page, { invitee = false } = {}) {
       name: invitee ? "Test invitee sign in" : "Test sign in",
     })
     .click();
+  await page.locator("[data-account-menu-toggle]").waitFor({ state: "visible" });
 }
 
 async function signOutFromAccountMenu(page) {
-  const accountMenuButton = page.getByRole("button", { name: /^Account menu for / });
+  const accountMenuButton = page.locator("[data-account-menu-toggle]");
+  await accountMenuButton.waitFor({ state: "visible" });
   if ((await accountMenuButton.getAttribute("aria-expanded")) !== "true") {
     await accountMenuButton.click();
   }
@@ -6143,9 +6235,8 @@ async function openFavouritesRoute(page) {
 }
 
 async function openSettingsRouteFromAccountMenu(page) {
-  const accountMenuButton = page.getByRole("button", {
-    name: /^Account menu for /,
-  });
+  const accountMenuButton = page.locator("[data-account-menu-toggle]");
+  await accountMenuButton.waitFor({ state: "visible" });
   if ((await accountMenuButton.getAttribute("aria-expanded")) !== "true") {
     await accountMenuButton.click();
   }

@@ -310,6 +310,7 @@ renderAccountShell(accountShell);
 void initialiseHostedAuth();
 
 themeToggle.addEventListener("click", () => {
+  setPlayMenuOpen(false);
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", {
     persist: true,
   });
@@ -431,6 +432,7 @@ startNewCurrentGameButton.addEventListener("click", () => {
 });
 
 helpToggle.addEventListener("click", () => {
+  setPlayMenuOpen(false);
   const isExpanded = helpToggle.getAttribute("aria-expanded") === "true";
   helpToggle.setAttribute("aria-expanded", String(!isExpanded));
   helpPanel.hidden = isExpanded;
@@ -496,6 +498,7 @@ document.addEventListener("keydown", (event) => {
 
 function handleNotificationToggleClick(event) {
   event.stopPropagation();
+  setPlayMenuOpen(false);
   closeAccountMenu({ returnFocus: false });
   const isExpanded = notificationToggle.getAttribute("aria-expanded") === "true";
   if (isExpanded) {
@@ -1038,14 +1041,10 @@ function renderAccountShell(shell) {
   } else {
     accountFeedback.hidden = accountFeedback.textContent.trim() === "";
   }
-  accountStatus.hidden = isAnonymous;
-  accountDetail.hidden = isAnonymous;
-  accountStatus.textContent = isAnonymous ? "" : shell.statusLabel;
-  accountDetail.textContent = isAnonymous
-    ? ""
-    : shell.persistenceAuthority.type === "local-browser"
-      ? "Local play in this browser"
-      : shell.profile.gamerTag;
+  accountStatus.hidden = true;
+  accountDetail.hidden = true;
+  accountStatus.textContent = "";
+  accountDetail.textContent = "";
   testSignInButton.hidden =
     !isSignInPanelOpen ||
     !isLocalTestAuthAvailable();
@@ -1079,11 +1078,15 @@ function setAccountFeedback(message) {
 }
 
 function renderAccountMenuToggle(shell) {
-  const gamerTag = shell.profile?.gamerTag ?? "Account";
-  const label = `Account menu for ${gamerTag}`;
+  const label = formatAccountProfileTooltip(shell.profile);
   accountMenuToggle.setAttribute("aria-label", label);
   accountMenuToggle.dataset.tooltip = label;
   void renderAccountMenuAvatar(shell.profile?.avatar);
+}
+
+function formatAccountProfileTooltip(profile) {
+  const gamerTag = String(profile?.gamerTag ?? "").trim();
+  return gamerTag === "" ? "Profile" : `${gamerTag}\u2019s profile`;
 }
 
 async function renderAccountMenuAvatar(avatarDescriptor) {

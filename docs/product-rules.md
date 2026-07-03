@@ -55,6 +55,22 @@ buckets, and the completed-history entry point. Completed multiplayer history re
 reachable from the `Batches completed` dashboard bucket; it should not become a separate
 primary navigation item or account-menu item in the first signed-in navigation shape.
 
+#### Account/profile affordance
+
+The signed-in Account/Profile affordance belongs at the far right of the top navigation
+as an icon-only Avatar button. It should visually behave as a peer of the other top-nav
+icon buttons rather than as a larger account status card.
+
+Do not show a surrounding account card, the visible `Account-backed mode` label, or the
+visible Gamer Tag label in the top navigation. The Avatar/Profile icon remains
+clickable and opens the existing Account menu underneath the icon. The Account menu is
+right-aligned to the icon anchor, must stay within the viewport, and contains the
+existing `Settings` and `Sign out` actions.
+
+The Account/Profile icon uses a hover/focus tooltip. If no Gamer Tag is available, the
+tooltip text is `Profile`. If a Gamer Tag is available, the tooltip text is
+`<Gamer Tag>’s profile`, for example `vhCoder’s profile`.
+
 #### Signed-in Favourites
 
 Private Phrase Favourites and Batch Favourites are signed-in, Account-backed

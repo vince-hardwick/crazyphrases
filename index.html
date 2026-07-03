@@ -86,6 +86,17 @@
             <i class="fa-solid fa-moon" aria-hidden="true" data-theme-toggle-icon></i>
             <span class="sr-only">Enable dark mode</span>
           </button>
+          <button
+            class="icon-button tooltip-action"
+            type="button"
+            aria-expanded="false"
+            aria-controls="help-panel"
+            data-help-toggle
+            data-tooltip="How to play"
+          >
+            <span aria-hidden="true">?</span>
+            <span class="sr-only">How to play</span>
+          </button>
           <section class="account-shell" aria-label="Account mode" data-account-shell>
             <button
               class="icon-button tooltip-action"
@@ -101,6 +112,7 @@
             <button
               class="icon-button tooltip-action account-menu-toggle"
               type="button"
+              aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="account-menu"
               data-account-menu-toggle
@@ -207,17 +219,6 @@
               </div>
             </div>
           </section>
-          <button
-            class="icon-button tooltip-action"
-            type="button"
-            aria-expanded="false"
-            aria-controls="help-panel"
-            data-help-toggle
-            data-tooltip="How to play"
-          >
-            <span aria-hidden="true">?</span>
-            <span class="sr-only">How to play</span>
-          </button>
         </div>
       </header>
 

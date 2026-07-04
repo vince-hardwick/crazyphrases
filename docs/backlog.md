@@ -1441,13 +1441,19 @@ preserve their original history.
 
 ### Expanded word-bank source selection
 
-- **Deferred**: Selecting and integrating a comprehensive open-source lexical dataset
-  for the default word bank.
+- **Deferred**: Integrating a comprehensive open-source lexical dataset for the
+  default word bank.
 - **Why deferred**: A tiny hand-curated seed list can unblock MVP dice-click
   implementation while licensing, parsing, part-of-speech quality, and packaging are
   researched.
-- **Revisit when**: The MVP dice feature works with the seed list and needs broader
-  candidate variety.
+- **Status**: Source research completed on 2026-07-04 in
+  `docs/research/word-bank-sources.md`. ESDB / SCOWL v2 is the lead candidate
+  for the next design or PRD slice; AGID is a morphology supplement for future
+  participle-heavy templates; old POS/Moby+WordNet remains a fallback and
+  comparison source. No runtime asset integration has been accepted yet.
+- **Revisit when**: The owner is ready to turn the ESDB recommendation into a
+  PRD and implementation issue set, or when sample review disproves ESDB's
+  playability for the default template.
 - **Remaining risk**: Word-bank storage should be able to grow beyond a small seed list
   without changing the entry-assistance interface.
 
@@ -1458,6 +1464,10 @@ preserve their original history.
 - **Why deferred**: MVP candidate generation is family-friendly by default, and
   account-level content preferences require signed-in settings and broader moderation
   design.
+- **Status**: The 2026-07-04 source research found that ESDB usage notes are
+  useful but incomplete for offensive/vulgar terms. The production Word Bank
+  still needs an independent family-friendly curation layer before any expanded
+  source ships.
 - **Revisit when**: Signed-in settings and expanded word-bank candidate categories are
   implemented.
 - **Remaining risk**: Word-bank entries should be taggable for content suitability
@@ -1471,8 +1481,13 @@ preserve their original history.
 - **Why deferred**: MVP can use a tiny bundled seed list, while a full lexicon may be
   large enough that bundling or forcing client-side storage would harm load time and
   waste disk space.
-- **Revisit when**: The expanded word-bank source is selected and its compressed size,
-  parse cost, and runtime access patterns are known.
+- **Status**: The 2026-07-04 source research profiled ESDB / SCOWL v2 with
+  conservative filters. The current adjective+noun shard estimate is about
+  738 KB minified JSON / 215 KB gzip; the broader future core POS set is about
+  1.14 MB minified JSON / 325 KB gzip before final curation.
+- **Revisit when**: The ESDB recommendation is converted into implementation
+  scope and final curated shard sizes, parse costs, and caching behaviour are
+  known.
 - **Remaining risk**: Runtime dice-click code should avoid assuming the full word bank
   is available inside the main client bundle.
 

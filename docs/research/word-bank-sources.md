@@ -61,6 +61,12 @@ The scratch profiler used conservative game-ready filters:
 These counts are not final production counts. They estimate whether each source
 can support Crazy Phrases after a first pass of v1 filtering.
 
+The single-token/no-hyphen/no-open-compound filters were profiling shortcuts,
+not accepted product constraints. ADR 0024 now treats production Word Bank
+candidates as curated lexical entries for one Entry Kind. Production curation
+may include single words, hyphenated words, and reviewed open compounds when the
+candidate behaves as one noun, adjective, or other Entry Kind.
+
 ## Download And Licence Evidence
 
 | Source | Download route used | Version pinned | Licence / redistribution notes | Practical notes |
@@ -161,5 +167,8 @@ architecture in ADR 0004
   note handling.
 - Counts do not prove comedy/playability. Human sample review is still required
   before replacing or expanding `assets/word-bank-seed.json`.
+- The scratch counts understate final candidate potential because the profiling
+  pass excluded hyphenated words and open compounds. Production curation should
+  evaluate those forms deliberately rather than inheriting the scratch filter.
 - Function-word Entry Kinds such as article/determiner may need manual seed
   lists even if the main Word Bank comes from ESDB.

@@ -1460,6 +1460,11 @@ deletion anonymization.
 Random generation produces entry-kind-specific candidates with low latency. Accepted
 entries remain editable and are not grammar-enforced beyond light entry validation.
 
+Entry Candidates are curated lexical entries for one Entry Kind. They can be single
+words, hyphenated words, or open compounds when the candidate behaves as one lexical
+entry, such as a specific noun or adjective. Arbitrary phrases, sentence fragments, and
+unreviewed source compounds are not accepted production Word Bank candidates.
+
 In MVP, clicking dice fills the target input immediately with a candidate. The
 participant can edit the value or click dice again to replace it.
 
@@ -1494,14 +1499,92 @@ The anonymous solo MVP seed word bank asset lives at `assets/word-bank-seed.json
 static app fetches it with the deployed asset version query string so dice assistance
 can be cache-busted alongside `assets/app.js`.
 
+Production Word Bank delivery uses immutable static Word Bank Shards as accepted in
+ADR 0024. A Word Bank Shard is the complete curated playable candidate list for one
+Entry Kind at a specific version, not a rotating subset and not an exhaustive
+dictionary. A small manifest declares the current shard version for each supported
+Entry Kind; clients may keep a cached shard until the manifest points to a newer
+version. Shard files must be versioned or content-addressed and must not be silently
+replaced in place.
+
+The app checks the Word Bank manifest at app start or first Entry Assist use, fetches
+shards lazily per Entry Kind, and does not background-poll for shard changes during
+play. If a newer shard version is discovered, it is used for newly started games after
+the shard is fetched. A game already in progress keeps using the shard versions it
+started with, so dice repeat-avoidance and phrase rendering do not change mid-game.
+
+Production Word Bank Shards carry minimal entry metadata rather than bare strings only.
+Entry Assist may still fill a plain candidate value into the input, but the shard format
+preserves source id/version, Entry Kind, optional dialect marker, optional commonness or
+playability band, required candidate form such as single word, hyphenated word, or open
+compound, required safety/curation status, and optional inflection or base-form link
+where available. This metadata supports attribution, family-friendly curation, UK/US
+controls, refresh diffs, and future template categories.
+
+Production Word Bank candidates are published as positive allowlists with curation
+labels, not as blocklist-only exports from source corpora. Potentially offensive but
+otherwise playable candidates may ship only when labelled for runtime filtering. The
+Entry Assist Safety Setting belongs only in signed-in Account Settings and controls
+whether Entry Assist may suggest candidates labelled as potentially offensive. The
+default setting excludes potentially offensive candidates. Anonymous play has no
+safety-setting form and always excludes potentially offensive candidates from Entry
+Assist. This setting affects dice suggestions only; it does not validate typed entries,
+replace public-content Safety Screening, or authorise moderation decisions for shared
+phrases.
+
+The first production Word Bank rollout should publish only family-friendly candidates,
+even though the shard schema includes safety/curation status. Potentially offensive
+labelled candidates must wait until the signed-in Account Settings toggle, persistence,
+QA process, and copy are implemented together.
+
+The production Word Bank schema and build pipeline should support the controlled
+built-in Entry Kind vocabulary, but production should publish shards only for Entry
+Kinds used by currently playable templates. Unsupported Entry Kinds should fail clearly
+during build validation or disable only their dice action at runtime if requested
+without a shard or seed fallback. The first production rollout may publish only
+adjective and noun shards unless another playable template is deliberately brought into
+scope.
+
+Production Word Bank assets live under `assets/word-bank/`, separate from the MVP seed
+fallback. The default layout is `assets/word-bank/manifest.json` plus immutable shard
+files under `assets/word-bank/shards/`, such as
+`assets/word-bank/shards/adjective.<version>.json`. The manifest owns the current
+production shard mapping. `assets/word-bank-seed.json` remains the tiny fallback seed
+file and must not be treated as the production manifest or a production shard.
+
+For the first production rollout, Word Bank manifests and shards deploy through the
+normal app deployment payload. They must not use a separate publishing channel or live
+mutation path. A separate Word Bank publishing channel may be reconsidered only if
+refresh cadence or curation operations materially diverge from app release cadence.
+
+The Word Bank build/import pipeline should be source-controlled in this repository,
+including pinned source configuration, extraction and Entry Kind mapping code, curation
+inputs, schema validation, deterministic sample/report generation, and reproducibility
+tests. Generated production shard files should be committed under `assets/word-bank/`
+only when an intentional Word Bank update is in scope; generated review reports may
+remain build artefacts unless deliberately added for review.
+
+Implementation should introduce the production manifest/shard loader directly rather
+than using a larger `assets/word-bank-seed.json` file as the primary production path.
+The loader contract includes manifest fetch, lazy per-Entry-Kind shard fetch,
+cache-by-version behaviour, game-stable shard version pinning, and seed category
+fallback. The existing seed JSON remains valid fallback data.
+
 Anonymous solo play must not require downloading the full production word bank. MVP
 anonymous solo may use the tiny bundled seed list, but production anonymous solo should
-use the same low-latency word-bank candidate service as signed-in play, with optional
-small client-side fallback shards.
+use the same low-latency Word Bank Shard delivery path as signed-in play, with the tiny
+bundled seed list available as fallback. As future built-in Entry Kinds become playable,
+the bundled seed should expand to include fallback candidates for those Entry Kinds
+rather than staying limited to the default template's adjective and noun slots.
+Anonymous fallback seed categories must remain family-friendly.
 
-Anonymous solo games remain playable if the word-bank candidate service is unavailable.
-Manual entry still works, and dice assistance may fall back to a tiny bundled list for
-the default template's adjective and noun slots.
+Anonymous solo games remain playable if Word Bank Shard delivery is unavailable.
+Manual entry still works. Dice assistance should keep using already cached manifest and
+shard data where available, then fall back to the bundled seed for the active Entry Kind
+when that seed category exists. If neither a cached shard nor a seed fallback exists for
+the active Entry Kind, only that slot's dice action is disabled with restrained local
+unavailable copy. Missing candidate suggestions must not block setup, typed entry, turn
+submission, or Reveal, and the app must not silently substitute the wrong Entry Kind.
 
 ### Personal word lists
 

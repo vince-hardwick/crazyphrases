@@ -27,6 +27,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0021-derived-cropped-images-for-uploaded-avatars.md` - Derived-image storage authority for circular Uploaded Avatar cropping.
 - `0022-branded-supabase-auth-deferral.md` - documented deferral and accepted risk for branded hosted Auth trust.
 - `0023-private-email-lookup-and-gamer-tag.md` - private email lookup and Gamer Tag account identity boundary.
+- `0024-versioned-static-word-bank-shards.md` - immutable static Word Bank Shards and manifest-based refresh boundary.
 
 ## Status Values
 

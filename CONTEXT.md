@@ -114,12 +114,26 @@ A tool that helps produce a candidate entry for a specific slot and row without 
 _Avoid_: CPU participant, auto-fill
 
 **Entry Candidate**:
-A generated suggestion for one entry, selected for a requested entry kind but still editable by the participant.
+A generated suggestion for one entry, selected for a requested entry kind but still
+editable by the participant. An Entry Candidate can be a single word, a hyphenated
+word, or a curated open compound when it behaves as one lexical entry for that entry
+kind.
 _Avoid_: Guaranteed word, validated grammar
+
+**Entry Assist Safety Setting**:
+A signed-in Account setting that controls whether Entry Assist excludes Word Bank
+candidates labelled as potentially offensive; the default excludes them, and anonymous
+play always excludes them.
+_Avoid_: Public-content moderation, typed-entry validation, Safety Screening
 
 **Word Bank**:
 A local or cached source of entry candidates grouped by entry kind.
 _Avoid_: Live word API, LLM generator
+
+**Word Bank Shard**:
+The complete curated playable candidate list for one entry kind at a specific version.
+_Avoid_: Rotating subset, exhaustive dictionary, temporary cache slice, single-token-only
+list
 
 **Personal Word List**:
 A participant-owned collection of reusable words for entry assistance.

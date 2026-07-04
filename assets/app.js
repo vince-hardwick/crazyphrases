@@ -21,6 +21,10 @@ import {
   submitActiveSection,
   updateEntry,
 } from "./game-state.js?v=__ASSET_VERSION__";
+import {
+  createSeedBackedEntryCandidateProvider,
+  hasEntryCandidates,
+} from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
 import { writePlainText } from "./clipboard.js?v=__ASSET_VERSION__";
 import {
   loadCurrentAnonymousSoloGame,
@@ -192,7 +196,7 @@ let currentRoute = normaliseRoute(window.location.hash);
 let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
   ? currentRoute
   : null;
-let wordBank = null;
+let entryCandidateProvider = null;
 let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
 let hostedAuthAvailable = false;
@@ -579,14 +583,14 @@ entryForm.addEventListener("input", (event) => {
 entryForm.addEventListener("click", (event) => {
   const diceButton = event.target.closest("[data-dice-row-index]");
 
-  if (!diceButton || !wordBank) {
+  if (!diceButton || !entryCandidateProvider) {
     return;
   }
 
   const rowIndex = Number(diceButton.dataset.diceRowIndex);
   game = generateEntryCandidate(game, {
     rowIndex,
-    wordBank,
+    entryCandidateProvider,
   });
   void persistGame();
   renderGame();
@@ -626,7 +630,7 @@ revealPanel.addEventListener("click", (event) => {
   const phraseCopyButton = event.target.closest("[data-copy-phrase-index]");
 
   if (phraseCopyButton) {
-    const phrases = renderPhrases(game, { wordBank });
+    const phrases = renderPhrases(game, { entryCandidateProvider });
     const phrase = phrases[Number(phraseCopyButton.dataset.copyPhraseIndex)];
     void copyText(formatPhraseCopyText(phrase), "Phrase copied.");
     return;
@@ -634,7 +638,7 @@ revealPanel.addEventListener("click", (event) => {
 
   if (event.target.closest("[data-copy-all-button]")) {
     void copyText(
-      formatBatchCopyText(renderPhrases(game, { wordBank })),
+      formatBatchCopyText(renderPhrases(game, { entryCandidateProvider })),
       "Batch copied.",
     );
   }
@@ -999,7 +1003,7 @@ function renderGame() {
     progress.textContent = "";
     copyStatus.textContent = "";
     phraseList.replaceChildren(
-      ...renderPhrases(game, { wordBank }).map(renderPhraseItem),
+      ...renderPhrases(game, { entryCandidateProvider }).map(renderPhraseItem),
     );
     revealDetails.replaceChildren(...getRevealDetails(game).map(renderDetailGroup));
     return;
@@ -2492,11 +2496,15 @@ function renderEntryRow(row, rowIndex, entryKind) {
   diceButton.type = "button";
   diceButton.className = "dice-button";
   diceButton.dataset.diceRowIndex = String(rowIndex);
-  diceButton.disabled = !wordBank;
-  diceButton.ariaLabel = wordBank
+  const entryKindHasCandidates = hasEntryCandidates(
+    entryCandidateProvider,
+    entryKind,
+  );
+  diceButton.disabled = !entryKindHasCandidates;
+  diceButton.ariaLabel = entryKindHasCandidates
     ? `Generate ${entryKind} for row ${rowIndex + 1}`
     : "Random word unavailable";
-  diceButton.title = wordBank
+  diceButton.title = entryKindHasCandidates
     ? `Generate ${entryKind}`
     : "Random word unavailable";
 
@@ -5349,7 +5357,7 @@ async function savePhraseFavourite(rowIndex) {
 
   const favourite = createPhraseFavouriteSnapshot(game, {
     rowIndex,
-    wordBank,
+    entryCandidateProvider,
   });
   const pendingRequest = addPendingFavouriteToggleRequest(context, {
     rowIndex,
@@ -5389,7 +5397,7 @@ async function saveBatchFavourite() {
   }
 
   const favourite = createBatchFavouriteSnapshot(game, {
-    wordBank,
+    entryCandidateProvider,
   });
   const pendingRequest = addPendingFavouriteToggleRequest(context, {
     type: "batch",
@@ -5530,7 +5538,7 @@ function captureCurrentRevealFavouriteContext() {
 
   return {
     accountId: accountShell.accountId,
-    reveal: createBatchFavouriteSnapshot(game, { wordBank }),
+    reveal: createBatchFavouriteSnapshot(game, { entryCandidateProvider }),
   };
 }
 
@@ -5568,7 +5576,7 @@ function isCurrentRevealFavouriteContext(context) {
   }
 
   return areFavouriteSnapshotsEqual(
-    createBatchFavouriteSnapshot(game, { wordBank }),
+    createBatchFavouriteSnapshot(game, { entryCandidateProvider }),
     context.reveal,
   );
 }
@@ -5990,7 +5998,7 @@ function findPhraseFavouriteRecordForCurrentReveal(phraseIndex) {
 
   const favourite = createPhraseFavouriteSnapshot(game, {
     rowIndex: phraseIndex,
-    wordBank,
+    entryCandidateProvider,
   });
 
   return (
@@ -6006,7 +6014,7 @@ function findBatchFavouriteRecordForCurrentReveal() {
   }
 
   const favourite = createBatchFavouriteSnapshot(game, {
-    wordBank,
+    entryCandidateProvider,
   });
 
   return (
@@ -6035,10 +6043,11 @@ async function loadWordBank() {
       throw new Error("Word Bank unavailable.");
     }
 
-    wordBank = await response.json();
+    const wordBank = await response.json();
+    entryCandidateProvider = createSeedBackedEntryCandidateProvider(wordBank);
     renderGame();
   } catch {
-    wordBank = null;
+    entryCandidateProvider = null;
     renderGame();
   }
 }

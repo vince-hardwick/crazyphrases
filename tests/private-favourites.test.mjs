@@ -43,6 +43,47 @@ describe("private favourites", () => {
     });
   });
 
+  it("normalizes metadata-bearing Entry Candidates in Phrase Favourite snapshots", () => {
+    const game = completeSignedInSoloGame();
+    const entryCandidateProvider = {
+      getEntryCandidates(entryKind) {
+        return {
+          adjective: [
+            {
+              canonicalText: "Brisk",
+              entryKind: "adjective",
+              source: "test",
+            },
+          ],
+          noun: [
+            {
+              canonicalText: "Teapot",
+              entryKind: "noun",
+              source: "test",
+            },
+            {
+              canonicalText: "Ladder",
+              entryKind: "noun",
+              source: "test",
+            },
+          ],
+        }[entryKind] ?? [];
+      },
+    };
+
+    const snapshot = createPhraseFavouriteSnapshot(game, {
+      rowIndex: 0,
+      entryCandidateProvider,
+    });
+
+    assert.equal(snapshot.phraseText, "Brisk Teapot Ladder");
+    assert.deepEqual(snapshot.entries, [
+      { entryKind: "adjective", value: "brisk", displayValue: "Brisk" },
+      { entryKind: "noun", value: "teapot", displayValue: "Teapot" },
+      { entryKind: "noun", value: "ladder", displayValue: "Ladder" },
+    ]);
+  });
+
   it("creates an immutable Batch Favourite snapshot from a revealed signed-in Solo Game", () => {
     assert.equal(typeof privateFavourites.createBatchFavouriteSnapshot, "function");
 

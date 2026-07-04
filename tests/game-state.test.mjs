@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import {
+  createSeedBackedEntryCandidateProvider,
+} from "../assets/entry-candidate-provider.js";
+import {
   createAnonymousSoloGame,
   formatBatchCopyText,
   formatPhraseCopyText,
@@ -181,6 +184,55 @@ describe("anonymous solo game state", () => {
     ]);
   });
 
+  it("uses metadata-bearing Entry Candidate records for dice and phrase rendering", () => {
+    const entryCandidateProvider = {
+      getEntryCandidates(entryKind) {
+        return {
+          adjective: [
+            {
+              canonicalText: "topsy-turvy",
+              entryKind: "adjective",
+              candidateForm: "hyphenated",
+            },
+          ],
+          noun: [
+            {
+              canonicalText: "top hat",
+              entryKind: "noun",
+              candidateForm: "openCompound",
+            },
+            {
+              value: "tea cart",
+              entryKind: "noun",
+              candidateForm: "openCompound",
+            },
+          ],
+        }[entryKind] ?? [];
+      },
+    };
+    let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
+
+    game = generateEntryCandidate(game, {
+      rowIndex: 0,
+      entryCandidateProvider,
+      random: () => 0,
+    });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "TOP HAT" });
+    game = submitActiveSection(game);
+    game = updateEntry(game, { rowIndex: 0, value: "TEA   CART" });
+    game = submitActiveSection(game);
+    game = revealBatch(game);
+
+    assert.deepEqual(
+      game.sections.map((section) => section.rows[0].value),
+      ["topsy-turvy", "TOP HAT", "TEA   CART"],
+    );
+    assert.deepEqual(renderPhrases(game, { entryCandidateProvider }), [
+      "Topsy-turvy top hat tea cart",
+    ]);
+  });
+
   it("does not add phrase or row numbers to rendered phrase text", () => {
     let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }));
 
@@ -295,11 +347,12 @@ describe("anonymous solo game state", () => {
         noun: ["teapot"],
       },
     };
+    const entryCandidateProvider = createSeedBackedEntryCandidateProvider(wordBank);
     let game = startGame(createAnonymousSoloGame({ rowCount: 2, random: () => 0 }));
 
     game = generateEntryCandidate(game, {
       rowIndex: 1,
-      wordBank,
+      entryCandidateProvider,
       random: () => 0,
     });
 

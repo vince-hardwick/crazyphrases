@@ -1,3 +1,8 @@
+import {
+  createSeedBackedEntryCandidateProvider,
+  getEntryCandidateValues,
+} from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
+
 const DEFAULT_SECTIONS = [
   { kind: "adjective", label: "Fill these adjectives" },
   { kind: "noun", label: "Fill these nouns" },
@@ -101,12 +106,15 @@ export function updateEntry(game, { rowIndex, value }) {
 
 export function generateEntryCandidate(
   game,
-  { rowIndex, wordBank, random = Math.random },
+  { rowIndex, entryCandidateProvider, wordBank, random = Math.random },
 ) {
   assertStarted(game);
 
   const activeSection = getActiveSection(game);
-  const candidates = getWordBankCandidates(wordBank, activeSection.kind);
+  const candidates = getCandidateValues(
+    { entryCandidateProvider, wordBank },
+    activeSection.kind,
+  );
 
   if (candidates.length === 0) {
     throw new Error(`No candidates available for ${activeSection.kind}.`);
@@ -186,12 +194,13 @@ export function getStartAgainConfirmation(game) {
   };
 }
 
-export function renderPhrases(game, { wordBank } = {}) {
+export function renderPhrases(game, { entryCandidateProvider, wordBank } = {}) {
   return Array.from({ length: game.rowCount }, (_, rowIndex) => {
     const phrase = game.sections
       .map((section) =>
         normalizeEntryForDisplay(section.rows[rowIndex].value, {
           entryKind: section.kind,
+          entryCandidateProvider,
           wordBank,
         }),
       )
@@ -245,17 +254,23 @@ function capitalizeFirst(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function getWordBankCandidates(wordBank, entryKind) {
-  return (wordBank?.entryKinds?.[entryKind] ?? [])
-    .map((candidate) => candidate.trim())
-    .filter(Boolean);
+function getCandidateValues({ entryCandidateProvider, wordBank }, entryKind) {
+  const provider =
+    entryCandidateProvider ??
+    (wordBank ? createSeedBackedEntryCandidateProvider(wordBank) : null);
+
+  return getEntryCandidateValues(provider, entryKind);
 }
 
-function normalizeEntryForDisplay(value, { entryKind, wordBank }) {
+function normalizeEntryForDisplay(
+  value,
+  { entryKind, entryCandidateProvider, wordBank },
+) {
   const cleanedValue = cleanWhitespace(value);
-  const candidate = getWordBankCandidates(wordBank, entryKind).find(
-    (word) => candidateKey(word) === candidateKey(cleanedValue),
-  );
+  const candidate = getCandidateValues(
+    { entryCandidateProvider, wordBank },
+    entryKind,
+  ).find((word) => candidateKey(word) === candidateKey(cleanedValue));
 
   return candidate ?? cleanedValue;
 }

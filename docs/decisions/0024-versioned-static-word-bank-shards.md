@@ -56,6 +56,13 @@ form such as single word, hyphenated word, or open compound, required
 safety/curation status, and optional inflection or base-form link when
 available.
 
+Runtime Entry Assist consumes candidate lists through an Entry Candidate
+Provider seam. The provider may expose legacy seed strings or metadata-bearing
+candidate records, but game state and phrase rendering normalise them to plain
+candidate values before filling or displaying Entries. This seam preserves the
+existing seed-backed dice behaviour while allowing later static shard loaders to
+carry metadata without changing the Entry storage shape.
+
 Published shard candidates are positive allowlists, not blocklist-only source
 exports. Build inputs may include source filters, exclusion rules, and
 blocklists, but a candidate ships only after it is deliberately accepted into a

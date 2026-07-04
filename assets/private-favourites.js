@@ -1,4 +1,8 @@
 import { renderPhrases } from "./game-state.js?v=__ASSET_VERSION__";
+import {
+  createSeedBackedEntryCandidateProvider,
+  getEntryCandidateValues,
+} from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
 
 const DEFAULT_TEMPLATE_ID = "default-adjective-noun-noun";
 const LOCAL_TEST_PRIVATE_PHRASE_FAVOURITES_SCHEMA = 1;
@@ -411,19 +415,29 @@ export function createSupabasePrivateFavouritesRepository({ supabase }) {
   };
 }
 
-export function createPhraseFavouriteSnapshot(game, { rowIndex, wordBank } = {}) {
+export function createPhraseFavouriteSnapshot(
+  game,
+  { rowIndex, entryCandidateProvider, wordBank } = {},
+) {
   assertRevealedSignedInSoloGame(game);
 
   if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= game.rowCount) {
     throw new Error("A valid phrase row index is required.");
   }
 
+  const resolvedEntryCandidateProvider = resolveEntryCandidateProvider({
+    entryCandidateProvider,
+    wordBank,
+  });
+
   return {
     type: "phrase",
     sourceMode: game.mode,
     templateId: DEFAULT_TEMPLATE_ID,
     rowIndex,
-    phraseText: renderPhrases(game, { wordBank })[rowIndex],
+    phraseText: renderPhrases(game, {
+      entryCandidateProvider: resolvedEntryCandidateProvider,
+    })[rowIndex],
     entries: game.sections.map((section) => {
       const value = section.rows[rowIndex].value;
 
@@ -432,17 +446,26 @@ export function createPhraseFavouriteSnapshot(game, { rowIndex, wordBank } = {})
         value,
         displayValue: normalizeEntryForDisplay(value, {
           entryKind: section.kind,
-          wordBank,
+          entryCandidateProvider: resolvedEntryCandidateProvider,
         }),
       };
     }),
   };
 }
 
-export function createBatchFavouriteSnapshot(game, { wordBank } = {}) {
+export function createBatchFavouriteSnapshot(
+  game,
+  { entryCandidateProvider, wordBank } = {},
+) {
   assertRevealedSignedInSoloGame(game);
 
-  const phrases = renderPhrases(game, { wordBank });
+  const resolvedEntryCandidateProvider = resolveEntryCandidateProvider({
+    entryCandidateProvider,
+    wordBank,
+  });
+  const phrases = renderPhrases(game, {
+    entryCandidateProvider: resolvedEntryCandidateProvider,
+  });
 
   return {
     type: "batch",
@@ -461,7 +484,7 @@ export function createBatchFavouriteSnapshot(game, { wordBank } = {}) {
           value,
           displayValue: normalizeEntryForDisplay(value, {
             entryKind: section.kind,
-            wordBank,
+            entryCandidateProvider: resolvedEntryCandidateProvider,
           }),
         };
       }),
@@ -797,9 +820,16 @@ function defaultCreateId() {
   return globalThis.crypto?.randomUUID?.() ?? `phrase-favourite-${Date.now()}`;
 }
 
-function normalizeEntryForDisplay(value, { entryKind, wordBank }) {
+function resolveEntryCandidateProvider({ entryCandidateProvider, wordBank } = {}) {
+  return (
+    entryCandidateProvider ??
+    (wordBank ? createSeedBackedEntryCandidateProvider(wordBank) : null)
+  );
+}
+
+function normalizeEntryForDisplay(value, { entryKind, entryCandidateProvider }) {
   const cleanedValue = cleanWhitespace(value);
-  const candidate = getWordBankCandidates(wordBank, entryKind).find(
+  const candidate = getEntryCandidateValues(entryCandidateProvider, entryKind).find(
     (word) => candidateKey(word) === candidateKey(cleanedValue),
   );
 
@@ -808,12 +838,6 @@ function normalizeEntryForDisplay(value, { entryKind, wordBank }) {
 
 function cleanWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
-}
-
-function getWordBankCandidates(wordBank, entryKind) {
-  return (wordBank?.entryKinds?.[entryKind] ?? [])
-    .map((candidate) => candidate.trim())
-    .filter(Boolean);
 }
 
 function candidateKey(candidate) {

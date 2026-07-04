@@ -1441,27 +1441,46 @@ preserve their original history.
 
 ### Expanded word-bank source selection
 
-- **Deferred**: Selecting and integrating a comprehensive open-source lexical dataset
-  for the default word bank.
+- **Deferred**: Integrating a comprehensive open-source lexical dataset for the
+  default word bank.
 - **Why deferred**: A tiny hand-curated seed list can unblock MVP dice-click
   implementation while licensing, parsing, part-of-speech quality, and packaging are
   researched.
-- **Revisit when**: The MVP dice feature works with the seed list and needs broader
-  candidate variety.
+- **Status**: Source research completed on 2026-07-04 in
+  `docs/research/word-bank-sources.md`. ESDB / SCOWL v2 is the lead candidate
+  for the next design or PRD slice; AGID is a morphology supplement for future
+  participle-heavy templates; old POS/Moby+WordNet remains a fallback and
+  comparison source. No runtime asset integration has been accepted yet.
+- **Revisit when**: The owner is ready to turn the ESDB recommendation into a
+  PRD and implementation issue set, or when sample review disproves ESDB's
+  playability for the default template.
 - **Remaining risk**: Word-bank storage should be able to grow beyond a small seed list
   without changing the entry-assistance interface.
 
 ### Word-bank family-friendly setting
 
-- **Deferred**: Account setting to toggle family-friendly filtering for generated
-  word-bank candidates.
+- **Deferred**: Implementing the Settings toggle that controls whether Entry
+  Assist may suggest Word Bank candidates labelled as potentially offensive.
 - **Why deferred**: MVP candidate generation is family-friendly by default, and
-  account-level content preferences require signed-in settings and broader moderation
-  design.
-- **Revisit when**: Signed-in settings and expanded word-bank candidate categories are
-  implemented.
-- **Remaining risk**: Word-bank entries should be taggable for content suitability
-  rather than assuming every candidate is family-friendly forever.
+  the expanded Word Bank still needs curation labels, Settings UX, persistence
+  rules, and broader moderation boundaries before potentially offensive
+  candidates can ship.
+- **Status**: ADR 0024 now accepts the design boundary: production candidates
+  are positive allowlists with safety/curation labels; the default Entry Assist
+  Safety Setting excludes potentially offensive candidates; signed-in Account
+  Settings can enable those labelled candidates for Entry Assist only;
+  anonymous play has no safety-setting form and always excludes potentially
+  offensive candidates. The first production Word Bank rollout should still
+  ship only family-friendly candidates, with potentially offensive labelled
+  candidates deferred until the signed-in toggle, persistence, QA process, and
+  copy ship together. The 2026-07-04 source research found that ESDB usage notes
+  are useful but incomplete, so the production Word Bank still needs an
+  independent curation layer before any expanded source ships.
+- **Revisit when**: The expanded Word Bank implementation plan defines curation
+  labels and signed-in Account Settings persistence for the safety setting.
+- **Remaining risk**: The setting must not be mistaken for typed-entry
+  validation, public-content Safety Screening, or moderation authority for
+  shared phrases.
 
 ### Production word-bank delivery
 
@@ -1471,8 +1490,49 @@ preserve their original history.
 - **Why deferred**: MVP can use a tiny bundled seed list, while a full lexicon may be
   large enough that bundling or forcing client-side storage would harm load time and
   waste disk space.
-- **Revisit when**: The expanded word-bank source is selected and its compressed size,
-  parse cost, and runtime access patterns are known.
+- **Status**: The 2026-07-04 source research profiled ESDB / SCOWL v2 with
+  conservative filters. The current adjective+noun shard estimate is about
+  738 KB minified JSON / 215 KB gzip; the broader future core POS set is about
+  1.14 MB minified JSON / 325 KB gzip before final curation. ADR 0024 now
+  accepts immutable static Word Bank Shards plus a manifest as the first
+  production delivery boundary; Supabase RPC/prefetch remains deferred unless
+  final curated shard sizes, account-level filtering, or update cadence require
+  a service-backed path. The bundled seed fallback should expand to future
+  built-in Entry Kinds as they become playable, so unavailable production shards
+  do not disable all dice assistance for alternative templates.
+- **Deployment note**: The first production Word Bank manifest and shards should
+  deploy through the normal app deployment payload. A separate word-list
+  publishing channel is deferred unless refresh cadence or curation operations
+  materially diverge from app release cadence.
+- **Pipeline note**: The build/import pipeline should live in this repository
+  with pinned source configuration, extraction and mapping code, curation
+  inputs, schema validation, deterministic sample/report generation, and
+  reproducibility tests. Generated shard files are committed under
+  `assets/word-bank/` only when an intentional Word Bank update is in scope.
+- **Loader note**: Implementation should introduce the production
+  manifest/shard loader directly, including lazy per-Entry-Kind shard fetch,
+  cache-by-version behaviour, game-stable shard version pinning, and seed
+  category fallback. Do not make a larger `assets/word-bank-seed.json` file the
+  main production path.
+- **Scope note**: The shard schema and build pipeline should understand the
+  controlled built-in Entry Kind vocabulary, but production should publish
+  shards only for Entry Kinds used by currently playable templates. The first
+  rollout can stay adjective/noun-only unless another playable template is
+  deliberately included in the same PRD.
+- **Planning note**: The first production Word Bank implementation should be
+  one PRD split into small issues, not separate PRDs for pipeline, data, and
+  loader work. The vertical slice should prove the source-controlled ESDB
+  pipeline, deterministic family-friendly adjective/noun output, committed
+  manifest and shards, browser manifest/shard loader, game-stable version
+  pinning, seed fallback, and unchanged dice UX end to end.
+- **Curation note**: The 2026-07-04 scratch profile used single-token filters
+  only as a research shortcut. Production candidates should be curated lexical
+  entries for one Entry Kind and may include reviewed hyphenated words or open
+  compounds; arbitrary phrases and unreviewed source compounds remain out of
+  scope.
+- **Revisit when**: The ESDB recommendation is converted into implementation
+  scope and final curated shard sizes, parse costs, and caching behaviour are
+  known.
 - **Remaining risk**: Runtime dice-click code should avoid assuming the full word bank
   is available inside the main client bundle.
 

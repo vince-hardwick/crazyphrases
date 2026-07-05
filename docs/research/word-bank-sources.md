@@ -2,8 +2,7 @@
 
 ## Status
 
-Research completed on 2026-07-04. The recommended source path for the next
-design/PRD slice is:
+Research completed on 2026-07-04. The recommended source path was:
 
 1. Use **ESDB / SCOWL v2** as the lead candidate for the production global Word
    Bank.
@@ -18,10 +17,11 @@ design/PRD slice is:
    Entry Kinds; dump size, parsing complexity, and share-alike licensing make it
    a poor first production source.
 
-This is a research recommendation, not an accepted runtime delivery boundary.
-No ADR is required until the project chooses a production delivery model such as
-static/CDN shards, Supabase-backed RPC/prefetch, or another durable service
-shape.
+PRD #174 and ADR 0024 later adopted ESDB / SCOWL v2 plus immutable static
+manifest/shard delivery for the first production Word Bank rollout. As of
+2026-07-05, production ships family-friendly adjective and noun shards for the
+Default Template from pinned ESDB source commit
+`1e5b7d3a72f47a71da5d28686c1dd4b397178485`.
 
 ## Project Fit Criteria
 
@@ -131,37 +131,43 @@ Scores use 1 = poor, 3 = workable, 5 = strong.
 | Open English Wordnet 2025 | 4 | 2 | 4 | 1 | 2 | 1 | 4 | 4 | 4 | Current and clean semantic reference; still not a game-ready Word Bank. |
 | Wiktionary | 2 | 5 | 2 | 1 | 1 | 3 | 1 | 4 | 1 | Defer until other sources fail; too large and licence-heavy for v1. |
 
-## Recommendation
+## Implementation Outcome
 
-Use ESDB / SCOWL v2 as the primary production Word Bank candidate for the next
-design and PRD slice.
+Use ESDB / SCOWL v2 as the primary production Word Bank source path.
 
-The next slice should design a pipeline that:
+The first production rollout now uses a source-controlled pipeline that:
 
 - pins an ESDB v2 commit;
-- runs ESDB generation in a Unix-like CI/container environment rather than
-  relying on ad hoc Windows import;
-- exports per-Entry-Kind static shards for the built-in Crazy Phrases Entry
-  Kind vocabulary;
+- exports per-Entry-Kind static shards for currently playable built-in Entry
+  Kinds;
 - applies a separate family-friendly curation layer because ESDB's own usage
   notes explicitly mark only some offensive/vulgar words;
-- keeps AGID available as a supplement for participle-specific future templates;
+- commits only intentional runtime assets under `assets/word-bank/`;
+- writes deterministic review artefacts under `output/word-bank-review/`; and
 - avoids bundling the full production Word Bank into the main client bundle.
 
+The shipped manifest version is `2026-07-05-word-bank-manifest`. It references a
+family-friendly adjective shard with 114 accepted candidates and a
+family-friendly noun shard with 240 accepted candidates. AGID remains available
+as a supplement for participle-specific future templates. Old POS / Moby plus
+WordNet, Princeton WordNet, and Open English Wordnet remain comparison or
+semantic-reference sources. Wiktionary remains deferred.
+
 Do not adopt a live word API, synchronous LLM call, or Supabase RPC service for
-the first production Word Bank implementation. Static per-Entry-Kind shards are
-small enough after conservative filtering and fit the existing cached Word Bank
-architecture in ADR 0004
-(`docs/decisions/0004-cached-word-bank-for-entry-candidates.md`).
+the current production Word Bank delivery path. Static per-Entry-Kind shards are
+small enough after curation and now match ADR 0024's immutable static
+manifest/shard boundary. Reconsider service-backed delivery only if future
+curated shard sizes, account-level filtering, or refresh cadence require it.
 
 ## Open Risks
 
-- The ESDB v2 schema and CLI are still marked as work in progress. Pinning and
-  generated-output tests are required before implementation.
-- The Windows scratch run could not create `scowl.db` through the official
-  import path because accented source entries failed parsing without the full
-  upstream build flow. Production extraction should run in a Unix-like build
-  path or container.
+- The ESDB v2 schema and CLI are still marked as work in progress. Future source
+  refreshes must keep exact source pinning and generated-output tests.
+- The 2026-07-04 Windows scratch run could not create `scowl.db` through the
+  official import path because accented source entries failed parsing without
+  the full upstream build flow. The first production rollout used a pinned
+  archive extraction path instead; future broader ESDB imports should still
+  prefer a Unix-like build path or container.
 - The profiling safety filter is intentionally minimal. A real curation pass
   needs a maintained blocklist, human sample review, and source-specific usage
   note handling.

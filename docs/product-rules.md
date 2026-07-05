@@ -1574,7 +1574,10 @@ including pinned source configuration, extraction and Entry Kind mapping code, c
 inputs, schema validation, deterministic sample/report generation, and reproducibility
 tests. Generated production shard files should be committed under `assets/word-bank/`
 only when an intentional Word Bank update is in scope; generated review reports may
-remain build artefacts unless deliberately added for review.
+remain build artefacts unless deliberately added for review. Generated production Word
+Bank JSON assets under `assets/word-bank/` are normalised to LF line endings through
+`.gitattributes`, so Windows checkouts and Word Bank build/check commands do not leave
+line-ending-only asset noise.
 
 The current production shard pipeline is run with `npm run word-bank:build`; use
 `npm run word-bank:check` or the underlying build script with `--check` to prove

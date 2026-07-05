@@ -24,6 +24,7 @@ const supabaseConfigActionPath = new URL(
 
 const requiredSourceOnlyExcludes = [
   ".gitattributes",
+  ".gitignore",
   ".github/**",
   "AGENTS.md",
   "CONTEXT.md",

@@ -21,6 +21,7 @@ Runtime payload includes:
 Source-only paths must stay out of FTPS uploads:
 
 - `.gitattributes`
+- `.gitignore`
 - `.github/`
 - `AGENTS.md`
 - `CONTEXT.md`
@@ -76,7 +77,7 @@ The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflar
 
 The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
 
-The static hosting payload is intentionally limited to runtime web files. Source-only repository paths such as `.gitattributes`, `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json` must stay out of FTPS uploads for `dev`, `test`, and `production`.
+The static hosting payload is intentionally limited to runtime web files. Source-only repository paths such as `.gitattributes`, `.gitignore`, `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json` must stay out of FTPS uploads for `dev`, `test`, and `production`.
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 

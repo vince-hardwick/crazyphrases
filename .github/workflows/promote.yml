@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
+      - ".gitattributes"
       - ".github/**"
       - "AGENTS.md"
       - "CONTEXT.md"
@@ -89,6 +90,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .gitattributes
             .github/**
             AGENTS.md
             CONTEXT.md
@@ -148,6 +150,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .gitattributes
             .github/**
             AGENTS.md
             CONTEXT.md

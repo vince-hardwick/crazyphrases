@@ -1532,10 +1532,10 @@ Assist. This setting affects dice suggestions only; it does not validate typed e
 replace public-content Safety Screening, or authorise moderation decisions for shared
 phrases.
 
-The first production Word Bank rollout should publish only family-friendly candidates,
-even though the shard schema includes safety/curation status. Potentially offensive
-labelled candidates must wait until the signed-in Account Settings toggle, persistence,
-QA process, and copy are implemented together.
+The first production Word Bank rollout publishes only family-friendly candidates, even
+though the shard schema includes safety/curation status. Potentially offensive labelled
+candidates must wait until the signed-in Account Settings toggle, persistence, QA
+process, and copy are implemented together.
 
 The production Word Bank schema and build pipeline should support the controlled
 built-in Entry Kind vocabulary, but production should publish shards only for Entry
@@ -1552,13 +1552,17 @@ files under `assets/word-bank/shards/`, such as
 production shard mapping. `assets/word-bank-seed.json` remains the tiny fallback seed
 file and must not be treated as the production manifest or a production shard.
 
-The committed production tracer publishes adjective and noun shards for the Default
-Template. Runtime Entry Assist checks the manifest at app start, loads shards lazily
-for the Entry Kinds used by a Game when that Game starts, and stores a serialised
-candidate snapshot on the started Game so later manifest or shard changes cannot alter
-that Game's dice suggestions, repeat avoidance, or Phrase Rendering. The bundled seed
-remains the fallback for adjective and noun categories. The runtime must not substitute
-candidates from another Entry Kind for any missing shard or seed fallback.
+The first production Word Bank rollout publishes adjective and noun shards for the
+Default Template: 114 family-friendly adjective candidates and 240 family-friendly noun
+candidates from pinned ESDB / SCOWL v2 source commit
+`1e5b7d3a72f47a71da5d28686c1dd4b397178485`. Runtime Entry Assist checks the manifest
+at app start, loads shards lazily for the Entry Kinds used by a Game when that Game
+starts, and stores a serialised candidate snapshot on the started Game so later
+manifest or shard changes cannot alter that Game's dice suggestions, repeat avoidance,
+or Phrase Rendering. The bundled seed remains the fallback for adjective and noun
+categories, and should expand to future built-in Entry Kinds before dice actions for
+those Entry Kinds are exposed. The runtime must not substitute candidates from another
+Entry Kind for any missing shard or seed fallback.
 
 For the first production rollout, Word Bank manifests and shards deploy through the
 normal app deployment payload. They must not use a separate publishing channel or live
@@ -1570,7 +1574,10 @@ including pinned source configuration, extraction and Entry Kind mapping code, c
 inputs, schema validation, deterministic sample/report generation, and reproducibility
 tests. Generated production shard files should be committed under `assets/word-bank/`
 only when an intentional Word Bank update is in scope; generated review reports may
-remain build artefacts unless deliberately added for review.
+remain build artefacts unless deliberately added for review. Generated production Word
+Bank JSON assets under `assets/word-bank/` are normalised to LF line endings through
+`.gitattributes`, so Windows checkouts and Word Bank build/check commands do not leave
+line-ending-only asset noise.
 
 The current production shard pipeline is run with `npm run word-bank:build`; use
 `npm run word-bank:check` or the underlying build script with `--check` to prove

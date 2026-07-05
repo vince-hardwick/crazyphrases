@@ -126,6 +126,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .gitattributes
             .github/**
             AGENTS.md
             CONTEXT.md

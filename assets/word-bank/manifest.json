@@ -10,6 +10,15 @@
       "familyFriendly": true,
       "sourceId": "esdb-scowl-v2",
       "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485"
+    },
+    "noun": {
+      "entryKind": "noun",
+      "version": "2026-07-05-esdb-v2-1e5b7d3-noun-tracer",
+      "path": "assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json",
+      "candidateCount": 240,
+      "familyFriendly": true,
+      "sourceId": "esdb-scowl-v2",
+      "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485"
     }
   }
 }

@@ -9,7 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  buildProductionWordBank,
+  buildProductionWordBanks,
   parseEsdbSourceText,
 } from "./word-bank-pipeline.js";
 
@@ -20,8 +20,10 @@ const args = parseArgs(process.argv.slice(2));
 const sourceConfig = await readJson(
   path.join(scriptDir, "source-config", "esdb-scowl-v2.json"),
 );
-const curation = await readJson(
-  path.join(scriptDir, "curation", "adjective.tracer.json"),
+const curations = await Promise.all(
+  ["adjective.tracer.json", "noun.tracer.json"].map((fileName) =>
+    readJson(path.join(scriptDir, "curation", fileName)),
+  ),
 );
 const sourceRoot = await resolveSourceRoot({ args, sourceConfig });
 const sourceRecords = (
@@ -35,8 +37,8 @@ const sourceRecords = (
       ),
   )
 ).flat();
-const result = buildProductionWordBank({
-  curation,
+const result = buildProductionWordBanks({
+  curations,
   sourceConfig,
   sourceRecords,
 });
@@ -47,7 +49,9 @@ await writeOrCheckOutput({
 });
 
 console.log(
-  `Built ${result.shard.candidates.length} ${result.shard.entryKind} Word Bank candidates from ${sourceConfig.id} ${sourceConfig.shortVersion}.`,
+  `Built ${result.shardResults
+    .map(({ shard }) => `${shard.candidates.length} ${shard.entryKind}`)
+    .join(", ")} Word Bank candidates from ${sourceConfig.id} ${sourceConfig.shortVersion}.`,
 );
 
 function parseArgs(rawArgs) {
@@ -140,30 +144,40 @@ async function resolveSourceRoot({ args, sourceConfig }) {
 
 async function writeOrCheckOutput({ args, result }) {
   const manifestPath = path.join(args.assetsDir, "manifest.json");
-  const shardPath = path.join(
-    projectRoot,
-    result.shardPath.replaceAll("/", path.sep),
-  );
-  const reviewPath = path.join(
-    args.reviewDir,
-    `${result.shard.entryKind}.${result.shard.version}.review.json`,
-  );
   const manifestJson = stringifyJson(result.manifest);
-  const shardJson = stringifyJson(result.shard);
-  const reviewJson = stringifyJson(result.review);
 
   if (args.check) {
     await assertFileMatches(manifestPath, manifestJson);
-    await assertFileMatches(shardPath, shardJson);
+    await Promise.all(
+      result.shardResults.map(async (shardResult) =>
+        assertFileMatches(
+          path.join(projectRoot, shardResult.shardPath.replaceAll("/", path.sep)),
+          stringifyJson(shardResult.shard),
+        ),
+      ),
+    );
     return;
   }
 
   await mkdir(path.dirname(manifestPath), { recursive: true });
-  await mkdir(path.dirname(shardPath), { recursive: true });
-  await mkdir(path.dirname(reviewPath), { recursive: true });
   await writeFile(manifestPath, manifestJson, "utf8");
-  await writeFile(shardPath, shardJson, "utf8");
-  await writeFile(reviewPath, reviewJson, "utf8");
+  await Promise.all(
+    result.shardResults.map(async (shardResult) => {
+      const shardPath = path.join(
+        projectRoot,
+        shardResult.shardPath.replaceAll("/", path.sep),
+      );
+      const reviewPath = path.join(
+        args.reviewDir,
+        `${shardResult.shard.entryKind}.${shardResult.shard.version}.review.json`,
+      );
+
+      await mkdir(path.dirname(shardPath), { recursive: true });
+      await mkdir(path.dirname(reviewPath), { recursive: true });
+      await writeFile(shardPath, stringifyJson(shardResult.shard), "utf8");
+      await writeFile(reviewPath, stringifyJson(shardResult.review), "utf8");
+    }),
+  );
 }
 
 async function assertFileMatches(filePath, expectedContent) {

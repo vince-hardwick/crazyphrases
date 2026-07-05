@@ -126,6 +126,63 @@ describe("Word Bank production pipeline", () => {
     );
   });
 
+  it("builds deterministic metadata-bearing noun shard output", () => {
+    const result = buildProductionWordBank({
+      curation: {
+        schemaVersion: 1,
+        entryKind: "noun",
+        version: "test-noun-curation",
+        shardVersion: "test-noun-shard",
+        shardPath: "assets/word-bank/shards/noun.test.json",
+        candidates: [
+          accepted("alarm clock", {
+            compoundReview: reviewedCompound("lexical clock type"),
+          }),
+          accepted("teapot"),
+          accepted("yo-yo"),
+          rejected("once upon a time", "phrase-like source entry"),
+        ],
+      },
+      sourceConfig,
+      sourceRecords: parseEsdbSourceText(
+        [
+          "35 [12dicts] [ukfreq]: teapot <n>",
+          "35 [12dicts]: yo-yo <n>",
+          "35 [12dicts]: alarm clock <n>",
+          "35 [12dicts]: once upon a time <n>",
+        ].join("\n"),
+        { sourceFile: "data/scowl-pre.txt" },
+      ),
+    });
+
+    assert.deepEqual(
+      result.shard.candidates.map((candidate) => candidate.canonicalText),
+      ["alarm clock", "teapot", "yo-yo"],
+    );
+    assert.deepEqual(
+      result.shard.candidates.map((candidate) => candidate.candidateForm),
+      ["openCompound", "singleWord", "hyphenatedWord"],
+    );
+    assert.equal(result.shard.entryKind, "noun");
+    assert.equal(result.manifest.entryKinds.noun.path, result.shardPath);
+    assert.equal(result.manifest.entryKinds.noun.candidateCount, 3);
+    assert.deepEqual(result.review.samples.noun, [
+      "alarm clock",
+      "teapot",
+      "yo-yo",
+    ]);
+
+    assert.doesNotThrow(() => validateWordBankShard(result.shard));
+    assert.deepEqual(
+      buildProductionWordBank({
+        curation: result.curation,
+        sourceConfig,
+        sourceRecords: result.sourceRecords,
+      }),
+      result,
+    );
+  });
+
   it("fails clearly for under-labelled accepted adjective candidates", () => {
     assert.throws(
       () =>

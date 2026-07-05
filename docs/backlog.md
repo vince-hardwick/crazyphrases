@@ -1486,13 +1486,13 @@ preserve their original history.
 ### Production word-bank delivery
 
 - **Deferred**: Completing production Word Bank delivery beyond the first
-  adjective tracer, including noun shard output, shard pinning/cache hardening,
-  rollout closeout, and any later service-backed alternative if static shards
-  stop fitting.
-- **Why deferred**: The first tracer proves the static manifest/shard path for
-  adjective Entry Candidates only. The default template still needs noun
-  production output and the broader refresh/cache behaviour before the seed
-  fallback stops carrying part of normal play.
+  adjective and noun tracers, including shard pinning/cache hardening, rollout
+  closeout, and any later service-backed alternative if static shards stop
+  fitting.
+- **Why deferred**: The first tracers prove the static manifest/shard path for
+  Default Template adjective and noun Entry Candidates. The broader
+  refresh/cache behaviour and rollout closeout still need focused verification
+  before the production Word Bank path is considered complete.
 - **Status**: The 2026-07-04 source research profiled ESDB / SCOWL v2 with
   conservative filters. The current adjective+noun shard estimate is about
   738 KB minified JSON / 215 KB gzip; the broader future core POS set is about
@@ -1502,12 +1502,12 @@ preserve their original history.
   final curated shard sizes, account-level filtering, or update cadence require
   a service-backed path. The bundled seed fallback should expand to future
   built-in Entry Kinds as they become playable, so unavailable production shards
-  do not disable all dice assistance for alternative templates. Issue #176
-  introduces the first adjective-only production tracer: pinned ESDB / SCOWL v2
-  source configuration, source-controlled adjective curation input, deterministic
-  build/check commands, a committed manifest and immutable adjective shard, and a
-  runtime provider that uses the adjective shard while keeping nouns on the seed
-  fallback.
+  do not disable all dice assistance for alternative templates. Issues #176 and
+  #177 introduce the first adjective and noun production tracers: pinned ESDB /
+  SCOWL v2 source configuration, source-controlled curation inputs,
+  deterministic build/check commands, a committed manifest with immutable
+  adjective and noun shards, and a runtime provider that preloads both Default
+  Template Entry Kinds while preserving the bundled seed fallback.
 - **Deployment note**: The first production Word Bank manifest and shards should
   deploy through the normal app deployment payload. A separate word-list
   publishing channel is deferred unless refresh cadence or curation operations
@@ -1527,9 +1527,9 @@ preserve their original history.
   main production path.
 - **Scope note**: The shard schema and build pipeline should understand the
   controlled built-in Entry Kind vocabulary, but production should publish
-  shards only for Entry Kinds used by currently playable templates. The first
-  committed tracer is adjective-only; noun production output remains the next
-  shard slice before the default template is fully production-backed.
+  shards only for Entry Kinds used by currently playable templates. The committed
+  tracer now covers adjective and noun output for the Default Template; future
+  Entry Kinds remain deferred until a playable template brings them into scope.
 - **Planning note**: The first production Word Bank implementation should be
   one PRD split into small issues, not separate PRDs for pipeline, data, and
   loader work. The vertical slice should prove the source-controlled ESDB
@@ -1541,9 +1541,9 @@ preserve their original history.
   entries for one Entry Kind and may include reviewed hyphenated words or open
   compounds; arbitrary phrases and unreviewed source compounds remain out of
   scope.
-- **Revisit when**: The noun production shard, shard pinning/cache hardening, and
-  rollout closeout slices complete, or final curated shard sizes, parse costs,
-  and caching behaviour require changing the static-shard model.
+- **Revisit when**: The shard pinning/cache hardening and rollout closeout slices
+  complete, or final curated shard sizes, parse costs, and caching behaviour
+  require changing the static-shard model.
 - **Remaining risk**: Runtime dice-click code should avoid assuming the full word bank
   is available inside the main client bundle.
 

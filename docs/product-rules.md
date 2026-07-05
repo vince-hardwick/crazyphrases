@@ -1552,11 +1552,11 @@ files under `assets/word-bank/shards/`, such as
 production shard mapping. `assets/word-bank-seed.json` remains the tiny fallback seed
 file and must not be treated as the production manifest or a production shard.
 
-The first committed production tracer publishes an adjective shard only. Runtime Entry
-Assist uses the manifest-backed adjective shard when it loads successfully and keeps the
-bundled seed as fallback for adjective and noun categories. Noun production shard output
-remains a follow-on slice; the runtime must not substitute adjective candidates for noun
-slots or any other missing Entry Kind.
+The committed production tracer publishes adjective and noun shards for the Default
+Template. Runtime Entry Assist preloads both manifest-backed shards when they load
+successfully and keeps the bundled seed as fallback for adjective and noun categories.
+The runtime must not substitute candidates from another Entry Kind for any missing
+shard or seed fallback.
 
 For the first production rollout, Word Bank manifests and shards deploy through the
 normal app deployment payload. They must not use a separate publishing channel or live

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-07-05-word-bank-manifest",
+  "entryKinds": {
+    "adjective": {
+      "entryKind": "adjective",
+      "version": "2026-07-05-esdb-v2-1e5b7d3-tracer",
+      "path": "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+      "candidateCount": 114,
+      "familyFriendly": true,
+      "sourceId": "esdb-scowl-v2",
+      "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485"
+    }
+  }
+}

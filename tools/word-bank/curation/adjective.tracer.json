@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "entryKind": "adjective",
+  "version": "2026-07-05-adjective-tracer-curation",
+  "manifestVersion": "2026-07-05-word-bank-manifest",
+  "shardVersion": "2026-07-05-esdb-v2-1e5b7d3-tracer",
+  "shardPath": "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+  "defaults": {
+    "curationStatus": "accepted",
+    "safetyStatus": "familyFriendly"
+  },
+  "reviewNotes": [
+    "Tracer allowlist for issue #176. This is a deliberately curated family-friendly adjective slice, not a raw ESDB export.",
+    "Single-word candidates mostly preserve the accepted MVP adjective tone while validating against the pinned ESDB / SCOWL v2 source.",
+    "Hyphenated words and reviewed open compounds are included to prove the production form rules accepted by ADR 0024."
+  ],
+  "candidates": [
+    "absurd",
+    "ancient",
+    "bashful",
+    "bouncy",
+    "brave",
+    "bright",
+    "brisk",
+    "bubbly",
+    "calm",
+    "careful",
+    "charming",
+    "cheerful",
+    "clever",
+    "cosy",
+    "crafty",
+    "crisp",
+    "curious",
+    "daft",
+    "delicate",
+    "dreamy",
+    "eager",
+    "electric",
+    "fancy",
+    "fluffy",
+    "friendly",
+    "frosty",
+    "gentle",
+    "gleaming",
+    "glossy",
+    "golden",
+    "graceful",
+    "happy",
+    "hazy",
+    "humble",
+    "inventive",
+    "jaunty",
+    "jolly",
+    "kind",
+    "leafy",
+    "lively",
+    "loopy",
+    "lucky",
+    "mellow",
+    "merry",
+    "misty",
+    "moonlit",
+    "muddy",
+    "musical",
+    "nimble",
+    "nosy",
+    "odd",
+    "peaceful",
+    "peculiar",
+    "perky",
+    "playful",
+    "plucky",
+    "polished",
+    "prickly",
+    "proud",
+    "puzzled",
+    "quiet",
+    "quirky",
+    "radiant",
+    "rambling",
+    "rosy",
+    "round",
+    "shy",
+    "silly",
+    "silvery",
+    "sleepy",
+    "smooth",
+    "snappy",
+    "snug",
+    "solemn",
+    "sparkly",
+    "speedy",
+    "spiral",
+    "sprightly",
+    "squiggly",
+    "striped",
+    "sturdy",
+    "sunny",
+    "tangled",
+    "tender",
+    "tiny",
+    "toothy",
+    "twinkly",
+    "velvety",
+    "vivid",
+    "wandering",
+    "whispering",
+    "wild",
+    "wobbly",
+    "woolly",
+    "zesty",
+    "zigzag",
+    "best-selling",
+    "built-in",
+    "light-hearted",
+    "long-standing",
+    "point-blank",
+    "top-notch",
+    "topsy-turvy",
+    "clearheaded",
+    "openhearted",
+    "warmhearted",
+    {
+      "canonicalText": "a cappella",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for performance style."
+      }
+    },
+    {
+      "canonicalText": "al dente",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for texture."
+      }
+    },
+    {
+      "canonicalText": "bone dry",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for dryness."
+      }
+    },
+    {
+      "canonicalText": "crystal clear",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for clarity."
+      }
+    },
+    {
+      "canonicalText": "powder blue",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for colour."
+      }
+    },
+    {
+      "canonicalText": "up to date",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for currency."
+      }
+    },
+    {
+      "canonicalText": "well behaved",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for conduct."
+      }
+    },
+    {
+      "canonicalText": "well timed",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical adjective for timing."
+      }
+    }
+  ]
+}

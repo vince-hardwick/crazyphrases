@@ -158,6 +158,49 @@ export function buildProductionWordBank({
   return result;
 }
 
+export function buildProductionWordBanks({
+  curations,
+  sourceConfig,
+  sourceRecords,
+} = {}) {
+  if (!Array.isArray(curations) || curations.length === 0) {
+    throw new Error("At least one Word Bank curation file is required.");
+  }
+
+  const shardResults = curations.map((curation) =>
+    buildProductionWordBank({ curation, sourceConfig, sourceRecords }),
+  );
+  const manifestVersion =
+    curations[0].manifestVersion ?? curations[0].shardVersion;
+  const entryKinds = {};
+
+  for (const result of shardResults) {
+    const [entryKind, reference] = Object.entries(result.manifest.entryKinds)[0];
+
+    if (
+      (result.curation.manifestVersion ?? result.curation.shardVersion) !==
+      manifestVersion
+    ) {
+      throw new Error("Word Bank curation files must share one manifest version.");
+    }
+
+    if (entryKinds[entryKind]) {
+      throw new Error(`Duplicate Word Bank curation for Entry Kind "${entryKind}".`);
+    }
+
+    entryKinds[entryKind] = reference;
+  }
+
+  return {
+    manifest: {
+      schemaVersion: SHARD_SCHEMA_VERSION,
+      version: manifestVersion,
+      entryKinds,
+    },
+    shardResults,
+  };
+}
+
 export function validateWordBankShard(shard) {
   if (shard?.schemaVersion !== SHARD_SCHEMA_VERSION) {
     throw new Error("Word Bank Shard schemaVersion must be 1.");

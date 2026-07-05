@@ -114,4 +114,52 @@ describe("manifest-backed Entry Candidate provider", () => {
     assert.deepEqual(getEntryCandidateValues(provider, "noun"), ["teapot"]);
     assert.deepEqual(getEntryCandidateValues(provider, "adverb"), []);
   });
+
+  it("uses loaded production noun shards without exposing unsafe noun records", async () => {
+    const provider = createManifestBackedEntryCandidateProvider({
+      manifest: {
+        entryKinds: {
+          noun: {
+            path: "assets/word-bank/shards/noun.test.json",
+            version: "test-noun",
+          },
+        },
+      },
+      seedWordBank: {
+        entryKinds: {
+          noun: ["teapot"],
+        },
+      },
+      fetchJson: async (path) => {
+        assert.equal(path, "assets/word-bank/shards/noun.test.json");
+
+        return {
+          entryKind: "noun",
+          version: "test-noun",
+          candidates: [
+            {
+              canonicalText: "alarm clock",
+              entryKind: "noun",
+              candidateForm: "openCompound",
+              safetyStatus: "familyFriendly",
+              curationStatus: "accepted",
+            },
+            {
+              canonicalText: "unsafe noun",
+              entryKind: "noun",
+              candidateForm: "openCompound",
+              safetyStatus: "potentiallyOffensive",
+              curationStatus: "accepted",
+            },
+          ],
+        };
+      },
+    });
+
+    assert.deepEqual(getEntryCandidateValues(provider, "noun"), ["teapot"]);
+
+    await provider.loadEntryKind("noun");
+
+    assert.deepEqual(getEntryCandidateValues(provider, "noun"), ["alarm clock"]);
+  });
 });

@@ -137,6 +137,79 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("uses production noun shards for both noun slots in the Default Template", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const productionOnlyNouns = new Set([
+      "alarm clock",
+      "board game",
+      "bubble bath",
+      "candy cane",
+      "comic book",
+      "fairy tale",
+      "fire engine",
+      "fountain pen",
+      "fruit salad",
+      "ginger ale",
+      "ice cream",
+      "jack-in-the-box",
+      "jelly bean",
+      "jump rope",
+      "merry-go-round",
+      "music box",
+      "paper-clip",
+      "pencil case",
+      "post office",
+      "sailing boat",
+      "steam engine",
+      "teddy bear",
+      "tin can",
+      "water wheel",
+      "yo-yo",
+    ]);
+    const nounHits = [];
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+
+    for (let sectionIndex = 0; sectionIndex < 3; sectionIndex += 1) {
+      await waitForDice(page);
+      const title = await page.locator("[data-section-title]").innerText();
+
+      if (/adjectives/i.test(title)) {
+        await fillVisibleSectionRows(page, fillState.adjectiveEntries);
+      } else {
+        const hit = await rollDiceUntilProductionOnlyValue(page, productionOnlyNouns);
+        nounHits.push(hit);
+        const nounEntries = fillState.nounEntrySets[fillState.nextNounSetIndex++];
+        await fillVisibleSectionRows(page, nounEntries, { skipFirstRow: true });
+      }
+
+      await page.getByRole("button", { name: /Next section|Reveal phrases/ }).click();
+    }
+
+    assert.equal(nounHits.length, 2);
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    const phrases = await page.locator("[data-phrase-list] li").allTextContents();
+    assert.equal(
+      nounHits.every((hit) =>
+        phrases.some((phrase) => phrase.toLowerCase().includes(hit)),
+      ),
+      true,
+    );
+    assertNoConsoleErrors();
+  });
+
   it("keeps desktop controls within the viewport and follows standard tab order", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -5539,6 +5612,30 @@ async function fillActiveSection(
   }
 
   await page.getByRole("button", { name: /Next section|Reveal phrases/ }).click();
+}
+
+async function fillVisibleSectionRows(page, entries, { skipFirstRow = false } = {}) {
+  const startIndex = skipFirstRow ? 1 : 0;
+
+  for (let rowIndex = startIndex; rowIndex < 10; rowIndex += 1) {
+    await page.locator(`[data-row-index='${rowIndex}']`).fill(entries[rowIndex]);
+  }
+}
+
+async function rollDiceUntilProductionOnlyValue(page, productionOnlyValues) {
+  for (let attempt = 0; attempt < 260; attempt += 1) {
+    await page.locator("[data-dice-row-index='0']").click();
+
+    const value = (
+      await page.locator("[data-row-index='0']").inputValue()
+    ).trim().toLowerCase();
+
+    if (productionOnlyValues.has(value)) {
+      return value;
+    }
+  }
+
+  throw new Error("Production noun shard did not provide a production-only noun.");
 }
 
 async function submitMultiplayerSection(page, word) {

@@ -1,0 +1,406 @@
+{
+  "schemaVersion": 1,
+  "entryKind": "noun",
+  "version": "2026-07-05-noun-tracer-curation",
+  "manifestVersion": "2026-07-05-word-bank-manifest",
+  "shardVersion": "2026-07-05-esdb-v2-1e5b7d3-noun-tracer",
+  "shardPath": "assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json",
+  "defaults": {
+    "curationStatus": "accepted",
+    "safetyStatus": "familyFriendly"
+  },
+  "reviewNotes": [
+    "Tracer allowlist for issue #177. This is a deliberately curated family-friendly noun slice, not a raw ESDB export.",
+    "The single-word candidates reuse the accepted MVP noun tone while validating against the pinned ESDB / SCOWL v2 source.",
+    "Hyphenated words and reviewed open compounds are included to prove the production noun form rules accepted by ADR 0024."
+  ],
+  "candidates": [
+    "acorn",
+    "anchor",
+    "apron",
+    "armchair",
+    "atlas",
+    "backpack",
+    "balcony",
+    "balloon",
+    "banana",
+    "banner",
+    "basket",
+    "bathtub",
+    "bead",
+    "bell",
+    "bench",
+    "bicycle",
+    "biscuit",
+    "blanket",
+    "block",
+    "bookcase",
+    "boot",
+    "bottle",
+    "bracelet",
+    "broom",
+    "bucket",
+    "button",
+    "cabinet",
+    "candle",
+    "canoe",
+    "caravan",
+    "carrot",
+    "castle",
+    "catapult",
+    "chair",
+    "chalk",
+    "chest",
+    "cherry",
+    "clock",
+    "cloud",
+    "coaster",
+    "comet",
+    "compass",
+    "cushion",
+    "daisy",
+    "diary",
+    "doorknob",
+    "drum",
+    "easel",
+    "envelope",
+    "feather",
+    "fiddle",
+    "flag",
+    "flowerpot",
+    "flute",
+    "folder",
+    "fountain",
+    "frisbee",
+    "funnel",
+    "gazebo",
+    "gear",
+    "gemstone",
+    "goblet",
+    "hammock",
+    "hat",
+    "helmet",
+    "hinge",
+    "jacket",
+    "jar",
+    "jigsaw",
+    "jug",
+    "kettle",
+    "key",
+    "kite",
+    "ladder",
+    "lamp",
+    "lampshade",
+    "lantern",
+    "leaflet",
+    "library",
+    "lollipop",
+    "magnet",
+    "marble",
+    "meadow",
+    "mirror",
+    "mitten",
+    "moon",
+    "mug",
+    "notebook",
+    "oar",
+    "onion",
+    "orchard",
+    "orchestra",
+    "paintbrush",
+    "pancake",
+    "parcel",
+    "pebble",
+    "pencil",
+    "pepper",
+    "pillow",
+    "pinwheel",
+    "planet",
+    "plum",
+    "postcard",
+    "pudding",
+    "puzzle",
+    "quilt",
+    "racket",
+    "ribbon",
+    "rucksack",
+    "sailboat",
+    "saucepan",
+    "scarf",
+    "shell",
+    "shoebox",
+    "shovel",
+    "sketchbook",
+    "sledge",
+    "spoon",
+    "sponge",
+    "staircase",
+    "stamp",
+    "star",
+    "suitcase",
+    "teapot",
+    "telescope",
+    "thimble",
+    "ticket",
+    "toaster",
+    "toothbrush",
+    "tray",
+    "trumpet",
+    "turnip",
+    "umbrella",
+    "vase",
+    "wagon",
+    "wardrobe",
+    "whistle",
+    "windmill",
+    "window",
+    "zip",
+    "album",
+    "archway",
+    "badge",
+    "beacon",
+    "booklet",
+    "bowl",
+    "bridge",
+    "brooch",
+    "bundle",
+    "cabbage",
+    "cactus",
+    "calendar",
+    "cart",
+    "chime",
+    "clover",
+    "cobblestone",
+    "cork",
+    "crate",
+    "cupboard",
+    "curtain",
+    "dewdrop",
+    "doorbell",
+    "drawer",
+    "dumpling",
+    "fern",
+    "fireplace",
+    "garland",
+    "gingerbread",
+    "globe",
+    "grapefruit",
+    "harbour",
+    "honeycomb",
+    "inkwell",
+    "jellybean",
+    "journal",
+    "keyboard",
+    "lighthouse",
+    "locket",
+    "map",
+    "marmalade",
+    "mosaic",
+    "napkin",
+    "nectarine",
+    "paintbox",
+    "parasol",
+    "parsnip",
+    "peach",
+    "pendant",
+    "peppermint",
+    "pinecone",
+    "pocket",
+    "porch",
+    "pumpkin",
+    "satchel",
+    "snowflake",
+    "spinner",
+    "spool",
+    "sticker",
+    "sunbeam",
+    "tapestry",
+    "teacup",
+    "toadstool",
+    "treasure",
+    "waffle",
+    "wheelbarrow",
+    "willow",
+    "yarn",
+    "air-conditioner",
+    "bean-bag",
+    "bell-flower",
+    "belly-button",
+    "bird-watcher",
+    "book-end",
+    "jack-in-the-box",
+    "merry-go-round",
+    "paper-clip",
+    "pine-cone",
+    "water-wheel",
+    "yo-yo",
+    {
+      "canonicalText": "alarm clock",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a clock type."
+      }
+    },
+    {
+      "canonicalText": "board game",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a tabletop game."
+      }
+    },
+    {
+      "canonicalText": "bubble bath",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a bath type."
+      }
+    },
+    {
+      "canonicalText": "candy cane",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a sweet."
+      }
+    },
+    {
+      "canonicalText": "comic book",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a publication type."
+      }
+    },
+    {
+      "canonicalText": "fairy tale",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a story type."
+      }
+    },
+    {
+      "canonicalText": "fire engine",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a vehicle type."
+      }
+    },
+    {
+      "canonicalText": "fountain pen",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a pen type."
+      }
+    },
+    {
+      "canonicalText": "fruit salad",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a dish."
+      }
+    },
+    {
+      "canonicalText": "ginger ale",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a drink."
+      }
+    },
+    {
+      "canonicalText": "ice cream",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a dessert."
+      }
+    },
+    {
+      "canonicalText": "jelly bean",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a sweet."
+      }
+    },
+    {
+      "canonicalText": "jump rope",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a play object."
+      }
+    },
+    {
+      "canonicalText": "music box",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a mechanical object."
+      }
+    },
+    {
+      "canonicalText": "pencil case",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a stationery container."
+      }
+    },
+    {
+      "canonicalText": "post office",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a place."
+      }
+    },
+    {
+      "canonicalText": "sailing boat",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a boat type."
+      }
+    },
+    {
+      "canonicalText": "steam engine",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for an engine type."
+      }
+    },
+    {
+      "canonicalText": "teddy bear",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a toy type."
+      }
+    },
+    {
+      "canonicalText": "tin can",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a container type."
+      }
+    },
+    {
+      "canonicalText": "water wheel",
+      "compoundReview": {
+        "reviewer": "codex",
+        "reviewedOn": "2026-07-05",
+        "note": "Reviewed as a fixed lexical noun for a wheel type."
+      }
+    }
+  ]
+}

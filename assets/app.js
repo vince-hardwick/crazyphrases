@@ -75,7 +75,7 @@ import { createSignedInRouteHandoff } from "./signed-in-route-handoff.js?v=__ASS
 
 const seedWordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const wordBankManifestUrl = "assets/word-bank/manifest.json?v=__ASSET_VERSION__";
-const productionWordBankEntryKindsToPreload = ["adjective"];
+const productionWordBankEntryKindsToPreload = ["adjective", "noun"];
 const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
 const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
 const AVATAR_UPLOAD_MAX_BYTES = 1024 * 1024;

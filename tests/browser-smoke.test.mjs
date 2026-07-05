@@ -210,6 +210,159 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps a started Game pinned to its Word Bank shard version across reload", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    let activeVersion = "v1";
+
+    await context.route("**/assets/word-bank/manifest.json*", async (route) => {
+      await route.fulfill({
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify({
+          schemaVersion: 1,
+          version: `test-manifest-${activeVersion}`,
+          entryKinds: {
+            adjective: {
+              entryKind: "adjective",
+              version: `adjective-${activeVersion}`,
+              path: `assets/word-bank/shards/adjective.${activeVersion}.json`,
+            },
+            noun: {
+              entryKind: "noun",
+              version: `noun-${activeVersion}`,
+              path: `assets/word-bank/shards/noun.${activeVersion}.json`,
+            },
+          },
+        }),
+      });
+    });
+    await context.route("**/assets/word-bank/shards/*", async (route) => {
+      const url = route.request().url();
+      const entryKind = url.includes("/noun.") ? "noun" : "adjective";
+      const isV2 = url.includes(".v2.");
+      const canonicalText =
+        entryKind === "noun"
+          ? isV2
+            ? "ladder"
+            : "teapot"
+          : isV2
+            ? "nimble"
+            : "brisk";
+
+      await route.fulfill({
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify({
+          schemaVersion: 1,
+          entryKind,
+          version: `${entryKind}-${isV2 ? "v2" : "v1"}`,
+          candidates: [
+            {
+              canonicalText,
+              entryKind,
+              candidateForm: "singleWord",
+              safetyStatus: "familyFriendly",
+              curationStatus: "accepted",
+            },
+          ],
+        }),
+      });
+    });
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+    await waitForDice(page);
+    await page.locator("[data-dice-row-index='0']").click();
+    const firstValue = await page.locator("[data-row-index='0']").inputValue();
+    assert.ok(
+      ["brisk", "teapot"].includes(firstValue),
+      `Expected v1 shard candidate before reload, got ${firstValue}`,
+    );
+
+    activeVersion = "v2";
+    await page.reload();
+    await waitForDice(page);
+    await page.locator("[data-dice-row-index='1']").click();
+
+    assert.equal(await page.locator("[data-row-index='1']").inputValue(), firstValue);
+    assertNoConsoleErrors();
+  });
+
+  it("allows manual completion and Reveal when production Word Bank shards are unavailable", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.route("**/assets/word-bank/manifest.json*", async (route) => {
+      await route.fulfill({
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify({
+          schemaVersion: 1,
+          version: "unavailable-shards-test",
+          entryKinds: {
+            adjective: {
+              entryKind: "adjective",
+              version: "adjective-unavailable",
+              path: "assets/word-bank/shards/adjective.unavailable.json",
+            },
+            noun: {
+              entryKind: "noun",
+              version: "noun-unavailable",
+              path: "assets/word-bank/shards/noun.unavailable.json",
+            },
+          },
+        }),
+      });
+    });
+    await context.route("**/assets/word-bank/shards/*", async (route) => {
+      const entryKind = route.request().url().includes("/noun.")
+        ? "noun"
+        : "adjective";
+      await route.fulfill({
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify({
+          schemaVersion: 1,
+          entryKind,
+          version: "stale-unusable-shard",
+          candidates: [],
+        }),
+      });
+    });
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
+
+    const fillState = createFillState(10);
+
+    for (let sectionIndex = 0; sectionIndex < 3; sectionIndex += 1) {
+      await page.locator("[data-row-index='0']").waitFor({ state: "visible" });
+      const title = await page.locator("[data-section-title]").innerText();
+      const entries = /adjectives/i.test(title)
+        ? fillState.adjectiveEntries
+        : fillState.nounEntrySets[fillState.nextNounSetIndex++];
+
+      await fillVisibleSectionRows(page, entries);
+      await page.getByRole("button", { name: /Next section|Reveal phrases/ }).click();
+    }
+
+    await assertTextVisible(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
+    assertNoConsoleErrors();
+  });
+
   it("keeps desktop controls within the viewport and follows standard tab order", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -5012,7 +5165,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
 
-    await assertTextVisible(
+    await waitForTextVisible(
       page,
       "Account-backed progress could not be saved. Keep this tab open and try again.",
     );
@@ -5215,7 +5368,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "Start batch" }).click();
 
-    await assertTextVisible(
+    await waitForTextVisible(
       page,
       "Account-backed progress changed in another tab. Reload to see the latest saved game before continuing.",
     );

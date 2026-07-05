@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import {
+  createManifestBackedEntryCandidateProvider,
   createSeedBackedEntryCandidateProvider,
 } from "../assets/entry-candidate-provider.js";
 import {
@@ -388,6 +389,89 @@ describe("anonymous solo game state", () => {
     assert.deepEqual(
       game.sections[0].rows.map((row) => row.value),
       ["brisk", "calm", "brisk"],
+    );
+  });
+
+  it("pins Entry Candidate values for a started game until a new game starts", async () => {
+    let activeVersion = "v1";
+    const provider = createManifestBackedEntryCandidateProvider({
+      manifestUrl: "assets/word-bank/manifest.json",
+      seedWordBank: {
+        entryKinds: {
+          adjective: ["seed brisk"],
+        },
+      },
+      fetchJson: async (path) => {
+        if (path === "assets/word-bank/manifest.json") {
+          return {
+            entryKinds: {
+              adjective: {
+                path: `assets/word-bank/shards/adjective.${activeVersion}.json`,
+                version: `adjective-${activeVersion}`,
+              },
+            },
+          };
+        }
+
+        const canonicalText = path.includes("v2") ? "nimble" : "brisk";
+        const version = path.includes("v2") ? "adjective-v2" : "adjective-v1";
+
+        return {
+          entryKind: "adjective",
+          version,
+          candidates: [
+            {
+              canonicalText,
+              entryKind: "adjective",
+              candidateForm: "singleWord",
+              safetyStatus: "familyFriendly",
+              curationStatus: "accepted",
+            },
+          ],
+        };
+      },
+    });
+
+    await provider.loadEntryKind("adjective");
+
+    let game = startGame(
+      createAnonymousSoloGame({ rowCount: 2, random: () => 0 }),
+      { entryCandidateProvider: provider },
+    );
+    game = generateEntryCandidate(game, {
+      rowIndex: 0,
+      entryCandidateProvider: provider,
+      random: () => 0,
+    });
+
+    activeVersion = "v2";
+    await provider.refreshManifest();
+    await provider.loadEntryKind("adjective");
+
+    game = generateEntryCandidate(game, {
+      rowIndex: 1,
+      entryCandidateProvider: provider,
+      random: () => 0,
+    });
+
+    assert.deepEqual(
+      game.sections[0].rows.map((row) => row.value),
+      ["brisk", "brisk"],
+    );
+
+    let nextGame = startGame(
+      createAnonymousSoloGame({ rowCount: 1, random: () => 0 }),
+      { entryCandidateProvider: provider },
+    );
+    nextGame = generateEntryCandidate(nextGame, {
+      rowIndex: 0,
+      entryCandidateProvider: provider,
+      random: () => 0,
+    });
+
+    assert.deepEqual(
+      nextGame.sections[0].rows.map((row) => row.value),
+      ["nimble"],
     );
   });
 });

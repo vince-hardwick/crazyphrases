@@ -74,8 +74,7 @@ import {
 import { createSignedInRouteHandoff } from "./signed-in-route-handoff.js?v=__ASSET_VERSION__";
 
 const seedWordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
-const wordBankManifestUrl = "assets/word-bank/manifest.json?v=__ASSET_VERSION__";
-const productionWordBankEntryKindsToPreload = ["adjective", "noun"];
+const wordBankManifestPath = "assets/word-bank/manifest.json";
 const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
 const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
 const AVATAR_UPLOAD_MAX_BYTES = 1024 * 1024;
@@ -311,7 +310,7 @@ let favouritesPanel = null;
 
 loadFontAwesomeKit();
 applyTheme(loadLocalTheme());
-loadWordBank();
+const wordBankLoadPromise = loadWordBank();
 renderAccountShell(accountShell);
 void initialiseHostedAuth();
 
@@ -534,9 +533,7 @@ rowCountButtons.forEach((button) => {
 });
 
 startButton.addEventListener("click", () => {
-  game = startGame(game);
-  void persistGame();
-  renderGame();
+  void startCurrentGame();
 });
 
 startAgainButton.addEventListener("click", () => {
@@ -6037,27 +6034,53 @@ function getSaveFailureMessage(error) {
   return "Account-backed progress could not be saved. Keep this tab open and try again.";
 }
 
-async function loadWordBank() {
-  const [seedWordBankResult, manifestResult] = await Promise.allSettled([
-    fetchWordBankJson(seedWordBankUrl),
-    fetchWordBankJson(wordBankManifestUrl),
-  ]);
-  const seedWordBank =
-    seedWordBankResult.status === "fulfilled" ? seedWordBankResult.value : null;
-  const manifest = manifestResult.status === "fulfilled" ? manifestResult.value : null;
-
-  entryCandidateProvider = createManifestBackedEntryCandidateProvider({
-    fetchJson: fetchVersionedWordBankAsset,
-    manifest,
-    seedWordBank,
-  });
+async function startCurrentGame() {
+  await wordBankLoadPromise;
+  await loadGameEntryKinds(game);
+  game = startGame(game, { entryCandidateProvider });
+  void persistGame();
   renderGame();
+}
+
+async function loadGameEntryKinds(gameToStart) {
+  if (
+    !entryCandidateProvider ||
+    typeof entryCandidateProvider.loadEntryKind !== "function"
+  ) {
+    return;
+  }
 
   await Promise.all(
-    productionWordBankEntryKindsToPreload.map((entryKind) =>
+    getGameEntryKinds(gameToStart).map((entryKind) =>
       entryCandidateProvider.loadEntryKind(entryKind),
     ),
   );
+}
+
+function getGameEntryKinds(gameToStart) {
+  return [
+    ...new Set(
+      (gameToStart?.sections ?? [])
+        .map((section) => section.kind)
+        .filter((entryKind) => typeof entryKind === "string"),
+    ),
+  ];
+}
+
+async function loadWordBank() {
+  const [seedWordBankResult] = await Promise.allSettled([
+    fetchWordBankJson(seedWordBankUrl),
+  ]);
+  const seedWordBank =
+    seedWordBankResult.status === "fulfilled" ? seedWordBankResult.value : null;
+
+  entryCandidateProvider = createManifestBackedEntryCandidateProvider({
+    fetchJson: fetchVersionedWordBankAsset,
+    manifestUrl: wordBankManifestPath,
+    seedWordBank,
+  });
+
+  await entryCandidateProvider.loadManifest();
   renderGame();
 }
 

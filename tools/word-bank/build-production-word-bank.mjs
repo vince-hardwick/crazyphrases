@@ -183,7 +183,7 @@ async function writeOrCheckOutput({ args, result }) {
 async function assertFileMatches(filePath, expectedContent) {
   const actualContent = await readUtf8(filePath);
 
-  if (actualContent !== expectedContent) {
+  if (normalizeLineEndings(actualContent) !== expectedContent) {
     throw new Error(`${path.relative(projectRoot, filePath)} is not reproducible.`);
   }
 }
@@ -244,4 +244,8 @@ async function readUtf8(filePath) {
 
 function stringifyJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function normalizeLineEndings(value) {
+  return value.replace(/\r\n/g, "\n");
 }

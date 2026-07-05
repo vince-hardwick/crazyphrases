@@ -7,6 +7,150 @@ import {
 } from "../assets/entry-candidate-provider.js";
 
 describe("manifest-backed Entry Candidate provider", () => {
+  it("checks the manifest on demand and caches a loaded immutable shard version", async () => {
+    const fetchCalls = [];
+    const provider = createManifestBackedEntryCandidateProvider({
+      manifestUrl: "assets/word-bank/manifest.json",
+      seedWordBank: {
+        entryKinds: {
+          adjective: ["seed brisk"],
+        },
+      },
+      fetchJson: async (path) => {
+        fetchCalls.push(path);
+
+        if (path === "assets/word-bank/manifest.json") {
+          return {
+            entryKinds: {
+              adjective: {
+                path: "assets/word-bank/shards/adjective.v1.json",
+                version: "adjective-v1",
+              },
+            },
+          };
+        }
+
+        if (path === "assets/word-bank/shards/adjective.v1.json") {
+          return {
+            entryKind: "adjective",
+            version: "adjective-v1",
+            candidates: [
+              {
+                canonicalText: "brisk",
+                entryKind: "adjective",
+                candidateForm: "singleWord",
+                safetyStatus: "familyFriendly",
+                curationStatus: "accepted",
+              },
+            ],
+          };
+        }
+
+        throw new Error(`Unexpected fetch path: ${path}`);
+      },
+    });
+
+    assert.deepEqual(getEntryCandidateValues(provider, "adjective"), [
+      "seed brisk",
+    ]);
+
+    await provider.loadEntryKind("adjective");
+    await provider.loadEntryKind("adjective");
+
+    assert.deepEqual(fetchCalls, [
+      "assets/word-bank/manifest.json",
+      "assets/word-bank/shards/adjective.v1.json",
+    ]);
+    assert.deepEqual(getEntryCandidateValues(provider, "adjective"), ["brisk"]);
+  });
+
+  it("keeps the cached shard when a refreshed manifest points to an unavailable newer version", async () => {
+    const fetchCalls = [];
+    let activeVersion = "v1";
+    let failV2Shard = true;
+    const provider = createManifestBackedEntryCandidateProvider({
+      manifestUrl: "assets/word-bank/manifest.json",
+      seedWordBank: {
+        entryKinds: {
+          adjective: ["seed brisk"],
+        },
+      },
+      fetchJson: async (path) => {
+        fetchCalls.push(path);
+
+        if (path === "assets/word-bank/manifest.json") {
+          return {
+            entryKinds: {
+              adjective: {
+                path: `assets/word-bank/shards/adjective.${activeVersion}.json`,
+                version: `adjective-${activeVersion}`,
+              },
+            },
+          };
+        }
+
+        if (path === "assets/word-bank/shards/adjective.v1.json") {
+          return {
+            entryKind: "adjective",
+            version: "adjective-v1",
+            candidates: [
+              {
+                canonicalText: "brisk",
+                entryKind: "adjective",
+                candidateForm: "singleWord",
+                safetyStatus: "familyFriendly",
+                curationStatus: "accepted",
+              },
+            ],
+          };
+        }
+
+        if (path === "assets/word-bank/shards/adjective.v2.json") {
+          if (failV2Shard) {
+            throw new Error("new shard unavailable");
+          }
+
+          return {
+            entryKind: "adjective",
+            version: "adjective-v2",
+            candidates: [
+              {
+                canonicalText: "nimble",
+                entryKind: "adjective",
+                candidateForm: "singleWord",
+                safetyStatus: "familyFriendly",
+                curationStatus: "accepted",
+              },
+            ],
+          };
+        }
+
+        throw new Error(`Unexpected fetch path: ${path}`);
+      },
+    });
+
+    await provider.loadEntryKind("adjective");
+    assert.deepEqual(getEntryCandidateValues(provider, "adjective"), ["brisk"]);
+
+    activeVersion = "v2";
+    await provider.refreshManifest();
+    await provider.loadEntryKind("adjective");
+
+    assert.deepEqual(getEntryCandidateValues(provider, "adjective"), ["brisk"]);
+
+    failV2Shard = false;
+    await provider.loadEntryKind("adjective");
+
+    assert.deepEqual(getEntryCandidateValues(provider, "adjective"), ["nimble"]);
+    assert.deepEqual(fetchCalls, [
+      "assets/word-bank/manifest.json",
+      "assets/word-bank/shards/adjective.v1.json",
+      "assets/word-bank/manifest.json",
+      "assets/word-bank/shards/adjective.v2.json",
+      "assets/word-bank/shards/adjective.v2.json",
+    ]);
+  });
+
   it("uses a loaded production adjective shard before seed fallback", async () => {
     const provider = createManifestBackedEntryCandidateProvider({
       manifest: {

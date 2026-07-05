@@ -70,10 +70,22 @@ export function recoverAnonymousSoloGame(serializedGame) {
   }
 }
 
-export function startGame(game) {
-  return {
+export function startGame(game, { entryCandidateProvider } = {}) {
+  const entryCandidateSnapshot =
+    createEntryCandidateSnapshot(game, entryCandidateProvider) ??
+    game.entryCandidateSnapshot;
+  const startedGame = {
     ...game,
     started: true,
+  };
+
+  if (!entryCandidateSnapshot) {
+    return startedGame;
+  }
+
+  return {
+    ...startedGame,
+    entryCandidateSnapshot,
   };
 }
 
@@ -112,7 +124,7 @@ export function generateEntryCandidate(
 
   const activeSection = getActiveSection(game);
   const candidates = getCandidateValues(
-    { entryCandidateProvider, wordBank },
+    { entryCandidateProvider, game, wordBank },
     activeSection.kind,
   );
 
@@ -201,6 +213,7 @@ export function renderPhrases(game, { entryCandidateProvider, wordBank } = {}) {
         normalizeEntryForDisplay(section.rows[rowIndex].value, {
           entryKind: section.kind,
           entryCandidateProvider,
+          game,
           wordBank,
         }),
       )
@@ -254,7 +267,13 @@ function capitalizeFirst(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function getCandidateValues({ entryCandidateProvider, wordBank }, entryKind) {
+function getCandidateValues({ entryCandidateProvider, game, wordBank }, entryKind) {
+  const snapshotCandidates = getSnapshotCandidateValues(game, entryKind);
+
+  if (snapshotCandidates) {
+    return snapshotCandidates;
+  }
+
   const provider =
     entryCandidateProvider ??
     (wordBank ? createSeedBackedEntryCandidateProvider(wordBank) : null);
@@ -264,11 +283,11 @@ function getCandidateValues({ entryCandidateProvider, wordBank }, entryKind) {
 
 function normalizeEntryForDisplay(
   value,
-  { entryKind, entryCandidateProvider, wordBank },
+  { entryKind, entryCandidateProvider, game, wordBank },
 ) {
   const cleanedValue = cleanWhitespace(value);
   const candidate = getCandidateValues(
-    { entryCandidateProvider, wordBank },
+    { entryCandidateProvider, game, wordBank },
     entryKind,
   ).find((word) => candidateKey(word) === candidateKey(cleanedValue));
 
@@ -292,6 +311,33 @@ function candidateKey(candidate) {
 
 function getRevealDetailLabel(entryKind) {
   return entryKind === "adjective" ? "Adjectives" : "Nouns";
+}
+
+function createEntryCandidateSnapshot(game, entryCandidateProvider) {
+  if (
+    !entryCandidateProvider ||
+    typeof entryCandidateProvider.createSnapshot !== "function"
+  ) {
+    return null;
+  }
+
+  return entryCandidateProvider.createSnapshot(
+    game.sections.map((section) => section.kind),
+  );
+}
+
+function getSnapshotCandidateValues(game, entryKind) {
+  const snapshotEntry = game?.entryCandidateSnapshot?.entryKinds?.[entryKind];
+
+  if (Array.isArray(snapshotEntry)) {
+    return snapshotEntry.map(cleanWhitespace).filter(Boolean);
+  }
+
+  if (snapshotEntry && Array.isArray(snapshotEntry.candidates)) {
+    return snapshotEntry.candidates.map(cleanWhitespace).filter(Boolean);
+  }
+
+  return null;
 }
 
 function isRecoverableAnonymousSoloGame(game) {

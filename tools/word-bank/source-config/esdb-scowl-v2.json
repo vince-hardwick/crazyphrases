@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "esdb-scowl-v2",
+  "name": "ESDB / SCOWL v2",
+  "version": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+  "shortVersion": "1e5b7d3",
+  "archiveUrl": "https://github.com/en-wl/wordlist/archive/1e5b7d3a72f47a71da5d28686c1dd4b397178485.zip",
+  "archiveSha256": "4A9ACD18D0C16ED595D11458A2DBC226C8A91F93C89970C0F4506444A8F4B161",
+  "archiveRoot": "wordlist-1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+  "license": "SCOWL/ESDB upstream Copyright terms; preserve the upstream Copyright attribution when redistributing derived word-bank outputs.",
+  "extractFiles": [
+    "README.md",
+    "Copyright",
+    "data/scowl-pre.txt",
+    "data/basic",
+    "data/extra",
+    "data/compounds",
+    "data/compounds-auto"
+  ]
+}

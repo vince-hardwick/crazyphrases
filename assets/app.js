@@ -22,7 +22,7 @@ import {
   updateEntry,
 } from "./game-state.js?v=__ASSET_VERSION__";
 import {
-  createSeedBackedEntryCandidateProvider,
+  createManifestBackedEntryCandidateProvider,
   hasEntryCandidates,
 } from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
 import { writePlainText } from "./clipboard.js?v=__ASSET_VERSION__";
@@ -73,7 +73,9 @@ import {
 } from "./pending-game.js?v=__ASSET_VERSION__";
 import { createSignedInRouteHandoff } from "./signed-in-route-handoff.js?v=__ASSET_VERSION__";
 
-const wordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
+const seedWordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
+const wordBankManifestUrl = "assets/word-bank/manifest.json?v=__ASSET_VERSION__";
+const productionWordBankEntryKindsToPreload = ["adjective"];
 const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
 const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
 const AVATAR_UPLOAD_MAX_BYTES = 1024 * 1024;
@@ -6036,20 +6038,47 @@ function getSaveFailureMessage(error) {
 }
 
 async function loadWordBank() {
-  try {
-    const response = await fetch(wordBankUrl);
+  const [seedWordBankResult, manifestResult] = await Promise.allSettled([
+    fetchWordBankJson(seedWordBankUrl),
+    fetchWordBankJson(wordBankManifestUrl),
+  ]);
+  const seedWordBank =
+    seedWordBankResult.status === "fulfilled" ? seedWordBankResult.value : null;
+  const manifest = manifestResult.status === "fulfilled" ? manifestResult.value : null;
 
-    if (!response.ok) {
-      throw new Error("Word Bank unavailable.");
-    }
+  entryCandidateProvider = createManifestBackedEntryCandidateProvider({
+    fetchJson: fetchVersionedWordBankAsset,
+    manifest,
+    seedWordBank,
+  });
+  renderGame();
 
-    const wordBank = await response.json();
-    entryCandidateProvider = createSeedBackedEntryCandidateProvider(wordBank);
-    renderGame();
-  } catch {
-    entryCandidateProvider = null;
-    renderGame();
+  await Promise.all(
+    productionWordBankEntryKindsToPreload.map((entryKind) =>
+      entryCandidateProvider.loadEntryKind(entryKind),
+    ),
+  );
+  renderGame();
+}
+
+async function fetchVersionedWordBankAsset(assetPath) {
+  return fetchWordBankJson(withAssetVersion(assetPath));
+}
+
+async function fetchWordBankJson(assetUrl) {
+  const response = await fetch(assetUrl);
+
+  if (!response.ok) {
+    throw new Error("Word Bank unavailable.");
   }
+
+  return response.json();
+}
+
+function withAssetVersion(assetPath) {
+  const separator = assetPath.includes("?") ? "&" : "?";
+
+  return `${assetPath}${separator}v=__ASSET_VERSION__`;
 }
 
 async function initialiseHostedAuth() {

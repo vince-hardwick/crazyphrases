@@ -1552,6 +1552,12 @@ files under `assets/word-bank/shards/`, such as
 production shard mapping. `assets/word-bank-seed.json` remains the tiny fallback seed
 file and must not be treated as the production manifest or a production shard.
 
+The first committed production tracer publishes an adjective shard only. Runtime Entry
+Assist uses the manifest-backed adjective shard when it loads successfully and keeps the
+bundled seed as fallback for adjective and noun categories. Noun production shard output
+remains a follow-on slice; the runtime must not substitute adjective candidates for noun
+slots or any other missing Entry Kind.
+
 For the first production rollout, Word Bank manifests and shards deploy through the
 normal app deployment payload. They must not use a separate publishing channel or live
 mutation path. A separate Word Bank publishing channel may be reconsidered only if
@@ -1563,6 +1569,12 @@ inputs, schema validation, deterministic sample/report generation, and reproduci
 tests. Generated production shard files should be committed under `assets/word-bank/`
 only when an intentional Word Bank update is in scope; generated review reports may
 remain build artefacts unless deliberately added for review.
+
+The current production shard pipeline is run with `npm run word-bank:build`; use
+`npm run word-bank:check` or the underlying build script with `--check` to prove
+committed manifest and shard output are reproducible from the pinned ESDB archive.
+Deterministic review artefacts are written under
+`output/word-bank-review/`, which is not part of the runtime deployment payload.
 
 Implementation should introduce the production manifest/shard loader directly rather
 than using a larger `assets/word-bank-seed.json` file as the primary production path.

@@ -103,6 +103,7 @@ const headerActions = document.querySelector(".header-actions");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const themeToggleIcon = document.querySelector("[data-theme-toggle-icon]");
 const themeMeta = document.querySelector('meta[name="color-scheme"]');
+const siteLogo = document.querySelector("[data-site-logo]");
 let notificationShell = document.querySelector("[data-notification-shell]");
 let notificationToggle = document.querySelector("[data-notification-toggle]");
 let notificationPanel = document.querySelector("[data-notification-panel]");
@@ -694,6 +695,14 @@ function applyTheme(theme, { persist = false } = {}) {
   document.documentElement.dataset.theme = selectedTheme;
   if (themeMeta) {
     themeMeta.content = selectedTheme;
+  }
+
+  if (siteLogo) {
+    const logoSource =
+      selectedTheme === "dark" ? siteLogo.dataset.darkSrc : siteLogo.dataset.lightSrc;
+    if (logoSource) {
+      siteLogo.setAttribute("src", logoSource);
+    }
   }
 
   themeToggle.setAttribute("aria-label", nextAction);

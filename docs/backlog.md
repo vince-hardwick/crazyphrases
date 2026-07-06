@@ -848,7 +848,9 @@ preserve their original history.
 - **Completed for MVP UI polish**: The owner selected
   `assets/img/crazy_phrases_homepage_logo.png` as the top-left homepage logo on
   2026-07-06. The static header references that source-controlled asset as the visible
-  Crazy Phrases brand image and links it to the Solo play home route.
+  Crazy Phrases brand image in light mode, uses
+  `assets/img/crazy_phrases_homepage_logo_dark.png` in dark mode to preserve
+  contrast, and links the logo to the Solo play home route.
 - **Related favicon asset**: `assets/img/crazy_phrases_logo_40px.png` is retained as
   the source PNG and converted to `assets/img/favicon.ico` for browser favicon use.
 - **Hosted verification**: PR #190 merged to `main` as

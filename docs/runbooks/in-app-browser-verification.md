@@ -275,6 +275,7 @@ For this static site, deployed `index.html` must reference versioned asset URLs 
 assets/site.css?v=<commit-sha>
 assets/app.js?v=<commit-sha>
 assets/img/crazy_phrases_homepage_logo.png?v=<commit-sha>
+assets/img/crazy_phrases_homepage_logo_dark.png?v=<commit-sha>
 assets/img/favicon.ico?v=<commit-sha>
 ```
 

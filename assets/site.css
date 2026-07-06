@@ -69,6 +69,29 @@ body {
   margin: 10px 0 22px;
 }
 
+.site-brand {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.site-home-link {
+  display: inline-flex;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.site-home-link:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.site-logo {
+  display: block;
+  width: min(300px, 48vw);
+  max-width: 100%;
+  height: auto;
+}
+
 .top-nav-actions {
   display: flex;
   align-items: center;
@@ -1748,6 +1771,10 @@ h1 {
   .app-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .site-logo {
+    width: min(280px, 100%);
   }
 
   .top-nav-actions {

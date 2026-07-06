@@ -120,6 +120,8 @@ const mimeTypes = new Map([
   [".js", "text/javascript; charset=utf-8"],
   [".css", "text/css; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
+  [".png", "image/png"],
+  [".ico", "image/x-icon"],
 ]);
 
 globalThis.staticServer4173 = httpMod.createServer(async (req, res) => {
@@ -272,6 +274,8 @@ For this static site, deployed `index.html` must reference versioned asset URLs 
 ```html
 assets/site.css?v=<commit-sha>
 assets/app.js?v=<commit-sha>
+assets/img/crazy_phrases_homepage_logo.png?v=<commit-sha>
+assets/img/favicon.ico?v=<commit-sha>
 ```
 
 Source `index.html` keeps `__ASSET_VERSION__` placeholders. GitHub Actions stamps those placeholders during deployment. If the placeholders are visible on a deployed environment, the deploy workflow did not stamp the file. If unversioned asset URLs are visible, cache-busting has regressed.

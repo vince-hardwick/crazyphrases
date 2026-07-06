@@ -19,10 +19,15 @@ runs:
         test -f assets/supabase-browser-client.js
         test -f assets/supabase-config.js
         test -f assets/word-bank-seed.json
+        test -f assets/img/crazy_phrases_homepage_logo.png
+        test -f assets/img/crazy_phrases_logo_40px.png
+        test -f assets/img/favicon.ico
 
     - name: Verify static asset cache-busting placeholders
       shell: bash
       run: |
+        grep -q "assets/img/favicon.ico?v=__ASSET_VERSION__" index.html
+        grep -q "assets/img/crazy_phrases_homepage_logo.png?v=__ASSET_VERSION__" index.html
         grep -q "assets/site.css?v=__ASSET_VERSION__" index.html
         grep -q "assets/app.js?v=__ASSET_VERSION__" index.html
         grep -q "./account-shell.js?v=__ASSET_VERSION__" assets/app.js

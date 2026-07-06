@@ -91,12 +91,13 @@ preserve their original history.
 
 ### Custom templates
 
-- **Deferred**: Creating, publishing, remixing, and discovering custom templates.
+- **Deferred outside MVP**: Creating, publishing, remixing, and discovering custom
+  templates.
 - **Why deferred**: A safe template ecosystem requires editor UX, versioning,
-  publishing, moderation, remix lineage, and discovery; the MVP should prove the
-  default-template game loop first.
-- **Revisit when**: Default-template play, accounts, sharing, and core social loops are
-  working.
+  publishing, moderation, remix lineage, and discovery. The owner confirmed on
+  2026-07-06 that custom phrase templates are outside MVP scope.
+- **Revisit when**: Post-MVP planning explicitly brings custom template creation,
+  publishing, remixing, or discovery back into scope.
 - **Remaining risk**: Game and template data models should preserve the template/version
   boundaries already documented so custom templates can be added without rewriting game
   history.
@@ -844,18 +845,15 @@ preserve their original history.
 
 ### Homepage logo home link
 
-- **Deferred**: Incorporating one of the owner-provided logo files from `assets/img/`
-  as the main top-left homepage image and making it the home link.
-- **Why deferred**: The current implementation slice is limited to signed-in Settings
-  profile controls. The owner has provided logo-size candidates but has not yet selected
-  the exact asset or requested the homepage integration task.
-- **Revisit when**: The owner asks to incorporate a specific logo file, currently one
-  of `assets/img/crazy_phrases_logo_80px.png`,
-  `assets/img/crazy_phrases_logo_160px.png`, or
-  `assets/img/crazy_phrases_logo_320px.png`, as the top-left home link.
-- **Remaining risk**: Until a dedicated implementation task tracks and references the
-  chosen asset, the local logo files are not part of the deployed site and the homepage
-  continues to use its existing text/brand treatment.
+- **Completed for MVP UI polish**: The owner selected
+  `assets/img/crazy_phrases_homepage_logo.png` as the top-left homepage logo on
+  2026-07-06. The static header references that source-controlled asset as the visible
+  Crazy Phrases brand image and links it to the Solo play home route.
+- **Related favicon asset**: `assets/img/crazy_phrases_logo_40px.png` is retained as
+  the source PNG and converted to `assets/img/favicon.ico` for browser favicon use.
+- **Remaining risk**: Deployment still needs the normal protected PR, CI, `dev`, `test`,
+  and production verification path for runtime changes before the logo and favicon are
+  visible on hosted environments.
 
 ### Cloudflare Access allow-list documentation
 

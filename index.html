@@ -9,14 +9,30 @@
       content="Play Crazy Phrases, a hidden-column word game for absurd three-word phrases."
     >
     <title>Crazy Phrases</title>
+    <link rel="icon" href="assets/img/favicon.ico?v=__ASSET_VERSION__" sizes="any">
     <link rel="stylesheet" href="assets/site.css?v=__ASSET_VERSION__">
     <script type="module" src="assets/app.js?v=__ASSET_VERSION__"></script>
   </head>
   <body>
     <main class="app-shell" aria-labelledby="site-title">
       <header class="app-header">
-        <div>
-          <h1 id="site-title">Crazy Phrases</h1>
+        <div class="site-brand">
+          <h1 id="site-title" aria-label="Crazy Phrases">
+            <a
+              class="site-home-link"
+              href="#/play/solo"
+              aria-label="Crazy Phrases home"
+            >
+              <img
+                class="site-logo"
+                src="assets/img/crazy_phrases_homepage_logo.png?v=__ASSET_VERSION__"
+                width="722"
+                height="389"
+                alt=""
+                aria-hidden="true"
+              >
+            </a>
+          </h1>
         </div>
         <div class="top-nav-actions">
           <nav class="primary-nav" aria-label="Primary" data-primary-nav hidden>

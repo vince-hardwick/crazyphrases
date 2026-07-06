@@ -14,6 +14,8 @@ const mimeTypes = new Map([
   [".js", "text/javascript; charset=utf-8"],
   [".css", "text/css; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
+  [".png", "image/png"],
+  [".ico", "image/x-icon"],
 ]);
 const LONG_TARGET_NOTIFICATION_MESSAGE =
   "Target notification with abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.";
@@ -47,7 +49,10 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
-    await assertTextVisible(page, "Crazy Phrases");
+    assert.equal(
+      await page.getByRole("heading", { name: "Crazy Phrases", level: 1 }).isVisible(),
+      true,
+    );
     await assertAnonymousAccountIconVisible(page);
     await assertAnonymousSignInSurfaceClosed(page);
     assert.equal(await page.locator(".site-domain").count(), 0);
@@ -181,6 +186,48 @@ describe("solo browser smoke", () => {
     );
 
     assertNoConsoleErrors();
+  });
+
+  it("renders the homepage logo as the home link and exposes the favicon asset", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 700 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}#/settings`);
+    await assertNoHorizontalOverflow(page);
+
+    const faviconHref = await page.locator("link[rel='icon']").getAttribute("href");
+    assert.equal(faviconHref, "assets/img/favicon.ico?v=__ASSET_VERSION__");
+
+    const faviconResponse = await page.request.get(
+      `${staticServer.origin}/assets/img/favicon.ico?v=__ASSET_VERSION__`,
+    );
+    assert.equal(faviconResponse.status(), 200);
+    assert.equal(faviconResponse.headers()["content-type"], "image/x-icon");
+
+    const homeLink = page.getByRole("link", { name: "Crazy Phrases home" });
+    assert.equal(await homeLink.count(), 1);
+    assert.equal(await homeLink.getAttribute("href"), "#/play/solo");
+
+    const logo = homeLink.locator("img");
+    assert.equal(
+      await logo.getAttribute("src"),
+      "assets/img/crazy_phrases_homepage_logo.png?v=__ASSET_VERSION__",
+    );
+    assert.equal(await logo.getAttribute("alt"), "");
+    assert.equal(await page.locator("#site-title").getAttribute("aria-label"), "Crazy Phrases");
+
+    await homeLink.click();
+    await page.waitForURL(`${staticServer.origin}/#/play/solo`);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+    await context.close();
   });
 
   it("uses production noun shards for both noun slots in the Default Template", async () => {

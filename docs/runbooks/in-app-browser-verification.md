@@ -197,9 +197,9 @@ For live `dev`, `test`, or production verification, skip this local server setup
 Use locators and snapshots from the Browser plugin's Playwright API. For example:
 
 ```js
-const startButton = tab.playwright.getByRole("button", { name: "Start batch" });
+const startButton = tab.playwright.getByRole("button", { name: "Start new batch" });
 if ((await startButton.count()) !== 1) {
-  throw new Error("Expected one Start batch button.");
+  throw new Error("Expected one Start new batch button.");
 }
 await startButton.click({});
 ```
@@ -221,9 +221,10 @@ For the anonymous solo MVP, a deployment smoke should check:
 - The page loads as Crazy Phrases.
 - The help panel opens and closes.
 - Phrase count selection is visible before start.
-- Entry controls are hidden before `Start batch`.
-- Selecting 10 phrases changes setup copy to `10 phrases selected`.
-- `Start batch` reveals one active section and disables row-count controls.
+- Entry controls are hidden before `Start new batch`.
+- Selecting 10 phrases changes the selector's pressed state without adding separate
+  selected-count status copy.
+- `Start new batch` reveals one active section and disables row-count controls.
 - Attempting to activate a different row count after start does not clear entered text.
 - `Start again` asks for phase-specific confirmation when entries or revealed phrases exist and returns to phrase-count selection.
 - Completing all three sections reveals the expected number of phrases.
@@ -231,9 +232,9 @@ For the anonymous solo MVP, a deployment smoke should check:
 - Revealed default-template phrases render in adjective-noun-noun order.
 - Revealed phrases have per-phrase copy actions.
 - The reveal view has a copy-all action that copies a title and unnumbered phrase lines.
-- The reveal view has optional entry details grouped by section.
+- The reveal view does not include the removed `Show entries` details disclosure.
 
-Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Fill these adjectives`, and noun words only when the page says `Fill these nouns`. Do not assume the first visible entry section is the adjective slot.
+Use non-numbered smoke words such as `brisk`, `teapot`, and `ladder` so test data cannot be mistaken for generated numbering. Because anonymous solo randomizes active slot order, the smoke runner must read the visible active section label and fill adjective words only when the page says `Enter adjectives`, and noun words only when the page says `Enter nouns`. Do not assume the first visible entry section is the adjective slot.
 
 When checking clipboard output from the visible browser on Windows, normalize `\r\n` to `\n` before comparing expected copy text. The assertion must still prove that per-phrase copy contains only the phrase text and that copy-all contains the short title followed by unnumbered phrase lines.
 

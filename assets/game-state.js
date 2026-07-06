@@ -4,9 +4,9 @@ import {
 } from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
 
 const DEFAULT_SECTIONS = [
-  { kind: "adjective", label: "Fill these adjectives" },
-  { kind: "noun", label: "Fill these nouns" },
-  { kind: "noun", label: "Fill these nouns" },
+  { kind: "adjective", label: "Enter adjectives" },
+  { kind: "noun", label: "Enter nouns" },
+  { kind: "noun", label: "Enter nouns" },
 ];
 const ANONYMOUS_SOLO_STORAGE_SCHEMA = 1;
 

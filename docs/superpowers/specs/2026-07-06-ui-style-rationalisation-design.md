@@ -2,8 +2,9 @@
 
 ## Status
 
-Active design. Owner-approved on 2026-07-06. Next action is to create an
-implementation plan before changing app code.
+Approved design. Owner-approved on 2026-07-06. Implementation plan created in
+`docs/superpowers/plans/2026-07-06-ui-style-rationalisation.md`. Next action is
+to execute that plan before changing app code outside its task sequence.
 
 Current authority remains `docs/product-rules.md`, `assets/site.css`,
 `assets/app.js`, `assets/clipboard.js`, and the browser smoke tests until this

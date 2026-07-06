@@ -463,6 +463,12 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  if (accountSignInPanelOpen && !accountShellElement.contains(event.target)) {
+    accountSignInPanelOpen = false;
+    renderAccountShell(accountShell);
+    accountSignInToggle.focus();
+  }
+
   if (!accountMenuOpen || accountShellElement.contains(event.target)) {
     return;
   }

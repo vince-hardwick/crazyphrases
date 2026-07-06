@@ -432,6 +432,7 @@ Anonymous sign-in itself is opened from the top-nav account affordance as a comp
 popover rather than a hash route. Opening or closing that popover must not start, clear,
 replace, or hide the current anonymous Solo Game, and it must not clear a preserved
 signed-in-only destination while the participant is on a sign-in-required gate.
+Clicking or tapping outside the anonymous sign-in popover closes it.
 Hosted OAuth and email magic-link starts may preserve only an allowlisted signed-in-only
 destination in a client-side handoff for up to ten minutes. That handoff is consumed
 only after a valid Account session exists, and it is cleared after consumption,

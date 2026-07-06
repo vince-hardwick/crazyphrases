@@ -534,6 +534,33 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("closes the anonymous sign-in popover on outside click", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+
+    const accountSignIn = page.getByRole("button", { name: "Account sign in" });
+    await accountSignIn.click();
+    await page.locator("[data-account-sign-in-panel]").waitFor({ state: "visible" });
+    assert.equal(await accountSignIn.getAttribute("aria-expanded"), "true");
+
+    await page.mouse.click(8, 8);
+
+    assert.equal(await page.locator("[data-account-sign-in-panel]").isHidden(), true);
+    assert.equal(await accountSignIn.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), false);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("renders Start batch and Start again as matching setup actions", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

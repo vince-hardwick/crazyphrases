@@ -17,6 +17,8 @@ describe("clipboard writing", () => {
     assert.equal(copied, true);
     assert.equal(textarea.value, "Brisk teapot ladder");
     assert.equal(textarea.readOnly, true);
+    assert.equal(textarea.className, "clipboard-fallback-textarea");
+    assert.deepEqual(textarea.style, {});
     assert.equal(textarea.focused, true);
     assert.equal(textarea.selected, true);
     assert.deepEqual(textarea.selectionRange, [0, "Brisk teapot ladder".length]);
@@ -66,6 +68,7 @@ function createClipboardFallbackDocument() {
       assert.equal(tagName, "textarea");
 
       const element = {
+        className: "",
         focused: false,
         readOnly: false,
         removed: false,

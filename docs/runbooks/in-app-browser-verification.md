@@ -199,9 +199,9 @@ For live `dev`, `test`, or production verification, skip this local server setup
 Use locators and snapshots from the Browser plugin's Playwright API. For example:
 
 ```js
-const startButton = tab.playwright.getByRole("button", { name: "Start new batch" });
+const startButton = tab.playwright.getByRole("button", { name: "Start batch" });
 if ((await startButton.count()) !== 1) {
-  throw new Error("Expected one Start new batch button.");
+  throw new Error("Expected one Start batch button.");
 }
 await startButton.click({});
 ```
@@ -223,10 +223,10 @@ For the anonymous solo MVP, a deployment smoke should check:
 - The page loads as Crazy Phrases.
 - The help panel opens and closes.
 - Phrase count selection is visible before start.
-- Entry controls are hidden before `Start new batch`.
+- Entry controls are hidden before `Start batch`.
 - Selecting 10 phrases changes the selector's pressed state without adding separate
   selected-count status copy.
-- `Start new batch` reveals one active section and disables row-count controls.
+- `Start batch` reveals one active section and disables row-count controls.
 - Attempting to activate a different row count after start does not clear entered text.
 - `Start again` asks for phase-specific confirmation when entries or revealed phrases exist and returns to phrase-count selection.
 - Completing all three sections reveals the expected number of phrases.

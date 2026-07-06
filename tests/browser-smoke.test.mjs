@@ -108,7 +108,7 @@ describe("solo browser smoke", () => {
       page.locator(".control-label"),
       page.locator("[data-section-progress]"),
     );
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await assertProgressEmpty(page);
     await assertMatchingPlainHeadingStyles(
@@ -181,7 +181,7 @@ describe("solo browser smoke", () => {
     await assertRowCountSelected(page, "10");
     await assertTextHidden(page, "10 phrases selected");
     assert.equal(
-      await page.getByRole("button", { name: "Start new batch" }).isVisible(),
+      await page.getByRole("button", { name: "Start batch" }).isVisible(),
       true,
     );
 
@@ -282,7 +282,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
 
@@ -382,7 +382,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await page.locator("[data-dice-row-index='0']").click();
     const firstValue = await page.locator("[data-row-index='0']").inputValue();
@@ -448,7 +448,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
 
@@ -481,7 +481,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await assertNoHorizontalOverflow(page);
 
@@ -627,7 +627,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "Enable dark mode" }).click();
 
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await page.locator("[data-row-index='0']").waitFor({ state: "visible" });
     await expectDarkBackground(page.locator("[data-row-index='0']"));
 
@@ -834,7 +834,7 @@ describe("solo browser smoke", () => {
     await expectFavouritesNavHeartState(page, "regular");
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
@@ -2700,7 +2700,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await page.locator("[data-row-index='0']").fill("brisk");
 
@@ -2745,7 +2745,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
@@ -2835,7 +2835,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "15" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
@@ -2846,7 +2846,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     const signedInSectionTitle = await page.locator("[data-section-title]").innerText();
     assert.equal(await page.locator("[data-row-index]").count(), 10);
@@ -4885,7 +4885,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "15" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
@@ -4893,7 +4893,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
     await assertNoHorizontalOverflow(page);
     assert.equal(
       await page
@@ -5176,7 +5176,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
     assert.equal(await page.getByText("Completed phrase batch").isVisible(), false);
-    assert.equal(await page.getByRole("button", { name: "Start new batch" }).isVisible(), true);
+    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
 
     await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
@@ -5200,7 +5200,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     await waitForTextVisible(
       page,
@@ -5225,7 +5225,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5285,7 +5285,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5330,7 +5330,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5401,7 +5401,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     await waitForTextVisible(
       page,
@@ -5426,7 +5426,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5493,7 +5493,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5535,7 +5535,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5582,7 +5582,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.getByRole("button", { name: "Start batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);

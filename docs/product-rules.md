@@ -23,9 +23,11 @@ already identifies the app. In the MVP game flow, do not render `crazyphrases.co
 separate header label above the Crazy Phrases title.
 
 The app header uses `assets/img/crazy_phrases_homepage_logo.png` as the visible
-top-left Crazy Phrases brand image. The logo links to the Solo play home route,
-keeps the accessible page title as `Crazy Phrases`, and is referenced from
-`index.html` with the deployed asset-version query string.
+top-left Crazy Phrases brand image in light mode and
+`assets/img/crazy_phrases_homepage_logo_dark.png` in dark mode. The logo links to
+the Solo play home route, keeps the accessible page title as `Crazy Phrases`, and
+both logo image sources are referenced from `index.html` with the deployed
+asset-version query string.
 
 MVP setup, entry, and reveal controls should avoid repeating selected row-count text
 when the row-count selector already communicates the selected option. The setup action

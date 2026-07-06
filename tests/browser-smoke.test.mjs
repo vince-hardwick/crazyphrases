@@ -222,6 +222,18 @@ describe("solo browser smoke", () => {
     assert.equal(await logo.getAttribute("alt"), "");
     assert.equal(await page.locator("#site-title").getAttribute("aria-label"), "Crazy Phrases");
 
+    await page.getByRole("button", { name: "Enable dark mode" }).click();
+    assert.equal(
+      await logo.getAttribute("src"),
+      "assets/img/crazy_phrases_homepage_logo_dark.png?v=__ASSET_VERSION__",
+    );
+
+    await page.getByRole("button", { name: "Enable light mode" }).click();
+    assert.equal(
+      await logo.getAttribute("src"),
+      "assets/img/crazy_phrases_homepage_logo.png?v=__ASSET_VERSION__",
+    );
+
     await homeLink.click();
     await page.waitForURL(`${staticServer.origin}/#/play/solo`);
     await assertNoHorizontalOverflow(page);

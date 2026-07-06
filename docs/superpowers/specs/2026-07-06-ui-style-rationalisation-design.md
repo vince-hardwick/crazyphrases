@@ -2,14 +2,12 @@
 
 ## Status
 
-Approved design. Owner-approved on 2026-07-06. Implementation plan created in
-`docs/superpowers/plans/2026-07-06-ui-style-rationalisation.md`. Next action is
-to execute that plan before changing app code outside its task sequence.
+Historical/completed. Implemented through the UI style rationalisation plan and promoted
+to product rules after source and smoke-test verification.
 
-Current authority remains `docs/product-rules.md`, `assets/site.css`,
-`assets/app.js`, `assets/clipboard.js`, and the browser smoke tests until this
-design is implemented and promoted into the owning product rules or source
-files.
+Current authority is `docs/product-rules.md`, `assets/site.css`, `assets/app.js`,
+`assets/clipboard.js`, `tests/repository-hygiene.test.mjs`,
+`tests/clipboard.test.mjs`, and `tests/browser-smoke.test.mjs`.
 
 ## Context
 

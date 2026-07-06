@@ -12,7 +12,6 @@ import {
   formatPhraseCopyText,
   generateEntryCandidate,
   getActiveSection,
-  getRevealDetails,
   getStartAgainConfirmation,
   needsStartAgainConfirmation,
   renderPhrases,
@@ -133,7 +132,6 @@ const entryList = document.querySelector("[data-entry-list]");
 const nextButton = document.querySelector("[data-next-button]");
 const revealPanel = document.querySelector("[data-reveal-panel]");
 const phraseList = document.querySelector("[data-phrase-list]");
-const revealDetails = document.querySelector("[data-reveal-details]");
 const copyStatus = document.querySelector("[data-copy-status]");
 const accountShellElement = document.querySelector("[data-account-shell]");
 const accountSignInToggle = document.querySelector("[data-account-sign-in-toggle]");
@@ -141,6 +139,12 @@ const accountMenuToggle = document.querySelector("[data-account-menu-toggle]");
 const accountMenuPanel = document.querySelector("[data-account-menu-panel]");
 const accountSettingsButton = document.querySelector("[data-account-settings-button]");
 const accountSignInPanel = document.querySelector("[data-account-sign-in-panel]");
+const accountSignInProviderSection = document.querySelector(
+  "[data-account-sign-in-provider-section]",
+);
+const accountSignInEmailSection = document.querySelector(
+  "[data-account-sign-in-email-section]",
+);
 const accountStatus = document.querySelector("[data-account-status]");
 const accountDetail = document.querySelector("[data-account-detail]");
 const testSignInButton = document.querySelector("[data-test-sign-in-button]");
@@ -705,7 +709,7 @@ function applyTheme(theme, { persist = false } = {}) {
   themeToggle.setAttribute("aria-label", nextAction);
   themeToggle.dataset.tooltip = nextAction;
   themeToggle.querySelector(".sr-only").textContent = nextAction;
-  themeToggleIcon.className = `fa-solid fa-${nextIcon}`;
+  themeToggleIcon.className = `fa-regular fa-${nextIcon}`;
 
   if (persist) {
     window.localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
@@ -1004,7 +1008,6 @@ function renderGame() {
     phraseList.replaceChildren(
       ...renderPhrases(game, { entryCandidateProvider }).map(renderPhraseItem),
     );
-    revealDetails.replaceChildren(...getRevealDetails(game).map(renderDetailGroup));
     return;
   }
 
@@ -1053,15 +1056,14 @@ function renderAccountShell(shell) {
   accountDetail.hidden = true;
   accountStatus.textContent = "";
   accountDetail.textContent = "";
-  testSignInButton.hidden =
-    !isSignInPanelOpen ||
-    !isLocalTestAuthAvailable();
-  testInviteeSignInButton.hidden =
-    !isSignInPanelOpen ||
-    !isLocalTestAuthAvailable();
-  googleSignInButton.hidden =
-    !isSignInPanelOpen || !hostedAuthAvailable;
-  emailSignInForm.hidden = !isSignInPanelOpen || !hostedAuthAvailable;
+  const localTestAuthVisible = isSignInPanelOpen && isLocalTestAuthAvailable();
+  const hostedAuthVisible = isSignInPanelOpen && hostedAuthAvailable;
+  accountSignInProviderSection.hidden = !(localTestAuthVisible || hostedAuthVisible);
+  accountSignInEmailSection.hidden = !hostedAuthVisible;
+  testSignInButton.hidden = !localTestAuthVisible;
+  testInviteeSignInButton.hidden = !localTestAuthVisible;
+  googleSignInButton.hidden = !hostedAuthVisible;
+  emailSignInForm.hidden = !hostedAuthVisible;
   signOutButton.hidden = true;
   if (isSignedIn) {
     renderAccountMenuToggle(shell);
@@ -2524,7 +2526,7 @@ function renderPhraseItem(phrase, phraseIndex) {
   copyButton.type = "button";
   copyButton.className = "secondary-button phrase-copy-button icon-action-button";
   copyButton.dataset.copyPhraseIndex = String(phraseIndex);
-  copyButton.replaceChildren(createFontAwesomeIcon("solid", "copy"), "Copy");
+  copyButton.replaceChildren(createFontAwesomeIcon("regular", "copy"), "Copy");
   copyButton.ariaLabel = `Copy phrase ${phraseIndex + 1}`;
 
   actions.append(copyButton);
@@ -2782,7 +2784,6 @@ function createScreenReaderText(text) {
 function clearRevealSurface() {
   removeBatchFavouriteToggleButton();
   phraseList.replaceChildren();
-  revealDetails.replaceChildren();
   copyStatus.textContent = "";
 }
 
@@ -4229,7 +4230,7 @@ function updateNotificationToggle() {
 }
 
 function getMultiplayerSectionTitle(entryKind) {
-  return entryKind === "adjective" ? "Fill these adjectives" : "Fill these nouns";
+  return entryKind === "adjective" ? "Enter adjectives" : "Enter nouns";
 }
 
 async function submitMultiplayerSection(event, currentSection) {
@@ -4954,8 +4955,9 @@ function createFavouriteIconActionButton({
   if (isFavouriteRouteCopyDataset(datasetName)) {
     button.disabled = isFavouriteRouteCopyLocked();
   }
+  const iconStyle = iconName === "copy" ? "regular" : "solid";
   button.replaceChildren(
-    createFontAwesomeIcon("solid", iconName),
+    createFontAwesomeIcon(iconStyle, iconName),
     createScreenReaderText(label),
   );
   return button;
@@ -5215,27 +5217,6 @@ function invalidateFavouriteCopyRequests(tab) {
   favouriteCopyRequestIds.batches += 1;
 }
 
-function renderDetailGroup(group, groupIndex) {
-  const section = document.createElement("section");
-  section.className = "reveal-detail-group";
-
-  const heading = document.createElement("h3");
-  heading.textContent = `Section ${groupIndex + 1}: ${group.label}`;
-
-  const list = document.createElement("ol");
-  list.className = "reveal-entry-list";
-  list.replaceChildren(
-    ...group.entries.map((entry) => {
-      const item = document.createElement("li");
-      item.textContent = entry;
-      return item;
-    }),
-  );
-
-  section.append(heading, list);
-  return section;
-}
-
 function updateNextButton() {
   const activeSection = getActiveSection(game);
   const isComplete = activeSection.rows.every((row) => row.value.trim() !== "");
@@ -5245,6 +5226,13 @@ function updateNextButton() {
 }
 
 function updateRowCountButtons(rowCount) {
+  const selectedIndex = rowCountButtons.findIndex(
+    (button) => Number(button.dataset.rowCount) === rowCount,
+  );
+  rowCountButtons[0]?.parentElement?.style.setProperty(
+    "--selected-index",
+    String(Math.max(selectedIndex, 0)),
+  );
   rowCountButtons.forEach((button) => {
     button.setAttribute("aria-pressed", String(Number(button.dataset.rowCount) === rowCount));
     button.disabled = game.started;

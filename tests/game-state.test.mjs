@@ -44,7 +44,7 @@ describe("anonymous solo game state", () => {
 
     const activeSection = getActiveSection(game);
     assert.equal(activeSection.kind, "noun");
-    assert.equal(activeSection.label, "Fill these nouns");
+    assert.equal(activeSection.label, "Enter nouns");
     assert.equal(activeSection.rows.length, 20);
     assert.ok(activeSection.rows.every((row) => row.value === ""));
   });

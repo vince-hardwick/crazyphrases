@@ -31,7 +31,7 @@
                 data-play-menu-toggle
                 data-tooltip="Play"
               >
-                <i class="fa-solid fa-play" aria-hidden="true"></i>
+                <i class="fa-regular fa-play" aria-hidden="true"></i>
                 <span class="sr-only">Play</span>
               </button>
               <div
@@ -84,7 +84,7 @@
             data-theme-toggle
             data-tooltip="Enable dark mode"
           >
-            <i class="fa-solid fa-moon" aria-hidden="true" data-theme-toggle-icon></i>
+            <i class="fa-regular fa-moon" aria-hidden="true" data-theme-toggle-icon></i>
             <span class="sr-only">Enable dark mode</span>
           </button>
           <button
@@ -152,55 +152,70 @@
             </div>
             <div class="account-sign-in-panel" data-account-sign-in-panel hidden>
               <div class="account-actions">
-                <button
-                  class="text-button"
-                  type="button"
-                  data-test-sign-in-button
+                <div
+                  class="account-sign-in-section"
+                  data-account-sign-in-provider-section
                   hidden
                 >
-                  Test sign in
-                </button>
-                <button
-                  class="text-button"
-                  type="button"
-                  data-test-invitee-sign-in-button
-                  hidden
-                >
-                  Test invitee sign in
-                </button>
-                <button
-                  class="icon-button tooltip-action"
-                  type="button"
-                  aria-label="Sign in with Google"
-                  data-google-sign-in-button
-                  data-tooltip="Sign in with Google"
-                  hidden
-                >
-                  <i class="fa-brands fa-google" aria-hidden="true"></i>
-                </button>
-                <form class="email-sign-in-form" data-email-sign-in-form hidden>
-                  <label class="sr-only" for="email-sign-in">Email address</label>
-                  <span class="email-sign-in-field">
-                    <i class="fa-solid fa-at" aria-hidden="true"></i>
-                    <input
-                      id="email-sign-in"
-                      name="email"
-                      type="email"
-                      autocomplete="email"
-                      placeholder="Email"
-                      data-email-sign-in-input
-                      required
+                  <p class="account-sign-in-title">Sign-in via</p>
+                  <div class="account-sign-in-provider-actions">
+                    <button
+                      class="text-button"
+                      type="button"
+                      data-test-sign-in-button
+                      hidden
                     >
-                  </span>
-                  <button
-                    class="icon-button tooltip-action"
-                    type="submit"
-                    aria-label="Send link"
-                    data-tooltip="Send link"
-                  >
-                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                  </button>
-                </form>
+                      Test sign in
+                    </button>
+                    <button
+                      class="text-button"
+                      type="button"
+                      data-test-invitee-sign-in-button
+                      hidden
+                    >
+                      Test invitee sign in
+                    </button>
+                    <button
+                      class="icon-button tooltip-action"
+                      type="button"
+                      aria-label="Sign in with Google"
+                      data-google-sign-in-button
+                      data-tooltip="Sign in with Google"
+                      hidden
+                    >
+                      <i class="fa-brands fa-google" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="account-sign-in-section account-sign-in-email-section"
+                  data-account-sign-in-email-section
+                  hidden
+                >
+                  <p class="account-sign-in-title">or using email</p>
+                  <form class="email-sign-in-form" data-email-sign-in-form hidden>
+                    <label class="sr-only" for="email-sign-in">Email address</label>
+                    <span class="email-sign-in-field">
+                      <input
+                        id="email-sign-in"
+                        name="email"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="Email"
+                        data-email-sign-in-input
+                        required
+                      >
+                    </span>
+                    <button
+                      class="icon-button tooltip-action"
+                      type="submit"
+                      aria-label="Send link"
+                      data-tooltip="Send link"
+                    >
+                      <i class="fa-regular fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </div>
                 <button class="text-button" type="button" data-sign-out-button hidden>
                   Sign out
                 </button>
@@ -246,7 +261,7 @@
       <section class="game-panel" aria-live="polite" data-game-panel data-game-phase="setup">
         <div class="setup-row">
           <div>
-            <p class="control-label">Phrases</p>
+            <h3 class="control-label">Phrases per batch</h3>
             <div class="segmented-control" data-row-count-options>
               <button type="button" data-row-count="10">10</button>
               <button type="button" data-row-count="15">15</button>
@@ -258,7 +273,7 @@
           <div class="setup-actions">
             <p class="progress-text" data-progress></p>
             <button class="primary-button setup-button" type="button" data-start-button>
-              Start batch
+              Start new batch
             </button>
             <button
               class="secondary-button setup-button"
@@ -298,8 +313,8 @@
 
         <form class="entry-form" data-entry-form>
           <div class="section-heading">
-            <p class="section-kicker" data-section-progress></p>
-            <h2 data-section-title></h2>
+            <h2 class="section-kicker" data-section-progress></h2>
+            <h3 class="section-instruction" data-section-title></h3>
           </div>
           <div class="entry-list" data-entry-list></div>
           <button class="primary-button" type="submit" data-next-button disabled>
@@ -318,16 +333,12 @@
               type="button"
               data-copy-all-button
             >
-              <i class="fa-solid fa-copy" aria-hidden="true"></i>
+              <i class="fa-regular fa-copy" aria-hidden="true"></i>
               Copy all
             </button>
             <p class="copy-status" aria-live="polite" data-copy-status></p>
           </div>
           <ol class="phrase-list" data-phrase-list></ol>
-          <details class="reveal-details">
-            <summary>Show entries</summary>
-            <div class="reveal-detail-list" data-reveal-details></div>
-          </details>
         </section>
       </section>
     </main>

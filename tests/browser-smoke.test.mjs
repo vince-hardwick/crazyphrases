@@ -83,10 +83,23 @@ describe("solo browser smoke", () => {
 
     await page.getByRole("button", { name: "10" }).click();
     await assertRowCountSelected(page, "10");
+    await assertRowCountHighlightAligned(page, "10");
     await assertTextHidden(page, "10 phrases selected");
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
 
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "30" }).click();
+    await assertRowCountSelected(page, "30");
+    await assertRowCountHighlightAligned(page, "30");
+
+    await page.getByRole("button", { name: "10" }).click();
+    await assertRowCountSelected(page, "10");
+    await assertRowCountHighlightAligned(page, "10");
+
+    assert.equal(
+      await page.getByRole("heading", { name: "Phrases per batch", level: 3 }).isVisible(),
+      true,
+    );
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await assertProgressEmpty(page);
     assert.equal(await page.getByRole("button", { name: "15" }).isDisabled(), true);
@@ -108,12 +121,12 @@ describe("solo browser smoke", () => {
     assert.doesNotMatch(copiedPhrase, /^\d+[\s.)-]/);
 
     const copyPhraseButton = page.getByRole("button", { name: "Copy phrase 2" });
-    await expectFontAwesomeClass(copyPhraseButton, "fa-solid", "fa-copy");
+    await expectFontAwesomeClass(copyPhraseButton, "fa-regular", "fa-copy");
     await copyPhraseButton.click();
     assert.equal(await readClipboard(page), copiedPhrase);
 
     const copyAllButton = page.getByRole("button", { name: "Copy all" });
-    await expectFontAwesomeClass(copyAllButton, "fa-solid", "fa-copy");
+    await expectFontAwesomeClass(copyAllButton, "fa-regular", "fa-copy");
     await copyAllButton.click();
     const batchCopy = normalizeLineEndings(await readClipboard(page));
     const batchLines = batchCopy.split("\n");
@@ -121,8 +134,8 @@ describe("solo browser smoke", () => {
     assert.equal(batchLines.length, 11);
     assert.equal(batchLines.slice(1).every((line) => !/^\d+[\s.)-]/.test(line)), true);
 
-    await page.getByText("Show entries").click();
-    await assertTextVisible(page, "Section 1:");
+    assert.equal(await page.getByText("Show entries").count(), 0);
+    assert.equal(await page.locator("[data-reveal-details]").count(), 0);
 
     await page.getByRole("button", { name: "Start again" }).click();
     await assertTextVisible(
@@ -132,7 +145,10 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Start new batch" }).click();
     await assertRowCountSelected(page, "10");
     await assertTextHidden(page, "10 phrases selected");
-    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+    assert.equal(
+      await page.getByRole("button", { name: "Start new batch" }).isVisible(),
+      true,
+    );
 
     assertNoConsoleErrors();
   });
@@ -177,7 +193,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
 
@@ -277,7 +293,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await page.locator("[data-dice-row-index='0']").click();
     const firstValue = await page.locator("[data-row-index='0']").inputValue();
@@ -343,7 +359,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
 
@@ -376,7 +392,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await assertNoHorizontalOverflow(page);
 
@@ -418,6 +434,12 @@ describe("solo browser smoke", () => {
     await accountSignIn.click();
 
     assert.equal(await accountSignIn.getAttribute("aria-expanded"), "true");
+    assert.equal(
+      await accountSignIn.evaluate((button) =>
+        window.getComputedStyle(button, "::after").content,
+      ),
+      "none",
+    );
     assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), true);
     await assertNoHorizontalOverflow(page);
     assertNoConsoleErrors();
@@ -436,7 +458,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
 
     const themeToggle = page.getByRole("button", { name: "Enable dark mode" });
-    await expectFontAwesomeClass(themeToggle, "fa-solid", "fa-moon");
+    await expectFontAwesomeClass(themeToggle, "fa-regular", "fa-moon");
     await expectDefaultTooltip(themeToggle, "Enable dark mode");
     assert.equal(await visibleTextContent(themeToggle), "");
     assert.ok(
@@ -457,7 +479,7 @@ describe("solo browser smoke", () => {
     await themeToggle.click();
 
     const lightToggle = page.getByRole("button", { name: "Enable light mode" });
-    await expectFontAwesomeClass(lightToggle, "fa-solid", "fa-sun");
+    await expectFontAwesomeClass(lightToggle, "fa-regular", "fa-sun");
     await expectDefaultTooltip(lightToggle, "Enable light mode");
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
     assert.equal(
@@ -468,7 +490,7 @@ describe("solo browser smoke", () => {
     await page.reload();
 
     const restoredToggle = page.getByRole("button", { name: "Enable light mode" });
-    await expectFontAwesomeClass(restoredToggle, "fa-solid", "fa-sun");
+    await expectFontAwesomeClass(restoredToggle, "fa-regular", "fa-sun");
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
     assert.equal(await page.locator("[data-account-menu-toggle]").isVisible(), false);
     await assertAnonymousSignInSurfaceClosed(page);
@@ -516,7 +538,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "Enable dark mode" }).click();
 
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await page.locator("[data-row-index='0']").waitFor({ state: "visible" });
     await expectDarkBackground(page.locator("[data-row-index='0']"));
 
@@ -582,12 +604,12 @@ describe("solo browser smoke", () => {
     assert.equal(await googleSignIn.getAttribute("data-tooltip"), "Sign in with Google");
     assert.equal(await visibleTextContent(googleSignIn), "");
 
-    const emailFieldIcon = page.locator(".email-sign-in-field i");
-    const emailFieldIconClass = await emailFieldIcon.getAttribute("class");
-    assert.equal(emailFieldIconClass.includes("fa-at"), true);
+    await assertTextVisible(page, "Sign-in via");
+    await assertTextVisible(page, "or using email");
+    assert.equal(await page.locator(".email-sign-in-field i").count(), 0);
 
     const sendLink = page.getByRole("button", { name: "Send link" });
-    await expectFontAwesomeClass(sendLink, "fa-solid", "fa-paper-plane");
+    await expectFontAwesomeClass(sendLink, "fa-regular", "fa-paper-plane");
     assert.equal(await sendLink.getAttribute("data-tooltip"), "Send link");
     assert.equal(await visibleTextContent(sendLink), "");
 
@@ -633,7 +655,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
 
     const play = page.getByRole("button", { name: "Play", exact: true });
-    await expectFontAwesomeClass(play, "fa-solid", "fa-play");
+    await expectFontAwesomeClass(play, "fa-regular", "fa-play");
     assert.equal(await play.getAttribute("data-tooltip"), "Play");
     assert.equal(await visibleTextContent(play), "");
     assert.ok(
@@ -723,7 +745,7 @@ describe("solo browser smoke", () => {
     await expectFavouritesNavHeartState(page, "regular");
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
@@ -2589,7 +2611,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await page.locator("[data-row-index='0']").fill("brisk");
 
@@ -2634,7 +2656,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await signInWithLocalTestAccount(page);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
@@ -2724,7 +2746,7 @@ describe("solo browser smoke", () => {
 
     await page.goto(staticServer.origin);
     await page.getByRole("button", { name: "15" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
@@ -2735,7 +2757,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-entry-form]").isHidden(), true);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     const signedInSectionTitle = await page.locator("[data-section-title]").innerText();
     assert.equal(await page.locator("[data-row-index]").count(), 10);
@@ -4846,7 +4868,7 @@ describe("solo browser smoke", () => {
     await page.goto(staticServer.origin);
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "15" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await assertRowCountSelected(page, "15");
 
@@ -4854,7 +4876,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
     await assertNoHorizontalOverflow(page);
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
     await assertNoHorizontalOverflow(page);
     assert.equal(
       await page
@@ -4976,7 +4998,7 @@ describe("solo browser smoke", () => {
     });
     await expectFontAwesomeClass(
       favouritePhraseCopyButton,
-      "fa-solid",
+      "fa-regular",
       "fa-copy",
     );
     await expectDefaultTooltip(favouritePhraseCopyButton, "Copy phrase");
@@ -5032,7 +5054,7 @@ describe("solo browser smoke", () => {
     });
     await expectFontAwesomeClass(
       favouriteBatchCopyButton,
-      "fa-solid",
+      "fa-regular",
       "fa-copy",
     );
     await expectDefaultTooltip(favouriteBatchCopyButton, "Copy batch");
@@ -5139,7 +5161,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
     assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
-    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+    assert.equal(await page.getByRole("button", { name: "Start new batch" }).isVisible(), true);
 
     await signOutFromAccountMenu(page);
     await assertAnonymousAccountIconVisible(page);
@@ -5163,7 +5185,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     await waitForTextVisible(
       page,
@@ -5188,7 +5210,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5248,7 +5270,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5295,7 +5317,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5342,10 +5364,10 @@ describe("solo browser smoke", () => {
       "Account-backed progress could not be loaded. Retry, or start a new batch without deleting saved progress.",
     );
 
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await page.locator("[data-start-new-current-game]").click();
     await assertRowCountSelected(page, "20");
     await assertTextHidden(page, "20 phrases selected");
-    assert.equal(await page.getByRole("button", { name: "Start batch" }).isVisible(), true);
+    assert.equal(await page.locator("[data-start-button]").isVisible(), true);
     assert.equal(await page.getByText("could not be loaded").isVisible(), false);
 
     assertNoConsoleErrors();
@@ -5366,7 +5388,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     await waitForTextVisible(
       page,
@@ -5391,7 +5413,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5458,7 +5480,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5500,7 +5522,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -5547,7 +5569,7 @@ describe("solo browser smoke", () => {
     await assertSignedInAccountAffordance(page);
 
     await page.getByRole("button", { name: "10" }).click();
-    await page.getByRole("button", { name: "Start batch" }).click();
+    await page.getByRole("button", { name: "Start new batch" }).click();
 
     const fillState = createFillState(10);
     await fillActiveSection(page, fillState);
@@ -6819,6 +6841,78 @@ async function assertRowCountSelected(page, rowCount) {
   assert.equal(
     await page.locator(`[data-row-count="${rowCount}"]`).getAttribute("aria-pressed"),
     "true",
+  );
+}
+
+async function assertRowCountHighlightAligned(page, rowCount) {
+  await page
+    .waitForFunction(
+      (selectedRowCount) => {
+        const control = document.querySelector("[data-row-count-options]");
+        const button = control?.querySelector(`[data-row-count="${selectedRowCount}"]`);
+
+        if (!control || !button) {
+          return false;
+        }
+
+        const highlightStyle = getComputedStyle(control, "::before");
+        const controlRect = control.getBoundingClientRect();
+        const buttonRect = button.getBoundingClientRect();
+        const transform = highlightStyle.transform;
+        const transformX =
+          transform && transform !== "none"
+            ? new DOMMatrixReadOnly(transform).m41
+            : 0;
+        const highlightLeft =
+          control.clientLeft +
+          parseFloat(highlightStyle.left) +
+          transformX;
+        const highlightWidth = parseFloat(highlightStyle.width);
+
+        return (
+          Math.abs(highlightLeft - (buttonRect.left - controlRect.left)) <= 1 &&
+          Math.abs(highlightWidth - buttonRect.width) <= 1
+        );
+      },
+      rowCount,
+      { timeout: 500 },
+    )
+    .catch(() => {});
+
+  const metrics = await page.locator("[data-row-count-options]").evaluate(
+    (control, selectedRowCount) => {
+      const button = control.querySelector(`[data-row-count="${selectedRowCount}"]`);
+      const controlStyle = getComputedStyle(control);
+      const highlightStyle = getComputedStyle(control, "::before");
+      const controlRect = control.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      const transform = highlightStyle.transform;
+      const transformX =
+        transform && transform !== "none"
+          ? new DOMMatrixReadOnly(transform).m41
+          : 0;
+
+      return {
+        buttonLeft: buttonRect.left - controlRect.left,
+        buttonWidth: buttonRect.width,
+        highlightLeft:
+          control.clientLeft +
+          parseFloat(highlightStyle.left) +
+          transformX,
+        highlightWidth: parseFloat(highlightStyle.width),
+        selectedRowCount,
+      };
+    },
+    rowCount,
+  );
+
+  assert.ok(
+    Math.abs(metrics.highlightLeft - metrics.buttonLeft) <= 1,
+    `Expected ${metrics.selectedRowCount} highlight left ${metrics.highlightLeft} to align with button left ${metrics.buttonLeft}`,
+  );
+  assert.ok(
+    Math.abs(metrics.highlightWidth - metrics.buttonWidth) <= 1,
+    `Expected ${metrics.selectedRowCount} highlight width ${metrics.highlightWidth} to match button width ${metrics.buttonWidth}`,
   );
 }
 

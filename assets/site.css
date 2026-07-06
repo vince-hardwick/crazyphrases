@@ -107,6 +107,11 @@ body {
   font-size: 0.84rem;
   font-weight: 800;
   text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .primary-nav-button {
@@ -278,18 +283,41 @@ body {
   padding: 10px;
   background: var(--surface);
   box-shadow: 0 14px 34px rgba(23, 33, 31, 0.16);
+  animation: popover-in 150ms ease-out;
 }
 
 .account-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
   gap: 8px;
   margin-top: 6px;
 }
 
 .account-shell.is-anonymous .account-actions {
   margin-top: 0;
+}
+
+.account-sign-in-section {
+  display: grid;
+  gap: 8px;
+}
+
+.account-sign-in-email-section {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.account-sign-in-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.account-sign-in-provider-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .email-sign-in-form {
@@ -316,11 +344,6 @@ body {
   padding: 0 8px;
   color: var(--ink);
   background: var(--surface);
-}
-
-.email-sign-in-field i {
-  flex: 0 0 auto;
-  color: var(--muted);
 }
 
 .email-sign-in-form input {
@@ -734,6 +757,11 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .notification-shell {
@@ -891,12 +919,33 @@ h1 {
 }
 
 .icon-button:hover,
+.primary-nav-link:hover,
 .dice-button:not(:disabled):hover,
-.segmented-control button:not(:disabled):hover,
-.primary-button:not(:disabled):hover,
 .secondary-button:not(:disabled):hover,
+.favourites-tab:not([aria-selected="true"]):hover,
+.notification-mark-read:hover,
+.notification-mark-all-read:hover {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+  box-shadow:
+    0 0 0 3px var(--ring),
+    0 8px 24px rgba(23, 33, 31, 0.08);
+}
+
+.primary-button:not(:disabled):hover {
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
 .danger-button:not(:disabled):hover {
-  transform: translateY(-1px);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(221, 95, 62, 0.22);
+}
+
+.segmented-control button:not(:disabled):not([aria-pressed="true"]):hover {
+  color: var(--accent-strong);
+  background: rgba(15, 118, 110, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.28);
 }
 
 .help-panel,
@@ -983,7 +1032,7 @@ h1 {
 
 .setup-row {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -1013,6 +1062,14 @@ h1 {
 }
 
 .segmented-control {
+  --segment-count: 5;
+  --segment-gap: 4px;
+  --segment-padding: 4px;
+  --segment-width: calc(
+    (100% - (var(--segment-padding) * 2) - (var(--segment-gap) * 4)) /
+    var(--segment-count)
+  );
+  position: relative;
   display: inline-grid;
   grid-template-columns: repeat(5, minmax(44px, 1fr));
   gap: 4px;
@@ -1022,7 +1079,25 @@ h1 {
   background: var(--surface-soft);
 }
 
+.segmented-control::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: var(--segment-padding);
+  bottom: var(--segment-padding);
+  left: var(--segment-padding);
+  width: var(--segment-width);
+  border-radius: 6px;
+  background: var(--accent);
+  transform: translateX(
+    calc(var(--selected-index, 2) * (100% + var(--segment-gap)))
+  );
+  transition: transform 170ms ease;
+}
+
 .segmented-control button {
+  position: relative;
+  z-index: 1;
   min-height: 40px;
   border: 0;
   border-radius: 6px;
@@ -1031,11 +1106,15 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .segmented-control button[aria-pressed="true"] {
   color: var(--accent-contrast);
-  background: var(--accent);
+  background: transparent;
 }
 
 .segmented-control button:disabled {
@@ -1061,6 +1140,22 @@ h1 {
   margin: 6px 0 0;
   font-size: clamp(1.7rem, 5vw, 2.6rem);
   line-height: 1.1;
+}
+
+.entry-form .section-kicker {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 850;
+  line-height: 1;
+}
+
+.section-instruction {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .entry-list {
@@ -1112,8 +1207,7 @@ h1 {
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
-.danger-button:focus-visible,
-.reveal-details summary:focus-visible {
+.danger-button:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 2px;
 }
@@ -1129,6 +1223,11 @@ h1 {
   color: var(--accent-strong);
   background: var(--surface-soft);
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .dice-button::before {
@@ -1161,6 +1260,9 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .secondary-button {
@@ -1173,6 +1275,11 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .icon-action-button {
@@ -1199,11 +1306,12 @@ h1 {
 
 .tooltip-action::after,
 .primary-nav-icon-link[data-tooltip]::after {
-  content: attr(data-tooltip);
+  content: none;
   position: absolute;
   inset: auto auto calc(100% + 8px) 50%;
   z-index: 20;
-  max-width: min(220px, calc(100vw - 32px));
+  width: max-content;
+  max-width: calc(100vw - 32px);
   border-radius: 6px;
   padding: 6px 8px;
   color: var(--accent-contrast);
@@ -1219,13 +1327,14 @@ h1 {
   transition:
     opacity 120ms ease,
     transform 120ms ease;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .tooltip-action:hover::after,
 .tooltip-action:focus-visible::after,
 .primary-nav-icon-link[data-tooltip]:hover::after,
 .primary-nav-icon-link[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
   opacity: 1;
   transform: translate(-50%, 0);
 }
@@ -1262,6 +1371,30 @@ h1 {
   transform: translate(0, 0);
 }
 
+.account-sign-in-panel .tooltip-action::after {
+  inset: auto 0 calc(100% + 8px) auto;
+  transform: translate(0, 4px);
+}
+
+.account-sign-in-panel .tooltip-action:hover::after,
+.account-sign-in-panel .tooltip-action:focus-visible::after {
+  transform: translate(0, 0);
+}
+
+.account-profile-panel .tooltip-action::after {
+  inset: auto 0 calc(100% + 8px) auto;
+  transform: translate(0, 4px);
+}
+
+.account-profile-panel .tooltip-action:hover::after,
+.account-profile-panel .tooltip-action:focus-visible::after {
+  transform: translate(0, 0);
+}
+
+.account-shell.is-sign-in-open > [data-account-sign-in-toggle]::after {
+  content: none;
+}
+
 .danger-button {
   min-height: 44px;
   border: 1px solid rgba(221, 95, 62, 0.34);
@@ -1272,6 +1405,11 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .setup-button {
@@ -1286,19 +1424,24 @@ h1 {
 }
 
 .start-again-confirmation {
-  flex-basis: 100%;
-  width: min(100%, 420px);
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(420px, calc(100vw - 32px));
   border: 1px solid rgba(221, 95, 62, 0.28);
   border-radius: 8px;
   padding: 12px;
   background: var(--danger-soft);
+  box-shadow: 0 14px 34px rgba(23, 33, 31, 0.16);
+  animation: popover-in 150ms ease-out;
 }
 
 .start-again-confirmation p {
   margin: 0 0 10px;
   color: var(--ink);
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .confirmation-actions {
@@ -1698,51 +1841,16 @@ h1 {
   min-height: 44px;
 }
 
-.reveal-details {
-  margin-top: 18px;
-  border-top: 1px solid var(--line);
-  padding-top: 14px;
-}
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 
-.reveal-details summary {
-  width: fit-content;
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  color: var(--accent-strong);
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.reveal-detail-list {
-  display: grid;
-  gap: 14px;
-  margin-top: 12px;
-}
-
-.reveal-detail-group h3 {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.reveal-entry-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.reveal-entry-list li {
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 9px 10px;
-  background: var(--surface);
-  overflow-wrap: anywhere;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sr-only {
@@ -1833,6 +1941,12 @@ h1 {
   .setup-actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .start-again-confirmation {
+    right: auto;
+    left: 0;
+    width: min(342px, calc(100vw - 24px));
   }
 
   .setup-button {

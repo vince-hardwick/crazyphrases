@@ -11,11 +11,11 @@ identifiers may follow ecosystem conventions when a framework or library strongl
 favours US spelling, but UI copy should remain UK English.
 
 Do not expose the domain term "slot" in user-facing copy for MVP. Use natural task
-wording such as "Fill these adjectives" or "Next section" while keeping Slot as the
+wording such as "Enter adjectives" or "Next section" while keeping Slot as the
 internal/domain term.
 
 For the default template's two noun slots, use neutral user-facing labels only when
-needed. During play, the active section can say "Fill these nouns"; progress context can
+needed. During play, the active section can say "Enter nouns"; progress context can
 use phrasing like "Section 2 of 3" without revealing the remaining resolved order.
 
 The app header should not duplicate the browser's domain display when the main title
@@ -358,7 +358,7 @@ from existing saved snapshot data without adding data-loading scope.
 
 Across viewport sizes, `Play` and `Favourites` remain visible as primary signed-in
 navigation controls rather than moving behind a hamburger or generic menu button.
-The top-level `Play` control is an icon-only Font Awesome Classic Solid `play`
+The top-level `Play` control is an icon-only Font Awesome Classic Regular `play`
 button with accessible name and hover/focus tooltip `Play`; it keeps a
 mobile-safe hit area and opens the Game Mode menu directly on keyboard, pointer,
 or touch activation.
@@ -384,8 +384,8 @@ destination tabs own saved-output loading, empty, and error state after the part
 chooses Favourites.
 
 The theme toggle is an always-available top-nav utility control. It uses Font Awesome
-Classic Solid `moon` with accessible name and tooltip `Enable dark mode` when the
-current presentation is light, and Font Awesome Classic Solid `sun` with accessible name
+Classic Regular `moon` with accessible name and tooltip `Enable dark mode` when the
+current presentation is light, and Font Awesome Classic Regular `sun` with accessible name
 and tooltip `Enable light mode` when the current presentation is dark. Theme choice is a
 local browser UI preference stored outside Account data; it does not require sign-in,
 does not mutate hosted Account records, and is restored from local browser storage on
@@ -399,6 +399,9 @@ default font weight. This applies to `Play`, `Favourites`, `Notifications`, `How
 play`, account sign-in, the signed-in account affordance, `Settings`, `Sign out`, and
 new icon-only header controls added by later slices. Touch activation performs the action
 directly rather than requiring a tooltip-preview tap.
+Tooltip text remains on a single line rather than wrapping. When the anonymous account
+sign-in popover opens, the account sign-in control's tooltip is suppressed so it does not
+compete with the popover.
 
 #### Route model and account gates
 
@@ -468,7 +471,7 @@ tap-to-preview tooltips for these utility actions; tapping the control performs 
 action directly, with meaning carried by the accessible name, familiar icon, hit area,
 and subsequent state or status feedback.
 
-Use Font Awesome `copy` for copy actions, `share-nodes` for share actions,
+Use Font Awesome Classic Regular `copy` for copy actions, `share-nodes` for share actions,
 `table-list` for batch actions or batch disclosure affordances, `envelope` for
 creating or sending a Game Invite, `envelope-open-text` for opening an incoming
 invite, `envelope-circle-check` for accepting an incoming invite, and
@@ -477,12 +480,15 @@ Favourites destination continues to use `heart-circle-minus` for remove-favourit
 actions. Share actions should appear only where an existing supported share path is
 available and Share Consent rules allow it; copy remains available independently.
 Anonymous account sign-in uses Font Awesome `circle-user` for the top-nav account
-affordance, `google` for Google sign-in, `at` before the email address input, and
-`paper-plane` for sending an email magic link. The Google and email magic-link submit
+affordance, `google` for Google sign-in, and Classic Regular `paper-plane` for sending
+an email magic link. The email address input does not use a leading `at` icon because
+the field placeholder and label already identify the input. The Google and email magic-link submit
 actions are icon-first controls whose tooltip meaning matches their accessible action
 name and uses default font weight.
-Primary game-flow and confirmation actions, such as `Start batch`, `Reveal phrases`,
-`Keep playing`, `Discard entries`, `View phrases`, and `Start new batch`, remain
+The anonymous account sign-in popover separates provider sign-in from email sign-in with
+subtle section titles such as `Sign-in via` and `or using email`.
+Primary game-flow and confirmation actions, such as `Start new batch`, `Reveal phrases`,
+`Keep playing`, `Discard entries`, and `View phrases`, remain
 text-labelled buttons. When one of these text-labelled controls has an assigned action
 icon, the icon precedes the text and the accessible name remains the action label rather
 than the icon name.
@@ -655,7 +661,7 @@ interaction model. Avoid literal skeuomorphic folded-paper UI that harms mobile
 usability or entry speed.
 
 Folded-paper visual hints must not intersect setup controls. In the anonymous solo MVP
-setup state before "Start batch", the phrase-count and start controls should appear
+setup state before `Start new batch`, the phrase-count and start controls should appear
 cleanly without column guide lines running underneath or through them.
 
 ### Onboarding
@@ -824,6 +830,9 @@ confirmation through in-app UI rather than a browser-native `window.confirm` dia
 During entry, the confirmation uses abandonment language: "Keep playing" or "Discard
 entries". After reveal, the confirmation uses new-batch language: "View phrases" or
 "Start new batch".
+The `Start again` confirmation appears as a popover that overlays the current page
+instead of pushing the revealed batch or entry controls down. The explanatory copy uses
+normal body weight; the confirmation button labels remain bold.
 
 The MVP default template renders each phrase by concatenating the three entries with
 spaces, trimming whitespace, collapsing extra spaces, and capitalizing the first
@@ -1399,8 +1408,9 @@ batch does not need a re-hide action.
 Revealed batches show phrases in original row order. Reveal does not shuffle completed
 phrases.
 
-Reveal presents final rendered phrases first. An optional details view may show the
-contributing entries grouped by slot.
+Reveal presents final rendered phrases first. Anonymous solo does not include a separate
+`Show entries` details disclosure after reveal; the completed phrases are the reveal
+surface for that batch.
 
 The signed-in multiplayer surface groups Started Games and completed batches
 into `Awaiting your entries`, `Awaiting other player entries`, and `Batches

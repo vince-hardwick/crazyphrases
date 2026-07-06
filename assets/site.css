@@ -400,16 +400,8 @@ body {
 }
 
 .account-profile-panel {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
-.account-profile-panel h2 {
-  margin: 0 0 8px;
-  color: var(--accent-strong);
-  font-size: 0.84rem;
-  line-height: 1.15;
+  margin: 0 0 16px;
+  padding: clamp(18px, 4vw, 28px);
 }
 
 .account-profile-form {
@@ -846,7 +838,8 @@ h1 {
 .help-panel,
 .game-panel,
 .pending-game-panel,
-.favourites-panel {
+.favourites-panel,
+.account-profile-panel {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -879,6 +872,10 @@ h1 {
 
 .route-gate h2,
 .route-gate p {
+  margin: 0;
+}
+
+.route-gate .route-heading {
   margin: 0;
 }
 
@@ -935,13 +932,20 @@ h1 {
   margin-bottom: 28px;
 }
 
-.control-label,
 .section-kicker,
 .progress-text {
   margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
   font-weight: 400;
+}
+
+.compact-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .control-label {
@@ -1050,9 +1054,11 @@ h1 {
   margin-bottom: 18px;
 }
 
-.section-heading h2 {
+.route-heading {
   margin: 6px 0 0;
+  color: var(--ink);
   font-size: clamp(1.7rem, 5vw, 2.6rem);
+  font-weight: 800;
   line-height: 1.1;
 }
 

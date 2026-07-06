@@ -61,6 +61,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-18-multiplayer-execution-redesign.md` | Approved design provenance. Source-controlled participant-section foundation is complete; PR #57 is merged to `main` and promoted through production. | ADR 0015, `docs/product-rules.md`, `docs/backlog.md`, `docs/runbooks/supabase-auth-and-postgres.md`, `docs/planning/supabase-state-ledger.md`, PR #57 |
 | `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD provenance. #64 shipped through PR #78 and production promotion; #79 shipped through PR #92 and production promotion. ADR 0025 supersedes this cropper model for current Uploaded Avatar storage/rendering. | GitHub issues #64, #79, and #188; ADRs 0019, 0021, and 0025; `docs/product-rules.md`; `docs/backlog.md`; `docs/planning/supabase-state-ledger.md` |
 | `specs/2026-06-26-signed-in-favourites-design.md` | Approved design provenance. Implementation is complete; do not treat this as pending design or implementation work. | `docs/product-rules.md`, `docs/backlog.md`, `assets/app.js`, `assets/site.css`, `tests/browser-smoke.test.mjs` |
+| `specs/2026-07-06-ui-style-rationalisation-design.md` | Active design. Owner-approved; next action is an implementation plan before app code changes. | `docs/product-rules.md`, `assets/site.css`, `assets/app.js`, `assets/clipboard.js`, `tests/browser-smoke.test.mjs` |
 
 ## Adding Future Plans Or Specs
 

@@ -1213,17 +1213,18 @@ preserve their original history.
   production on 2026-06-25 after owner approvals. The post-MVP visual cropper merged
   under #79 through PR #92 as `3529bafcbbfedd9bac9d77266317865c7bb1ad21` and was
   promoted through production on 2026-06-25 after owner approvals and owner acceptance
-  in `test`.
-- **No longer deferred in #63/#64/#79**: The signed-in Profile editor can select
+  in `test`. ADR 0025 and PR #188 superseded that cropper model on 2026-07-06 by
+  returning current Uploaded Avatar storage to original validated files rendered with
+  cover-fit Avatar presentation.
+- **No longer deferred in #63/#64/#79/#188**: The signed-in Profile editor can select
   Built-in Avatars, validate JPEG/PNG/WebP Uploaded Avatar files, preview them locally,
-  operate a visual inline crop editor with a fixed square crop box, drag-to-reposition
-  image movement, explicit zoom controls, crop-box markers, transient guide overlay,
-  keyboard nudge/zoom support, and Reset crop, upload only a browser-generated derived
-  256 x 256 PNG crop on explicit Save profile, persist the Uploaded Avatar descriptor,
-  and keep the previous Avatar active on upload or post-upload save failure. The live
-  Avatar object remains the derived crop; the uncropped original is not uploaded as the
-  live Avatar object, crop coordinates are draft state only, and crop coordinates are
-  not persisted as rendering authority.
+  upload the original validated source file only on explicit Save profile, persist the
+  Uploaded Avatar descriptor, render saved Uploaded Avatars with cover-fit Avatar
+  presentation, and keep the previous Avatar active on upload or post-upload save
+  failure. The app no longer mounts crop editor DOM, crop-box markers, crop guide
+  overlays, zoom/reset controls, or an avatar-crop helper asset. Future crop controls,
+  server-side processing, metadata stripping, derivative generation, or transcoding
+  require a separate issue and ADR or an explicit amendment to ADR 0025.
 - **Remaining risk**: Any production uploaded-avatar write smoke remains separately
   approval-gated. The #63/#64 Uploaded Avatar slices intentionally exclude image-content
   moderation, automated safety scanning, human review queues, report queues,
@@ -1236,7 +1237,7 @@ preserve their original history.
   renders uploaded avatars in production or when Account Deletion implementation reaches
   uploaded media; revisit formal metadata stripping and server-side derivative
   generation if uploaded images create privacy, performance, or presentation problems
-  beyond the browser-generated #64 crop; revisit moderation and abuse handling before
+  beyond current cover-fit rendering; revisit moderation and abuse handling before
   Uploaded Avatars appear in public discovery surfaces or if abuse appears in signed-in
   game/profile contexts.
 

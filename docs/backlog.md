@@ -851,9 +851,12 @@ preserve their original history.
   Crazy Phrases brand image and links it to the Solo play home route.
 - **Related favicon asset**: `assets/img/crazy_phrases_logo_40px.png` is retained as
   the source PNG and converted to `assets/img/favicon.ico` for browser favicon use.
-- **Remaining risk**: Deployment still needs the normal protected PR, CI, `dev`, `test`,
-  and production verification path for runtime changes before the logo and favicon are
-  visible on hosted environments.
+- **Hosted verification**: PR #190 merged to `main` as
+  `ac210e024ebfbf830d7f2815491e8b6b49184085` and was promoted through `test`
+  and production by workflow run `28791398410` on 2026-07-06 after owner
+  approvals. Visible browser smokes on `dev`, `test`, and production confirmed
+  stamped logo/favicon assets, the logo home link, and no desktop or
+  mobile-width horizontal overflow.
 
 ### Cloudflare Access allow-list documentation
 

@@ -1047,14 +1047,8 @@ describe("solo browser smoke", () => {
     const accountMenu = page.getByRole("menu", { name: "Account menu" });
     await accountMenu.waitFor({ state: "visible" });
     await expectHeaderTooltipAbovePopover(help, accountMenu, "How to play");
-    await expectDefaultTooltip(
-      accountMenu.getByRole("menuitem", { name: "Settings" }),
-      "Settings",
-    );
-    await expectDefaultTooltip(
-      accountMenu.getByRole("menuitem", { name: "Sign out" }),
-      "Sign out",
-    );
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Settings" }));
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Sign out" }));
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -1099,6 +1093,8 @@ describe("solo browser smoke", () => {
     assert.equal(await signOut.isVisible(), true);
     await expectFontAwesomeClass(settings, "fa-solid", "fa-sliders");
     await expectFontAwesomeClass(signOut, "fa-solid", "fa-arrow-right-from-bracket");
+    await expectNoTooltip(settings);
+    await expectNoTooltip(signOut);
     assert.ok(Number(await signOut.evaluate((button) => getComputedStyle(button).fontWeight)) < 600);
     assert.equal(await accountMenu.getByRole("menuitem").count(), 2);
     assert.equal(await accountMenu.getByText("Favourites").count(), 0);
@@ -6018,6 +6014,14 @@ async function expectDefaultTooltip(locator, label) {
         getComputedStyle(element, "::after").fontWeight,
       ),
     ) < 600,
+  );
+}
+
+async function expectNoTooltip(locator) {
+  assert.equal(await locator.getAttribute("data-tooltip"), null);
+  assert.equal(
+    await locator.evaluate((element) => element.classList.contains("tooltip-action")),
+    false,
   );
 }
 

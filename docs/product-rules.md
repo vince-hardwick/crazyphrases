@@ -73,6 +73,8 @@ visible Gamer Tag label in the top navigation. The Avatar/Profile icon remains
 clickable and opens the existing Account menu underneath the icon. The Account menu is
 right-aligned to the icon anchor, must stay within the viewport, and contains the
 existing `Settings` and `Sign out` actions.
+Because these account-menu actions include visible text labels next to their icons,
+they do not expose duplicate hover/focus tooltips.
 
 The Account/Profile icon uses a hover/focus tooltip. If no Gamer Tag is available, the
 tooltip text is `Profile`. If a Gamer Tag is available, the tooltip text is
@@ -403,9 +405,10 @@ identity control. The `Play` dropdown and account menu may open as full-width mo
 popovers or sheets on narrow screens.
 Header tooltip text should match the control's accessible action name in meaning and use
 default font weight. This applies to `Play`, `Favourites`, `Notifications`, `How to
-play`, account sign-in, the signed-in account affordance, `Settings`, `Sign out`, and
-new icon-only header controls added by later slices. Touch activation performs the action
-directly rather than requiring a tooltip-preview tap.
+play`, account sign-in, the signed-in account affordance, and new icon-only header
+controls added by later slices. Labelled menu items, including account-menu `Settings`
+and `Sign out`, do not duplicate their visible label in a tooltip. Touch activation
+performs the action directly rather than requiring a tooltip-preview tap.
 Tooltip text remains on a single line rather than wrapping. Header tooltips render above
 open top-nav menus and popovers. When the anonymous account sign-in popover opens, the
 account sign-in control's tooltip is suppressed so it does not compete with the popover.

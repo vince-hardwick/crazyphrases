@@ -1129,18 +1129,6 @@ h1 {
   outline-offset: 2px;
 }
 
-.primary-nav-link:focus,
-.play-menu-item:focus,
-.account-menu-item:focus,
-.notification-mark-all-read:focus,
-.favourites-tab:focus,
-.primary-button:focus,
-.secondary-button:focus,
-.danger-button:focus {
-  outline: 4px solid var(--ring);
-  outline-offset: 2px;
-}
-
 .dice-button {
   width: 48px;
   height: 48px;

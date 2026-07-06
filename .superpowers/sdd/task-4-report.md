@@ -89,3 +89,10 @@ This includes the existing `renders Start batch and Start again as matching setu
 
 - The brief-specified `:focus-visible` selectors were not sufficient on their own for every programmatically focused control in Playwright after pointer-driven interactions. A narrow `:focus` fallback was added for the exact covered interaction families so the smoke can verify the intended visible ring consistently.
 - The new Play control smoke needed `exact: true` because plain `name: "Play"` also matched `How to play` under Playwright strict mode in this repository.
+
+## Fix After Task Review
+
+- Issue: Task 4 left a production plain `:focus` fallback in `assets/site.css`, which broadened the design contract beyond the brief's shared `:focus-visible` selector group.
+- Fix: Removed the plain `:focus` fallback block from `assets/site.css` and changed `assertVisibleFocusRing` in `tests/browser-smoke.test.mjs` to reach targets by keyboard `Tab`, assert keyboard reachability, and confirm the focused element matches `:focus-visible` before checking the outline.
+- Command: `npm test -- tests/browser-smoke.test.mjs`
+- Result: Passed (`# pass 104`, `# fail 0`), including `uses visible focus treatment across equivalent interaction families`.

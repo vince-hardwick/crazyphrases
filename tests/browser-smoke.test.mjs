@@ -7221,16 +7221,35 @@ async function assertMatchingTextStyle(first, second) {
 }
 
 async function assertVisibleFocusRing(locator) {
-  await locator.focus();
+  const page = locator.page();
+  await locator.waitFor({ state: "visible" });
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+
+  let focused = false;
+  for (let step = 0; step < 40; step += 1) {
+    await page.keyboard.press("Tab");
+    focused = await locator.evaluate((element) => document.activeElement === element);
+    if (focused) {
+      break;
+    }
+  }
+
+  assert.equal(focused, true, "Expected target to be keyboard reachable by Tab");
   const focusStyle = await locator.evaluate((element) => {
     const style = getComputedStyle(element);
     return {
+      matchesFocusVisible: element.matches(":focus-visible"),
       outlineColor: style.outlineColor,
       outlineStyle: style.outlineStyle,
       outlineWidth: Number.parseFloat(style.outlineWidth),
     };
   });
 
+  assert.equal(focusStyle.matchesFocusVisible, true);
   assert.equal(focusStyle.outlineStyle, "solid");
   assert.ok(
     focusStyle.outlineWidth >= 4,

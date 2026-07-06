@@ -174,15 +174,15 @@ If the user already has the in-app browser open at `http://localhost:4173/`, att
 
 Local smoke runs may restore anonymous solo state from browser local storage. If the setup controls are missing and the page is already in `entry` or `reveal` phase, use the visible `Start again` flow to return to setup before checking phrase-count selection. Do not rely on `tab.playwright.evaluate(() => localStorage.clear())`; the Browser plugin's page-evaluate scope is read-oriented and may not expose `localStorage`.
 
-If `Start again` opens the in-app confirmation panel, click the visible confirmation button for the current phase. During entry, the confirmation button is `Discard entries`. After reveal, the confirmation button is `Start new batch`. The app must not use browser-native `window.confirm` for this flow because it blocks Playwright automation and is not inspectable through normal DOM assertions.
+If `Start again` opens the in-app confirmation panel, click the visible confirmation button for the current phase. During entry, the confirmation button is `Discard entries`. After reveal, the confirmation button is `Begin batch`. The app must not use browser-native `window.confirm` for this flow because it blocks Playwright automation and is not inspectable through normal DOM assertions.
 
 ```js
 const startAgain = tab.playwright.getByRole("button", { name: "Start again" });
 await startAgain.click({});
-const startNewBatch = tab.playwright.getByRole("button", { name: "Start new batch" });
+const beginBatch = tab.playwright.getByRole("button", { name: "Begin batch" });
 const discardEntries = tab.playwright.getByRole("button", { name: "Discard entries" });
 const confirmationButton =
-  (await startNewBatch.count()) === 1 ? startNewBatch : discardEntries;
+  (await beginBatch.count()) === 1 ? beginBatch : discardEntries;
 await confirmationButton.click({});
 await tab.playwright.locator("[data-start-button]").waitFor({
   state: "visible",

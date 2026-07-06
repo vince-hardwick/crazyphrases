@@ -8,11 +8,12 @@ ownership metadata, and Storage policies have been applied after explicit owner
 approval. Hosted `dev` and `test` browser upload/write/reload/restore
 validation passed through the real Storage bucket, and production passed a
 non-write browser smoke. Production uploaded-avatar write smoke remains
-separately approval-gated. ADR 0021 extends this decision for #64 by selecting
-derived cropped images, rather than persistent crop metadata or retained
-originals, as the storage authority for circular Uploaded Avatar cropping. The
-#64 implementation merged to `main` through PR #78 and has been promoted through
-production.
+separately approval-gated. ADR 0021 later selected derived cropped images for
+#64; ADR 0025 supersedes that model for current Uploaded Avatar storage and
+rendering by returning to original validated files rendered with cover-fit Avatar
+presentation. The #64 implementation merged to `main` through PR #78 and has
+been promoted through production; the ADR 0025 implementation merged through PR
+#188 and has been promoted through production.
 
 ## Context
 
@@ -108,10 +109,11 @@ and should run in dev or test first. Production uploaded-avatar write smoke
 requires separate explicit approval.
 
 The #63 Uploaded Avatar slice did not store crop coordinates, generate derived
-cropped images, or add a crop-positioning UI. ADR 0021 owns the #64
-crop-storage model, which is now implemented with browser-generated derived
-cropped PNG objects. The richer #79 visual cropper is now implemented on top of
-that storage model without changing Storage authority.
+cropped images, or add a crop-positioning UI. ADR 0021 owned the historical #64
+crop-storage model, which was implemented with browser-generated derived
+cropped PNG objects. ADR 0025 now owns current storage and rendering authority:
+the active Uploaded Avatar object is the original validated file and circular
+framing is CSS presentation rather than persisted media transformation.
 
 The first slice must render a basic Avatar preview in the existing Profile
 editor for both Built-in Avatars and Uploaded Avatars. Existing participant or
@@ -190,10 +192,12 @@ is unavailable for that operation.
   mutation authority must remain owner-scoped.
 - The `avatars` bucket and `uploaded/{uuid}.{ext}` object path convention are
   part of the first-slice storage contract.
-- #63 stores original validated files. #64 stores browser-generated derived
-  cropped PNG files as the active Uploaded Avatar object.
-- ADR 0021 introduces the #64 derived cropped-image model while preserving the
-  existing Avatar descriptor, bucket, and opaque object-path authority.
+- #63 stored original validated files. #64/ADR 0021 historically stored
+  browser-generated derived cropped PNG files as the active Uploaded Avatar
+  object; ADR 0025 supersedes that model for current behaviour and stores the
+  original validated file as the active Uploaded Avatar object.
+- ADR 0025 preserves the existing Avatar descriptor, bucket, and opaque
+  object-path authority while moving circular framing back to CSS presentation.
 - Image moderation and abuse handling are not solved by #63 and must be
   revisited before Uploaded Avatars are used in public discovery surfaces.
 - Replacing a live profile Avatar must not break completed-game history that

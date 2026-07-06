@@ -6981,6 +6981,18 @@ async function assertRowCountSelected(page, rowCount) {
     await page.locator(`[data-row-count="${rowCount}"]`).getAttribute("aria-pressed"),
     "true",
   );
+
+  const expectedIndex = ["10", "15", "20", "25", "30"].indexOf(rowCount);
+  assert.notEqual(expectedIndex, -1);
+  const selectedIndexClasses = await page
+    .locator("[data-row-count-options]")
+    .evaluate((control) =>
+      [...control.classList]
+        .filter((className) => className.startsWith("is-selected-index-"))
+        .sort(),
+    );
+
+  assert.deepEqual(selectedIndexClasses, [`is-selected-index-${expectedIndex}`]);
 }
 
 async function assertRowCountHighlightAligned(page, rowCount) {

@@ -30,3 +30,11 @@
 
 ## Concerns
 - The hygiene matcher was adjusted from the brief to avoid a false positive against existing UI state management in `assets/app.js`. That keeps the test useful, but it is a slight deviation from the literal matcher text in the brief.
+
+## Fix After Task Review
+- Review issue: Task 1 weakened the direct inline-style hygiene matcher by carving out `.style.setProperty(...)`, which left first-party runtime style mutation outside the guard.
+- Fix: restored the strict direct style mutation pattern so `.style.` and `.style[...]` are both rejected again, then removed the row-count selected-state inline style mutation by moving that state onto `is-selected-index-N` classes on `[data-row-count-options]`.
+- Tests run:
+  - `npm test -- tests/browser-smoke.test.mjs tests/repository-hygiene.test.mjs`
+  - `npm test -- tests/repository-hygiene.test.mjs tests/clipboard.test.mjs`
+- Result: pass. The browser smoke suite now asserts exactly one selected-index class for the row-count control, the repository hygiene guard catches direct style mutation again, and Task 1 clipboard coverage remains green.

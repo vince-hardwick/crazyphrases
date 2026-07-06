@@ -87,6 +87,9 @@ const AVATAR_UPLOAD_COPY = {
     "Profile could not be saved. Your previous avatar is still active.",
 };
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
+const rowCountSelectedIndexClasses = rowCountButtons.map(
+  (_button, index) => `is-selected-index-${index}`,
+);
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
 const startAgainConfirmation = document.querySelector(
@@ -4994,14 +4997,23 @@ function updateNextButton() {
   nextButton.textContent = isLastSection ? "Reveal phrases" : "Next section";
 }
 
+function updateRowCountSelectedIndexClass(selectedIndex) {
+  const rowCountControl = rowCountButtons[0]?.parentElement;
+  if (!rowCountControl) {
+    return;
+  }
+
+  rowCountControl.classList.remove(...rowCountSelectedIndexClasses);
+  rowCountControl.classList.add(
+    `is-selected-index-${Math.max(selectedIndex, 0)}`,
+  );
+}
+
 function updateRowCountButtons(rowCount) {
   const selectedIndex = rowCountButtons.findIndex(
     (button) => Number(button.dataset.rowCount) === rowCount,
   );
-  rowCountButtons[0]?.parentElement?.style.setProperty(
-    "--selected-index",
-    String(Math.max(selectedIndex, 0)),
-  );
+  updateRowCountSelectedIndexClass(selectedIndex);
   rowCountButtons.forEach((button) => {
     button.setAttribute("aria-pressed", String(Number(button.dataset.rowCount) === rowCount));
     button.disabled = game.started;

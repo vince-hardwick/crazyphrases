@@ -985,10 +985,28 @@ h1 {
   width: var(--segment-width);
   border-radius: 6px;
   background: var(--accent);
-  transform: translateX(
-    calc(var(--selected-index, 2) * (100% + var(--segment-gap)))
-  );
+  transform: translateX(calc(2 * (100% + var(--segment-gap))));
   transition: transform 170ms ease;
+}
+
+.segmented-control.is-selected-index-0::before {
+  transform: translateX(calc(0 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-1::before {
+  transform: translateX(calc(1 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-2::before {
+  transform: translateX(calc(2 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-3::before {
+  transform: translateX(calc(3 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-4::before {
+  transform: translateX(calc(4 * (100% + var(--segment-gap))));
 }
 
 .segmented-control button {

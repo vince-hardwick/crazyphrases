@@ -99,9 +99,18 @@ describe("solo browser smoke", () => {
       await page.getByRole("heading", { name: "Phrases per batch", level: 3 }).isVisible(),
       true,
     );
+    await assertMatchingPlainHeadingStyles(
+      page.locator(".control-label"),
+      page.locator("[data-section-progress]"),
+    );
     await page.getByRole("button", { name: "Start new batch" }).click();
     await waitForDice(page);
     await assertProgressEmpty(page);
+    await assertMatchingPlainHeadingStyles(
+      page.locator(".control-label"),
+      page.locator("[data-section-progress]"),
+    );
+    await assertPlainTextWeight(page.locator("[data-section-title]"));
     assert.equal(await page.getByRole("button", { name: "15" }).isDisabled(), true);
     await assertNoHorizontalOverflow(page);
 
@@ -110,7 +119,11 @@ describe("solo browser smoke", () => {
     await fillActiveSection(page, fillState, { verifyRefreshRecovery: true });
     await fillActiveSection(page, fillState);
 
-    await assertTextVisible(page, "Your crazy phrases");
+    await page.getByRole("heading", { name: "Completed phrase batch", level: 2 }).waitFor({
+      state: "visible",
+    });
+    await assertTextHidden(page, "Your crazy phrases");
+    assert.equal(await page.locator("[data-reveal-panel] .section-kicker").count(), 0);
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoFavouriteDom(page);
     await assertNoHorizontalOverflow(page);
@@ -122,11 +135,13 @@ describe("solo browser smoke", () => {
 
     const copyPhraseButton = page.getByRole("button", { name: "Copy phrase 2" });
     await expectFontAwesomeClass(copyPhraseButton, "fa-regular", "fa-copy");
+    assert.equal(await visibleTextContent(copyPhraseButton), "");
     await copyPhraseButton.click();
     assert.equal(await readClipboard(page), copiedPhrase);
 
     const copyAllButton = page.getByRole("button", { name: "Copy all" });
     await expectFontAwesomeClass(copyAllButton, "fa-regular", "fa-copy");
+    await assertBatchActionsAlignedWithPhraseActions(page);
     await copyAllButton.click();
     const batchCopy = normalizeLineEndings(await readClipboard(page));
     const batchLines = batchCopy.split("\n");
@@ -137,12 +152,27 @@ describe("solo browser smoke", () => {
     assert.equal(await page.getByText("Show entries").count(), 0);
     assert.equal(await page.locator("[data-reveal-details]").count(), 0);
 
-    await page.getByRole("button", { name: "Start again" }).click();
-    await assertTextVisible(
-      page,
-      "Start a new batch? Your revealed phrases will be cleared from this browser.",
+    const startAgain = page.getByRole("button", { name: "Start again" });
+    await startAgain.click();
+    const startAgainPopover = page.locator("[data-start-again-confirmation]");
+    await startAgainPopover.waitFor({ state: "visible" });
+    assert.equal(await startAgain.isDisabled(), true);
+    await assertElementsOverlap(startAgain, startAgainPopover);
+    assert.deepEqual(
+      await page
+        .locator("[data-start-again-confirmation-message]")
+        .evaluate((element) => element.innerText.split("\n")),
+      ["Start a new batch?", "Your revealed phrases will be cleared."],
     );
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    const cancelStartAgain = page.getByRole("button", { name: "Cancel" });
+    await expectFontAwesomeClass(cancelStartAgain, "fa-solid", "fa-arrow-left");
+    await cancelStartAgain.click();
+    assert.equal(await startAgain.isDisabled(), false);
+
+    await startAgain.click();
+    const beginBatch = page.getByRole("button", { name: "Begin batch" });
+    await expectFontAwesomeClass(beginBatch, "fa-solid", "fa-table-list");
+    await beginBatch.click();
     await assertRowCountSelected(page, "10");
     await assertTextHidden(page, "10 phrases selected");
     assert.equal(
@@ -214,7 +244,7 @@ describe("solo browser smoke", () => {
     }
 
     assert.equal(nounHits.length, 2);
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     const phrases = await page.locator("[data-phrase-list] li").allTextContents();
     assert.equal(
@@ -374,7 +404,7 @@ describe("solo browser smoke", () => {
       await page.getByRole("button", { name: /Next section|Reveal phrases/ }).click();
     }
 
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     assertNoConsoleErrors();
   });
@@ -655,7 +685,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
 
     const play = page.getByRole("button", { name: "Play", exact: true });
-    await expectFontAwesomeClass(play, "fa-regular", "fa-play");
+    await expectFontAwesomeClass(play, "fa-solid", "fa-play");
     assert.equal(await play.getAttribute("data-tooltip"), "Play");
     assert.equal(await visibleTextContent(play), "");
     assert.ok(
@@ -2661,7 +2691,7 @@ describe("solo browser smoke", () => {
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     const revealedPhrases = await page.locator("[data-phrase-list] li").allTextContents();
     assert.equal(revealedPhrases.length, 10);
 
@@ -2678,7 +2708,7 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
     await openPlayRoute(page);
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.deepEqual(
       await page.locator("[data-phrase-list] li").allTextContents(),
       revealedPhrases,
@@ -3024,7 +3054,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("previews, crops, saves, reloads, and removes an Uploaded Avatar in local test mode", async () => {
+  it("previews, saves, reloads, and removes an Uploaded Avatar in local test mode", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -3059,9 +3089,10 @@ describe("solo browser smoke", () => {
       .locator("[data-account-profile-uploaded-avatar-input]")
       .setInputFiles(createPngFilePayload({ height: 180, width: 300 }));
 
-    await profileRegion
-      .locator("[data-account-profile-uploaded-avatar-image]")
-      .waitFor({ state: "visible" });
+    const uploadedPreview = profileRegion.locator(
+      "[data-account-profile-uploaded-avatar-image]",
+    );
+    await uploadedPreview.waitFor({ state: "visible" });
     assert.equal(
       await profileRegion
         .getByRole("radiogroup", { name: "Avatar" })
@@ -3069,75 +3100,26 @@ describe("solo browser smoke", () => {
         .count(),
       1,
     );
-    await profileRegion
-      .locator("[data-account-profile-crop-editor]")
-      .waitFor({ state: "visible" });
-    assert.equal(
-      await profileRegion.locator("[data-account-profile-crop-box]").count(),
-      1,
-    );
-    assert.equal(
-      await profileRegion.locator("[data-account-profile-crop-marker]").count(),
-      8,
-    );
+    await assertNoAvatarCropper(profileRegion);
     assert.match(
-      await profileRegion
-        .locator("[data-account-profile-crop-editor-image]")
-        .getAttribute("src"),
+      await uploadedPreview.getAttribute("src"),
       /^blob:/,
     );
-    const cropGuide = profileRegion.locator("[data-account-profile-crop-guide]");
     assert.equal(
-      await cropGuide.evaluate((element) => element.classList.contains("is-active")),
-      false,
-    );
-    assert.equal(
-      await profileRegion.getByRole("button", { name: "Zoom in" }).count(),
-      1,
+      await uploadedPreview.evaluate((image) => getComputedStyle(image).objectFit),
+      "cover",
     );
     assert.equal(
-      await profileRegion.getByRole("button", { name: "Reset crop" }).count(),
-      1,
+      await uploadedPreview.evaluate((image) => getComputedStyle(image).transform),
+      "none",
     );
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-scale]").count(), 0);
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-x]").count(), 0);
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-y]").count(), 0);
-    const initialDraftStyle = await profileRegion
-      .locator("[data-account-profile-uploaded-avatar-image]")
-      .getAttribute("style");
-    const cropEditorBox = await profileRegion
-      .locator("[data-account-profile-crop-editor]")
-      .boundingBox();
-    await page.mouse.move(
-      cropEditorBox.x + cropEditorBox.width / 2,
-      cropEditorBox.y + cropEditorBox.height / 2,
-    );
-    await page.mouse.down();
-    await page.mouse.move(
-      cropEditorBox.x + cropEditorBox.width / 2 + 30,
-      cropEditorBox.y + cropEditorBox.height / 2,
-    );
-    await page.mouse.up();
-    assert.notEqual(
+    assert.equal(
       await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("style"),
-      initialDraftStyle,
+        .locator("[data-account-profile-uploaded-avatar-option-image]")
+        .evaluate((image) => getComputedStyle(image).objectFit),
+      "cover",
     );
-    assert.equal(
-      await cropGuide.evaluate((element) => element.classList.contains("is-active")),
-      true,
-    );
-    await profileRegion.getByRole("button", { name: "Reset crop" }).click();
-    assert.match(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("style"),
-      /translate\(0%, 0%\) scale\(1\)/,
-    );
-    const draftPreviewUrl = await profileRegion
-      .locator("[data-account-profile-uploaded-avatar-image]")
-      .getAttribute("src");
+    const draftPreviewUrl = await uploadedPreview.getAttribute("src");
     assert.match(draftPreviewUrl, /^blob:/);
 
     await profileRegion
@@ -3162,9 +3144,7 @@ describe("solo browser smoke", () => {
       .locator("[data-account-profile-uploaded-avatar-input]")
       .setInputFiles(createPngFilePayload({ height: 180, width: 300 }));
 
-    await profileRegion
-      .locator("[data-account-profile-uploaded-avatar-image]")
-      .waitFor({ state: "visible" });
+    await uploadedPreview.waitFor({ state: "visible" });
     assert.equal(
       await profileRegion
         .getByRole("radiogroup", { name: "Avatar" })
@@ -3172,49 +3152,26 @@ describe("solo browser smoke", () => {
         .count(),
       1,
     );
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-scale]").count(), 0);
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-x]").count(), 0);
-    assert.equal(await profileRegion.locator("[data-account-profile-crop-y]").count(), 0);
-    await profileRegion.getByRole("button", { name: "Zoom in" }).click();
+    await assertNoAvatarCropper(profileRegion);
     assert.match(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("style"),
-      /scale\(1\.1\)/,
-    );
-    await profileRegion.locator("[data-account-profile-crop-editor]").focus();
-    await page.keyboard.press("ArrowRight");
-    assert.match(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("style"),
-      /translate\(5%, 0%\) scale\(1\.1\)/,
-    );
-    assert.match(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("src"),
+      await uploadedPreview.getAttribute("src"),
       /^blob:/,
     );
 
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
     assert.match(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .getAttribute("src"),
+      await uploadedPreview.getAttribute("src"),
       /^data:image\/png;base64,/,
     );
     assert.deepEqual(
-      await profileRegion
-        .locator("[data-account-profile-uploaded-avatar-image]")
-        .evaluate((image) => ({
-          naturalHeight: image.naturalHeight,
-          naturalWidth: image.naturalWidth,
-        })),
+      await uploadedPreview.evaluate((image) => ({
+        naturalHeight: image.naturalHeight,
+        naturalWidth: image.naturalWidth,
+      })),
       {
-        naturalHeight: 256,
-        naturalWidth: 256,
+        naturalHeight: 180,
+        naturalWidth: 300,
       },
     );
     const uploadedMetadata = await page.evaluate(() => {
@@ -3240,8 +3197,8 @@ describe("solo browser smoke", () => {
       },
       {
         contentType: "image/png",
-        height: 256,
-        width: 256,
+        height: 180,
+        width: 300,
       },
     );
     assert.match(
@@ -3259,6 +3216,7 @@ describe("solo browser smoke", () => {
         .getAttribute("src"),
       /^data:image\/png;base64,/,
     );
+    await assertNoAvatarCropper(profileRegion);
     assert.deepEqual(
       await profileRegion
         .locator("[data-account-profile-uploaded-avatar-image]")
@@ -3267,8 +3225,8 @@ describe("solo browser smoke", () => {
           naturalWidth: image.naturalWidth,
         })),
       {
-        naturalHeight: 256,
-        naturalWidth: 256,
+        naturalHeight: 180,
+        naturalWidth: 300,
       },
     );
 
@@ -3700,7 +3658,7 @@ describe("solo browser smoke", () => {
     await submitMultiplayerSection(page, "brisk");
     await assertTextVisible(page, "Batches completed");
     await page.getByRole("button", { name: "Reveal phrases" }).click();
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -3728,7 +3686,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Read");
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Reveal phrases" }).click();
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
 
     assertNoConsoleErrors();
   });
@@ -4890,7 +4848,7 @@ describe("solo browser smoke", () => {
     await fillActiveSection(page, fillState);
     await fillActiveSection(page, fillState);
 
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
 
@@ -5102,7 +5060,7 @@ describe("solo browser smoke", () => {
 
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
 
@@ -5111,16 +5069,14 @@ describe("solo browser smoke", () => {
     await assertRowCountSelected(page, "15");
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
-    await assertTextVisible(page, "Your crazy phrases");
+    await assertTextVisible(page, "Completed phrase batch");
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
     await assertNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Start again" }).click();
-    await assertTextVisible(
-      page,
-      "Start a new batch? Your revealed phrases will be cleared from this browser.",
-    );
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "Start a new batch?");
+    await assertTextVisible(page, "Your revealed phrases will be cleared.");
+    await page.getByRole("button", { name: "Begin batch" }).click();
     await assertRowCountSelected(page, "10");
     await assertTextHidden(page, "10 phrases selected");
     await assertNoFavouritesPanelDom(page);
@@ -5160,7 +5116,7 @@ describe("solo browser smoke", () => {
     await assertRowCountSelected(page, "15");
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
-    assert.equal(await page.getByText("Your crazy phrases").isVisible(), false);
+    assert.equal(await page.getByText("Completed phrase batch").isVisible(), false);
     assert.equal(await page.getByRole("button", { name: "Start new batch" }).isVisible(), true);
 
     await signOutFromAccountMenu(page);
@@ -5287,11 +5243,9 @@ describe("solo browser smoke", () => {
     assert.equal(await phraseFavouriteButton.isDisabled(), true);
 
     await page.getByRole("button", { name: "Start again" }).click();
-    await assertTextVisible(
-      page,
-      "Start a new batch? Your revealed phrases will be cleared from this browser.",
-    );
-    await page.getByRole("button", { name: "Start new batch" }).click();
+    await assertTextVisible(page, "Start a new batch?");
+    await assertTextVisible(page, "Your revealed phrases will be cleared.");
+    await page.getByRole("button", { name: "Begin batch" }).click();
     await assertRowCountSelected(page, "10");
     await page.waitForTimeout(700);
     await assertTextHidden(page, "Phrase favourite saved.");
@@ -6767,6 +6721,18 @@ async function assertNoProfileEditorDom(page) {
   assert.equal(await page.locator("[data-account-profile-crop-y]").count(), 0);
 }
 
+async function assertNoAvatarCropper(scope) {
+  assert.equal(await scope.locator("[data-account-profile-crop-controls]").count(), 0);
+  assert.equal(await scope.locator("[data-account-profile-crop-editor]").count(), 0);
+  assert.equal(await scope.locator("[data-account-profile-crop-box]").count(), 0);
+  assert.equal(await scope.locator("[data-account-profile-crop-editor-image]").count(), 0);
+  assert.equal(await scope.locator("[data-account-profile-crop-guide]").count(), 0);
+  assert.equal(await scope.locator("[data-account-profile-crop-marker]").count(), 0);
+  assert.equal(await scope.getByRole("button", { name: "Zoom in" }).count(), 0);
+  assert.equal(await scope.getByRole("button", { name: "Zoom out" }).count(), 0);
+  assert.equal(await scope.getByRole("button", { name: "Reset crop" }).count(), 0);
+}
+
 async function assertNoNotificationDom(page) {
   assert.equal(
     await page
@@ -6913,6 +6879,88 @@ async function assertRowCountHighlightAligned(page, rowCount) {
   assert.ok(
     Math.abs(metrics.highlightWidth - metrics.buttonWidth) <= 1,
     `Expected ${metrics.selectedRowCount} highlight width ${metrics.highlightWidth} to match button width ${metrics.buttonWidth}`,
+  );
+}
+
+async function assertPlainTextWeight(locator) {
+  const fontWeight = await locator.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontWeight),
+  );
+  assert.ok(fontWeight <= 500, `Expected plain font weight, got ${fontWeight}`);
+}
+
+async function assertMatchingPlainHeadingStyles(first, second) {
+  const [firstStyle, secondStyle] = await Promise.all(
+    [first, second].map((locator) =>
+      locator.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          fontSize: Number.parseFloat(style.fontSize),
+          fontWeight: Number.parseFloat(style.fontWeight),
+        };
+      }),
+    ),
+  );
+
+  assert.ok(
+    firstStyle.fontWeight <= 500,
+    `Expected first heading font weight to be plain, got ${firstStyle.fontWeight}`,
+  );
+  assert.ok(
+    secondStyle.fontWeight <= 500,
+    `Expected second heading font weight to be plain, got ${secondStyle.fontWeight}`,
+  );
+  assert.ok(
+    Math.abs(firstStyle.fontSize - secondStyle.fontSize) <= 1,
+    `Expected heading sizes to match, got ${firstStyle.fontSize} and ${secondStyle.fontSize}`,
+  );
+}
+
+async function assertElementsOverlap(first, second) {
+  const [firstBox, secondBox] = await Promise.all([
+    first.boundingBox(),
+    second.boundingBox(),
+  ]);
+  assert.ok(firstBox, "Expected first element to have a bounding box");
+  assert.ok(secondBox, "Expected second element to have a bounding box");
+  const overlaps =
+    firstBox.x < secondBox.x + secondBox.width &&
+    firstBox.x + firstBox.width > secondBox.x &&
+    firstBox.y < secondBox.y + secondBox.height &&
+    firstBox.y + firstBox.height > secondBox.y;
+
+  assert.equal(overlaps, true);
+}
+
+async function assertBatchActionsAlignedWithPhraseActions(page) {
+  const metrics = await page.evaluate(() => {
+    const revealActions = document.querySelector(".reveal-actions");
+    const phraseActions = document.querySelector("[data-phrase-list] li .phrase-actions");
+    const batchActionButtons = [
+      ...document.querySelectorAll(
+        ".reveal-actions [data-copy-all-button], .reveal-actions [data-toggle-batch-favourite]",
+      ),
+    ];
+
+    if (!revealActions || !phraseActions || batchActionButtons.length === 0) {
+      return null;
+    }
+
+    const batchRight = Math.max(
+      ...batchActionButtons.map((button) => button.getBoundingClientRect().right),
+    );
+    const phraseRect = phraseActions.getBoundingClientRect();
+
+    return {
+      batchRight,
+      phraseRight: phraseRect.right,
+    };
+  });
+
+  assert.ok(metrics, "Expected reveal and phrase action groups to be present");
+  assert.ok(
+    Math.abs(metrics.batchRight - metrics.phraseRight) <= 1,
+    `Expected batch actions right ${metrics.batchRight} to align with phrase actions right ${metrics.phraseRight}`,
   );
 }
 

@@ -472,7 +472,7 @@ action directly, with meaning carried by the accessible name, familiar icon, hit
 and subsequent state or status feedback.
 
 Use Font Awesome Classic Regular `copy` for copy actions, `share-nodes` for share actions,
-`table-list` for batch actions or batch disclosure affordances, `envelope` for
+`arrow-left` for returning from an in-place confirmation, `table-list` for batch actions or batch disclosure affordances, `envelope` for
 creating or sending a Game Invite, `envelope-open-text` for opening an incoming
 invite, `envelope-circle-check` for accepting an incoming invite, and
 `rectangle-xmark` for rejecting or declining an incoming invite. The dedicated
@@ -488,7 +488,7 @@ name and uses default font weight.
 The anonymous account sign-in popover separates provider sign-in from email sign-in with
 subtle section titles such as `Sign-in via` and `or using email`.
 Primary game-flow and confirmation actions, such as `Start new batch`, `Reveal phrases`,
-`Keep playing`, `Discard entries`, and `View phrases`, remain
+`Keep playing`, `Discard entries`, `Cancel`, and `Begin batch`, remain
 text-labelled buttons. When one of these text-labelled controls has an assigned action
 icon, the icon precedes the text and the accessible name remains the action label rather
 than the icon name.
@@ -517,7 +517,7 @@ lookup key is derived from Supabase Auth email and must not be presented as publ
 identity or a normal editable profile text field unless a later accepted design
 explicitly adds Auth-email change behaviour. Anonymous or signed-out sessions that
 request `#/settings` must see a sign-in-required gate and must not mount Settings,
-Profile, Avatar upload, crop, or hidden profile-input DOM.
+Profile, Avatar upload, or hidden profile-input DOM.
 
 The Settings profile editor is mounted only while the signed-in participant is on
 `#/settings`; leaving the route removes the editor DOM without clearing the current
@@ -828,11 +828,15 @@ returns to phrase-count selection for a new local game with a fresh randomized s
 order and empty entries. If the current game has entered values, the action asks for
 confirmation through in-app UI rather than a browser-native `window.confirm` dialog.
 During entry, the confirmation uses abandonment language: "Keep playing" or "Discard
-entries". After reveal, the confirmation uses new-batch language: "View phrases" or
-"Start new batch".
-The `Start again` confirmation appears as a popover that overlays the current page
-instead of pushing the revealed batch or entry controls down. The explanatory copy uses
-normal body weight; the confirmation button labels remain bold.
+entries". After reveal, the confirmation uses new-batch language: "Cancel" or "Begin
+batch". The explanatory text is split across two lines: "Start a new batch?" and "Your
+revealed phrases will be cleared." The `Cancel` action uses a Font Awesome `arrow-left`
+icon and returns to the revealed phrases; the `Begin batch` action uses `table-list` and
+returns to phrase-count selection for a new batch.
+The `Start again` confirmation appears as a popover over the `Start again` button
+instead of pushing the revealed batch or entry controls down. The `Start again` button is
+disabled while the popover is visible. The explanatory copy uses normal body weight; the
+confirmation button labels remain bold.
 
 The MVP default template renders each phrase by concatenating the three entries with
 spaces, trimming whitespace, collapsing extra spaces, and capitalizing the first
@@ -1191,67 +1195,34 @@ ownership metadata, and direct browser upload behaviour. Hosted validation remai
 approval-gated and should run in dev or test first; production uploaded-avatar write
 smoke requires separate explicit approval.
 
-The #63 Uploaded Avatar slice did not include crop positioning, crop metadata, or
-derived cropped-image generation. That deferred scope is now implemented under #64 using
-a browser-generated derived cropped image. The richer visual avatar cropper is
-implemented under #79 without changing the derived-image storage authority.
+The current Uploaded Avatar model is original-file storage with cover-fit rendering.
+After a valid file is selected, the Profile editor shows a local preview and any Uploaded
+Avatar option or saved Avatar surface fills its circular container with CSS cover fit.
+The app does not mount crop editor DOM, crop-box markers, crop guide overlays, zoom
+controls, reset-crop controls, hidden crop inputs, or a separate avatar-crop helper
+asset.
 
-Circular mask cropping under #64 saves a derived cropped image as the active Uploaded
-Avatar object. The selected source file is local draft input for validation, crop
-preview, and browser-side crop generation only; #64 does not upload or retain the
-uncropped original as the live Avatar object.
+Saving an Uploaded Avatar uploads the original validated file as the live Avatar object.
+The object path uses the accepted opaque `uploaded/{uuid}.{extension}` convention, with
+the extension derived from the original content type. Ownership metadata records the
+original file content type, byte size, width, and height. The save path does not resize,
+crop, transcode, strip metadata, or generate a browser-derived square PNG.
 
-The #64 derived cropped image is a fixed square PNG with a 256 x 256 target. It uses the
-existing `avatars` bucket, opaque `uploaded/{uuid}.png` object path convention,
-owner-scoped metadata, and Uploaded Avatar descriptor. Circular display remains a
-rendering rule around the saved square crop.
+Previously saved derived-crop Uploaded Avatar objects remain valid historical Uploaded
+Avatar objects. Current Avatar surfaces render them through the same cover-fit rule; the
+app does not reconstruct or expose old crop state.
 
-Crop position and scale are draft Profile-editor state only. Save/reload correctness
-comes from the derived image bytes, not from persisted crop metadata. The #79 visual
-cropper replaces the #64 numerical controls with an inline editor inside the existing
-Profile panel after a valid Uploaded Avatar file is selected; it keeps the small
-circular Avatar preview as the result preview and does not introduce a modal or
-full-screen crop lifecycle. The crop box remains a fixed 1:1 target for the 256 x 256
-derived PNG; users move the image under the target and adjust scale through explicit
-zoom controls rather than resizing the crop box. New valid images default to
-centre-cover at the minimum zoom, without face detection or focal-point guessing. The
-fixed crop boundary and crop-box markers remain visible while editing, while the
-rule-of-thirds grid and centre guides appear during and briefly after drag, keyboard
-nudge, or zoom changes rather than being permanently dominant. The editor must prevent
-blank or transparent space inside the crop box by keeping zoom at or above the cover
-minimum and clamping panning at the image edges. Crop edits update the draft circular
-preview immediately, but the existing Save profile action remains the only action that
-uploads the derived image and saves the Account Profile; there is no separate Apply crop
-action. A Reset crop control returns the current valid image to centre-cover at minimum
-zoom, affects only local draft crop state, and updates the draft circular preview
-immediately. Crop generation failure uses the message "Avatar could not be cropped. Try
-again."
-
-The #79 visual cropper supports keyboard operation directly on the crop editor rather
-than keeping the #64 numeric controls as the primary accessibility fallback. The crop
-editor is focusable, arrow keys nudge the image, Shift plus arrow keys nudge further,
-and plus/minus keys adjust zoom. Explicit zoom controls are keyboard-accessible buttons.
-Touch users can drag the image to reposition it and use visible zoom controls to scale
-it. Pinch-to-zoom is optional enhancement only, not a required path for mobile
-usability.
-
-The #79 visual cropper is implemented directly in the existing static app code rather
-than using a generic third-party cropper dependency. This keeps the cropper constrained
-to the accepted fixed-square target, draft pan and zoom state, guide overlay, reset
-control, keyboard operation, and save-time derived PNG generation model.
-
-Future cropper changes that preserve the existing Storage upload behaviour, Account
-Profile persistence, Supabase schema and policies, and derived-image save contract
-should use local automated tests plus a visible local browser smoke of the signed-in
-Profile editor rather than requiring hosted Supabase write validation. Hosted dev or
-test validation becomes required if implementation changes Storage upload behaviour,
-Account Profile persistence, Supabase schema or policies, or the derived-image save
-contract. Production Uploaded Avatar write smoke remains separately approval-gated.
+Future work that reintroduces crop controls, server-side processing, metadata stripping,
+derivative generation, or transcoding requires a separate issue and ADR or an explicit
+amendment to ADR 0025. Hosted dev or test validation becomes required if implementation
+changes Storage upload behaviour, Account Profile persistence, Supabase schema or
+policies, or production Uploaded Avatar write paths. Production Uploaded Avatar write
+smoke remains separately approval-gated.
 
 The first Uploaded Avatar slice rendered a basic Avatar preview in the profile editor
 for both Built-in Avatars and Uploaded Avatars. The Settings Avatar gallery is now the
-primary choice UI, while the selected Avatar preview and crop editor remain the result
-and adjustment surfaces. Existing participant or profile identity surfaces should
+primary choice UI, while the selected Avatar preview and gallery Uploaded Avatar option
+remain result surfaces. Existing participant or profile identity surfaces should
 consume the Avatar descriptor where they already show avatar identity. It must not add
 new public profile pages, friend cards, leaderboard identity, or broader social
 surfaces.

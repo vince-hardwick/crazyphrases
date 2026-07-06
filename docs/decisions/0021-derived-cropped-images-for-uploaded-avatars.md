@@ -2,11 +2,12 @@
 
 ## Status
 
-Accepted. The owner selected the derived cropped image model for circular
-Uploaded Avatar cropping on 2026-06-25. GitHub issue #64 was implemented through
-PR #78 and promoted through production on 2026-06-25. The post-MVP visual
-cropper UX follow-up was implemented through GitHub issue #79 and PR #92, then
-promoted through production on 2026-06-25.
+Superseded by ADR 0025 for current Uploaded Avatar storage and rendering
+behaviour as of 2026-07-06. The owner selected the derived cropped image model
+for circular Uploaded Avatar cropping on 2026-06-25. GitHub issue #64 was
+implemented through PR #78 and promoted through production on 2026-06-25. The
+post-MVP visual cropper UX follow-up was implemented through GitHub issue #79
+and PR #92, then promoted through production on 2026-06-25.
 
 ## Context
 

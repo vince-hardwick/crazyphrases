@@ -494,7 +494,7 @@ actions are icon-first controls whose tooltip meaning matches their accessible a
 name and uses default font weight.
 The anonymous account sign-in popover separates provider sign-in from email sign-in with
 subtle section titles such as `Sign-in via` and `or using email`.
-Primary game-flow and confirmation actions, such as `Start new batch`, `Reveal phrases`,
+Primary game-flow and confirmation actions, such as `Start batch`, `Reveal phrases`,
 `Keep playing`, `Discard entries`, `Cancel`, and `Begin batch`, remain
 text-labelled buttons. When one of these text-labelled controls has an assigned action
 icon, the icon precedes the text and the accessible name remains the action label rather
@@ -668,7 +668,7 @@ interaction model. Avoid literal skeuomorphic folded-paper UI that harms mobile
 usability or entry speed.
 
 Folded-paper visual hints must not intersect setup controls. In the anonymous solo MVP
-setup state before `Start new batch`, the phrase-count and start controls should appear
+setup state before `Start batch`, the phrase-count and start controls should appear
 cleanly without column guide lines running underneath or through them.
 
 ### Onboarding

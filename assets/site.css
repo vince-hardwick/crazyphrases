@@ -186,13 +186,10 @@ body {
 
 .play-menu-item:hover,
 .play-menu-item:focus-visible,
-.play-menu-item[aria-current="page"] {
+.play-menu-item[aria-current="page"],
+.account-menu-item:hover,
+.account-menu-item:focus-visible {
   background: var(--surface-soft);
-}
-
-.play-menu-item:focus-visible {
-  outline: 4px solid var(--ring);
-  outline-offset: 2px;
 }
 
 .primary-nav-icon-link {
@@ -296,10 +293,6 @@ body {
   font-weight: 400;
   text-align: left;
   cursor: pointer;
-}
-
-.account-menu-item:hover {
-  background: var(--surface-soft);
 }
 
 .account-shell.is-anonymous .account-sign-in-panel {
@@ -1117,17 +1110,33 @@ h1 {
 .entry-row input:focus-visible,
 .dice-button:focus-visible,
 .icon-button:focus-visible,
+.primary-nav-link:focus-visible,
+.play-menu-item:focus-visible,
 .account-profile-avatar-option:focus-visible,
 .account-profile-avatar-upload-button:focus-visible,
 .account-menu-item:focus-visible,
 .notification-item:focus-visible,
 .notification-mark-read:focus-visible,
+.notification-mark-all-read:focus-visible,
 .text-button:focus-visible,
 .favourite-row:focus-visible,
+.favourites-tab:focus-visible,
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .danger-button:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.primary-nav-link:focus,
+.play-menu-item:focus,
+.account-menu-item:focus,
+.notification-mark-all-read:focus,
+.favourites-tab:focus,
+.primary-button:focus,
+.secondary-button:focus,
+.danger-button:focus {
   outline: 4px solid var(--ring);
   outline-offset: 2px;
 }
@@ -1339,7 +1348,8 @@ h1 {
 }
 
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

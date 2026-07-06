@@ -656,6 +656,57 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("uses visible focus treatment across equivalent interaction families", async () => {
+    if (!staticServer) {
+      staticServer = await startStaticServer();
+    }
+    if (!browser) {
+      browser = await chromium.launch();
+    }
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 700 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertVisibleFocusRing(page.getByRole("button", { name: "Enable dark mode" }));
+    await assertVisibleFocusRing(page.getByRole("button", { name: "Start batch" }));
+    await assertVisibleFocusRing(page.getByRole("button", { name: "10" }));
+
+    await signInWithLocalTestAccount(page);
+    await assertVisibleFocusRing(page.getByRole("link", { name: "Favourites" }));
+
+    const playButton = page.getByRole("button", { name: "Play", exact: true });
+    await playButton.click();
+    await assertVisibleFocusRing(page.getByRole("menuitem", { name: "Solo play" }));
+
+    await page.keyboard.press("Escape");
+    await openFavouritesRoute(page);
+    await assertVisibleFocusRing(page.getByRole("tab", { name: "Batches" }));
+
+    await openSettingsRouteFromAccountMenu(page);
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    await assertVisibleFocusRing(settingsPanel.getByRole("button", { name: "Save profile" }));
+    await assertVisibleFocusRing(
+      settingsPanel.getByRole("button", { name: "Reset profile changes" }),
+    );
+
+    const accountMenuButton = page.getByRole("button", {
+      name: LOCAL_TEST_PROFILE_TOOLTIP,
+    });
+    await accountMenuButton.click();
+    const accountMenu = page.getByRole("menu", { name: "Account menu" });
+    await accountMenu.waitFor({ state: "visible" });
+    await assertVisibleFocusRing(accountMenu.getByRole("menuitem", { name: "Settings" }));
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Settings" }));
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Sign out" }));
+
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
   it("lets anonymous users toggle and reload a local dark theme from top nav", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -7167,6 +7218,25 @@ async function assertMatchingTextStyle(first, second) {
   const secondStyle = await readTextStyle(second);
 
   assert.deepEqual(secondStyle, firstStyle);
+}
+
+async function assertVisibleFocusRing(locator) {
+  await locator.focus();
+  const focusStyle = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      outlineColor: style.outlineColor,
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+    };
+  });
+
+  assert.equal(focusStyle.outlineStyle, "solid");
+  assert.ok(
+    focusStyle.outlineWidth >= 4,
+    `Expected at least a 4px focus ring, got ${focusStyle.outlineWidth}px`,
+  );
+  assert.notEqual(focusStyle.outlineColor, "rgba(0, 0, 0, 0)");
 }
 
 async function assertElementsOverlap(first, second) {

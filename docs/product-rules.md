@@ -22,6 +22,11 @@ The app header should not duplicate the browser's domain display when the main t
 already identifies the app. In the MVP game flow, do not render `crazyphrases.com` as a
 separate header label above the Crazy Phrases title.
 
+The app header uses `assets/img/crazy_phrases_homepage_logo.png` as the visible
+top-left Crazy Phrases brand image. The logo links to the Solo play home route,
+keeps the accessible page title as `Crazy Phrases`, and is referenced from
+`index.html` with the deployed asset-version query string.
+
 MVP setup, entry, and reveal controls should avoid repeating selected row-count text
 when the row-count selector already communicates the selected option. The setup action
 area should not add status copy such as "10 phrases selected"; the entry action area
@@ -798,8 +803,9 @@ behaviour should be sensible, but custom keyboard shortcuts are deferred.
 
 ### Template mode support
 
-MVP play uses the default template only. Custom template creation, publishing, remixing,
-and discovery are deferred.
+MVP play uses the Default Template only. Custom template creation, publishing,
+remixing, and discovery are outside MVP scope and remain deferred to post-MVP
+product design unless the owner explicitly reopens that boundary.
 
 Templates declare the participant counts and game modes they support. Game setup only
 offers modes supported by the selected template.

@@ -406,9 +406,9 @@ default font weight. This applies to `Play`, `Favourites`, `Notifications`, `How
 play`, account sign-in, the signed-in account affordance, `Settings`, `Sign out`, and
 new icon-only header controls added by later slices. Touch activation performs the action
 directly rather than requiring a tooltip-preview tap.
-Tooltip text remains on a single line rather than wrapping. When the anonymous account
-sign-in popover opens, the account sign-in control's tooltip is suppressed so it does not
-compete with the popover.
+Tooltip text remains on a single line rather than wrapping. Header tooltips render above
+open top-nav menus and popovers. When the anonymous account sign-in popover opens, the
+account sign-in control's tooltip is suppressed so it does not compete with the popover.
 
 #### Route model and account gates
 
@@ -670,6 +670,9 @@ usability or entry speed.
 Folded-paper visual hints must not intersect setup controls. In the anonymous solo MVP
 setup state before `Start batch`, the phrase-count and start controls should appear
 cleanly without column guide lines running underneath or through them.
+The setup action that starts a batch and the in-progress `Start again` action that
+replaces it use matching height, font colour, background colour, and hover treatment so
+the control transition does not create a visual jump.
 
 ### Onboarding
 

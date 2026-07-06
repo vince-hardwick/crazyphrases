@@ -534,6 +534,39 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("renders Start batch and Start again as matching setup actions", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 700 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+
+    const startBatch = page.getByRole("button", { name: "Start batch" });
+    const startBatchDefault = await readButtonVisualState(startBatch);
+    await startBatch.hover();
+    await waitForCssTransition(startBatch);
+    const startBatchHover = await readButtonVisualState(startBatch);
+
+    await startBatch.click();
+    const startAgain = page.getByRole("button", { name: "Start again" });
+    await startAgain.waitFor({ state: "visible" });
+    const startAgainDefault = await readButtonVisualState(startAgain);
+    await startAgain.hover();
+    await waitForCssTransition(startAgain);
+    const startAgainHover = await readButtonVisualState(startAgain);
+
+    assert.deepEqual(startAgainDefault, startBatchDefault);
+    assert.deepEqual(startAgainHover, startBatchHover);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("lets anonymous users toggle and reload a local dark theme from top nav", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -986,6 +1019,7 @@ describe("solo browser smoke", () => {
 
     const accountMenu = page.getByRole("menu", { name: "Account menu" });
     await accountMenu.waitFor({ state: "visible" });
+    await expectHeaderTooltipAbovePopover(help, accountMenu, "How to play");
     await expectDefaultTooltip(
       accountMenu.getByRole("menuitem", { name: "Settings" }),
       "Settings",
@@ -5981,6 +6015,55 @@ async function expectVisibleHeaderTooltip(locator, label) {
   assert.ok(tooltip.opacity > 0.9);
   assert.notEqual(tooltip.overflow, "hidden");
   assert.notEqual(tooltip.top, "auto");
+}
+
+async function expectHeaderTooltipAbovePopover(locator, popover, label) {
+  await locator.hover();
+  await locator.evaluate(
+    () => new Promise((resolve) => window.setTimeout(resolve, 160)),
+  );
+  const tooltip = await locator.evaluate((element) => {
+    const style = getComputedStyle(element, "::after");
+    return {
+      content: style.content,
+      opacity: Number(style.opacity),
+      zIndex: Number(style.zIndex),
+    };
+  });
+  const popoverZIndex = await popover.evaluate((element) =>
+    Number(getComputedStyle(element).zIndex),
+  );
+
+  assert.equal(tooltip.content.includes(label), true);
+  assert.ok(tooltip.opacity > 0.9);
+  assert.ok(
+    tooltip.zIndex > popoverZIndex,
+    `Expected tooltip z-index ${tooltip.zIndex} to be above popover z-index ${popoverZIndex}`,
+  );
+}
+
+async function readButtonVisualState(locator) {
+  const box = await locator.boundingBox();
+  assert.ok(box, "Expected button to have a visible bounding box");
+
+  const styles = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      color: style.color,
+    };
+  });
+
+  return {
+    height: Math.round(box.height),
+    ...styles,
+  };
+}
+
+async function waitForCssTransition(locator) {
+  await locator.evaluate(
+    () => new Promise((resolve) => window.setTimeout(resolve, 180)),
+  );
 }
 
 async function expectFavouriteToggleState(locator, { pressed, style }) {

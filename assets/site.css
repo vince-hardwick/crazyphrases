@@ -1198,7 +1198,7 @@ h1 {
   content: none;
   position: absolute;
   inset: auto auto calc(100% + 8px) 50%;
-  z-index: 20;
+  z-index: 40;
   width: max-content;
   max-width: calc(100vw - 32px);
   border-radius: 6px;

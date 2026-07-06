@@ -24,10 +24,11 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0018-dashboard-triggered-nudge-generation.md` - database-owned in-app nudge generation during dashboard refresh.
 - `0019-uploaded-avatar-storage-authority.md` - Supabase Storage authority for Uploaded Avatar image bytes and hosted storage mutation boundaries.
 - `0020-font-awesome-kit-for-built-in-avatars.md` - Font Awesome Kit integration boundary for Built-in Avatar visuals.
-- `0021-derived-cropped-images-for-uploaded-avatars.md` - Derived-image storage authority for circular Uploaded Avatar cropping.
+- `0021-derived-cropped-images-for-uploaded-avatars.md` - superseded derived-image storage authority for circular Uploaded Avatar cropping.
 - `0022-branded-supabase-auth-deferral.md` - documented deferral and accepted risk for branded hosted Auth trust.
 - `0023-private-email-lookup-and-gamer-tag.md` - private email lookup and Gamer Tag account identity boundary.
 - `0024-versioned-static-word-bank-shards.md` - immutable static Word Bank Shards and manifest-based refresh boundary.
+- `0025-original-uploaded-avatar-cover-fit.md` - current original-file Uploaded Avatar storage and cover-fit rendering boundary.
 
 ## Status Values
 

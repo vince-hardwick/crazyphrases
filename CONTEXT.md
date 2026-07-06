@@ -251,13 +251,9 @@ _Avoid_: Preset key, icon name, emoji name
 An Avatar supplied by the account holder as an uploaded image.
 _Avoid_: Profile picture, social profile photo
 
-**Avatar Crop Box**:
-The fixed square target used to choose which part of an Uploaded Avatar source image becomes the saved Avatar.
-_Avoid_: Resize frame, selection area
-
-**Avatar Crop Guide Overlay**:
-Temporary alignment guides shown inside the Avatar crop editor while a participant is positioning or zooming an Uploaded Avatar.
-_Avoid_: Decoration, permanent grid
+**Avatar Cover Fit**:
+The rendering rule that makes an Uploaded Avatar image fill its Avatar container while preserving image aspect ratio. Cover fit may visually hide image edges but does not change the stored Uploaded Avatar object.
+_Avoid_: Crop editor, crop box, saved crop
 
 **Lookup Key**:
 The value entered into signed-in Account lookup. It may be a full email address already known to the participant or a Gamer Tag; lookup results show Gamer Tag and Avatar, not the email address.

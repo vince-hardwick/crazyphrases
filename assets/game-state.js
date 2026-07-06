@@ -192,10 +192,11 @@ export function needsStartAgainConfirmation(game) {
 export function getStartAgainConfirmation(game) {
   if (game.revealed) {
     return {
-      message:
-        "Start a new batch? Your revealed phrases will be cleared from this browser.",
-      cancelLabel: "View phrases",
-      confirmLabel: "Start new batch",
+      message: "Start a new batch?\nYour revealed phrases will be cleared.",
+      cancelIcon: "arrow-left",
+      cancelLabel: "Cancel",
+      confirmIcon: "table-list",
+      confirmLabel: "Begin batch",
     };
   }
 

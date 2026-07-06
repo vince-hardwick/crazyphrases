@@ -7213,13 +7213,6 @@ async function readTextStyle(locator) {
   });
 }
 
-async function assertMatchingTextStyle(first, second) {
-  const firstStyle = await readTextStyle(first);
-  const secondStyle = await readTextStyle(second);
-
-  assert.deepEqual(secondStyle, firstStyle);
-}
-
 async function assertVisibleFocusRing(locator) {
   const page = locator.page();
   await locator.waitFor({ state: "visible" });

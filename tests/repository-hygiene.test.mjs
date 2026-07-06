@@ -54,7 +54,7 @@ describe("repository hygiene", () => {
       { name: "style attribute", pattern: /<[^>]*\sstyle\s*=/i },
       {
         name: "direct element.style mutation",
-        pattern: /\.style(?:\.|\[)/,
+        pattern: /\.style(?:\s*=|\.|\[)/,
       },
       {
         name: "style attribute mutation",

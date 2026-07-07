@@ -2235,7 +2235,9 @@ function getLocalTestPendingGameSeedCount() {
     "testPendingGame",
   );
 
-  return ["history-pages", "history-load-more-fails"].includes(testMode)
+  return ["history-pages", "history-load-more-fails", "history-fails"].includes(
+    testMode,
+  )
     ? 21
     : 0;
 }
@@ -3186,17 +3188,19 @@ function renderMultiplayerDashboard() {
     items: multiplayerDashboard.completedBatches,
     renderItem: renderCompletedMultiplayerBatch,
   });
-  const historyButtonActions = document.createElement("div");
-  historyButtonActions.className = "multiplayer-bucket-actions";
-  const historyButton = document.createElement("button");
-  historyButton.className = "secondary-button";
-  historyButton.type = "button";
-  historyButton.textContent = "View all";
-  historyButton.addEventListener("click", () => {
-    void openCompletedMultiplayerHistory();
-  });
-  historyButtonActions.append(historyButton);
-  completedBucket.append(historyButtonActions);
+  if (multiplayerDashboard.hasMoreCompletedBatches) {
+    const historyButtonActions = document.createElement("div");
+    historyButtonActions.className = "multiplayer-bucket-actions";
+    const historyButton = document.createElement("button");
+    historyButton.className = "secondary-button";
+    historyButton.type = "button";
+    historyButton.textContent = "View all";
+    historyButton.addEventListener("click", () => {
+      void openCompletedMultiplayerHistory();
+    });
+    historyButtonActions.append(historyButton);
+    completedBucket.append(historyButtonActions);
+  }
 
   dashboard.replaceChildren(
     renderMultiplayerBucket({
@@ -4227,7 +4231,15 @@ async function loadMultiplayerDashboard({ accountId = accountShell.accountId } =
     return false;
   }
 
-  multiplayerDashboard = dashboard;
+  const dashboardWithHistoryFlag = await resolveCompletedDashboardHistoryFlag({
+    accountId,
+    dashboard,
+  });
+  if (!isCurrentAccountSession(accountId)) {
+    return false;
+  }
+
+  multiplayerDashboard = dashboardWithHistoryFlag;
   inAppNotifications = notifications;
   return true;
 }
@@ -4237,7 +4249,37 @@ function createEmptyMultiplayerDashboard() {
     awaitingYourEntries: [],
     awaitingOtherPlayerEntries: [],
     completedBatches: [],
+    hasMoreCompletedBatches: false,
   };
+}
+
+async function resolveCompletedDashboardHistoryFlag({ accountId, dashboard }) {
+  if (typeof dashboard.hasMoreCompletedBatches === "boolean") {
+    return dashboard;
+  }
+
+  if (dashboard.completedBatches.length < 5) {
+    return {
+      ...dashboard,
+      hasMoreCompletedBatches: false,
+    };
+  }
+
+  try {
+    const history = await pendingGameRepository.listCompletedMultiplayerHistory({
+      accountId,
+      pageSize: 6,
+    });
+    return {
+      ...dashboard,
+      hasMoreCompletedBatches: history.batches.length > 5 || Boolean(history.hasMore),
+    };
+  } catch {
+    return {
+      ...dashboard,
+      hasMoreCompletedBatches: false,
+    };
+  }
 }
 
 function createEmptyCompletedMultiplayerHistory() {

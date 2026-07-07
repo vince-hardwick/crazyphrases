@@ -713,6 +713,8 @@ describe("Pending Game repository", () => {
 
     assert.equal(completedForCreator.completedBatches.length, 1);
     assert.equal(completedForInvitee.completedBatches.length, 1);
+    assert.equal(completedForCreator.hasMoreCompletedBatches, false);
+    assert.equal(completedForInvitee.hasMoreCompletedBatches, false);
     assert.equal(completedForCreator.completedBatches[0].revealed, false);
     assert.equal(completedForInvitee.completedBatches[0].revealed, false);
 
@@ -848,6 +850,7 @@ describe("Pending Game repository", () => {
         "started-game-3",
       ],
     );
+    assert.equal(dashboard.hasMoreCompletedBatches, true);
   });
 
   it("lists an empty completed multiplayer history page", async () => {
@@ -1075,6 +1078,7 @@ describe("Pending Game repository", () => {
         awaitingYourEntries: [],
         awaitingOtherPlayerEntries: [],
         completedBatches: [],
+        hasMoreCompletedBatches: false,
       },
     );
     assert.deepEqual(
@@ -1085,6 +1089,7 @@ describe("Pending Game repository", () => {
         awaitingYourEntries: [],
         awaitingOtherPlayerEntries: [],
         completedBatches: [],
+        hasMoreCompletedBatches: false,
       },
     );
     assert.deepEqual(

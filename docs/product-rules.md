@@ -59,14 +59,22 @@ the dropdown rather than renaming the top-level control to the active mode.
 Selecting `Multiplayer` from the `Play` menu opens a single signed-in Multiplayer
 destination. That destination owns invite creation, active multiplayer dashboard
 buckets, and the completed-history entry point. Completed multiplayer history remains
-reachable from the `Completed batches` dashboard bucket; it should not become a separate
-primary navigation item or account-menu item in the first signed-in navigation shape.
+reachable from the `Completed batches` dashboard bucket only when the Account has more
+than five completed multiplayer batches; it should not become a separate primary
+navigation item or account-menu item in the first signed-in navigation shape.
 The Solo destination uses the route heading `Solo play`. The Multiplayer destination
 uses the route heading `Multiplayer`. Within that route, `Game invitations`,
 `Awaiting your entries`, `Awaiting other player entries`, and `Completed batches` are
 peer subsection headings. The invite form uses an invite lookup label of
 `Email address/username` and an `Invite` submit button with a Font Awesome Classic
 Regular `envelope` icon.
+Route-level game-mode headings should be the most prominent text on their routes.
+Subsection headings should be visually stronger than their adjacent instruction or
+empty-state copy, including the Solo section-progress label above the section
+instruction and the Multiplayer bucket headings above `Nothing here yet.` copy. Within
+Multiplayer cards and completed-batch listings, body copy such as phrase counts,
+started state, participant names, participant invite status, and batch summaries should
+use regular or medium body weight so headings and command buttons retain the emphasis.
 
 #### Account/profile affordance
 
@@ -1419,12 +1427,14 @@ The signed-in multiplayer surface groups Started Games and completed batches int
 multiplayer batches for the signed-in Account in the MVP.
 
 Signed-in participants can open a dedicated completed multiplayer history view
-from the `Completed batches` dashboard bucket. The dashboard keeps its five-item
-cap. The history view lists completed multiplayer batches for the current
-Account in pages of up to 20, newest first, with deterministic cursor
-pagination and invite-safe participant Gamer Tags and row count context. `Load
-more` appears only when older completed batches are available and appends older
-batches without replacing already loaded results. Cancelled Games are excluded.
+from the `Completed batches` dashboard bucket only when more than five completed
+multiplayer batches exist for the current Account. The dashboard keeps its five-item
+cap and does not show the `View all` history action for zero to five completed batches.
+The history view lists completed multiplayer batches for the current Account in pages
+of up to 20, newest first, with deterministic cursor pagination and invite-safe
+participant Gamer Tags and row count context. `Load more` appears only when older
+completed batches are available and appends older batches without replacing already
+loaded results. Cancelled Games are excluded.
 Unrevealed completed batches show that they have not been revealed yet, offer
 `Reveal phrases` for the current participant, and must not render phrase text in
 visible or hidden DOM before that participant's successful Reveal. Successful

@@ -1058,7 +1058,7 @@ h1 {
 .entry-form .section-kicker {
   margin: 0;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: clamp(1.25rem, 3.4vw, 1.6rem);
   font-weight: 400;
   line-height: 1.2;
 }
@@ -1541,9 +1541,13 @@ h1 {
   font-weight: 800;
 }
 
+.pending-game-card .pending-game-row-count {
+  font-weight: 400;
+}
+
 .pending-game-row-count.section-instruction {
   margin: 8px 0 0;
-  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  font-size: 1rem;
   font-weight: 400;
   line-height: 1.2;
 }
@@ -1588,12 +1592,13 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-weight: 800;
+  font-weight: 400;
   overflow-wrap: anywhere;
 }
 
 .pending-game-participants strong {
   color: var(--accent-strong);
+  font-weight: 500;
 }
 
 .pending-game-actions {

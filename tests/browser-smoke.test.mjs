@@ -115,6 +115,7 @@ describe("solo browser smoke", () => {
     await assertProgressEmpty(page);
     await assertCompactLabel(page.locator(".control-label"));
     await assertPlainTextWeight(page.locator("[data-section-title]"));
+    await assertSoloSectionHierarchy(page);
     assert.equal(await page.getByRole("button", { name: "15" }).isDisabled(), true);
     await assertNoHorizontalOverflow(page);
 
@@ -581,6 +582,7 @@ describe("solo browser smoke", () => {
     await assertRouteHeading(multiplayerHeading);
     assert.deepEqual(await readTextStyle(multiplayerHeading), favouritesHeadingStyle);
     await assertMultiplayerSectionHeadings(page);
+    await assertMultiplayerEmptyStateHierarchy(page);
     await assertCompactLabel(page.locator(".pending-game-field").first());
 
     const anonymousContext = await browser.newContext({
@@ -4047,18 +4049,29 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await assertTextVisible(page, "Completed batches");
+    assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 
-    await page.getByRole("button", { name: "View all" }).click();
+    await assertNoHorizontalOverflow(page);
 
-    await assertTextVisible(page, "Completed multiplayer history");
-    await assertTextVisible(page, "Batch with Player and Invitee Two.");
-    await assertTextVisible(page, "Not revealed yet.");
-    await assertTextAbsent(page, "Brisk-0 teapot-0 ladder-0");
-    await page.getByRole("button", { name: "Reveal phrases" }).click();
-    await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
-    await assertTextVisible(page, "Brisk-9 teapot-9 ladder-9");
-    await page.getByRole("button", { name: "Back to dashboard" }).click();
+    assertNoConsoleErrors();
+  });
+
+  it("keeps multiplayer card body typography below section-heading emphasis", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
     await assertTextVisible(page, "Completed batches");
+    await assertMultiplayerCardBodyTypography(page);
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -4077,6 +4090,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
+    await assertCompletedHistoryActionVisible(page);
     await page.getByRole("button", { name: "View all" }).click();
 
     await assertTextVisible(page, "Completed multiplayer history");
@@ -4167,6 +4181,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Completed batches");
+    await assertCompletedHistoryActionVisible(page);
 
     await page.getByRole("button", { name: "View all" }).click();
 
@@ -4182,7 +4197,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("keeps completed multiplayer history retryable when Reveal fails", async () => {
+  it("keeps completed multiplayer dashboard reveal retryable when Reveal fails", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -4221,17 +4236,19 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
-    await page.getByRole("button", { name: "View all" }).click();
+    await assertTextVisible(page, "Completed batches");
+    assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Phrases could not be revealed. Try again.");
-    await assertTextVisible(page, "Completed multiplayer history");
-    await assertTextVisible(page, "Not revealed yet.");
     await assertTextAbsent(page, "Brisk-0 teapot-0 ladder-0");
+    assert.equal(
+      await page.getByRole("button", { name: "Reveal phrases" }).isVisible(),
+      true,
+    );
 
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
-    await page.getByRole("button", { name: "Back to dashboard" }).click();
     await assertTextVisible(page, "Completed batches");
     await assertNoHorizontalOverflow(page);
 
@@ -7115,49 +7132,173 @@ async function assertMultiplayerInviteCopy(page) {
 
   const emptyCopy = page.getByText("Nothing here yet.");
   assert.equal(await emptyCopy.count(), 3);
-  const emptyStyleComparison = await emptyCopy.evaluateAll((elements) => {
-    const reference = document.createElement("p");
-    reference.className = "section-instruction";
-    reference.textContent = "Reference";
-    reference.setAttribute("aria-hidden", "true");
-    reference.style.cssText =
-      "position:absolute;left:-9999px;top:0;visibility:hidden;";
-    document.body.append(reference);
-    const referenceStyle = getComputedStyle(reference);
-    const sectionInstructionStyle = {
-      color: referenceStyle.color,
-      fontSize: Number.parseFloat(referenceStyle.fontSize),
-      fontWeight: Number.parseFloat(referenceStyle.fontWeight),
-      lineHeight: referenceStyle.lineHeight,
-    };
-    const styles = elements.map((element) => {
+  await assertMultiplayerEmptyStateHierarchy(page);
+
+  const completedBucket = page
+    .locator(".multiplayer-bucket")
+    .filter({ has: page.getByRole("heading", { name: "Completed batches", level: 3 }) });
+  assert.equal(await completedBucket.count(), 1);
+  const historyButton = completedBucket.getByRole("button", { name: "View all" });
+  assert.equal(await historyButton.count(), 0);
+  assert.equal(
+    await completedBucket.getByRole("button", {
+      name: "View all completed batches",
+    }).count(),
+    0,
+  );
+}
+
+async function assertMultiplayerEmptyStateHierarchy(page) {
+  const emptyStyleComparison = await page
+    .locator(".multiplayer-bucket")
+    .evaluateAll((sections) => {
+      const styles = [];
+      for (const section of sections) {
+        const heading = section.querySelector(".multiplayer-section-heading");
+        const empty = section.querySelector(
+          ".pending-game-row-count.section-instruction",
+        );
+        if (!heading || !empty) {
+          continue;
+        }
+        const headingStyle = getComputedStyle(heading);
+        const emptyStyle = getComputedStyle(empty);
+        styles.push({
+          emptyHasSectionInstructionClass:
+            empty.classList.contains("section-instruction"),
+          emptyFontSize: Number.parseFloat(emptyStyle.fontSize),
+          emptyFontWeight: Number.parseFloat(emptyStyle.fontWeight),
+          headingFontSize: Number.parseFloat(headingStyle.fontSize),
+          headingFontWeight: Number.parseFloat(headingStyle.fontWeight),
+        });
+      }
+      return styles;
+    });
+  assert.equal(emptyStyleComparison.length, 3);
+  for (const style of emptyStyleComparison) {
+    assert.equal(style.emptyHasSectionInstructionClass, true);
+    assert.ok(
+      style.headingFontSize > style.emptyFontSize,
+      `Expected multiplayer bucket heading font size ${style.headingFontSize} to exceed empty-state font size ${style.emptyFontSize}`,
+    );
+    assert.ok(
+      style.headingFontWeight >= style.emptyFontWeight,
+      `Expected multiplayer bucket heading font weight ${style.headingFontWeight} to be at least empty-state font weight ${style.emptyFontWeight}`,
+    );
+  }
+}
+
+async function assertMultiplayerCardBodyTypography(page) {
+  const typography = await page.evaluate(() => {
+    const readStyle = (element) => {
+      if (!element) {
+        return null;
+      }
       const style = getComputedStyle(element);
       return {
-        hasSectionInstructionClass: element.classList.contains("section-instruction"),
-        color: style.color,
+        className: element.className,
         fontSize: Number.parseFloat(style.fontSize),
         fontWeight: Number.parseFloat(style.fontWeight),
-        lineHeight: style.lineHeight,
+        text: element.textContent.trim(),
       };
-    });
-    reference.remove();
-    return { sectionInstructionStyle, styles };
-  });
-  assert.deepEqual(emptyStyleComparison.styles, [
-    {
-      hasSectionInstructionClass: true,
-      ...emptyStyleComparison.sectionInstructionStyle,
-    },
-    {
-      hasSectionInstructionClass: true,
-      ...emptyStyleComparison.sectionInstructionStyle,
-    },
-    {
-      hasSectionInstructionClass: true,
-      ...emptyStyleComparison.sectionInstructionStyle,
-    },
-  ]);
+    };
+    const findElement = (selector, text) =>
+      Array.from(document.querySelectorAll(selector)).find(
+        (element) => element.textContent.trim() === text,
+      );
+    const completedBucket = Array.from(
+      document.querySelectorAll(".multiplayer-bucket"),
+    ).find(
+      (section) =>
+        section.querySelector(".multiplayer-section-heading")?.textContent.trim() ===
+        "Completed batches",
+    );
 
+    return {
+      cardMeta: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-card p", "10 phrases"),
+      ),
+      cardState: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-card p", "Started"),
+      ),
+      participantName: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-participants span", "Player"),
+      ),
+      participantStatus: readStyle(
+        findElement(
+          "[data-pending-game-summary] .pending-game-participants strong",
+          "Accepted",
+        ),
+      ),
+      completedHeading: readStyle(
+        completedBucket?.querySelector(".multiplayer-section-heading"),
+      ),
+      completedSummary: readStyle(
+        findElement(
+          ".multiplayer-bucket .pending-game-card p",
+          "Batch with Player and Invitee Two.",
+        ),
+      ),
+      revealButton: readStyle(
+        completedBucket?.querySelector("button"),
+      ),
+    };
+  });
+
+  const bodyText = [
+    typography.cardMeta,
+    typography.cardState,
+    typography.participantName,
+    typography.participantStatus,
+    typography.completedSummary,
+  ];
+  for (const style of bodyText) {
+    assert.notEqual(style, null);
+    assert.ok(
+      style.fontWeight <= 500,
+      `Expected "${style.text}" to use body font weight, got ${style.fontWeight}`,
+    );
+  }
+  assert.notEqual(typography.completedHeading, null);
+  assert.notEqual(typography.revealButton, null);
+  assert.ok(
+    typography.completedHeading.fontWeight > typography.completedSummary.fontWeight,
+    `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+  );
+  assert.ok(
+    typography.revealButton.fontWeight > typography.completedSummary.fontWeight,
+    `Expected Reveal phrases button weight ${typography.revealButton.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+  );
+}
+
+async function assertSoloSectionHierarchy(page) {
+  const hierarchy = await page.locator("[data-entry-form] .section-heading").evaluate(
+    (heading) => {
+      const sectionKicker = heading.querySelector(".section-kicker");
+      const sectionTitle = heading.querySelector("[data-section-title]");
+      if (!sectionKicker || !sectionTitle) {
+        return null;
+      }
+      const kickerStyle = getComputedStyle(sectionKicker);
+      const titleStyle = getComputedStyle(sectionTitle);
+      return {
+        sectionKickerFontSize: Number.parseFloat(kickerStyle.fontSize),
+        sectionKickerText: sectionKicker.textContent.trim(),
+        sectionTitleFontSize: Number.parseFloat(titleStyle.fontSize),
+        sectionTitleText: sectionTitle.textContent.trim(),
+      };
+    },
+  );
+  assert.notEqual(hierarchy, null);
+  assert.match(hierarchy.sectionKickerText, /^Section \d+ of 3$/);
+  assert.match(hierarchy.sectionTitleText, /^Enter (adjectives|nouns)$/);
+  assert.ok(
+    hierarchy.sectionKickerFontSize > hierarchy.sectionTitleFontSize,
+    `Expected solo section kicker font size ${hierarchy.sectionKickerFontSize} to exceed instruction font size ${hierarchy.sectionTitleFontSize}`,
+  );
+}
+
+async function assertCompletedHistoryActionVisible(page) {
   const completedBucket = page
     .locator(".multiplayer-bucket")
     .filter({ has: page.getByRole("heading", { name: "Completed batches", level: 3 }) });
@@ -7189,7 +7330,6 @@ async function assertMultiplayerInviteCopy(page) {
     `Expected View all bottom spacing >= 12px, got ${historyButtonSpacing.marginBottom}`,
   );
 }
-
 async function assertMultiplayerSectionHeadings(page) {
   const sectionHeadings = [
     "Game invitations",

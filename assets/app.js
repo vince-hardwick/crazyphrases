@@ -2584,7 +2584,7 @@ function ensurePendingGamePanel() {
 
   const title = document.createElement("h2");
   title.className = "route-heading";
-  title.textContent = "Invite by email or Gamer Tag";
+  title.textContent = "Game invitations";
 
   const form = document.createElement("form");
   form.className = "pending-game-form";
@@ -2593,12 +2593,12 @@ function ensurePendingGamePanel() {
 
   const lookupKeyLabel = document.createElement("label");
   lookupKeyLabel.className = "pending-game-field compact-label";
-  lookupKeyLabel.textContent = "Email or Gamer Tag";
+  lookupKeyLabel.textContent = "Email address/username";
 
   pendingGameLookupKeyInput = document.createElement("input");
   pendingGameLookupKeyInput.type = "text";
   pendingGameLookupKeyInput.autocomplete = "off";
-  pendingGameLookupKeyInput.placeholder = "invitee.two@example.test or Invitee Two";
+  pendingGameLookupKeyInput.placeholder = "e.g. phrasing_phriend@example.com";
   pendingGameLookupKeyInput.dataset.pendingGameLookupKeyInput = "";
   pendingGameLookupKeyInput.required = true;
 
@@ -2635,9 +2635,9 @@ function ensurePendingGamePanel() {
   submitButton.type = "submit";
   replaceWithLeadingIconText(
     submitButton,
-    "solid",
+    "regular",
     "envelope",
-    "Create invite",
+    "Invite",
   );
 
   pendingGameStatus = document.createElement("p");
@@ -3218,7 +3218,7 @@ function renderMultiplayerBucket({ headingText, items, renderItem }) {
   section.append(heading);
   if (items.length === 0) {
     const empty = document.createElement("p");
-    empty.className = "pending-game-row-count";
+    empty.className = "pending-game-row-count section-instruction";
     empty.textContent = "Nothing here yet.";
     section.append(empty);
     return section;

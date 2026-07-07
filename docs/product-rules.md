@@ -61,6 +61,10 @@ destination. That destination owns invite creation, active multiplayer dashboard
 buckets, and the completed-history entry point. Completed multiplayer history remains
 reachable from the `Batches completed` dashboard bucket; it should not become a separate
 primary navigation item or account-menu item in the first signed-in navigation shape.
+The Solo destination uses the route heading `Solo play`. The Multiplayer destination
+uses the route heading `Game invitations`, an invite lookup label of
+`Email address/username`, and an `Invite` submit button with a Font Awesome Classic
+Regular `envelope` icon.
 
 #### Account/profile affordance
 

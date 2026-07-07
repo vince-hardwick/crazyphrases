@@ -1541,6 +1541,10 @@ h1 {
   font-weight: 800;
 }
 
+.pending-game-card .pending-game-row-count {
+  font-weight: 400;
+}
+
 .pending-game-row-count.section-instruction {
   margin: 8px 0 0;
   font-size: 1rem;
@@ -1588,12 +1592,13 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-weight: 800;
+  font-weight: 400;
   overflow-wrap: anywhere;
 }
 
 .pending-game-participants strong {
   color: var(--accent-strong);
+  font-weight: 500;
 }
 
 .pending-game-actions {

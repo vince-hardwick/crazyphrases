@@ -4056,6 +4056,27 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps multiplayer card body typography below section-heading emphasis", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    await assertTextVisible(page, "Completed batches");
+    await assertMultiplayerCardBodyTypography(page);
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("loads another completed multiplayer history page without replacing the first page", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -7165,6 +7186,89 @@ async function assertMultiplayerEmptyStateHierarchy(page) {
       `Expected multiplayer bucket heading font weight ${style.headingFontWeight} to be at least empty-state font weight ${style.emptyFontWeight}`,
     );
   }
+}
+
+async function assertMultiplayerCardBodyTypography(page) {
+  const typography = await page.evaluate(() => {
+    const readStyle = (element) => {
+      if (!element) {
+        return null;
+      }
+      const style = getComputedStyle(element);
+      return {
+        className: element.className,
+        fontSize: Number.parseFloat(style.fontSize),
+        fontWeight: Number.parseFloat(style.fontWeight),
+        text: element.textContent.trim(),
+      };
+    };
+    const findElement = (selector, text) =>
+      Array.from(document.querySelectorAll(selector)).find(
+        (element) => element.textContent.trim() === text,
+      );
+    const completedBucket = Array.from(
+      document.querySelectorAll(".multiplayer-bucket"),
+    ).find(
+      (section) =>
+        section.querySelector(".multiplayer-section-heading")?.textContent.trim() ===
+        "Completed batches",
+    );
+
+    return {
+      cardMeta: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-card p", "10 phrases"),
+      ),
+      cardState: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-card p", "Started"),
+      ),
+      participantName: readStyle(
+        findElement("[data-pending-game-summary] .pending-game-participants span", "Player"),
+      ),
+      participantStatus: readStyle(
+        findElement(
+          "[data-pending-game-summary] .pending-game-participants strong",
+          "Accepted",
+        ),
+      ),
+      completedHeading: readStyle(
+        completedBucket?.querySelector(".multiplayer-section-heading"),
+      ),
+      completedSummary: readStyle(
+        findElement(
+          ".multiplayer-bucket .pending-game-card p",
+          "Batch with Player and Invitee Two.",
+        ),
+      ),
+      revealButton: readStyle(
+        completedBucket?.querySelector("button"),
+      ),
+    };
+  });
+
+  const bodyText = [
+    typography.cardMeta,
+    typography.cardState,
+    typography.participantName,
+    typography.participantStatus,
+    typography.completedSummary,
+  ];
+  for (const style of bodyText) {
+    assert.notEqual(style, null);
+    assert.ok(
+      style.fontWeight <= 500,
+      `Expected "${style.text}" to use body font weight, got ${style.fontWeight}`,
+    );
+  }
+  assert.notEqual(typography.completedHeading, null);
+  assert.notEqual(typography.revealButton, null);
+  assert.ok(
+    typography.completedHeading.fontWeight > typography.completedSummary.fontWeight,
+    `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+  );
+  assert.ok(
+    typography.revealButton.fontWeight > typography.completedSummary.fontWeight,
+    `Expected Reveal phrases button weight ${typography.revealButton.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+  );
 }
 
 async function assertSoloSectionHierarchy(page) {

@@ -71,7 +71,10 @@ Regular `envelope` icon.
 Route-level game-mode headings should be the most prominent text on their routes.
 Subsection headings should be visually stronger than their adjacent instruction or
 empty-state copy, including the Solo section-progress label above the section
-instruction and the Multiplayer bucket headings above `Nothing here yet.` copy.
+instruction and the Multiplayer bucket headings above `Nothing here yet.` copy. Within
+Multiplayer cards and completed-batch listings, body copy such as phrase counts,
+started state, participant names, participant invite status, and batch summaries should
+use regular or medium body weight so headings and command buttons retain the emphasis.
 
 #### Account/profile affordance
 

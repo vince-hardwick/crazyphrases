@@ -60,7 +60,7 @@ sections.
 
 Reveal is participant-scoped viewing state, not a global Game transition. Each
 participant clicks `Reveal phrases` for themselves after the batch is complete.
-The batch remains in `Batches completed` after that participant reveals it.
+The batch remains in `Completed batches` after that participant reveals it.
 
 The signed-in multiplayer surface should classify Started Games into three
 areas for the current Account:
@@ -69,7 +69,7 @@ areas for the current Account:
 - `Awaiting other player entries`: the Account has no remaining available
   sections, but at least one other participant still has incomplete assigned
   sections.
-- `Batches completed`: all assigned sections are complete. Show the five most
+- `Completed batches`: all assigned sections are complete. Show the five most
   recently completed batches for the Account.
 
 Durable in-app notification rows are stored per participant. When a Game

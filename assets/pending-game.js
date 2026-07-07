@@ -1511,6 +1511,7 @@ function createEmptyMultiplayerDashboard() {
     awaitingYourEntries: [],
     awaitingOtherPlayerEntries: [],
     completedBatches: [],
+    hasMoreCompletedBatches: false,
   };
 }
 
@@ -1575,6 +1576,21 @@ function createMultiplayerDashboard({
   profile,
   revealedMultiplayerBatches,
 }) {
+  const completedBatches = createCompletedBatches({
+    assignedSections,
+    completedMultiplayerBatches,
+    pendingGames,
+    profile,
+    revealedMultiplayerBatches,
+  });
+  const completedBatchThreshold = createCompletedBatches({
+    assignedSections,
+    completedMultiplayerBatches,
+    limit: 6,
+    pendingGames,
+    profile,
+    revealedMultiplayerBatches,
+  });
   return {
     awaitingYourEntries: createCurrentSectionBatches({
       assignedSections,
@@ -1586,13 +1602,8 @@ function createMultiplayerDashboard({
       pendingGames,
       profile,
     }),
-    completedBatches: createCompletedBatches({
-      assignedSections,
-      completedMultiplayerBatches,
-      pendingGames,
-      profile,
-      revealedMultiplayerBatches,
-    }),
+    completedBatches,
+    hasMoreCompletedBatches: completedBatchThreshold.length > 5,
   };
 }
 
@@ -2204,6 +2215,9 @@ function recoverSingleSupabaseRow(data, message) {
 }
 
 function recoverMultiplayerDashboard(dashboardRow) {
+  const hasMoreCompletedBatches =
+    dashboardRow?.hasMoreCompletedBatches ??
+    dashboardRow?.has_more_completed_batches;
   return {
     awaitingYourEntries: (
       dashboardRow?.awaitingYourEntries ??
@@ -2224,6 +2238,9 @@ function recoverMultiplayerDashboard(dashboardRow) {
     ).map((batch) =>
       recoverMultiplayerBatch(batch, { includeRevealState: true }),
     ),
+    ...(typeof hasMoreCompletedBatches === "boolean"
+      ? { hasMoreCompletedBatches }
+      : {}),
   };
 }
 

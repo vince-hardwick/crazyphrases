@@ -27,10 +27,7 @@ function copyWithTemporaryTextarea(text, documentRef) {
   textarea.value = text;
   textarea.readOnly = true;
   textarea.setAttribute?.("readonly", "");
-  textarea.style.left = "-9999px";
-  textarea.style.opacity = "0";
-  textarea.style.position = "fixed";
-  textarea.style.top = "0";
+  textarea.className = "clipboard-fallback-textarea";
 
   if (documentRef.body.append) {
     documentRef.body.append(textarea);

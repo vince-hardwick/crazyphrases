@@ -80,6 +80,14 @@ The Account/Profile icon uses a hover/focus tooltip. If no Gamer Tag is availabl
 tooltip text is `Profile`. If a Gamer Tag is available, the tooltip text is
 `<Gamer Tag>’s profile`, for example `vhCoder’s profile`.
 
+First-party UI styling belongs in linked stylesheets. App-owned JavaScript may update
+classes, data attributes, and ARIA state to reflect visual state, but must not create
+first-party inline `style` attributes, `style` tags, or direct `element.style` writes for
+production UI styling. Route-level headings, compact field labels, top-nav icons,
+text-labelled command buttons, menu rows, segmented controls, icon-only utility actions,
+text links, and popover internals use their shared CSS families before adding local
+one-off interaction rules.
+
 Top-nav icon affordances use one consistent 44px icon-button footprint, 8px radius,
 and 8px spacing across Play, Favourites, theme, Notifications, Help, and
 Account/Profile. Opening one top-nav menu or popover must close the other top-nav menu
@@ -518,8 +526,9 @@ The first account menu contains only `Settings` and `Sign out`. Do not add
 `Favourites`, completed history, notifications, social/profile-public links, or separate
 `Profile` and `Avatar` menu items to the account menu in this slice. `Settings` uses
 Font Awesome `sliders`, and `Sign out` uses Font Awesome
-`arrow-right-from-bracket`. Their visible menu text and hover/focus tooltip text use
-default font weight.
+`arrow-right-from-bracket`. Their visible menu text uses default font weight, and
+because these rows are visibly labelled they do not expose duplicate hover/focus
+tooltips.
 
 `Settings` routes to `#/settings`, a signed-in-only focused editor view or panel for
 Gamer Tag and Avatar. Choosing `Settings` closes the account menu, updates the hash

@@ -42,6 +42,13 @@
   display: none !important;
 }
 
+.clipboard-fallback-textarea {
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  opacity: 0;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -179,13 +186,10 @@ body {
 
 .play-menu-item:hover,
 .play-menu-item:focus-visible,
-.play-menu-item[aria-current="page"] {
+.play-menu-item[aria-current="page"],
+.account-menu-item:hover,
+.account-menu-item:focus-visible {
   background: var(--surface-soft);
-}
-
-.play-menu-item:focus-visible {
-  outline: 4px solid var(--ring);
-  outline-offset: 2px;
 }
 
 .primary-nav-icon-link {
@@ -291,10 +295,6 @@ body {
   cursor: pointer;
 }
 
-.account-menu-item:hover {
-  background: var(--surface-soft);
-}
-
 .account-shell.is-anonymous .account-sign-in-panel {
   position: absolute;
   z-index: 30;
@@ -393,16 +393,8 @@ body {
 }
 
 .account-profile-panel {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
-.account-profile-panel h2 {
-  margin: 0 0 8px;
-  color: var(--accent-strong);
-  font-size: 0.84rem;
-  line-height: 1.15;
+  margin: 0 0 16px;
+  padding: clamp(18px, 4vw, 28px);
 }
 
 .account-profile-form {
@@ -839,7 +831,8 @@ h1 {
 .help-panel,
 .game-panel,
 .pending-game-panel,
-.favourites-panel {
+.favourites-panel,
+.account-profile-panel {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -872,6 +865,10 @@ h1 {
 
 .route-gate h2,
 .route-gate p {
+  margin: 0;
+}
+
+.route-gate .route-heading {
   margin: 0;
 }
 
@@ -928,13 +925,20 @@ h1 {
   margin-bottom: 28px;
 }
 
-.control-label,
 .section-kicker,
 .progress-text {
   margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
   font-weight: 400;
+}
+
+.compact-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .control-label {
@@ -978,10 +982,28 @@ h1 {
   width: var(--segment-width);
   border-radius: 6px;
   background: var(--accent);
-  transform: translateX(
-    calc(var(--selected-index, 2) * (100% + var(--segment-gap)))
-  );
+  transform: translateX(calc(2 * (100% + var(--segment-gap))));
   transition: transform 170ms ease;
+}
+
+.segmented-control.is-selected-index-0::before {
+  transform: translateX(calc(0 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-1::before {
+  transform: translateX(calc(1 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-2::before {
+  transform: translateX(calc(2 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-3::before {
+  transform: translateX(calc(3 * (100% + var(--segment-gap))));
+}
+
+.segmented-control.is-selected-index-4::before {
+  transform: translateX(calc(4 * (100% + var(--segment-gap))));
 }
 
 .segmented-control button {
@@ -1025,9 +1047,11 @@ h1 {
   margin-bottom: 18px;
 }
 
-.section-heading h2 {
+.route-heading {
   margin: 6px 0 0;
+  color: var(--ink);
   font-size: clamp(1.7rem, 5vw, 2.6rem);
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -1086,13 +1110,17 @@ h1 {
 .entry-row input:focus-visible,
 .dice-button:focus-visible,
 .icon-button:focus-visible,
+.primary-nav-link:focus-visible,
+.play-menu-item:focus-visible,
 .account-profile-avatar-option:focus-visible,
 .account-profile-avatar-upload-button:focus-visible,
 .account-menu-item:focus-visible,
 .notification-item:focus-visible,
 .notification-mark-read:focus-visible,
+.notification-mark-all-read:focus-visible,
 .text-button:focus-visible,
 .favourite-row:focus-visible,
+.favourites-tab:focus-visible,
 .segmented-control button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
@@ -1308,7 +1336,8 @@ h1 {
 }
 
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

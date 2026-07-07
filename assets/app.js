@@ -87,6 +87,9 @@ const AVATAR_UPLOAD_COPY = {
     "Profile could not be saved. Your previous avatar is still active.",
 };
 const rowCountButtons = [...document.querySelectorAll("[data-row-count]")];
+const rowCountSelectedIndexClasses = rowCountButtons.map(
+  (_button, index) => `is-selected-index-${index}`,
+);
 const startButton = document.querySelector("[data-start-button]");
 const startAgainButton = document.querySelector("[data-start-again-button]");
 const startAgainConfirmation = document.querySelector(
@@ -882,6 +885,7 @@ function renderRoute() {
 
 function renderSignInRequiredGate(route) {
   const heading = document.createElement("h2");
+  heading.className = "route-heading";
   if (route === ROUTES.favourites) {
     heading.textContent = "Sign in to view Favourites";
   } else if (route === ROUTES.settings) {
@@ -1359,8 +1363,13 @@ function ensureAccountProfilePanel() {
   accountProfilePanel.dataset.accountProfilePanel = "";
   accountProfilePanel.setAttribute("aria-label", "Settings");
 
-  const heading = document.createElement("h2");
-  heading.textContent = "Settings";
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+
+  const title = document.createElement("h2");
+  title.className = "route-heading";
+  title.textContent = "Settings";
+  heading.append(title);
 
   const form = document.createElement("form");
   form.className = "account-profile-form";
@@ -1465,7 +1474,7 @@ function createProfileInputField({ datasetKey, label, required = true }) {
   const field = document.createElement("label");
   const input = document.createElement("input");
 
-  field.className = "account-profile-field";
+  field.className = "account-profile-field compact-label";
   field.textContent = label;
   input.type = "text";
   input.dataset[datasetKey] = "";
@@ -1483,7 +1492,7 @@ function createProfileAvatarField() {
   const uploadButton = document.createElement("button");
 
   field.className = "account-profile-avatar-field";
-  galleryLabel.className = "account-profile-avatar-label";
+  galleryLabel.className = "account-profile-avatar-label compact-label";
   galleryLabel.id = "account-profile-avatar-label";
   galleryLabel.textContent = "Avatar";
 
@@ -2356,6 +2365,7 @@ function renderFavouritesHeading() {
   kicker.textContent = "Favourites";
 
   const title = document.createElement("h2");
+  title.className = "route-heading";
   title.textContent = "Favourites";
 
   heading.append(kicker, title);
@@ -2573,6 +2583,7 @@ function ensurePendingGamePanel() {
   kicker.textContent = "Multiplayer";
 
   const title = document.createElement("h2");
+  title.className = "route-heading";
   title.textContent = "Invite by email or Gamer Tag";
 
   const form = document.createElement("form");
@@ -2581,7 +2592,7 @@ function ensurePendingGamePanel() {
   form.addEventListener("submit", createPendingGameInvite);
 
   const lookupKeyLabel = document.createElement("label");
-  lookupKeyLabel.className = "pending-game-field";
+  lookupKeyLabel.className = "pending-game-field compact-label";
   lookupKeyLabel.textContent = "Email or Gamer Tag";
 
   pendingGameLookupKeyInput = document.createElement("input");
@@ -2592,7 +2603,7 @@ function ensurePendingGamePanel() {
   pendingGameLookupKeyInput.required = true;
 
   const rowCountLabel = document.createElement("label");
-  rowCountLabel.className = "pending-game-field";
+  rowCountLabel.className = "pending-game-field compact-label";
   rowCountLabel.textContent = "Phrases";
 
   pendingGameRowCountSelect = document.createElement("select");
@@ -2606,7 +2617,7 @@ function ensurePendingGamePanel() {
   }
 
   const nudgeTimeoutLabel = document.createElement("label");
-  nudgeTimeoutLabel.className = "pending-game-field";
+  nudgeTimeoutLabel.className = "pending-game-field compact-label";
   nudgeTimeoutLabel.textContent = "Nudge after";
 
   pendingGameNudgeTimeoutSelect = document.createElement("select");
@@ -4994,14 +5005,23 @@ function updateNextButton() {
   nextButton.textContent = isLastSection ? "Reveal phrases" : "Next section";
 }
 
+function updateRowCountSelectedIndexClass(selectedIndex) {
+  const rowCountControl = rowCountButtons[0]?.parentElement;
+  if (!rowCountControl) {
+    return;
+  }
+
+  rowCountControl.classList.remove(...rowCountSelectedIndexClasses);
+  rowCountControl.classList.add(
+    `is-selected-index-${Math.max(selectedIndex, 0)}`,
+  );
+}
+
 function updateRowCountButtons(rowCount) {
   const selectedIndex = rowCountButtons.findIndex(
     (button) => Number(button.dataset.rowCount) === rowCount,
   );
-  rowCountButtons[0]?.parentElement?.style.setProperty(
-    "--selected-index",
-    String(Math.max(selectedIndex, 0)),
-  );
+  updateRowCountSelectedIndexClass(selectedIndex);
   rowCountButtons.forEach((button) => {
     button.setAttribute("aria-pressed", String(Number(button.dataset.rowCount) === rowCount));
     button.disabled = game.started;

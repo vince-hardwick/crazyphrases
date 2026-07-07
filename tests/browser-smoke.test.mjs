@@ -104,17 +104,11 @@ describe("solo browser smoke", () => {
       await page.getByRole("heading", { name: "Phrases per batch", level: 3 }).isVisible(),
       true,
     );
-    await assertMatchingPlainHeadingStyles(
-      page.locator(".control-label"),
-      page.locator("[data-section-progress]"),
-    );
+    await assertCompactLabel(page.locator(".control-label"));
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
     await assertProgressEmpty(page);
-    await assertMatchingPlainHeadingStyles(
-      page.locator(".control-label"),
-      page.locator("[data-section-progress]"),
-    );
+    await assertCompactLabel(page.locator(".control-label"));
     await assertPlainTextWeight(page.locator("[data-section-title]"));
     assert.equal(await page.getByRole("button", { name: "15" }).isDisabled(), true);
     await assertNoHorizontalOverflow(page);
@@ -124,9 +118,12 @@ describe("solo browser smoke", () => {
     await fillActiveSection(page, fillState, { verifyRefreshRecovery: true });
     await fillActiveSection(page, fillState);
 
-    await page.getByRole("heading", { name: "Completed phrase batch", level: 2 }).waitFor({
-      state: "visible",
+    const revealHeading = page.getByRole("heading", {
+      name: "Completed phrase batch",
+      level: 2,
     });
+    await revealHeading.waitFor({ state: "visible" });
+    await assertRouteHeading(revealHeading);
     await assertTextHidden(page, "Your crazy phrases");
     assert.equal(await page.locator("[data-reveal-panel] .section-kicker").count(), 0);
     assert.equal(await page.locator("[data-phrase-list] li").count(), 10);
@@ -534,6 +531,71 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("renders equivalent route headings and compact labels through shared classes", async () => {
+    if (!staticServer) {
+      staticServer = await startStaticServer();
+    }
+    if (!browser) {
+      browser = await chromium.launch();
+    }
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 700 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertCompactLabel(page.locator(".control-label"));
+
+    await signInWithLocalTestAccount(page);
+    await openFavouritesRoute(page);
+    const favouritesHeading = page.getByRole("heading", {
+      name: "Favourites",
+      level: 2,
+    });
+    await assertRouteHeading(favouritesHeading);
+    const favouritesHeadingStyle = await readTextStyle(favouritesHeading);
+
+    await openSettingsRouteFromAccountMenu(page);
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    const settingsHeading = settingsPanel.getByRole("heading", {
+      name: "Settings",
+      level: 2,
+    });
+    await assertRouteHeading(settingsHeading);
+    assert.deepEqual(await readTextStyle(settingsHeading), favouritesHeadingStyle);
+    await assertCompactLabel(settingsPanel.locator(".account-profile-field").first());
+    await assertCompactLabel(settingsPanel.locator(".account-profile-avatar-label"));
+
+    await openMultiplayerRoute(page);
+    const multiplayerHeading = page.getByRole("heading", {
+      name: "Invite by email or Gamer Tag",
+      level: 2,
+    });
+    await assertRouteHeading(multiplayerHeading);
+    assert.deepEqual(await readTextStyle(multiplayerHeading), favouritesHeadingStyle);
+    await assertCompactLabel(page.locator(".pending-game-field").first());
+
+    const anonymousContext = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const anonymousPage = await anonymousContext.newPage();
+    const assertAnonymousNoConsoleErrors = trackConsoleErrors(anonymousPage);
+    await anonymousPage.goto(`${staticServer.origin}/#/settings`);
+    const settingsGateHeading = anonymousPage.getByRole("heading", {
+      name: "Sign in to view Settings",
+      level: 2,
+    });
+    await assertRouteHeading(settingsGateHeading);
+    await assertNoHorizontalOverflow(anonymousPage);
+    assertAnonymousNoConsoleErrors();
+    await anonymousContext.close();
+
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
   it("closes the anonymous sign-in popover on outside click", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -591,6 +653,57 @@ describe("solo browser smoke", () => {
     assert.deepEqual(startAgainHover, startBatchHover);
     await assertNoHorizontalOverflow(page);
 
+    assertNoConsoleErrors();
+  });
+
+  it("uses visible focus treatment across equivalent interaction families", async () => {
+    if (!staticServer) {
+      staticServer = await startStaticServer();
+    }
+    if (!browser) {
+      browser = await chromium.launch();
+    }
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 700 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await assertVisibleFocusRing(page.getByRole("button", { name: "Enable dark mode" }));
+    await assertVisibleFocusRing(page.getByRole("button", { name: "Start batch" }));
+    await assertVisibleFocusRing(page.getByRole("button", { name: "10" }));
+
+    await signInWithLocalTestAccount(page);
+    await assertVisibleFocusRing(page.getByRole("link", { name: "Favourites" }));
+
+    const playButton = page.getByRole("button", { name: "Play", exact: true });
+    await playButton.click();
+    await assertVisibleFocusRing(page.getByRole("menuitem", { name: "Solo play" }));
+
+    await page.keyboard.press("Escape");
+    await openFavouritesRoute(page);
+    await assertVisibleFocusRing(page.getByRole("tab", { name: "Batches" }));
+
+    await openSettingsRouteFromAccountMenu(page);
+    const settingsPanel = page.getByRole("region", { name: "Settings" });
+    await assertVisibleFocusRing(settingsPanel.getByRole("button", { name: "Save profile" }));
+    await assertVisibleFocusRing(
+      settingsPanel.getByRole("button", { name: "Reset profile changes" }),
+    );
+
+    const accountMenuButton = page.getByRole("button", {
+      name: LOCAL_TEST_PROFILE_TOOLTIP,
+    });
+    await accountMenuButton.click();
+    const accountMenu = page.getByRole("menu", { name: "Account menu" });
+    await accountMenu.waitFor({ state: "visible" });
+    await assertVisibleFocusRing(accountMenu.getByRole("menuitem", { name: "Settings" }));
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Settings" }));
+    await expectNoTooltip(accountMenu.getByRole("menuitem", { name: "Sign out" }));
+
+    await assertNoHorizontalOverflow(page);
     assertNoConsoleErrors();
   });
 
@@ -6981,6 +7094,18 @@ async function assertRowCountSelected(page, rowCount) {
     await page.locator(`[data-row-count="${rowCount}"]`).getAttribute("aria-pressed"),
     "true",
   );
+
+  const expectedIndex = ["10", "15", "20", "25", "30"].indexOf(rowCount);
+  assert.notEqual(expectedIndex, -1);
+  const selectedIndexClasses = await page
+    .locator("[data-row-count-options]")
+    .evaluate((control) =>
+      [...control.classList]
+        .filter((className) => className.startsWith("is-selected-index-"))
+        .sort(),
+    );
+
+  assert.deepEqual(selectedIndexClasses, [`is-selected-index-${expectedIndex}`]);
 }
 
 async function assertRowCountHighlightAligned(page, rowCount) {
@@ -7062,31 +7187,68 @@ async function assertPlainTextWeight(locator) {
   assert.ok(fontWeight <= 500, `Expected plain font weight, got ${fontWeight}`);
 }
 
-async function assertMatchingPlainHeadingStyles(first, second) {
-  const [firstStyle, secondStyle] = await Promise.all(
-    [first, second].map((locator) =>
-      locator.evaluate((element) => {
-        const style = getComputedStyle(element);
-        return {
-          fontSize: Number.parseFloat(style.fontSize),
-          fontWeight: Number.parseFloat(style.fontWeight),
-        };
-      }),
-    ),
+async function assertRouteHeading(locator) {
+  assert.equal(
+    await locator.evaluate((element) => element.classList.contains("route-heading")),
+    true,
   );
+}
 
-  assert.ok(
-    firstStyle.fontWeight <= 500,
-    `Expected first heading font weight to be plain, got ${firstStyle.fontWeight}`,
+async function assertCompactLabel(locator) {
+  assert.equal(
+    await locator.evaluate((element) => element.classList.contains("compact-label")),
+    true,
   );
+}
+
+async function readTextStyle(locator) {
+  return locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      color: style.color,
+      fontSize: Number.parseFloat(style.fontSize),
+      fontWeight: Number.parseFloat(style.fontWeight),
+      lineHeight: style.lineHeight,
+    };
+  });
+}
+
+async function assertVisibleFocusRing(locator) {
+  const page = locator.page();
+  await locator.waitFor({ state: "visible" });
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+
+  let focused = false;
+  for (let step = 0; step < 40; step += 1) {
+    await page.keyboard.press("Tab");
+    focused = await locator.evaluate((element) => document.activeElement === element);
+    if (focused) {
+      break;
+    }
+  }
+
+  assert.equal(focused, true, "Expected target to be keyboard reachable by Tab");
+  const focusStyle = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      matchesFocusVisible: element.matches(":focus-visible"),
+      outlineColor: style.outlineColor,
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+    };
+  });
+
+  assert.equal(focusStyle.matchesFocusVisible, true);
+  assert.equal(focusStyle.outlineStyle, "solid");
   assert.ok(
-    secondStyle.fontWeight <= 500,
-    `Expected second heading font weight to be plain, got ${secondStyle.fontWeight}`,
+    focusStyle.outlineWidth >= 4,
+    `Expected at least a 4px focus ring, got ${focusStyle.outlineWidth}px`,
   );
-  assert.ok(
-    Math.abs(firstStyle.fontSize - secondStyle.fontSize) <= 1,
-    `Expected heading sizes to match, got ${firstStyle.fontSize} and ${secondStyle.fontSize}`,
-  );
+  assert.notEqual(focusStyle.outlineColor, "rgba(0, 0, 0, 0)");
 }
 
 async function assertElementsOverlap(first, second) {

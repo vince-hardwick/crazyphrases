@@ -56,7 +56,7 @@ cancellation notification so stale actionable prompts do not remain unread.
 Dashboard and action RPCs must treat a cancelled source Pending Game as
 inactive. `public.list_multiplayer_dashboard()` excludes cancelled Started
 Games from `Awaiting your entries`, `Awaiting other player entries`, and
-`Batches completed`. `public.submit_multiplayer_section(uuid, jsonb)` and
+`Completed batches`. `public.submit_multiplayer_section(uuid, jsonb)` and
 `public.reveal_multiplayer_batch(uuid)` reject cancelled games.
 
 The creator UI exposes a creator-only `Cancel game` action on cancellable

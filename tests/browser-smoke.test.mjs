@@ -104,6 +104,11 @@ describe("solo browser smoke", () => {
       await page.getByRole("heading", { name: "Phrases per batch", level: 3 }).isVisible(),
       true,
     );
+    const soloHeading = page.getByRole("heading", {
+      name: "Solo play",
+      level: 2,
+    });
+    await assertRouteHeading(soloHeading);
     await assertCompactLabel(page.locator(".control-label"));
     await page.getByRole("button", { name: "Start batch" }).click();
     await waitForDice(page);
@@ -570,7 +575,7 @@ describe("solo browser smoke", () => {
 
     await openMultiplayerRoute(page);
     const multiplayerHeading = page.getByRole("heading", {
-      name: "Invite by email or Gamer Tag",
+      name: "Game invitations",
       level: 2,
     });
     await assertRouteHeading(multiplayerHeading);
@@ -2975,8 +2980,8 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    const createInviteButton = page.getByRole("button", { name: "Create invite" });
-    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-envelope");
+    const createInviteButton = page.getByRole("button", { name: "Invite" });
+    await expectFontAwesomeClass(createInviteButton, "fa-regular", "fa-envelope");
     await createInviteButton.click();
     await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
 
@@ -3640,8 +3645,8 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    const createInviteButton = page.getByRole("button", { name: "Create invite" });
-    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-envelope");
+    const createInviteButton = page.getByRole("button", { name: "Invite" });
+    await expectFontAwesomeClass(createInviteButton, "fa-regular", "fa-envelope");
     await createInviteButton.click();
 
     await assertTextVisible(
@@ -3679,7 +3684,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await assertTextVisible(
       page,
@@ -3734,7 +3739,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await assertTextVisible(
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
@@ -3786,7 +3791,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await assertTextVisible(
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
@@ -3835,7 +3840,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await assertTextVisible(
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
@@ -3934,7 +3939,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await assertTextVisible(
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
@@ -4019,7 +4024,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4194,7 +4199,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4250,7 +4255,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4308,7 +4313,7 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("10");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4939,11 +4944,12 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
     await assertPendingGameSurfaceMounted(page);
     await assertNoFavouritesPanelDom(page);
+    await assertMultiplayerInviteCopy(page);
 
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
 
     await assertTextVisible(
       page,
@@ -5000,7 +5006,7 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
-    await page.getByRole("button", { name: "Create invite" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
 
     await page.locator("[data-account-menu-toggle]").click();
@@ -7087,6 +7093,71 @@ async function assertPendingGameSurfaceMounted(page) {
   assert.equal(await page.locator("[data-pending-game-row-count]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-nudge-timeout]").count(), 1);
   assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);
+}
+
+async function assertMultiplayerInviteCopy(page) {
+  const multiplayerHeading = page.getByRole("heading", {
+    name: "Game invitations",
+    level: 2,
+  });
+  await assertRouteHeading(multiplayerHeading);
+
+  const lookupLabel = page.getByLabel("Email address/username");
+  assert.equal(await lookupLabel.count(), 1);
+  assert.equal(
+    await lookupLabel.getAttribute("placeholder"),
+    "e.g. phrasing_phriend@example.com",
+  );
+
+  const inviteButton = page.getByRole("button", { name: "Invite" });
+  assert.equal(await inviteButton.count(), 1);
+  await expectFontAwesomeClass(inviteButton, "fa-regular", "fa-envelope");
+  assert.equal(await page.getByRole("button", { name: "Create invite" }).count(), 0);
+
+  const emptyCopy = page.getByText("Nothing here yet.");
+  assert.equal(await emptyCopy.count(), 3);
+  const emptyStyleComparison = await emptyCopy.evaluateAll((elements) => {
+    const reference = document.createElement("p");
+    reference.className = "section-instruction";
+    reference.textContent = "Reference";
+    reference.setAttribute("aria-hidden", "true");
+    reference.style.cssText =
+      "position:absolute;left:-9999px;top:0;visibility:hidden;";
+    document.body.append(reference);
+    const referenceStyle = getComputedStyle(reference);
+    const sectionInstructionStyle = {
+      color: referenceStyle.color,
+      fontSize: Number.parseFloat(referenceStyle.fontSize),
+      fontWeight: Number.parseFloat(referenceStyle.fontWeight),
+      lineHeight: referenceStyle.lineHeight,
+    };
+    const styles = elements.map((element) => {
+      const style = getComputedStyle(element);
+      return {
+        hasSectionInstructionClass: element.classList.contains("section-instruction"),
+        color: style.color,
+        fontSize: Number.parseFloat(style.fontSize),
+        fontWeight: Number.parseFloat(style.fontWeight),
+        lineHeight: style.lineHeight,
+      };
+    });
+    reference.remove();
+    return { sectionInstructionStyle, styles };
+  });
+  assert.deepEqual(emptyStyleComparison.styles, [
+    {
+      hasSectionInstructionClass: true,
+      ...emptyStyleComparison.sectionInstructionStyle,
+    },
+    {
+      hasSectionInstructionClass: true,
+      ...emptyStyleComparison.sectionInstructionStyle,
+    },
+    {
+      hasSectionInstructionClass: true,
+      ...emptyStyleComparison.sectionInstructionStyle,
+    },
+  ]);
 }
 
 async function assertRowCountSelected(page, rowCount) {

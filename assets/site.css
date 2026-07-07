@@ -1540,6 +1540,13 @@ h1 {
   font-weight: 800;
 }
 
+.pending-game-row-count.section-instruction {
+  margin: 8px 0 0;
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
 .pending-game-card + .pending-game-card {
   margin-top: 12px;
   padding-top: 12px;

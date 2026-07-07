@@ -68,13 +68,43 @@ uses the route heading `Multiplayer`. Within that route, `Game invitations`,
 peer subsection headings. The invite form uses an invite lookup label of
 `Email address/username` and an `Invite` submit button with a Font Awesome Classic
 Regular `envelope` icon.
+Within `Game invitations`, creator-owned pending invitation lists use the heading
+`Sent invitations`, and invitee-owned pending invitation lists use the heading
+`Received invitations`. Do not use the older implementation-facing headings `Created
+invites` or `Incoming invites` in the UI.
+Every multiplayer listing under `Sent invitations`, `Received invitations`, `Awaiting
+your entries`, `Awaiting other player entries`, and `Completed batches` should render as
+its own clearly demarcated card within the owning section container. Do not rely on
+subtle horizontal separators alone to show where one listing ends and another begins.
+Cards should use labelled rows for game attributes and participant context, such as
+`Player 1: vhCoder`, `Player 2: test-player`, `Phrase count: 20`, `Game status:
+Awaiting responses`, and `Nudge after: 2 days`.
+Cards should use a consistent internal order: participant rows first, then game metadata
+rows. Participant rows use labels such as `Player 1` and `Player 2`, include any
+meaningful invitee status on the relevant participant row, and are followed by metadata
+rows such as `Phrase count`, `Game status`, and `Nudge after`. Narrow layouts keep the
+same reading order while stacking gracefully instead of forcing a wide table.
+Invitation-card participant status should appear only where it adds information. Do not
+show an `Accepted` status for the Game Creator in `Sent invitations` or `Received
+invitations`; the creator's acceptance is implied by having sent the invitation. Show
+the invited participant's status when it affects the next action or historical meaning,
+such as `Invited`, `Declined`, or `Accepted` when the creator still needs to start the
+Game.
+When the Game Creator cancels a Pending Game from `Sent invitations`, remove that
+invitation from the active `Sent invitations` list instead of leaving a dead-end
+`Cancelled` card. The underlying Pending Game record remains preserved for audit and
+history; this is a UI visibility rule, not a hard-delete rule.
+`Sent invitations` may retain declined invitations as recent feedback to the creator,
+but it should show no more than three declined invitation cards, sorted newest first by
+the original invitation creation time. Declined invitations beyond that cap remain
+preserved in the underlying records but are omitted from the active list.
 Route-level game-mode headings should be the most prominent text on their routes.
 Subsection headings should be visually stronger than their adjacent instruction or
 empty-state copy, including the Solo section-progress label above the section
 instruction and the Multiplayer bucket headings above `Nothing here yet.` copy. Within
-Multiplayer cards and completed-batch listings, body copy such as phrase counts,
-started state, participant names, participant invite status, and batch summaries should
-use regular or medium body weight so headings and command buttons retain the emphasis.
+Multiplayer cards and completed-batch listings, row labels may use heavier font weight
+than their values, but they must remain visually subordinate to section headings and
+command buttons.
 
 #### Account/profile affordance
 
@@ -425,6 +455,12 @@ reload. If no local preference exists, the app starts in light mode.
 The Notifications bell remains a utility control, and the account affordance remains the
 identity control. The `Play` dropdown and account menu may open as full-width mobile
 popovers or sheets on narrow screens.
+The signed-out account/sign-in control uses the same rounded-square utility-button
+treatment as the other top-nav icon controls. Once signed in, the top-nav account
+affordance becomes a circular Avatar button with a fixed top-nav icon footprint:
+Built-in Avatars are centred inside the circular frame, and Uploaded Avatars are clipped
+to the circular frame with cover fit. The signed-in Avatar button must not distort an
+Uploaded Avatar into an oval or use the general rounded-square utility frame.
 Header tooltip text should match the control's accessible action name in meaning and use
 default font weight. This applies to `Play`, `Favourites`, `Notifications`, `How to
 play`, account sign-in, the signed-in account affordance, and new icon-only header
@@ -508,10 +544,11 @@ Use Font Awesome Classic Regular `copy` for copy actions, `share-nodes` for shar
 `arrow-left` for returning from an in-place confirmation, `table-list` for batch actions or batch disclosure affordances, `envelope` for
 creating or sending a Game Invite, `envelope-open-text` for opening an incoming
 invite, `envelope-circle-check` for accepting an incoming invite, and
-`rectangle-xmark` for rejecting or declining an incoming invite. The dedicated
-Favourites destination continues to use `heart-circle-minus` for remove-favourite
-actions. Share actions should appear only where an existing supported share path is
-available and Share Consent rules allow it; copy remains available independently.
+`rectangle-xmark` for rejecting, declining, or creator-cancelling an invitation or
+cancellable Game. The dedicated Favourites destination continues to use
+`heart-circle-minus` for remove-favourite actions. Share actions should appear only
+where an existing supported share path is available and Share Consent rules allow it;
+copy remains available independently.
 Anonymous account sign-in uses Font Awesome `circle-user` for the top-nav account
 affordance, `google` for Google sign-in, and Classic Regular `paper-plane` for sending
 an email magic link. The email address input does not use a leading `at` icon because
@@ -534,7 +571,9 @@ the signed-in Account's game-facing identity, such as Avatar and Gamer Tag conte
 signed-in navigation shape. The account affordance is avatar-first: the signed-in Avatar
 is the stable visual target, the Gamer Tag may be shown beside it when space allows, and
 narrow layouts may use an avatar-only button with an accessible name such as `Account
-menu for Captain Spoon`.
+menu for Captain Spoon`. In the top nav, that signed-in account affordance is a circular
+Avatar button rather than a rounded-square utility icon button; this circular framing
+applies to both Built-in Avatars and Uploaded Avatars.
 
 The first account menu contains only `Settings` and `Sign out`. Do not add
 `Favourites`, completed history, notifications, social/profile-public links, or separate
@@ -591,6 +630,13 @@ new or unread notifications. The bell replaces the earlier exclamation-mark plac
 and keeps accessible status labelling for unread state. When the unread count is
 greater than zero, the bell also shows a numeric unread badge; the visible badge caps at
 `9+`, while the accessible label includes the actual unread count.
+
+Creating a Game Invite for another Account creates one unread In-App Notification for
+the invited Account only. The Game Creator does not receive a self-notification for the
+invite they just sent. The invite notification targets the Pending Game, uses copy that
+identifies the inviting participant, such as `test-player invited you to a multiplayer
+game.`, and updates the bell's solid/regular state and unread badge like every other
+unread notification.
 
 The notification panel lists unread items first, then read items, newest first within
 each group. The bell is only a panel toggle: opening or closing it must not mark any
@@ -731,12 +777,13 @@ failure warnings, stale-write conflict warnings, and mobile overflow checks.
 Notification-panel regression coverage should include mixed notification lists, not
 just one actionable row. Cover unread-first/read-second and newest-first ordering, bell
 open/close without read mutation, keyboard focus entry, `Escape`, outside-click close,
-focus return to the bell on non-navigating close, row-level mark-read without routing,
-target navigation read after rendered target presence, route-success/read-failure
-recovery, stale or mismatched target data staying unread, non-target notification read
-actions staying on the current route, multiple notifications for the same exact target
-context, loaded-list bulk `Mark all as read`, bulk partial failure, accessible status
-feedback, and mobile layout with several rows without horizontal overflow.
+focus return to the bell on non-navigating close, Pending Game invite-notification
+creation, row-level mark-read without routing, target navigation read after rendered
+target presence, route-success/read-failure recovery, stale or mismatched target data
+staying unread, non-target notification read actions staying on the current route,
+multiple notifications for the same exact target context, loaded-list bulk `Mark all as
+read`, bulk partial failure, accessible status feedback, and mobile layout with several
+rows without horizontal overflow.
 
 ### Frontend implementation
 
@@ -1236,6 +1283,9 @@ smoke requires separate explicit approval.
 The current Uploaded Avatar model is original-file storage with cover-fit rendering.
 After a valid file is selected, the Profile editor shows a local preview and any Uploaded
 Avatar option or saved Avatar surface fills its circular container with CSS cover fit.
+The signed-in top-nav account affordance is one of those Avatar surfaces: it uses a
+circular container and cover fit rather than cropping the image into an oval inside a
+rounded-square button.
 The app does not mount crop editor DOM, crop-box markers, crop guide overlays, zoom
 controls, reset-crop controls, hidden crop inputs, or a separate avatar-crop helper
 asset.
@@ -1346,6 +1396,19 @@ Pending Game in the MVP. The source-controlled participant-section foundation
 for ADR 0015 lets signed-in participants submit their own assigned sections,
 wait for other participant entries, receive in-app notifications, and reveal a
 completed multiplayer batch for themselves after all sections are submitted.
+The Pending Game invitation lists are labelled `Sent invitations` for Game Creator
+visibility and `Received invitations` for invitee visibility.
+Successful Game Invite creation should be communicated primarily through the `Invite`
+button state rather than a persistent sentence between the form and the invitation list.
+While lookup and invite creation are pending, the button shows a smoothly animated Font
+Awesome `spinner` in place of the usual envelope icon and label. On success, the button
+briefly shows a Font Awesome check icon for about 1.5 seconds, then restores the normal
+envelope icon and `Invite` label.
+If invite lookup fails because no matching Account is found, show the existing failure
+copy, such as `No gamer found under that gamer tag.`, below the `Invite` button with the
+copy and button aligned on their right edges. Keep the failure copy visible for about
+1.5 seconds, then fade it away instead of leaving persistent status text between the
+form and the invitation lists.
 The current MVP invite UI includes creator cancellation for Pending Games
 before start and unrevealed Started Games, seven-day Pending Game invite
 expiry, and configurable in-app nudge timeouts. It still does not add Share
@@ -1373,19 +1436,21 @@ changing the game's shared inactivity timeout.
 MVP notifications are in-app only. Game status, invites, consent requests, and nudges do
 not require email or push notification delivery in the first product shape.
 
-Multiplayer Game-start, batch-complete, and creator-cancellation notifications
-are durable in-app notification rows stored per participant. When a Game starts
-after all invited participants have accepted, every participant receives an
-unread actionable notification that they can submit entries. When the final
-assigned section is submitted and the batch becomes complete, every participant
-receives a batch-complete notification. The final submitter's batch-complete
-notification is created as read because the submit flow takes them directly to
-the completed batch and Reveal action; other participants receive it unread.
-When the Game Creator cancels a Pending Game or unrevealed Started Game,
-accepted participants other than the creator receive an unread cancellation
-notification. If the cancelled Game had earlier entry-needed notifications,
-or nudge notifications, those notifications are marked read so stale prompts do
-not remain unread.
+Multiplayer invite, Game-start, batch-complete, and creator-cancellation notifications
+are durable in-app notification rows stored per participant. Creating a Pending Game
+creates an unread actionable invite notification for the invited Account, targeted to
+that Pending Game and omitted for the creator. Invite notification creation is owned by
+backend/database logic; browser clients do not receive direct insert authority for
+invite notifications. When a Game starts after all invited participants have accepted,
+every participant receives an unread actionable notification that they can submit
+entries. When the final assigned section is submitted and the batch becomes complete,
+every participant receives a batch-complete notification. The final submitter's
+batch-complete notification is created as read because the submit flow takes them
+directly to the completed batch and Reveal action; other participants receive it unread.
+When the Game Creator cancels a Pending Game or unrevealed Started Game, accepted
+participants other than the creator receive an unread cancellation notification. If the
+cancelled Game had earlier entry-needed notifications, or nudge notifications, those
+notifications are marked read so stale prompts do not remain unread.
 
 Nudge notifications are durable in-app notification rows. The MVP generates
 overdue nudges opportunistically during authenticated Multiplayer dashboard
@@ -1451,6 +1516,9 @@ The Game Creator may cancel a Pending Game before start or a Started Game
 before any participant has revealed the batch. Invited participants may decline
 before accepting or starting. Once any participant has revealed the batch, the
 Game becomes completed history rather than cancellable.
+
+Creator-cancelled Pending Games are removed from the active `Sent invitations`
+UI after successful cancellation, because they require no further creator action.
 
 Cancellation preserves the Pending Game, Started Game, participant snapshots,
 assigned sections, submitted entries, and notification rows for history and

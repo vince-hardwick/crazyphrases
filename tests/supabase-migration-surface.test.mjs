@@ -89,6 +89,9 @@ const legacyIdentityColumnCleanupMigrationUrl = findMigrationUrl(
 const remediateSupabaseAdvisorLintsMigrationUrl = findMigrationUrl(
   "remediate_supabase_advisor_lints",
 );
+const pendingGameInviteNotificationsMigrationUrl = findMigrationUrl(
+  "pending_game_invite_notifications",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -1845,6 +1848,63 @@ describe("Supabase migration surface", () => {
         new RegExp(`drop index if exists public\\.${retainedIndex}`),
       );
     }
+  });
+
+  it("creates Pending Game invite notifications through database-owned authority", () => {
+    assert.equal(existsSync(pendingGameInviteNotificationsMigrationUrl), true);
+    assert.ok(
+      pendingGameInviteNotificationsMigrationUrl.pathname >
+        remediateSupabaseAdvisorLintsMigrationUrl.pathname,
+      "invite notification migration must run after current advisor remediation",
+    );
+
+    const migration = readFileSync(
+      pendingGameInviteNotificationsMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(migration, /drop constraint if exists in_app_notifications_type/);
+    assert.match(
+      migration,
+      /notification_type in \('entries_needed', 'batch_complete', 'game_cancelled', 'nudge', 'game_invite'\)/,
+    );
+    assert.match(
+      migration,
+      /create or replace function private\.create_pending_game_invite_notification\(\)/,
+    );
+    assert.match(migration, /returns trigger/);
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(migration, /insert into public\.in_app_notifications/);
+    assert.match(migration, /'game_invite',\s+'unread'/);
+    assert.match(
+      migration,
+      /creator\.gamer_tag \|\| ' invited you to a multiplayer game\.'/,
+    );
+    assert.match(migration, /target_pending_game_id/);
+    assert.match(migration, /invitee\.profile_id = new\.invitee_profile_id/);
+    assert.match(migration, /invitee\.account_id <> new\.creator_account_id/);
+    assert.match(migration, /on conflict do nothing/);
+    for (const role of ["public", "anon", "authenticated"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.create_pending_game_invite_notification\\(\\)\\s+from ${role}`,
+        ),
+      );
+    }
+    assert.match(
+      migration,
+      /create trigger create_pending_game_invite_notification\s+after insert on public\.pending_games/,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant insert .*on table public\.in_app_notifications to authenticated/i,
+    );
+    assert.doesNotMatch(
+      migration,
+      /grant execute on function private\.create_pending_game_invite_notification\(\)\s+to authenticated/i,
+    );
   });
 
   it("adds Uploaded Avatar storage, descriptor, and snapshot authority", () => {

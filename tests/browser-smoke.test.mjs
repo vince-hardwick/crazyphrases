@@ -1787,6 +1787,70 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("shows a new incoming Game Invite in the notification popover", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+    await page.getByRole("button", { name: "Invite" }).click();
+    await assertTextVisible(
+      page,
+      "Game invite created. Waiting for Invitee Two to accept.",
+    );
+    await expectFontAwesomeClass(
+      page.getByRole("button", { name: "Notifications" }),
+      "fa-regular",
+      "fa-bell",
+    );
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page, { invitee: true });
+    await openFavouritesRoute(page);
+
+    const notificationButton = page.getByRole("button", {
+      name: "Notifications, 1 unread",
+    });
+    assert.equal(await notificationButton.isVisible(), true);
+    await expectFontAwesomeClass(notificationButton, "fa-solid", "fa-bell");
+    assert.equal(
+      await notificationButton.locator("[data-notification-badge]").innerText(),
+      "1",
+    );
+
+    await notificationButton.click();
+    const notificationItem = page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Player invited you to a multiplayer game." });
+    assert.equal(await notificationItem.count(), 1);
+    await notificationItem.click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "0",
+    );
+    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
+    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Player");
+    assert.equal(await page.locator("[data-notification-panel]").isHidden(), true);
+    assert.equal(
+      await page.getByRole("button", { name: "Notifications" }).isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("opens the notification panel without marking unread notifications read", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -3902,17 +3966,17 @@ describe("solo browser smoke", () => {
     await openFavouritesRoute(page);
     assert.equal(
       await page
-        .getByRole("button", { name: "Notifications, 2 unread" })
+        .getByRole("button", { name: "Notifications, 1 unread" })
         .isVisible(),
       true,
     );
     const notificationButton = page.getByRole("button", {
-      name: "Notifications, 2 unread",
+      name: "Notifications, 1 unread",
     });
     await expectFontAwesomeClass(notificationButton, "fa-solid", "fa-bell");
     assert.equal(
       await notificationButton.locator("[data-notification-badge]").innerText(),
-      "2",
+      "1",
     );
 
     await page.getByRole("button", { name: "Notifications" }).click();

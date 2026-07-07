@@ -3084,6 +3084,8 @@ async function respondToPendingGameInvite(pendingGameId, response) {
       createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
     }
     renderPendingGamePanel();
+    await markUnreadPendingGameNotificationsRead(pendingGame.id);
+    await markUnreadNotificationsForRenderedMultiplayerTargets();
     pendingGameStatus.textContent =
       response === "accept" ? "Game invite accepted." : "Game invite declined.";
   } catch {
@@ -3868,6 +3870,25 @@ async function markUnreadNotificationsForRenderedMultiplayerTargets() {
   );
   for (const notification of unreadNotifications) {
     await markRenderedNotificationTargetRead(notification);
+  }
+}
+
+async function markUnreadPendingGameNotificationsRead(pendingGameId) {
+  const targetNotifications = inAppNotifications.filter(
+    (notification) =>
+      notification.status === "unread" &&
+      notification.targetPendingGameId === pendingGameId,
+  );
+  if (targetNotifications.length === 0) {
+    return;
+  }
+
+  let changed = false;
+  for (const notification of targetNotifications) {
+    changed = (await persistNotificationRead(notification.id)) || changed;
+  }
+  if (changed) {
+    renderNotificationDropdown();
   }
 }
 

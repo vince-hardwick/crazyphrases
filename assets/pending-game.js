@@ -100,6 +100,15 @@ export function createTestPendingGameRepository({
         ],
       });
       pendingGames.push(pendingGame);
+      inAppNotifications.push(
+        createGameInviteNotification({
+          accountIdsByProfileId,
+          createNotificationId,
+          creatorProfile,
+          inviteeProfile,
+          pendingGame,
+        }),
+      );
       pendingGameExpiryTimes.set(
         pendingGame.id,
         now().getTime() + pendingGameInviteExpiryMs,
@@ -405,6 +414,22 @@ export function createTestPendingGameRepository({
       return inAppNotifications
         .filter((notification) => notification.accountId === accountId)
         .map(toNotificationDto);
+    },
+
+    async markInAppNotificationRead({ accountId, notificationId }) {
+      assertAccountId(accountId);
+      assertText(notificationId, "A notification id is required.");
+
+      const notification = inAppNotifications.find(
+        (candidate) =>
+          candidate.accountId === accountId && candidate.id === notificationId,
+      );
+      if (!notification) {
+        throw new Error("Notification was not found.");
+      }
+
+      notification.status = "read";
+      return toNotificationDto(notification);
     },
 
     async submitMultiplayerSection({ accountId, entries, sectionId }) {
@@ -1318,6 +1343,24 @@ function createGameStartedNotifications({
     targetGameId: startedGame.id,
     type: "entries_needed",
   }));
+}
+
+function createGameInviteNotification({
+  accountIdsByProfileId,
+  createNotificationId,
+  creatorProfile,
+  inviteeProfile,
+  pendingGame,
+}) {
+  return {
+    id: createNotificationId(),
+    accountId: accountIdsByProfileId.get(inviteeProfile.profileId),
+    createdAt: new Date(0).toISOString(),
+    message: `${getParticipantDisplayName(creatorProfile)} invited you to a multiplayer game.`,
+    status: "unread",
+    targetPendingGameId: pendingGame.id,
+    type: "game_invite",
+  };
 }
 
 function seedCompletedMultiplayerHistory({

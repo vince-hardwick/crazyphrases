@@ -104,6 +104,42 @@ describe("Pending Game repository", () => {
     assert.equal(JSON.stringify(pendingGame).includes("auth-account"), false);
   });
 
+  it("creates one unread invite notification for the invited Account only", async () => {
+    const repository = createTestPendingGameRepository({
+      createNotificationId: createSequenceId("notification"),
+      createPendingGameId: () => "pending-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: inviteeProfile.gamerTag,
+      rowCount: 10,
+    });
+
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: inviteeProfile.accountId,
+      }),
+      [
+        {
+          id: "notification-1",
+          type: "game_invite",
+          status: "unread",
+          message: "Creator One invited you to a multiplayer game.",
+          createdAt: "1970-01-01T00:00:00.000Z",
+          targetPendingGameId: "pending-game-1",
+        },
+      ],
+    );
+    assert.deepEqual(
+      await repository.listInAppNotifications({
+        accountId: creatorProfile.accountId,
+      }),
+      [],
+    );
+  });
+
   it("lists incoming Pending Game invites for the invitee Account without exposing Auth identities", async () => {
     const repository = createTestPendingGameRepository({
       createPendingGameId: () => "pending-game-1",
@@ -532,7 +568,7 @@ describe("Pending Game repository", () => {
       }),
       [
         {
-          id: "notification-1",
+          id: "notification-2",
           type: "entries_needed",
           status: "unread",
           message:
@@ -548,7 +584,15 @@ describe("Pending Game repository", () => {
       }),
       [
         {
-          id: "notification-2",
+          id: "notification-1",
+          type: "game_invite",
+          status: "unread",
+          message: "Player Test Account invited you to a multiplayer game.",
+          createdAt: "1970-01-01T00:00:00.000Z",
+          targetPendingGameId: "pending-game-1",
+        },
+        {
+          id: "notification-3",
           type: "entries_needed",
           status: "unread",
           message:
@@ -599,7 +643,15 @@ describe("Pending Game repository", () => {
       }),
       [
         {
-          id: "notification-2",
+          id: "notification-1",
+          type: "game_invite",
+          status: "unread",
+          message: "Creator One invited you to a multiplayer game.",
+          createdAt: "1970-01-01T00:00:00.000Z",
+          targetPendingGameId: "pending-game-1",
+        },
+        {
+          id: "notification-3",
           type: "entries_needed",
           status: "unread",
           message:
@@ -608,7 +660,7 @@ describe("Pending Game repository", () => {
           targetGameId: "started-game-1",
         },
         {
-          id: "notification-3",
+          id: "notification-4",
           type: "nudge",
           status: "unread",
           message:
@@ -654,10 +706,12 @@ describe("Pending Game repository", () => {
       inviteeSecondDashboard.awaitingYourEntries[0].currentSection.sectionIndex,
       1,
     );
-    assert.equal(
-      (await repository.listInAppNotifications({
+    const inviteeNotifications = await repository.listInAppNotifications({
         accountId: inviteeProfile.accountId,
-      })).length,
+    });
+    assert.equal(
+      inviteeNotifications.filter((notification) => notification.type === "entries_needed")
+        .length,
       1,
     );
 
@@ -1098,7 +1152,15 @@ describe("Pending Game repository", () => {
       }),
       [
         {
-          id: "notification-2",
+          id: "notification-1",
+          type: "game_invite",
+          status: "unread",
+          message: "Creator One invited you to a multiplayer game.",
+          createdAt: "1970-01-01T00:00:00.000Z",
+          targetPendingGameId: "pending-game-1",
+        },
+        {
+          id: "notification-3",
           type: "entries_needed",
           status: "read",
           message:
@@ -1107,7 +1169,7 @@ describe("Pending Game repository", () => {
           targetGameId: "started-game-1",
         },
         {
-          id: "notification-3",
+          id: "notification-4",
           type: "game_cancelled",
           status: "unread",
           message: "Creator One cancelled a batch with Creator One and Invitee Two.",
@@ -1168,6 +1230,14 @@ describe("Pending Game repository", () => {
       [
         {
           id: "notification-1",
+          type: "game_invite",
+          status: "unread",
+          message: "Creator One invited you to a multiplayer game.",
+          createdAt: "1970-01-01T00:00:00.000Z",
+          targetPendingGameId: "pending-game-1",
+        },
+        {
+          id: "notification-2",
           type: "game_cancelled",
           status: "unread",
           message:

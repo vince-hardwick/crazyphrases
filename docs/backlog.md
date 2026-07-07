@@ -1150,7 +1150,7 @@ preserve their original history.
 
 - **Previously deferred**: A full paginated page for a signed-in participant's completed
   multiplayer batch history.
-- **Why it was deferred**: The MVP `Batches completed` panel could expose the five most
+- **Why it was deferred**: The MVP `Completed batches` panel could expose the five most
   recently completed multiplayer batches without introducing routing, pagination, or a
   larger history browsing surface.
 - **Status**: Completed on 2026-06-23. Parent PRD issue #65 was implemented through
@@ -1167,7 +1167,7 @@ preserve their original history.
   confirmed the deployed completed-history empty state, stamped first-party assets, no
   smoke markers, no horizontal overflow, and empty browser warning/error logs.
 - **Scope**: Add a signed-in, Account-scoped completed multiplayer history surface
-  reachable from the dashboard `Batches completed` panel. The dashboard keeps its
+  reachable from the dashboard `Completed batches` panel. The dashboard keeps its
   five-item cap; the history surface lists completed multiplayer batches newest first
   with a clear pagination contract.
 - **Boundary**: Preserve participant-scoped Reveal, current Account scoping,

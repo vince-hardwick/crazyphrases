@@ -59,11 +59,13 @@ the dropdown rather than renaming the top-level control to the active mode.
 Selecting `Multiplayer` from the `Play` menu opens a single signed-in Multiplayer
 destination. That destination owns invite creation, active multiplayer dashboard
 buckets, and the completed-history entry point. Completed multiplayer history remains
-reachable from the `Batches completed` dashboard bucket; it should not become a separate
+reachable from the `Completed batches` dashboard bucket; it should not become a separate
 primary navigation item or account-menu item in the first signed-in navigation shape.
 The Solo destination uses the route heading `Solo play`. The Multiplayer destination
-uses the route heading `Game invitations`, an invite lookup label of
-`Email address/username`, and an `Invite` submit button with a Font Awesome Classic
+uses the route heading `Multiplayer`. Within that route, `Game invitations`,
+`Awaiting your entries`, `Awaiting other player entries`, and `Completed batches` are
+peer subsection headings. The invite form uses an invite lookup label of
+`Email address/username` and an `Invite` submit button with a Font Awesome Classic
 Regular `envelope` icon.
 
 #### Account/profile affordance
@@ -1411,13 +1413,13 @@ Reveal presents final rendered phrases first. Anonymous solo does not include a 
 `Show entries` details disclosure after reveal; the completed phrases are the reveal
 surface for that batch.
 
-The signed-in multiplayer surface groups Started Games and completed batches
-into `Awaiting your entries`, `Awaiting other player entries`, and `Batches
-completed`. `Batches completed` lists only the five most recently completed
+The signed-in multiplayer surface groups Started Games and completed batches into
+`Awaiting your entries`, `Awaiting other player entries`, and `Completed batches`.
+`Completed batches` lists only the five most recently completed
 multiplayer batches for the signed-in Account in the MVP.
 
 Signed-in participants can open a dedicated completed multiplayer history view
-from the `Batches completed` dashboard bucket. The dashboard keeps its five-item
+from the `Completed batches` dashboard bucket. The dashboard keeps its five-item
 cap. The history view lists completed multiplayer batches for the current
 Account in pages of up to 20, newest first, with deterministic cursor
 pagination and invite-safe participant Gamer Tags and row count context. `Load
@@ -1444,7 +1446,7 @@ Cancellation preserves the Pending Game, Started Game, participant snapshots,
 assigned sections, submitted entries, and notification rows for history and
 audit; it does not hard-delete collaborative game records. Cancelled Games are
 removed from active `Awaiting your entries`, `Awaiting other player entries`,
-and `Batches completed` dashboard buckets, and further section submission or
+and `Completed batches` dashboard buckets, and further section submission or
 Reveal is blocked.
 
 Cancellation notifies accepted participants other than the creator. Pre-start

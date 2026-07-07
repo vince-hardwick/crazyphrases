@@ -575,11 +575,12 @@ describe("solo browser smoke", () => {
 
     await openMultiplayerRoute(page);
     const multiplayerHeading = page.getByRole("heading", {
-      name: "Game invitations",
+      name: "Multiplayer",
       level: 2,
     });
     await assertRouteHeading(multiplayerHeading);
     assert.deepEqual(await readTextStyle(multiplayerHeading), favouritesHeadingStyle);
+    await assertMultiplayerSectionHeadings(page);
     await assertCompactLabel(page.locator(".pending-game-field").first());
 
     const anonymousContext = await browser.newContext({
@@ -2658,7 +2659,7 @@ describe("solo browser smoke", () => {
         notificationId: "notification-unread-completed",
       },
     ]);
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
     await assertTextVisible(page, "Reveal phrases");
 
     assertNoConsoleErrors();
@@ -3890,7 +3891,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Completed phrase batch");
 
@@ -4015,10 +4016,7 @@ describe("solo browser smoke", () => {
     const assertNoConsoleErrors = trackConsoleErrors(page);
 
     await page.goto(staticServer.origin);
-    assert.equal(
-      await page.getByRole("button", { name: "View all completed batches" }).count(),
-      0,
-    );
+    assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
@@ -4048,9 +4046,9 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
 
-    await page.getByRole("button", { name: "View all completed batches" }).click();
+    await page.getByRole("button", { name: "View all" }).click();
 
     await assertTextVisible(page, "Completed multiplayer history");
     await assertTextVisible(page, "Batch with Player and Invitee Two.");
@@ -4060,7 +4058,7 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
     await assertTextVisible(page, "Brisk-9 teapot-9 ladder-9");
     await page.getByRole("button", { name: "Back to dashboard" }).click();
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -4079,7 +4077,7 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=history-pages`);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "View all completed batches" }).click();
+    await page.getByRole("button", { name: "View all" }).click();
 
     await assertTextVisible(page, "Completed multiplayer history");
     const historyPanel = page.locator("[data-completed-multiplayer-history]");
@@ -4123,7 +4121,7 @@ describe("solo browser smoke", () => {
     );
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
-    await page.getByRole("button", { name: "View all completed batches" }).click();
+    await page.getByRole("button", { name: "View all" }).click();
 
     const historyPanel = page.locator("[data-completed-multiplayer-history]");
     assert.equal(
@@ -4150,7 +4148,7 @@ describe("solo browser smoke", () => {
       true,
     );
     await page.getByRole("button", { name: "Back to dashboard" }).click();
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
 
     assertNoConsoleErrors();
   });
@@ -4168,9 +4166,9 @@ describe("solo browser smoke", () => {
     await page.goto(`${staticServer.origin}/?testPendingGame=history-fails`);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
 
-    await page.getByRole("button", { name: "View all completed batches" }).click();
+    await page.getByRole("button", { name: "View all" }).click();
 
     await assertTextVisible(
       page,
@@ -4178,7 +4176,7 @@ describe("solo browser smoke", () => {
     );
     assert.equal(await page.getByRole("button", { name: "Retry" }).isVisible(), true);
     await page.getByRole("button", { name: "Back to dashboard" }).click();
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -4223,7 +4221,7 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
-    await page.getByRole("button", { name: "View all completed batches" }).click();
+    await page.getByRole("button", { name: "View all" }).click();
 
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Phrases could not be revealed. Try again.");
@@ -4234,7 +4232,7 @@ describe("solo browser smoke", () => {
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Brisk-0 teapot-0 ladder-0");
     await page.getByRole("button", { name: "Back to dashboard" }).click();
-    await assertTextVisible(page, "Batches completed");
+    await assertTextVisible(page, "Completed batches");
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -7097,10 +7095,11 @@ async function assertPendingGameSurfaceMounted(page) {
 
 async function assertMultiplayerInviteCopy(page) {
   const multiplayerHeading = page.getByRole("heading", {
-    name: "Game invitations",
+    name: "Multiplayer",
     level: 2,
   });
   await assertRouteHeading(multiplayerHeading);
+  await assertMultiplayerSectionHeadings(page);
 
   const lookupLabel = page.getByLabel("Email address/username");
   assert.equal(await lookupLabel.count(), 1);
@@ -7158,6 +7157,73 @@ async function assertMultiplayerInviteCopy(page) {
       ...emptyStyleComparison.sectionInstructionStyle,
     },
   ]);
+
+  const completedBucket = page
+    .locator(".multiplayer-bucket")
+    .filter({ has: page.getByRole("heading", { name: "Completed batches", level: 3 }) });
+  assert.equal(await completedBucket.count(), 1);
+  const historyButton = completedBucket.getByRole("button", { name: "View all" });
+  assert.equal(await historyButton.count(), 1);
+  assert.equal(
+    await completedBucket.getByRole("button", {
+      name: "View all completed batches",
+    }).count(),
+    0,
+  );
+  const historyButtonSpacing = await historyButton.evaluate((button) => {
+    const wrapper = button.parentElement;
+    const wrapperStyle = wrapper ? getComputedStyle(wrapper) : null;
+    return {
+      wrapperClass: wrapper?.className ?? "",
+      marginTop: wrapperStyle ? Number.parseFloat(wrapperStyle.marginTop) : 0,
+      marginBottom: wrapperStyle ? Number.parseFloat(wrapperStyle.marginBottom) : 0,
+    };
+  });
+  assert.equal(historyButtonSpacing.wrapperClass, "multiplayer-bucket-actions");
+  assert.ok(
+    historyButtonSpacing.marginTop >= 12,
+    `Expected View all top spacing >= 12px, got ${historyButtonSpacing.marginTop}`,
+  );
+  assert.ok(
+    historyButtonSpacing.marginBottom >= 12,
+    `Expected View all bottom spacing >= 12px, got ${historyButtonSpacing.marginBottom}`,
+  );
+}
+
+async function assertMultiplayerSectionHeadings(page) {
+  const sectionHeadings = [
+    "Game invitations",
+    "Awaiting your entries",
+    "Awaiting other player entries",
+    "Completed batches",
+  ];
+  const sectionHeadingStyles = [];
+  for (const headingText of sectionHeadings) {
+    const heading = page.getByRole("heading", {
+      name: headingText,
+      level: 3,
+    });
+    assert.equal(await heading.count(), 1);
+    assert.equal(
+      await heading.evaluate((element) =>
+        element.classList.contains("multiplayer-section-heading"),
+      ),
+      true,
+    );
+    sectionHeadingStyles.push(await readTextStyle(heading));
+  }
+  assert.deepEqual(
+    sectionHeadingStyles,
+    sectionHeadings.map(() => sectionHeadingStyles[0]),
+  );
+  assert.equal(
+    await page.getByRole("heading", {
+      name: "Game invitations",
+      level: 2,
+    }).count(),
+    0,
+  );
+  assert.equal(await page.getByText("Batches completed").count(), 0);
 }
 
 async function assertRowCountSelected(page, rowCount) {

@@ -29,6 +29,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0023-private-email-lookup-and-gamer-tag.md` - private email lookup and Gamer Tag account identity boundary.
 - `0024-versioned-static-word-bank-shards.md` - immutable static Word Bank Shards and manifest-based refresh boundary.
 - `0025-original-uploaded-avatar-cover-fit.md` - current original-file Uploaded Avatar storage and cover-fit rendering boundary.
+- `0026-pending-game-invite-notification-authority.md` - database-owned Pending Game invite notification creation authority.
 
 ## Status Values
 

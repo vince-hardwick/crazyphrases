@@ -2578,13 +2578,13 @@ function ensurePendingGamePanel() {
   const heading = document.createElement("div");
   heading.className = "section-heading";
 
-  const kicker = document.createElement("p");
-  kicker.className = "section-kicker";
-  kicker.textContent = "Multiplayer";
-
   const title = document.createElement("h2");
   title.className = "route-heading";
-  title.textContent = "Game invitations";
+  title.textContent = "Multiplayer";
+
+  const inviteHeading = document.createElement("h3");
+  inviteHeading.className = "multiplayer-section-heading";
+  inviteHeading.textContent = "Game invitations";
 
   const form = document.createElement("form");
   form.className = "pending-game-form";
@@ -2663,13 +2663,14 @@ function ensurePendingGamePanel() {
   completedMultiplayerHistoryPanel.dataset.completedMultiplayerHistory = "";
   completedMultiplayerHistoryPanel.hidden = true;
 
-  heading.append(kicker, title);
+  heading.append(title);
   lookupKeyLabel.append(pendingGameLookupKeyInput);
   rowCountLabel.append(pendingGameRowCountSelect);
   nudgeTimeoutLabel.append(pendingGameNudgeTimeoutSelect);
   form.append(lookupKeyLabel, rowCountLabel, nudgeTimeoutLabel, submitButton);
   pendingGamePanel.append(
     heading,
+    inviteHeading,
     form,
     pendingGameStatus,
     pendingGameSummary,
@@ -3181,18 +3182,21 @@ function renderMultiplayerDashboard() {
   dashboard.className = "multiplayer-dashboard";
   dashboard.dataset.multiplayerDashboard = "";
   const completedBucket = renderMultiplayerBucket({
-    headingText: "Batches completed",
+    headingText: "Completed batches",
     items: multiplayerDashboard.completedBatches,
     renderItem: renderCompletedMultiplayerBatch,
   });
+  const historyButtonActions = document.createElement("div");
+  historyButtonActions.className = "multiplayer-bucket-actions";
   const historyButton = document.createElement("button");
   historyButton.className = "secondary-button";
   historyButton.type = "button";
-  historyButton.textContent = "View all completed batches";
+  historyButton.textContent = "View all";
   historyButton.addEventListener("click", () => {
     void openCompletedMultiplayerHistory();
   });
-  completedBucket.append(historyButton);
+  historyButtonActions.append(historyButton);
+  completedBucket.append(historyButtonActions);
 
   dashboard.replaceChildren(
     renderMultiplayerBucket({
@@ -3214,6 +3218,7 @@ function renderMultiplayerBucket({ headingText, items, renderItem }) {
   const section = document.createElement("section");
   section.className = "multiplayer-bucket";
   const heading = document.createElement("h3");
+  heading.className = "multiplayer-section-heading";
   heading.textContent = headingText;
   section.append(heading);
   if (items.length === 0) {

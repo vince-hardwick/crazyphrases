@@ -291,6 +291,10 @@ let pendingGameNudgeTimeoutSelect = null;
 let pendingGameStatus = null;
 let pendingGameSummary = null;
 let pendingGameIncomingList = null;
+let pendingGameSubmitButton = null;
+let pendingGameLookupFeedback = null;
+let pendingGameInviteFeedbackTimer = null;
+let pendingGameLookupFeedbackTimer = null;
 let multiplayerDashboardMount = null;
 let completedMultiplayerHistoryPanel = null;
 let currentPendingGame = null;
@@ -2635,12 +2639,24 @@ function ensurePendingGamePanel() {
   const submitButton = document.createElement("button");
   submitButton.className = "primary-button pending-game-submit icon-action-button";
   submitButton.type = "submit";
+  submitButton.dataset.pendingGameSubmit = "";
   replaceWithLeadingIconText(
     submitButton,
     "regular",
     "envelope",
     "Invite",
   );
+  pendingGameSubmitButton = submitButton;
+
+  pendingGameLookupFeedback = document.createElement("p");
+  pendingGameLookupFeedback.className = "pending-game-lookup-feedback";
+  pendingGameLookupFeedback.dataset.pendingGameLookupFeedback = "";
+  pendingGameLookupFeedback.setAttribute("aria-live", "polite");
+  pendingGameLookupFeedback.hidden = true;
+
+  const submitGroup = document.createElement("div");
+  submitGroup.className = "pending-game-submit-group";
+  submitGroup.append(submitButton, pendingGameLookupFeedback);
 
   pendingGameStatus = document.createElement("p");
   pendingGameStatus.className = "pending-game-status";
@@ -2669,7 +2685,7 @@ function ensurePendingGamePanel() {
   lookupKeyLabel.append(pendingGameLookupKeyInput);
   rowCountLabel.append(pendingGameRowCountSelect);
   nudgeTimeoutLabel.append(pendingGameNudgeTimeoutSelect);
-  form.append(lookupKeyLabel, rowCountLabel, nudgeTimeoutLabel, submitButton);
+  form.append(lookupKeyLabel, rowCountLabel, nudgeTimeoutLabel, submitGroup);
   pendingGamePanel.append(
     heading,
     inviteHeading,
@@ -2693,6 +2709,10 @@ function removePendingGamePanel() {
   pendingGameStatus = null;
   pendingGameSummary = null;
   pendingGameIncomingList = null;
+  clearPendingGameInviteFeedbackTimer();
+  clearPendingGameLookupFeedbackTimer();
+  pendingGameSubmitButton = null;
+  pendingGameLookupFeedback = null;
   multiplayerDashboardMount = null;
   completedMultiplayerHistoryPanel = null;
 }
@@ -2704,6 +2724,102 @@ function resetPendingGameState() {
   multiplayerDashboard = createEmptyMultiplayerDashboard();
   completedMultiplayerHistory = createEmptyCompletedMultiplayerHistory();
   inAppNotifications = [];
+}
+
+function clearPendingGameInviteFeedbackTimer() {
+  if (pendingGameInviteFeedbackTimer === null) {
+    return;
+  }
+
+  window.clearTimeout(pendingGameInviteFeedbackTimer);
+  pendingGameInviteFeedbackTimer = null;
+}
+
+function clearPendingGameLookupFeedbackTimer() {
+  if (pendingGameLookupFeedbackTimer === null) {
+    return;
+  }
+
+  window.clearTimeout(pendingGameLookupFeedbackTimer);
+  pendingGameLookupFeedbackTimer = null;
+}
+
+function renderPendingGameInviteButtonState(state) {
+  if (!pendingGameSubmitButton) {
+    return;
+  }
+
+  clearPendingGameInviteFeedbackTimer();
+  pendingGameSubmitButton.classList.remove("is-pending", "is-success");
+  pendingGameSubmitButton.disabled = state !== "idle";
+
+  if (state === "pending") {
+    pendingGameSubmitButton.classList.add("is-pending");
+    pendingGameSubmitButton.setAttribute("aria-label", "Creating invite");
+    const icon = createFontAwesomeIcon("solid", "spinner");
+    icon.classList.add("fa-spin");
+    pendingGameSubmitButton.replaceChildren(
+      icon,
+      createScreenReaderText("Creating invite"),
+    );
+    return;
+  }
+
+  if (state === "success") {
+    pendingGameSubmitButton.classList.add("is-success");
+    pendingGameSubmitButton.setAttribute("aria-label", "Invite sent");
+    pendingGameSubmitButton.replaceChildren(
+      createFontAwesomeIcon("solid", "check"),
+      createScreenReaderText("Invite sent"),
+    );
+    pendingGameInviteFeedbackTimer = window.setTimeout(() => {
+      pendingGameInviteFeedbackTimer = null;
+      renderPendingGameInviteButtonState("idle");
+    }, 1500);
+    return;
+  }
+
+  pendingGameSubmitButton.removeAttribute("aria-label");
+  replaceWithLeadingIconText(
+    pendingGameSubmitButton,
+    "regular",
+    "envelope",
+    "Invite",
+  );
+}
+
+function hidePendingGameLookupFeedback() {
+  if (!pendingGameLookupFeedback) {
+    return;
+  }
+
+  clearPendingGameLookupFeedbackTimer();
+  pendingGameLookupFeedback.hidden = true;
+  pendingGameLookupFeedback.classList.remove("is-visible", "is-fading");
+  pendingGameLookupFeedback.textContent = "";
+}
+
+function showPendingGameLookupFeedback(message) {
+  if (!pendingGameLookupFeedback) {
+    return;
+  }
+
+  clearPendingGameLookupFeedbackTimer();
+  pendingGameLookupFeedback.textContent = message;
+  pendingGameLookupFeedback.hidden = false;
+  pendingGameLookupFeedback.classList.remove("is-fading");
+  pendingGameLookupFeedback.classList.add("is-visible");
+  pendingGameLookupFeedbackTimer = window.setTimeout(() => {
+    pendingGameLookupFeedback?.classList.add("is-fading");
+    pendingGameLookupFeedbackTimer = window.setTimeout(() => {
+      pendingGameLookupFeedbackTimer = null;
+      hidePendingGameLookupFeedback();
+    }, 120);
+  }, 1500);
+}
+
+function isPendingGameLookupMissMessage(message) {
+  return /^No gamer found under/.test(message);
 }
 
 async function createPendingGameInvite(event) {
@@ -2718,6 +2834,8 @@ async function createPendingGameInvite(event) {
   const nudgeTimeoutHours = Number(pendingGameNudgeTimeoutSelect.value);
   const rowCount = Number(pendingGameRowCountSelect.value);
   pendingGameStatus.textContent = "";
+  hidePendingGameLookupFeedback();
+  renderPendingGameInviteButtonState("pending");
 
   try {
     const pendingGame = await pendingGameRepository.createPendingGameFromLookupKey({
@@ -2730,28 +2848,30 @@ async function createPendingGameInvite(event) {
       return;
     }
 
-    const invitee = pendingGame.participants.find(
-      (participant) => participant.role === "invitee",
-    );
-
     currentPendingGame = pendingGame;
     createdPendingGames = upsertPendingGame(createdPendingGames, pendingGame);
     pendingGameLookupKeyInput.value = "";
     renderCreatedPendingGames();
-    pendingGameStatus.textContent =
-      `Game invite created. Waiting for ${getParticipantDisplayName(invitee)} to accept.`;
+    renderPendingGameInviteButtonState("success");
   } catch (error) {
     if (!isCurrentAccountSession(accountId)) {
       return;
     }
 
+    renderPendingGameInviteButtonState("idle");
     currentPendingGame = null;
     if (pendingGameSummary) {
       pendingGameSummary.hidden = true;
       pendingGameSummary.replaceChildren();
     }
     if (pendingGameStatus) {
-      pendingGameStatus.textContent = getPendingGameFailureMessage(error);
+      const failureMessage = getPendingGameFailureMessage(error);
+      if (isPendingGameLookupMissMessage(failureMessage)) {
+        pendingGameStatus.textContent = "";
+        showPendingGameLookupFeedback(failureMessage);
+      } else {
+        pendingGameStatus.textContent = failureMessage;
+      }
     }
   }
 }
@@ -2956,8 +3076,13 @@ function renderPendingGameCancelActions(pendingGame) {
 
   const cancelButton = document.createElement("button");
   cancelButton.type = "button";
-  cancelButton.className = "danger-button";
-  cancelButton.textContent = "Cancel game";
+  cancelButton.className = "danger-button icon-action-button";
+  replaceWithLeadingIconText(
+    cancelButton,
+    "solid",
+    "rectangle-xmark",
+    "Cancel game",
+  );
   cancelButton.setAttribute(
     "aria-label",
     `Cancel game with ${getParticipantDisplayName(invitee)}`,

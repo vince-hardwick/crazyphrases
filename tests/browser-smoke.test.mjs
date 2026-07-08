@@ -652,6 +652,8 @@ describe("solo browser smoke", () => {
     await startBatch.click();
     const startAgain = page.getByRole("button", { name: "Start again" });
     await startAgain.waitFor({ state: "visible" });
+    await page.mouse.move(0, 0);
+    await waitForCssTransition(startAgain);
     const startAgainDefault = await readButtonVisualState(startAgain);
     await startAgain.hover();
     await waitForCssTransition(startAgain);

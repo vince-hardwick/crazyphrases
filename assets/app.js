@@ -2760,7 +2760,7 @@ function renderCreatedPendingGames() {
   renderPendingGameList({
     container: pendingGameSummary,
     includeCancelActions: true,
-    headingText: "Created invites",
+    headingText: "Sent invitations",
     includeResponseActions: false,
     includeStartActions: true,
     pendingGames: createdPendingGames,
@@ -2771,7 +2771,7 @@ function renderIncomingPendingGameInvites() {
   renderPendingGameList({
     container: pendingGameIncomingList,
     includeCancelActions: false,
-    headingText: "Incoming invites",
+    headingText: "Received invitations",
     includeResponseActions: true,
     includeStartActions: false,
     pendingGames: incomingPendingGameInvites,
@@ -2820,31 +2820,24 @@ function renderPendingGameCard(
   const card = document.createElement("div");
   card.className = "pending-game-card";
 
-  const rowCount = document.createElement("p");
-  rowCount.className = "pending-game-row-count";
-  rowCount.textContent = `${pendingGame.rowCount} phrases`;
-
-  const state = document.createElement("p");
-  state.className = "pending-game-row-count";
-  state.textContent = getPendingGameStateLabel(pendingGame);
-
-  const nudgeTimeout = document.createElement("p");
-  nudgeTimeout.className = "pending-game-row-count";
-  nudgeTimeout.textContent = pendingGame.nudgeTimeoutHours
-    ? `Nudge after ${formatNudgeTimeoutHours(pendingGame.nudgeTimeoutHours)}`
-    : "";
-
-  const participantList = document.createElement("ul");
-  participantList.className = "pending-game-participants";
-  participantList.replaceChildren(
-    ...pendingGame.participants.map(renderPendingGameParticipant),
-  );
-
   card.append(
-    rowCount,
-    state,
-    ...(pendingGame.nudgeTimeoutHours ? [nudgeTimeout] : []),
-    participantList,
+    ...pendingGame.participants.map(renderPendingGameParticipantRow),
+    renderPendingGameCardRow({
+      label: "Phrase count",
+      value: String(pendingGame.rowCount),
+    }),
+    renderPendingGameCardRow({
+      label: "Game status",
+      value: getPendingGameStateLabel(pendingGame),
+    }),
+    ...(pendingGame.nudgeTimeoutHours
+      ? [
+          renderPendingGameCardRow({
+            label: "Nudge after",
+            value: formatNudgeTimeoutHours(pendingGame.nudgeTimeoutHours),
+          }),
+        ]
+      : []),
   );
 
   const invitee = pendingGame.participants.find(
@@ -2865,6 +2858,42 @@ function renderPendingGameCard(
   }
 
   return card;
+}
+
+function renderPendingGameParticipantRow(participant, index) {
+  return renderPendingGameCardRow({
+    label: `Player ${index + 1}`,
+    status: getPendingGameParticipantCardStatusLabel(participant),
+    value: getParticipantDisplayName(participant),
+  });
+}
+
+function renderPendingGameCardRow({ label, status = "", value }) {
+  const row = document.createElement("div");
+  row.className = "pending-game-card-row";
+  row.dataset.pendingGameCardRow = "";
+
+  const labelElement = document.createElement("span");
+  labelElement.className = "pending-game-card-label";
+  labelElement.dataset.pendingGameCardLabel = "";
+  labelElement.textContent = `${label}:`;
+
+  const valueElement = document.createElement("span");
+  valueElement.className = "pending-game-card-value";
+  valueElement.dataset.pendingGameCardValue = "";
+  valueElement.textContent = value;
+
+  row.append(labelElement, valueElement);
+
+  if (status) {
+    const statusElement = document.createElement("strong");
+    statusElement.className = "pending-game-card-status";
+    statusElement.dataset.pendingGameCardStatus = "";
+    statusElement.textContent = status;
+    row.append(statusElement);
+  }
+
+  return row;
 }
 
 function isPendingGameReadyToStart(pendingGame) {
@@ -3009,19 +3038,6 @@ function renderPendingGameStartActions(pendingGame) {
   return actions;
 }
 
-function renderPendingGameParticipant(participant) {
-  const item = document.createElement("li");
-
-  const displayName = document.createElement("span");
-  displayName.textContent = getParticipantDisplayName(participant);
-
-  const status = document.createElement("strong");
-  status.textContent = getPendingGameParticipantStatusLabel(participant);
-
-  item.append(displayName, status);
-  return item;
-}
-
 function getParticipantDisplayName(participant) {
   const gamerTag = String(
     participant?.gamerTag ?? "",
@@ -3031,6 +3047,17 @@ function getParticipantDisplayName(participant) {
   }
 
   return "Unknown gamer";
+}
+
+function getPendingGameParticipantCardStatusLabel(participant) {
+  if (
+    participant.role === "creator" &&
+    participant.inviteStatus === "accepted"
+  ) {
+    return "";
+  }
+
+  return getPendingGameParticipantStatusLabel(participant);
 }
 
 function getPendingGameParticipantStatusLabel(participant) {

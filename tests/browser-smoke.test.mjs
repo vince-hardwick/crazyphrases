@@ -519,6 +519,7 @@ describe("solo browser smoke", () => {
 
     const accountSignIn = page.getByRole("button", { name: "Account sign in" });
     await expectFontAwesomeClass(accountSignIn, "fa-regular", "fa-circle-user");
+    await assertSignedOutAccountSignInButtonShape(accountSignIn);
     assert.equal(await page.locator("[data-test-sign-in-button]").isVisible(), false);
     assert.equal(await page.locator("[data-google-sign-in-button]").isVisible(), false);
     assert.equal(await page.locator("[data-email-sign-in-form]").isVisible(), false);
@@ -1197,6 +1198,9 @@ describe("solo browser smoke", () => {
     await expectFontAwesomeClass(accountMenuButton, "fa-solid", "fa-dice");
     assert.equal(await page.locator("[data-account-sign-in-toggle]").isHidden(), true);
     await assertSignedInAccountAffordance(page);
+    await assertSignedInAccountAvatarButtonShape(accountMenuButton, {
+      avatarKind: "built-in",
+    });
     await expectVisibleHeaderTooltip(accountMenuButton, LOCAL_TEST_PROFILE_TOOLTIP);
     await assertAccountProfileButtonIsTopRightPeer(page);
     await assertConsistentTopNavIconLayout(page);
@@ -3461,6 +3465,9 @@ describe("solo browser smoke", () => {
 
     await profileRegion.getByRole("button", { name: "Save profile" }).click();
     await profileRegion.getByText("Profile saved.").waitFor({ state: "visible" });
+    await assertSignedInAccountAvatarButtonShape(page.locator("[data-account-menu-toggle]"), {
+      avatarKind: "uploaded",
+    });
     assert.match(
       await uploadedPreview.getAttribute("src"),
       /^data:image\/png;base64,/,
@@ -6485,6 +6492,103 @@ async function assertSignedInAccountAffordance(page) {
   assert.equal(accountShellText.includes("Account-backed mode"), false);
 }
 
+async function assertSignedOutAccountSignInButtonShape(accountSignIn) {
+  const metrics = await accountSignIn.evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    const styles = getComputedStyle(button);
+
+    return {
+      borderRadius: styles.borderTopLeftRadius,
+      height: rect.height,
+      width: rect.width,
+    };
+  });
+
+  assert.equal(Math.round(metrics.width), 44);
+  assert.equal(Math.round(metrics.height), 44);
+  assert.ok(
+    Math.abs(cssRadiusToPixels(metrics.borderRadius, metrics.width) - 8) <= 1,
+    `Expected signed-out account sign-in button to keep 8px utility radius, got ${metrics.borderRadius}`,
+  );
+}
+
+async function assertSignedInAccountAvatarButtonShape(
+  accountMenuButton,
+  { avatarKind },
+) {
+  await accountMenuButton.waitFor({ state: "visible" });
+
+  if (avatarKind === "uploaded") {
+    await accountMenuButton.locator("img").waitFor({ state: "visible" });
+  } else {
+    await accountMenuButton
+      .locator("[data-account-menu-built-in-avatar-icon]")
+      .waitFor({ state: "attached" });
+  }
+
+  const metrics = await accountMenuButton.evaluate((button, expectedAvatarKind) => {
+    const buttonRect = button.getBoundingClientRect();
+    const buttonStyles = getComputedStyle(button);
+    const visual =
+      expectedAvatarKind === "uploaded"
+        ? button.querySelector("img")
+        : button.querySelector("[data-account-menu-built-in-avatar-icon]");
+    const visualRect = visual?.getBoundingClientRect();
+    const visualStyles = visual ? getComputedStyle(visual) : null;
+
+    return {
+      borderRadius: buttonStyles.borderTopLeftRadius,
+      height: buttonRect.height,
+      visual: visualRect
+        ? {
+            borderRadius: visualStyles.borderTopLeftRadius,
+            centreX: visualRect.left + visualRect.width / 2,
+            centreY: visualRect.top + visualRect.height / 2,
+            height: visualRect.height,
+            objectFit: visualStyles.objectFit,
+            width: visualRect.width,
+          }
+        : null,
+      visualCentreDeltaX: visualRect
+        ? visualRect.left + visualRect.width / 2 - (buttonRect.left + buttonRect.width / 2)
+        : null,
+      visualCentreDeltaY: visualRect
+        ? visualRect.top + visualRect.height / 2 - (buttonRect.top + buttonRect.height / 2)
+        : null,
+      width: buttonRect.width,
+    };
+  }, avatarKind);
+
+  assert.equal(Math.round(metrics.width), 44);
+  assert.equal(Math.round(metrics.height), 44);
+  assert.ok(
+    cssRadiusToPixels(metrics.borderRadius, metrics.width) >=
+      Math.min(metrics.width, metrics.height) / 2 - 1,
+    `Expected signed-in account button to be circular, got ${metrics.borderRadius}`,
+  );
+  assert.ok(metrics.visual, `Expected ${avatarKind} Avatar visual in account button`);
+
+  if (avatarKind === "uploaded") {
+    assert.ok(Math.abs(metrics.visualCentreDeltaX) <= 1);
+    assert.ok(Math.abs(metrics.visualCentreDeltaY) <= 1);
+    assert.equal(metrics.visual.objectFit, "cover");
+    assert.ok(
+      Math.abs(metrics.visual.width - metrics.visual.height) <= 1,
+      `Expected Uploaded Avatar image to render square, got ${metrics.visual.width} x ${metrics.visual.height}`,
+    );
+    assert.ok(metrics.visual.width >= metrics.width - 4);
+    assert.ok(metrics.visual.height >= metrics.height - 4);
+    assert.ok(
+      cssRadiusToPixels(metrics.visual.borderRadius, metrics.visual.width) >=
+        Math.min(metrics.visual.width, metrics.visual.height) / 2 - 1,
+      `Expected Uploaded Avatar image to be circular, got ${metrics.visual.borderRadius}`,
+    );
+  } else if (metrics.visual.width > 0 && metrics.visual.height > 0) {
+    assert.ok(Math.abs(metrics.visualCentreDeltaX) <= 1);
+    assert.ok(Math.abs(metrics.visualCentreDeltaY) <= 1);
+  }
+}
+
 async function assertAccountProfileButtonIsTopRightPeer(page) {
   const metrics = await page.evaluate(() => {
     const accountShell = document.querySelector("[data-account-shell]");
@@ -6522,6 +6626,16 @@ async function assertAccountProfileButtonIsTopRightPeer(page) {
   assert.ok(metrics.viewportWidth - metrics.accountButton.right <= 14);
 }
 
+function cssRadiusToPixels(value, relativeTo) {
+  const radius = String(value ?? "").trim();
+
+  if (radius.endsWith("%")) {
+    return (Number.parseFloat(radius) / 100) * relativeTo;
+  }
+
+  return Number.parseFloat(radius);
+}
+
 async function assertConsistentTopNavIconLayout(page) {
   const metrics = await page.evaluate(() => {
     const selectors = [
@@ -6553,7 +6667,18 @@ async function assertConsistentTopNavIconLayout(page) {
   for (const metric of metrics) {
     assert.equal(Math.round(metric.width), 44, metric.selector);
     assert.equal(Math.round(metric.height), 44, metric.selector);
-    assert.equal(metric.borderRadius, "8px", metric.selector);
+    if (metric.selector === "[data-account-menu-toggle]") {
+      assert.ok(
+        cssRadiusToPixels(metric.borderRadius, metric.width) >=
+          Math.min(metric.width, metric.height) / 2 - 1,
+        metric.selector,
+      );
+    } else {
+      assert.ok(
+        Math.abs(cssRadiusToPixels(metric.borderRadius, metric.width) - 8) <= 1,
+        metric.selector,
+      );
+    }
     assert.ok(Math.abs(metric.top - metrics[0].top) <= 1, metric.selector);
   }
 

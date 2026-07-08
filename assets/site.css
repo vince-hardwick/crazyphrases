@@ -1216,6 +1216,11 @@ h1 {
   border-radius: 8px;
 }
 
+.account-shell > [data-account-menu-toggle] {
+  border-radius: 999px;
+  padding: 0;
+}
+
 .tooltip-action,
 .primary-nav-icon-link[data-tooltip] {
   position: relative;

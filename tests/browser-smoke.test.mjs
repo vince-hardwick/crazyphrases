@@ -1840,7 +1840,7 @@ describe("solo browser smoke", () => {
           .unreadCount === "0",
     );
     assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
-    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Received invitations");
     await assertTextVisible(page, "Player");
     assert.equal(await page.locator("[data-notification-panel]").isHidden(), true);
     assert.equal(
@@ -2685,7 +2685,7 @@ describe("solo browser smoke", () => {
         notificationId: "notification-unread-oldest",
       },
     ]);
-    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Received invitations");
     await assertTextVisible(page, "Waiting for responses");
 
     assertNoConsoleErrors();
@@ -3720,13 +3720,20 @@ describe("solo browser smoke", () => {
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
     );
-    await assertTextVisible(page, "Player");
-    await assertTextVisible(page, "Accepted");
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextHidden(page, "Created invites");
+    await assertPendingInvitationCardRows(page, "Sent invitations", [
+      { label: "Player 1:", value: "Player", status: "" },
+      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count:", value: "15", status: "" },
+      { label: "Game status:", value: "Waiting for responses", status: "" },
+      { label: "Nudge after:", value: "3 days", status: "" },
+    ]);
+    await assertPendingInvitationCardHierarchy(page, "Sent invitations");
+    await assertTextHidden(page, "Accepted");
     await assertTextVisible(page, "Invitee Two");
     await assertTextHidden(page, "@invitee-two");
     await assertTextVisible(page, "Invited");
-    await assertTextVisible(page, "15 phrases");
-    await assertTextVisible(page, "Nudge after 3 days");
     await assertNoHorizontalOverflow(page);
 
     await signOutFromAccountMenu(page);
@@ -3757,7 +3764,7 @@ describe("solo browser smoke", () => {
       page,
       "Game invite created. Waiting for Invitee Two to accept.",
     );
-    await assertTextVisible(page, "Created invites");
+    await assertTextVisible(page, "Sent invitations");
     await assertTextVisible(page, "Expired");
     assert.equal(
       await page.getByRole("button", { name: "Start game with Invitee Two" }).count(),
@@ -3771,7 +3778,7 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
-    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Received invitations");
     await assertTextVisible(page, "Expired");
     assert.equal(
       await page
@@ -3817,9 +3824,15 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Invitee Two");
     await assertTextHidden(page, "@invitee-two");
-    await assertTextVisible(page, "Incoming invites");
+    await assertTextVisible(page, "Received invitations");
     await assertTextVisible(page, "Player");
-    await assertTextVisible(page, "15 phrases");
+    await assertPendingInvitationCardRows(page, "Received invitations", [
+      { label: "Player 1:", value: "Player", status: "" },
+      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count:", value: "15", status: "" },
+      { label: "Game status:", value: "Waiting for responses", status: "" },
+      { label: "Nudge after:", value: "2 days", status: "" },
+    ]);
     const acceptInviteButton = page.getByRole("button", {
       name: "Accept invite from Player",
     });
@@ -5035,7 +5048,13 @@ describe("solo browser smoke", () => {
       "Game invite created. Waiting for Invitee Two to accept.",
     );
     await assertTextVisible(page, "Invitee Two");
-    await assertTextVisible(page, "15 phrases");
+    await assertPendingInvitationCardRows(page, "Sent invitations", [
+      { label: "Player 1:", value: "Player", status: "" },
+      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count:", value: "15", status: "" },
+      { label: "Game status:", value: "Waiting for responses", status: "" },
+      { label: "Nudge after:", value: "3 days", status: "" },
+    ]);
 
     await openFavouritesRoute(page);
     await assertFavouriteSurfaceMounted(page);
@@ -5047,8 +5066,13 @@ describe("solo browser smoke", () => {
     assert.equal(await page.locator("[data-pending-game-lookup-key-input]").count(), 1);
     await assertNoFavouritesPanelDom(page);
     await assertTextVisible(page, "Invitee Two");
-    await assertTextVisible(page, "15 phrases");
-    await assertTextVisible(page, "Nudge after 3 days");
+    await assertPendingInvitationCardRows(page, "Sent invitations", [
+      { label: "Player 1:", value: "Player", status: "" },
+      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count:", value: "15", status: "" },
+      { label: "Game status:", value: "Waiting for responses", status: "" },
+      { label: "Nudge after:", value: "3 days", status: "" },
+    ]);
 
     assertNoConsoleErrors();
   });
@@ -7174,6 +7198,80 @@ async function assertPendingGameSurfaceMounted(page) {
   assert.equal(await page.locator("[data-pending-game-summary]").isHidden(), true);
 }
 
+async function assertPendingInvitationCardRows(page, sectionHeading, expectedRows) {
+  const actualRows = await page.evaluate((headingText) => {
+    const sections = [
+      ...document.querySelectorAll(
+        "[data-pending-game-summary], [data-pending-game-incoming]",
+      ),
+    ];
+    const section = sections.find((candidate) =>
+      [...candidate.children].some(
+        (child) => child.textContent.trim() === headingText,
+      ),
+    );
+    const card = section?.querySelector(".pending-game-card");
+
+    return [...(card?.querySelectorAll("[data-pending-game-card-row]") ?? [])].map(
+      (row) => ({
+        label: row.querySelector("[data-pending-game-card-label]")?.textContent.trim() ?? "",
+        value: row.querySelector("[data-pending-game-card-value]")?.textContent.trim() ?? "",
+        status: row.querySelector("[data-pending-game-card-status]")?.textContent.trim() ?? "",
+      }),
+    );
+  }, sectionHeading);
+
+  assert.deepEqual(actualRows, expectedRows);
+}
+
+async function assertPendingInvitationCardHierarchy(page, sectionHeading) {
+  const hierarchy = await page.evaluate((headingText) => {
+    const sections = [
+      ...document.querySelectorAll(
+        "[data-pending-game-summary], [data-pending-game-incoming]",
+      ),
+    ];
+    const section = sections.find((candidate) =>
+      [...candidate.children].some(
+        (child) => child.textContent.trim() === headingText,
+      ),
+    );
+    const card = section?.querySelector(".pending-game-card");
+    const label = card?.querySelector("[data-pending-game-card-label]");
+    const value = card?.querySelector("[data-pending-game-card-value]");
+
+    if (!section || !card || !label || !value) {
+      return null;
+    }
+
+    const cardStyle = getComputedStyle(card);
+    const labelStyle = getComputedStyle(label);
+    const valueStyle = getComputedStyle(value);
+    return {
+      borderStyle: cardStyle.borderTopStyle,
+      borderWidth: Number.parseFloat(cardStyle.borderTopWidth),
+      labelWeight: Number.parseFloat(labelStyle.fontWeight),
+      paddingTop: Number.parseFloat(cardStyle.paddingTop),
+      valueWeight: Number.parseFloat(valueStyle.fontWeight),
+    };
+  }, sectionHeading);
+
+  assert.notEqual(hierarchy, null);
+  assert.equal(hierarchy.borderStyle, "solid");
+  assert.ok(
+    hierarchy.borderWidth >= 1,
+    `Expected invitation card border width >= 1px, got ${hierarchy.borderWidth}`,
+  );
+  assert.ok(
+    hierarchy.paddingTop >= 10,
+    `Expected invitation card padding >= 10px, got ${hierarchy.paddingTop}`,
+  );
+  assert.ok(
+    hierarchy.labelWeight > hierarchy.valueWeight,
+    `Expected invitation card label weight ${hierarchy.labelWeight} to exceed value weight ${hierarchy.valueWeight}`,
+  );
+}
+
 async function assertMultiplayerInviteCopy(page) {
   const multiplayerHeading = page.getByRole("heading", {
     name: "Multiplayer",
@@ -7278,21 +7376,18 @@ async function assertMultiplayerCardBodyTypography(page) {
         "Completed batches",
     );
 
+    const invitationCard = document.querySelector(
+      "[data-pending-game-summary] .pending-game-card",
+    );
     return {
-      cardMeta: readStyle(
-        findElement("[data-pending-game-summary] .pending-game-card p", "10 phrases"),
+      invitationLabel: readStyle(
+        invitationCard?.querySelector("[data-pending-game-card-label]"),
       ),
-      cardState: readStyle(
-        findElement("[data-pending-game-summary] .pending-game-card p", "Started"),
+      invitationValue: readStyle(
+        invitationCard?.querySelector("[data-pending-game-card-value]"),
       ),
-      participantName: readStyle(
-        findElement("[data-pending-game-summary] .pending-game-participants span", "Player"),
-      ),
-      participantStatus: readStyle(
-        findElement(
-          "[data-pending-game-summary] .pending-game-participants strong",
-          "Accepted",
-        ),
+      invitationStatus: readStyle(
+        invitationCard?.querySelector("[data-pending-game-card-status]"),
       ),
       completedHeading: readStyle(
         completedBucket?.querySelector(".multiplayer-section-heading"),
@@ -7310,10 +7405,8 @@ async function assertMultiplayerCardBodyTypography(page) {
   });
 
   const bodyText = [
-    typography.cardMeta,
-    typography.cardState,
-    typography.participantName,
-    typography.participantStatus,
+    typography.invitationValue,
+    typography.invitationStatus,
     typography.completedSummary,
   ];
   for (const style of bodyText) {
@@ -7323,8 +7416,17 @@ async function assertMultiplayerCardBodyTypography(page) {
       `Expected "${style.text}" to use body font weight, got ${style.fontWeight}`,
     );
   }
+  assert.notEqual(typography.invitationLabel, null);
+  assert.ok(
+    typography.invitationLabel.fontWeight > typography.invitationValue.fontWeight,
+    `Expected invitation label weight ${typography.invitationLabel.fontWeight} to exceed value weight ${typography.invitationValue.fontWeight}`,
+  );
   assert.notEqual(typography.completedHeading, null);
   assert.notEqual(typography.revealButton, null);
+  assert.ok(
+    typography.completedHeading.fontWeight > typography.invitationLabel.fontWeight,
+    `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed invitation label weight ${typography.invitationLabel.fontWeight}`,
+  );
   assert.ok(
     typography.completedHeading.fontWeight > typography.completedSummary.fontWeight,
     `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,

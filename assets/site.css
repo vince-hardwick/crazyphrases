@@ -1535,6 +1535,13 @@ h1 {
   background: var(--surface-soft);
 }
 
+[data-pending-game-summary],
+[data-pending-game-incoming] {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .pending-game-row-count {
   margin: 0 0 8px;
   color: var(--muted);
@@ -1556,6 +1563,40 @@ h1 {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
+}
+
+[data-pending-game-summary] .pending-game-card,
+[data-pending-game-incoming] .pending-game-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.pending-game-card-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.pending-game-card-label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pending-game-card-value {
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.pending-game-card-status {
+  color: var(--accent-strong);
+  font-weight: 500;
 }
 
 .multiplayer-bucket {

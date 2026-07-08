@@ -1804,10 +1804,8 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.getByRole("button", { name: "Invite" }).click();
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
     await expectFontAwesomeClass(
       page.getByRole("button", { name: "Notifications" }),
       "fa-regular",
@@ -3718,10 +3716,6 @@ describe("solo browser smoke", () => {
     await expectFontAwesomeClass(createInviteButton, "fa-regular", "fa-envelope");
     await createInviteButton.click();
 
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
     await assertTextVisible(page, "Sent invitations");
     await assertTextHidden(page, "Created invites");
     await assertPendingInvitationCardRows(page, "Sent invitations", [
@@ -3745,6 +3739,131 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("communicates Pending Game invite progress and success through the Invite button", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await delayLocalTestPendingGameInviteCreation(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
+    assert.equal(await page.getByRole("button", { name: "Invite" }).count(), 1);
+    const createInviteButton = page.locator("[data-pending-game-submit]");
+    assert.equal(await createInviteButton.count(), 1);
+    await expectFontAwesomeClass(createInviteButton, "fa-regular", "fa-envelope");
+    await createInviteButton.click();
+    await page.waitForFunction(() => window.__pendingGameCreateStarted === true);
+    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-spinner", "fa-spin");
+    assert.equal(await createInviteButton.getAttribute("aria-label"), "Creating invite");
+    assert.equal((await createInviteButton.innerText()).includes("Invite"), false);
+
+    await releaseDelayedPendingGameInviteCreation(page);
+    await expectFontAwesomeClass(createInviteButton, "fa-solid", "fa-check");
+    assert.equal(await createInviteButton.getAttribute("aria-label"), "Invite sent");
+    await assertTextHidden(
+      page,
+      "Game invite created. Waiting for Invitee Two to accept.",
+    );
+    await createInviteButton.waitFor({ state: "visible" });
+    await page.waitForFunction(() => {
+      const icon = document.querySelector("[data-pending-game-submit] i");
+      return icon?.classList.contains("fa-envelope");
+    });
+    await expectFontAwesomeClass(createInviteButton, "fa-regular", "fa-envelope");
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("shows temporary lookup miss feedback under the Invite button", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    await page.locator("[data-pending-game-lookup-key-input]").fill("missing-gamer");
+    await page.getByRole("button", { name: "Invite" }).click();
+
+    const feedback = page.locator("[data-pending-game-lookup-feedback]");
+    await assertTextVisible(feedback, "No gamer found under that gamer tag.");
+    assert.equal(await page.locator("[data-pending-game-status]").innerText(), "");
+    const rightEdgeDelta = await page.evaluate(() => {
+      const button = document.querySelector("[data-pending-game-submit]");
+      const message = document.querySelector("[data-pending-game-lookup-feedback]");
+      if (!button || !message) {
+        return Number.POSITIVE_INFINITY;
+      }
+
+      return Math.abs(
+        button.getBoundingClientRect().right -
+          message.getBoundingClientRect().right,
+      );
+    });
+    assert.ok(
+      rightEdgeDelta <= 1,
+      `Expected lookup feedback to align with Invite button right edge, got ${rightEdgeDelta}px`,
+    );
+
+    await page.waitForTimeout(1700);
+    await assertTextHidden(feedback, "No gamer found under that gamer tag.");
+    await expectFontAwesomeClass(
+      page.locator("[data-pending-game-submit]"),
+      "fa-regular",
+      "fa-envelope",
+    );
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("renders creator cancellation as a rectangle-xmark icon action", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+    await page.getByRole("button", { name: "Invite" }).click();
+    await assertTextVisible(page, "Sent invitations");
+
+    const cancelButton = page.getByRole("button", {
+      name: "Cancel game with Invitee Two",
+    });
+    assert.equal(await cancelButton.count(), 1);
+    await expectFontAwesomeClass(cancelButton, "fa-solid", "fa-rectangle-xmark");
+    await assertNoHorizontalOverflow(page);
+
+    assertNoConsoleErrors();
+  });
+
   it("shows expired Pending Game invites without creator or invitee actions", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -3762,10 +3881,6 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Invite" }).click();
 
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
     await assertTextVisible(page, "Sent invitations");
     await assertTextVisible(page, "Expired");
     assert.equal(
@@ -3816,10 +3931,8 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Invite" }).click();
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -3874,10 +3987,8 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Invite" }).click();
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -3923,10 +4034,8 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.locator("[data-pending-game-row-count]").selectOption("15");
     await page.getByRole("button", { name: "Invite" }).click();
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4022,10 +4131,8 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
     await page.getByRole("button", { name: "Invite" }).click();
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
+    await assertTextVisible(page, "Sent invitations");
+    await assertTextVisible(page, "Invitee Two");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -5045,10 +5152,6 @@ describe("solo browser smoke", () => {
     await page.locator("[data-pending-game-nudge-timeout]").selectOption("72");
     await page.getByRole("button", { name: "Invite" }).click();
 
-    await assertTextVisible(
-      page,
-      "Game invite created. Waiting for Invitee Two to accept.",
-    );
     await assertTextVisible(page, "Invitee Two");
     await assertPendingInvitationCardRows(page, "Sent invitations", [
       { label: "Player 1:", value: "Player", status: "" },

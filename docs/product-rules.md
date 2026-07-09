@@ -77,8 +77,9 @@ your entries`, `Awaiting other player entries`, and `Completed batches` should r
 its own clearly demarcated card within the owning section container. Do not rely on
 subtle horizontal separators alone to show where one listing ends and another begins.
 Cards should use labelled rows for game attributes and participant context, such as
-`Player 1: vhCoder`, `Player 2: test-player`, `Phrase count: 20`, `Game status:
-Awaiting responses`, and `Nudge after: 2 days`.
+`Player 1` `vhCoder`, `Player 2` `test-player`, `Phrase count` `20`, `Game status`
+`Awaiting responses`, and `Nudge after` `2 days`. Labels do not include trailing
+colons.
 Cards should use a consistent internal order: participant rows first, then game metadata
 rows. Participant rows use labels such as `Player 1` and `Player 2`, include any
 meaningful invitee status on the relevant participant row, and are followed by metadata

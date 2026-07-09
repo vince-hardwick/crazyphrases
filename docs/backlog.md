@@ -629,7 +629,11 @@ preserve their original history.
   completed mutually exclusive Solo/Multiplayer destinations. Issue #119 completed
   Multiplayer destination hardening, including actionable notification navigation back
   to `#/play/multiplayer` without changing backend authority paths. PR #122 merged to
-  `main` and was promoted through `test` and production on 2026-06-30.
+  `main` and was promoted through `test` and production on 2026-06-30. On 2026-07-09,
+  the owner accepted ADR `0027` and PRD issue #226 for a Game-scoped Multiplayer Game
+  Play Surface so active Entry input, waiting, Reveal, and revealed Batch states are no
+  longer subsumed inside dashboard cards. Implementation is tracked by child issues
+  #227, #228, #229, #230, #231, and #232.
 - **Remaining risk**: The first Multiplayer destination sequence has hosted coverage
   for the route gate, mutually exclusive destinations, dashboard buckets, completed
   history entry point, actionable notification routing, and anonymous account-only DOM
@@ -825,11 +829,14 @@ preserve their original history.
 
 ### Celebratory reveal effects
 
-- **Deferred**: Heavy reveal animation, confetti, or other celebratory effects.
-- **Why deferred**: MVP should keep reveal readable and focused on the phrase content,
-  with only subtle transitions if needed.
-- **Revisit when**: The core reveal flow is tested and needs more delight without
-  harming readability.
+- **Deferred outside MVP; weak Could**: Dedicated celebratory Reveal effects, including
+  heavy reveal animation, confetti, or other decorative reveal-only effects.
+- **Why deferred**: MVP should prioritise first-class phrase entry and Reveal workflow
+  clarity. Reveal should stay readable and focused on the phrase content; optional
+  delight is not a launch-priority implementation slice.
+- **Revisit when**: The core phrase-entry and Reveal interfaces are settled, user
+  testing shows the Reveal moment needs more delight, and that polish can be added
+  without harming readability or reduced-motion behaviour.
 - **Remaining risk**: Reveal UI should leave room for optional animation without
   depending on it.
 

@@ -476,9 +476,53 @@ account sign-in control's tooltip is suppressed so it does not compete with the 
 
 The first signed-in navigation implementation remains inside the static single-page app
 and uses lightweight hash routes for primary signed-in destinations rather than
-introducing a frontend framework or server-level route rewrites. The accepted
-destination fragments are `#/play/solo`, `#/play/multiplayer`, and `#/favourites`. The
-hash fragment selects the client view; it does not grant account authority, bypass
+introducing a frontend framework or server-level route rewrites. The accepted primary
+destination fragments are `#/play/solo`, `#/play/multiplayer`, and `#/favourites`.
+Multiplayer phrase entry may use a dedicated signed-in child entry route so active Entry
+input is a first-class Game Play Surface rather than being embedded inside a dashboard
+bucket.
+That child route should identify the Started Game, not a specific assigned section. The
+canonical route shape is `#/play/multiplayer/games/<started-game-id>`. The route
+represents the participant taking their current turn in that Game; the backend returns
+the current Account's next incomplete assigned section for that Started Game.
+The same Game-scoped Game Play Surface owns the participant's Reveal task and revealed
+batch view for that Started Game, so completed phrase content is not buried inside a
+dashboard card.
+The Game-scoped play route should be directly reloadable and shareable as a signed-in
+destination. Opening or refreshing it must load the current participant-scoped state for
+that Started Game and render the applicable entry, waiting, Reveal, revealed-batch,
+unavailable, or sign-in-gate state without depending on the Multiplayer dashboard having
+already loaded.
+While that participant-scoped state is loading, the Game Play Surface should show a
+route-local skeleton screen rather than dashboard buckets, stale Game details, or
+loading text as the primary presentation.
+Anonymous visits to a Game Play Surface route such as
+`#/play/multiplayer/games/<started-game-id>` should use the existing signed-in route
+gate. Hosted Auth may preserve that exact allowlisted route through sign-in; after a
+valid Account session exists, the participant-scoped Started Game loader decides whether
+the Account may see the target Game.
+For a signed-in Account, if the Game Play Surface loader cannot return an authorised
+participant state for the route's Started Game id, the route should show a conservative
+unavailable state with heading `Game unavailable.`, body `This game cannot be opened
+from this account.`, and action `Return to Multiplayer`. This state must not reveal
+whether the Game exists or who participates in it.
+If the loader can authorise the signed-in Account as a participant in a cancelled
+Started Game, the Game Play Surface should show a specific cancelled state with heading
+`Game cancelled.`, body `The game creator cancelled this game before reveal.`, and
+action `Return to Multiplayer`. Non-participants, invalid ids, and protected stale links
+still use the generic unavailable state.
+Waiting, cancelled, unavailable, and revealed-batch Game Play Surface states should
+include a clear `Return to Multiplayer` action. Active entry states should keep
+`Submit section` as the dominant action and rely on normal top navigation or browser
+back navigation rather than showing a competing prominent return action.
+The Game-scoped play route should use a narrow participant-scoped Started Game read
+contract rather than depending on the full Multiplayer dashboard payload. That read
+contract should return only what the current Account may know for that Started Game:
+safe participant/context summary, the current next assigned section when available,
+waiting/completed/revealed state, phrases only after that participant has revealed,
+candidate snapshot or Entry Assist data needed for dice suggestions, and unavailable,
+cancelled, or not-authorised state without leaking protected Game details.
+The hash fragment selects the client view; it does not grant account authority, bypass
 authentication, or replace backend permissions.
 
 When a signed-in user lands with no hash route or no recognised hash route, the first
@@ -1494,6 +1538,54 @@ The signed-in multiplayer surface groups Started Games and completed batches int
 `Awaiting your entries`, `Awaiting other player entries`, and `Completed batches`.
 `Completed batches` lists only the five most recently completed
 multiplayer batches for the signed-in Account in the MVP.
+When a Started Game has an active section for the current Account, the `Awaiting your
+entries` dashboard card should use a `Take turn` action to open the dedicated Game Play
+Surface. The section input UI should not be embedded inside the dashboard card.
+The dashboard card should remain summary-only: participant rows, phrase count, Game
+status, and the `Take turn` action. It should not preview the current assigned Entry
+Kind, row prompts, or phrase input fields.
+Opening the Game Play Surface is a navigation and presentation change only; the
+database-owned participant-section authority still decides whether the current Account
+can see and submit that section.
+Solo and Multiplayer phrase entry surfaces should use the same first-class interface
+language where practical: route-level task heading, section progress, a clear section
+title such as `Enter adjectives` or `Enter nouns`, phrase rows with the same input
+rhythm and mobile layout, and a primary submission action at the bottom. They do not
+need to share one identical implementation module because Solo uses local Game state
+while Multiplayer uses Account-scoped participant-section authority, remote
+submission, waiting states, and Reveal state.
+Multiplayer section entry should include the same dice-based Entry Assist affordance as
+Solo for supported Entry Kinds. Dice suggestions must use the Game's pinned candidate
+snapshot for the relevant Entry Kind, respect the Account's Entry Assist Safety Setting
+where applicable, and never reveal or infer another participant's assigned section or
+entries.
+Actionable `entries_needed` notifications should open the same Game-scoped Game Play
+Surface directly rather than stopping on the Multiplayer dashboard. Actionable
+`batch_complete` notifications should also open that Game-scoped surface, landing on
+the current participant's `Reveal phrases` state when unrevealed or the completed
+phrase batch when already revealed. The Multiplayer dashboard remains the overview and
+fallback destination when the target Game no longer has a current participant task.
+After the Game Creator validly starts a Pending Game, which requires every invited
+human participant to have accepted, the app should navigate the creator to the
+Game-scoped Game Play Surface. If the creator has an immediately available assigned
+section, the route should show that section. If the creator has no immediately
+available section, the route should show the waiting state. If start fails because the
+Pending Game is no longer startable, the app should remain on the Multiplayer dashboard
+and show local failure feedback.
+Accepting a Pending Game invite should keep the invitee in the Multiplayer destination
+because invite acceptance and turn-taking are separate lifecycle moments. After the Game
+Creator starts the Game, the invitee should reach the Game-scoped Game Play Surface
+through the actionable `entries_needed` notification or the dashboard `Take turn`
+action.
+After a successful Multiplayer section submission, the participant should stay on the
+Game-scoped entry route when another assigned section is immediately available for that
+participant. If the participant has no remaining available section and the batch is not
+complete, the route should show a waiting state with a clear return action to the
+Multiplayer dashboard. If the submission completes the batch, the route should show the
+participant-scoped `Reveal phrases` action. Once the participant has revealed the batch,
+the same Game-scoped surface should show the completed phrase batch. If the Game is
+cancelled, expired, or no longer accessible, the route should show a local unavailable
+state and offer return to the Multiplayer dashboard.
 
 Signed-in participants can open a dedicated completed multiplayer history view
 from the `Completed batches` dashboard bucket only when more than five completed
@@ -1511,8 +1603,10 @@ Reveal from history uses the existing participant-scoped Multiplayer Reveal
 authority, updates only the current participant's reveal state, and renders
 phrases in original row order.
 
-MVP reveal effects should be simple and polished. Subtle transitions are acceptable, but
-heavy animation or confetti is deferred.
+Dedicated celebratory Reveal effects are outside MVP implementation scope and sit as a
+weak `Could` priority under MoSCoW. MVP Reveal should stay readable and focused on
+phrase content. If a future in-scope UI pass touches Reveal presentation, subtle CSS
+transitions may be used, but heavy animation or confetti remains deferred.
 
 ### Cancellation
 

@@ -3843,7 +3843,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("renders creator cancellation as a rectangle-xmark icon action", async () => {
+  it("removes creator-cancelled Pending Games from Sent invitations", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -3866,6 +3866,15 @@ describe("solo browser smoke", () => {
     });
     assert.equal(await cancelButton.count(), 1);
     await expectFontAwesomeClass(cancelButton, "fa-solid", "fa-rectangle-xmark");
+    await cancelButton.click();
+
+    await assertTextVisible(page, "Game cancelled.");
+    await assertTextHidden(page, "Sent invitations");
+    await assertTextHidden(page, "Invitee Two");
+    assert.equal(
+      await page.getByRole("button", { name: "Cancel game with Invitee Two" }).count(),
+      0,
+    );
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -4021,6 +4030,56 @@ describe("solo browser smoke", () => {
       0,
     );
     await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
+  it("caps declined Sent invitations at three newest original invites", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    for (const rowCount of ["10", "15", "20", "25"]) {
+      await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+      await page.locator("[data-pending-game-row-count]").selectOption(rowCount);
+      await page.locator("[data-pending-game-submit]").click();
+      await waitForInviteButtonReady(page);
+    }
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page, { invitee: true });
+    await openMultiplayerRoute(page);
+
+    for (let index = 0; index < 4; index += 1) {
+      await page
+        .getByRole("button", { name: "Decline invite from Player" })
+        .first()
+        .click();
+      await assertTextVisible(page, "Game invite declined.");
+    }
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    assert.deepEqual(
+      await getPendingInvitationCardValues(page, "Sent invitations", "Phrase count:"),
+      ["25", "20", "15"],
+    );
+    assert.deepEqual(
+      await getPendingInvitationCardStatuses(page, "Sent invitations", "Player 2:"),
+      ["Declined", "Declined", "Declined"],
+    );
+    await assertNoHorizontalOverflow(page);
+
     assertNoConsoleErrors();
   });
 
@@ -6294,6 +6353,13 @@ async function expectFontAwesomeClass(locator, ...classNames) {
   }
 }
 
+async function waitForInviteButtonReady(page) {
+  await page.waitForFunction(() => {
+    const icon = document.querySelector("[data-pending-game-submit] i");
+    return icon?.classList.contains("fa-envelope");
+  });
+}
+
 async function expectDarkBackground(locator) {
   const backgroundColor = await locator.evaluate(
     (element) => getComputedStyle(element).backgroundColor,
@@ -7452,6 +7518,53 @@ async function assertPendingInvitationCardRows(page, sectionHeading, expectedRow
   }, sectionHeading);
 
   assert.deepEqual(actualRows, expectedRows);
+}
+
+async function getPendingInvitationCardValues(page, sectionHeading, rowLabel) {
+  return getPendingInvitationCardRowField(page, sectionHeading, rowLabel, "value");
+}
+
+async function getPendingInvitationCardStatuses(page, sectionHeading, rowLabel) {
+  return getPendingInvitationCardRowField(page, sectionHeading, rowLabel, "status");
+}
+
+async function getPendingInvitationCardRowField(
+  page,
+  sectionHeading,
+  rowLabel,
+  fieldName,
+) {
+  return page.evaluate(
+    ({ headingText, labelText, targetField }) => {
+      const sections = [
+        ...document.querySelectorAll(
+          "[data-pending-game-summary], [data-pending-game-incoming]",
+        ),
+      ];
+      const section = sections.find((candidate) =>
+        [...candidate.children].some(
+          (child) => child.textContent.trim() === headingText,
+        ),
+      );
+      const cards = [...(section?.querySelectorAll(".pending-game-card") ?? [])];
+
+      return cards.map((card) => {
+        const row = [...card.querySelectorAll("[data-pending-game-card-row]")].find(
+          (candidate) =>
+            candidate
+              .querySelector("[data-pending-game-card-label]")
+              ?.textContent.trim() === labelText,
+        );
+        const selector =
+          targetField === "status"
+            ? "[data-pending-game-card-status]"
+            : "[data-pending-game-card-value]";
+
+        return row?.querySelector(selector)?.textContent.trim() ?? "";
+      });
+    },
+    { headingText: sectionHeading, labelText: rowLabel, targetField: fieldName },
+  );
 }
 
 async function assertPendingInvitationCardHierarchy(page, sectionHeading) {

@@ -163,6 +163,7 @@ export function createTestPendingGameRepository({
               participant.profileId === creatorProfile.profileId,
           ),
         )
+        .toReversed()
         .map((pendingGame) =>
           createEffectivePendingGameDto({
             now,
@@ -691,7 +692,8 @@ export function createSupabasePendingGameRepository({
       const pendingGameResponse = await supabase
         .from("pending_games")
         .select("id, template_id, row_count, nudge_timeout_hours, status, expires_at")
-        .eq("creator_account_id", accountId);
+        .eq("creator_account_id", accountId)
+        .order("created_at", { ascending: false });
       assertNoSupabaseError(
         pendingGameResponse,
         "Could not load created Pending Games",

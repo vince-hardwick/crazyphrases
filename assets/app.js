@@ -2883,8 +2883,33 @@ function renderCreatedPendingGames() {
     headingText: "Sent invitations",
     includeResponseActions: false,
     includeStartActions: true,
-    pendingGames: createdPendingGames,
+    pendingGames: getVisibleCreatedPendingGames(createdPendingGames),
   });
+}
+
+function getVisibleCreatedPendingGames(pendingGames) {
+  const activeInvitations = [];
+  const declinedInvitations = [];
+
+  for (const pendingGame of pendingGames) {
+    if (isDeclinedCreatedPendingGame(pendingGame)) {
+      declinedInvitations.push(pendingGame);
+    } else if (pendingGame.status !== "cancelled") {
+      activeInvitations.push(pendingGame);
+    }
+  }
+
+  return [...activeInvitations, ...declinedInvitations.slice(0, 3)];
+}
+
+function isDeclinedCreatedPendingGame(pendingGame) {
+  return (
+    pendingGame.status === "cancelled" &&
+    pendingGame.participants.some(
+      (participant) =>
+        participant.role === "invitee" && participant.inviteStatus === "declined",
+    )
+  );
 }
 
 function renderIncomingPendingGameInvites() {

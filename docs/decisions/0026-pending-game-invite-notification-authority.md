@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted. Source-controlled implementation is pending.
+Accepted. Source-controlled implementation exists for the MVP through
+`supabase/migrations/20260707234133_pending_game_invite_notifications.sql`.
+Hosted deployment, smoke, and cleanup evidence lives in
+`docs/planning/supabase-state-ledger.md`.
 
 ## Context
 

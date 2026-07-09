@@ -174,6 +174,8 @@ const ROUTES = {
   settings: "#/settings",
 };
 const signedInRouteReconciliationDelaysMs = [0, 100, 500, 1500, 3000, 6000, 10000];
+const PENDING_GAME_LOOKUP_FEEDBACK_VISIBLE_MS = 3000;
+const PENDING_GAME_LOOKUP_FEEDBACK_FADE_MS = 300;
 const signedInOnlyRoutes = new Set([
   ROUTES.playMultiplayer,
   ROUTES.favourites,
@@ -2807,15 +2809,16 @@ function showPendingGameLookupFeedback(message) {
   clearPendingGameLookupFeedbackTimer();
   pendingGameLookupFeedback.textContent = message;
   pendingGameLookupFeedback.hidden = false;
-  pendingGameLookupFeedback.classList.remove("is-fading");
+  pendingGameLookupFeedback.classList.remove("is-visible", "is-fading");
+  void pendingGameLookupFeedback.offsetHeight;
   pendingGameLookupFeedback.classList.add("is-visible");
   pendingGameLookupFeedbackTimer = window.setTimeout(() => {
     pendingGameLookupFeedback?.classList.add("is-fading");
     pendingGameLookupFeedbackTimer = window.setTimeout(() => {
       pendingGameLookupFeedbackTimer = null;
       hidePendingGameLookupFeedback();
-    }, 120);
-  }, 1500);
+    }, PENDING_GAME_LOOKUP_FEEDBACK_FADE_MS);
+  }, PENDING_GAME_LOOKUP_FEEDBACK_VISIBLE_MS);
 }
 
 function isPendingGameLookupMissMessage(message) {

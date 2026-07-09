@@ -1545,7 +1545,7 @@ h1 {
   line-height: 1.2;
   opacity: 0;
   text-align: right;
-  transition: opacity 140ms ease;
+  transition: opacity 280ms ease-in-out;
 }
 
 .pending-game-lookup-feedback.is-visible {

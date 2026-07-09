@@ -3860,7 +3860,39 @@ describe("solo browser smoke", () => {
       `Expected lookup feedback to align with Invite button right edge, got ${rightEdgeDelta}px`,
     );
 
+    const feedbackTransitionMs = await feedback.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const duration = style.transitionDuration
+        .split(",")
+        .map((value) => value.trim())
+        .find((value) => value.endsWith("ms") || value.endsWith("s"));
+      if (!duration) {
+        return 0;
+      }
+
+      return duration.endsWith("ms")
+        ? Number.parseFloat(duration)
+        : Number.parseFloat(duration) * 1000;
+    });
+    assert.ok(
+      feedbackTransitionMs >= 260,
+      `Expected lookup feedback opacity transition to be gradual, got ${feedbackTransitionMs}ms`,
+    );
+
     await page.waitForTimeout(1700);
+    await assertTextVisible(feedback, "No gamer found under that gamer tag.");
+    await page.waitForTimeout(1200);
+    await assertTextVisible(feedback, "No gamer found under that gamer tag.");
+    assert.equal(
+      await feedback.evaluate((element) => element.classList.contains("is-fading")),
+      false,
+    );
+    await page.waitForFunction(() =>
+      document
+        .querySelector("[data-pending-game-lookup-feedback]")
+        ?.classList.contains("is-fading"),
+    );
+    await page.waitForTimeout(400);
     await assertTextHidden(feedback, "No gamer found under that gamer tag.");
     await expectFontAwesomeClass(
       page.locator("[data-pending-game-submit]"),

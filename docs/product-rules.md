@@ -1410,9 +1410,9 @@ If invite lookup fails because no matching Account is found, show the existing f
 copy, such as `No gamer found under that gamer tag.`, below the `Invite` button with the
 copy and button aligned on their right edges. Showing or hiding this temporary feedback
 must not move, resize, or realign the lookup field, phrase-count select, nudge-timeout
-select, or `Invite` button. Keep the failure copy visible for about 1.5 seconds, then
-fade it away instead of leaving persistent status text between the form and the
-invitation lists.
+select, or `Invite` button. Show and hide the failure copy through a gradual opacity
+transition, keep it visible for about 3 seconds, then fade it away instead of leaving
+persistent status text between the form and the invitation lists.
 The current MVP invite UI includes creator cancellation for Pending Games
 before start and unrevealed Started Games, seven-day Pending Game invite
 expiry, and configurable in-app nudge timeouts. It still does not add Share

@@ -3021,7 +3021,7 @@ function renderPendingGameCardRow({ label, status = "", value }) {
   const labelElement = document.createElement("span");
   labelElement.className = "pending-game-card-label";
   labelElement.dataset.pendingGameCardLabel = "";
-  labelElement.textContent = `${label}:`;
+  labelElement.textContent = label;
 
   const valueElement = document.createElement("span");
   valueElement.className = "pending-game-card-value";
@@ -3418,7 +3418,7 @@ function renderMultiplayerBucket({ headingText, items, renderItem }) {
 function renderAwaitingYourEntries(gameSummary) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
-  card.append(renderMultiplayerParticipantSummary(gameSummary));
+  card.append(...renderMultiplayerBatchCardRows(gameSummary, "Awaiting your entries"));
   card.append(renderMultiplayerSectionForm(gameSummary.currentSection));
   return card;
 }
@@ -3426,7 +3426,12 @@ function renderAwaitingYourEntries(gameSummary) {
 function renderAwaitingOtherPlayerEntries(gameSummary) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
-  card.append(renderMultiplayerParticipantSummary(gameSummary));
+  card.append(
+    ...renderMultiplayerBatchCardRows(
+      gameSummary,
+      "Awaiting other player entries",
+    ),
+  );
   const waiting = document.createElement("p");
   waiting.className = "pending-game-row-count";
   waiting.textContent = "Awaiting other player entries.";
@@ -3437,7 +3442,7 @@ function renderAwaitingOtherPlayerEntries(gameSummary) {
 function renderCompletedMultiplayerBatch(batchSummary) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
-  card.append(renderMultiplayerParticipantSummary(batchSummary));
+  card.append(...renderMultiplayerBatchCardRows(batchSummary, "Completed batch"));
   if (!batchSummary.revealed) {
     const revealButton = document.createElement("button");
     revealButton.className = "secondary-button";
@@ -3462,6 +3467,27 @@ function renderCompletedMultiplayerBatch(batchSummary) {
   );
   card.append(heading, list);
   return card;
+}
+
+function renderMultiplayerBatchCardRows(batchSummary, gameStatus) {
+  return [
+    ...batchSummary.participants.map(renderMultiplayerParticipantCardRow),
+    renderPendingGameCardRow({
+      label: "Phrase count",
+      value: String(batchSummary.rowCount),
+    }),
+    renderPendingGameCardRow({
+      label: "Game status",
+      value: gameStatus,
+    }),
+  ];
+}
+
+function renderMultiplayerParticipantCardRow(participant, index) {
+  return renderPendingGameCardRow({
+    label: `Player ${index + 1}`,
+    value: getParticipantDisplayName(participant),
+  });
 }
 
 async function openCompletedMultiplayerHistory() {

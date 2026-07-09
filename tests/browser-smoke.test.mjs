@@ -3726,11 +3726,11 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Sent invitations");
     await assertTextHidden(page, "Created invites");
     await assertPendingInvitationCardRows(page, "Sent invitations", [
-      { label: "Player 1:", value: "Player", status: "" },
-      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
-      { label: "Phrase count:", value: "15", status: "" },
-      { label: "Game status:", value: "Waiting for responses", status: "" },
-      { label: "Nudge after:", value: "3 days", status: "" },
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Waiting for responses", status: "" },
+      { label: "Nudge after", value: "3 days", status: "" },
     ]);
     await assertPendingInvitationCardHierarchy(page, "Sent invitations");
     await assertTextHidden(page, "Accepted");
@@ -3958,11 +3958,11 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Received invitations");
     await assertTextVisible(page, "Player");
     await assertPendingInvitationCardRows(page, "Received invitations", [
-      { label: "Player 1:", value: "Player", status: "" },
-      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
-      { label: "Phrase count:", value: "15", status: "" },
-      { label: "Game status:", value: "Waiting for responses", status: "" },
-      { label: "Nudge after:", value: "2 days", status: "" },
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Waiting for responses", status: "" },
+      { label: "Nudge after", value: "2 days", status: "" },
     ]);
     const acceptInviteButton = page.getByRole("button", {
       name: "Accept invite from Player",
@@ -4071,11 +4071,11 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
 
     assert.deepEqual(
-      await getPendingInvitationCardValues(page, "Sent invitations", "Phrase count:"),
+      await getPendingInvitationCardValues(page, "Sent invitations", "Phrase count"),
       ["25", "20", "15"],
     );
     assert.deepEqual(
-      await getPendingInvitationCardStatuses(page, "Sent invitations", "Player 2:"),
+      await getPendingInvitationCardStatuses(page, "Sent invitations", "Player 2"),
       ["Declined", "Declined", "Declined"],
     );
     await assertNoHorizontalOverflow(page);
@@ -4119,6 +4119,12 @@ describe("solo browser smoke", () => {
     await assertTextVisible(page, "Game started. Your turn is ready.");
     await assertTextVisible(page, "Started");
     await assertTextVisible(page, "Awaiting your entries");
+    await assertMultiplayerBucketCardRows(page, "Awaiting your entries", [
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Awaiting your entries", status: "" },
+    ]);
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
     await signOutFromAccountMenu(page);
@@ -4137,6 +4143,12 @@ describe("solo browser smoke", () => {
     );
     await submitMultiplayerSection(page, "ladder");
     await assertTextVisible(page, "Awaiting other player entries");
+    await assertMultiplayerBucketCardRows(page, "Awaiting other player entries", [
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Awaiting other player entries", status: "" },
+    ]);
     await assertNoHorizontalOverflow(page);
     assert.equal(
       await page.getByRole("button", { name: "Start game with Invitee Two" }).count(),
@@ -4148,6 +4160,12 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await submitMultiplayerSection(page, "brisk");
     await assertTextVisible(page, "Completed batches");
+    await assertMultiplayerBucketCardRows(page, "Completed batches", [
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Completed batch", status: "" },
+    ]);
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Completed phrase batch");
 
@@ -5220,11 +5238,11 @@ describe("solo browser smoke", () => {
 
     await assertTextVisible(page, "Invitee Two");
     await assertPendingInvitationCardRows(page, "Sent invitations", [
-      { label: "Player 1:", value: "Player", status: "" },
-      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
-      { label: "Phrase count:", value: "15", status: "" },
-      { label: "Game status:", value: "Waiting for responses", status: "" },
-      { label: "Nudge after:", value: "3 days", status: "" },
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Waiting for responses", status: "" },
+      { label: "Nudge after", value: "3 days", status: "" },
     ]);
 
     await openFavouritesRoute(page);
@@ -5238,11 +5256,11 @@ describe("solo browser smoke", () => {
     await assertNoFavouritesPanelDom(page);
     await assertTextVisible(page, "Invitee Two");
     await assertPendingInvitationCardRows(page, "Sent invitations", [
-      { label: "Player 1:", value: "Player", status: "" },
-      { label: "Player 2:", value: "Invitee Two", status: "Invited" },
-      { label: "Phrase count:", value: "15", status: "" },
-      { label: "Game status:", value: "Waiting for responses", status: "" },
-      { label: "Nudge after:", value: "3 days", status: "" },
+      { label: "Player 1", value: "Player", status: "" },
+      { label: "Player 2", value: "Invitee Two", status: "Invited" },
+      { label: "Phrase count", value: "15", status: "" },
+      { label: "Game status", value: "Waiting for responses", status: "" },
+      { label: "Nudge after", value: "3 days", status: "" },
     ]);
 
     assertNoConsoleErrors();
@@ -7520,6 +7538,28 @@ async function assertPendingInvitationCardRows(page, sectionHeading, expectedRow
   assert.deepEqual(actualRows, expectedRows);
 }
 
+async function assertMultiplayerBucketCardRows(page, sectionHeading, expectedRows) {
+  const actualRows = await page.evaluate((headingText) => {
+    const sections = [...document.querySelectorAll(".multiplayer-bucket")];
+    const section = sections.find(
+      (candidate) =>
+        candidate.querySelector(".multiplayer-section-heading")?.textContent.trim() ===
+        headingText,
+    );
+    const card = section?.querySelector(".pending-game-card");
+
+    return [...(card?.querySelectorAll("[data-pending-game-card-row]") ?? [])].map(
+      (row) => ({
+        label: row.querySelector("[data-pending-game-card-label]")?.textContent.trim() ?? "",
+        value: row.querySelector("[data-pending-game-card-value]")?.textContent.trim() ?? "",
+        status: row.querySelector("[data-pending-game-card-status]")?.textContent.trim() ?? "",
+      }),
+    );
+  }, sectionHeading);
+
+  assert.deepEqual(actualRows, expectedRows);
+}
+
 async function getPendingInvitationCardValues(page, sectionHeading, rowLabel) {
   return getPendingInvitationCardRowField(page, sectionHeading, rowLabel, "value");
 }
@@ -7707,10 +7747,6 @@ async function assertMultiplayerCardBodyTypography(page) {
         text: element.textContent.trim(),
       };
     };
-    const findElement = (selector, text) =>
-      Array.from(document.querySelectorAll(selector)).find(
-        (element) => element.textContent.trim() === text,
-      );
     const completedBucket = Array.from(
       document.querySelectorAll(".multiplayer-bucket"),
     ).find(
@@ -7735,11 +7771,11 @@ async function assertMultiplayerCardBodyTypography(page) {
       completedHeading: readStyle(
         completedBucket?.querySelector(".multiplayer-section-heading"),
       ),
-      completedSummary: readStyle(
-        findElement(
-          ".multiplayer-bucket .pending-game-card p",
-          "Batch with Player and Invitee Two.",
-        ),
+      completedLabel: readStyle(
+        completedBucket?.querySelector("[data-pending-game-card-label]"),
+      ),
+      completedValue: readStyle(
+        completedBucket?.querySelector("[data-pending-game-card-value]"),
       ),
       revealButton: readStyle(
         completedBucket?.querySelector("button"),
@@ -7750,7 +7786,7 @@ async function assertMultiplayerCardBodyTypography(page) {
   const bodyText = [
     typography.invitationValue,
     typography.invitationStatus,
-    typography.completedSummary,
+    typography.completedValue,
   ];
   for (const style of bodyText) {
     assert.notEqual(style, null);
@@ -7765,18 +7801,24 @@ async function assertMultiplayerCardBodyTypography(page) {
     `Expected invitation label weight ${typography.invitationLabel.fontWeight} to exceed value weight ${typography.invitationValue.fontWeight}`,
   );
   assert.notEqual(typography.completedHeading, null);
+  assert.notEqual(typography.completedLabel, null);
+  assert.notEqual(typography.completedValue, null);
   assert.notEqual(typography.revealButton, null);
+  assert.ok(
+    typography.completedLabel.fontWeight > typography.completedValue.fontWeight,
+    `Expected completed card label weight ${typography.completedLabel.fontWeight} to exceed value weight ${typography.completedValue.fontWeight}`,
+  );
   assert.ok(
     typography.completedHeading.fontWeight > typography.invitationLabel.fontWeight,
     `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed invitation label weight ${typography.invitationLabel.fontWeight}`,
   );
   assert.ok(
-    typography.completedHeading.fontWeight > typography.completedSummary.fontWeight,
-    `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+    typography.completedHeading.fontWeight > typography.completedValue.fontWeight,
+    `Expected Completed batches heading weight ${typography.completedHeading.fontWeight} to exceed completed value weight ${typography.completedValue.fontWeight}`,
   );
   assert.ok(
-    typography.revealButton.fontWeight > typography.completedSummary.fontWeight,
-    `Expected Reveal phrases button weight ${typography.revealButton.fontWeight} to exceed completed summary weight ${typography.completedSummary.fontWeight}`,
+    typography.revealButton.fontWeight > typography.completedValue.fontWeight,
+    `Expected Reveal phrases button weight ${typography.revealButton.fontWeight} to exceed completed value weight ${typography.completedValue.fontWeight}`,
   );
 }
 

@@ -1602,7 +1602,8 @@ h1 {
 }
 
 [data-pending-game-summary] .pending-game-card,
-[data-pending-game-incoming] .pending-game-card {
+[data-pending-game-incoming] .pending-game-card,
+.multiplayer-bucket .pending-game-card {
   display: grid;
   gap: 8px;
   padding: 12px;

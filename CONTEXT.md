@@ -17,6 +17,12 @@ A supported way of configuring and playing a game, such as Solo Game,
 multiplayer Game, or a future CPU-participant Game.
 _Avoid_: Primary navigation item, account surface
 
+**Game Play Surface**:
+The focused interface for a participant's current work in a Game, such as entering
+assigned Entries, waiting for other participants, revealing a completed Batch, or
+viewing that participant's revealed Batch.
+_Avoid_: Dashboard, bucket, card, settings page
+
 **Cancelled Game**:
 An in-progress game stopped before reveal.
 _Avoid_: Deleted game, abandoned game

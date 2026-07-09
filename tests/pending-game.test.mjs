@@ -604,6 +604,214 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("loads only the current participant's active Game Play Surface state", async () => {
+    const creatorProfile = createPlayerTestCreatorProfile();
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+
+    await repository.createPendingGameFromLookupKey({
+      creatorAccountId: creatorProfile.accountId,
+      lookupKey: inviteeProfile.gamerTag,
+      rowCount: 10,
+    });
+    await repository.acceptPendingGameInvite({
+      accountId: inviteeProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+    const startedGame = await repository.startPendingGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    const state = await repository.loadGamePlaySurface({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    assert.deepEqual(state, {
+      state: "active",
+      game: {
+        id: "started-game-1",
+        rowCount: 10,
+        participants: [
+          { gamerTag: "Player Test Account" },
+          { gamerTag: inviteeProfile.gamerTag },
+        ],
+      },
+      currentSection: {
+        id: "started-game-1-section-creator-1",
+        entryKind: "adjective",
+        sectionIndex: 0,
+        sectionCount: 1,
+        rows: Array.from({ length: 10 }, (_, rowIndex) => ({
+          rowIndex,
+          value: "",
+        })),
+      },
+    });
+    const stateJson = JSON.stringify(state);
+    assert.equal(stateJson.includes(creatorProfile.accountId), false);
+    assert.equal(stateJson.includes(creatorProfile.profileId), false);
+    assert.equal(stateJson.includes(inviteeProfile.accountId), false);
+    assert.equal(stateJson.includes(inviteeProfile.profileId), false);
+    assert.equal(stateJson.includes("started-game-1-section-invitee-1"), false);
+  });
+
+  it("loads a waiting Game Play Surface state after the participant submits their sections", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    await submitAllCurrentSections(
+      repository,
+      creatorProfile.accountId,
+      "brisk",
+    );
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      {
+        state: "waiting",
+        game: {
+          id: "started-game-1",
+          rowCount: 10,
+          participants: [
+            { gamerTag: creatorProfile.gamerTag },
+            { gamerTag: inviteeProfile.gamerTag },
+          ],
+        },
+      },
+    );
+  });
+
+  it("loads completed and participant-revealed Game Play Surface states without another participant's section", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    await submitAllCurrentSections(
+      repository,
+      creatorProfile.accountId,
+      "brisk",
+    );
+    await submitAllCurrentSections(
+      repository,
+      inviteeProfile.accountId,
+      "noun",
+    );
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      {
+        state: "completed",
+        game: {
+          id: "started-game-1",
+          rowCount: 10,
+          participants: [
+            { gamerTag: creatorProfile.gamerTag },
+            { gamerTag: inviteeProfile.gamerTag },
+          ],
+        },
+      },
+    );
+
+    await repository.revealMultiplayerBatch({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    const revealed = await repository.loadGamePlaySurface({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+    assert.deepEqual(revealed, {
+      state: "revealed",
+      game: {
+        id: "started-game-1",
+        rowCount: 10,
+        participants: [
+          { gamerTag: creatorProfile.gamerTag },
+          { gamerTag: inviteeProfile.gamerTag },
+        ],
+      },
+      phrases: Array.from({ length: 10 }, (_, rowIndex) =>
+        `Brisk-a-${rowIndex} noun-a-${rowIndex} noun-b-${rowIndex}`,
+      ),
+    });
+    assert.equal(JSON.stringify(revealed).includes("section-invitee"), false);
+  });
+
+  it("loads an authorised cancellation without exposing a stale section or phrase", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    await repository.cancelCreatedGame({
+      creatorAccountId: creatorProfile.accountId,
+      pendingGameId: "pending-game-1",
+    });
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: inviteeProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      {
+        state: "cancelled",
+        game: {
+          id: "started-game-1",
+          rowCount: 10,
+          participants: [
+            { gamerTag: creatorProfile.gamerTag },
+            { gamerTag: inviteeProfile.gamerTag },
+          ],
+        },
+      },
+    );
+  });
+
+  it("returns one generic unavailable state for an invalid game or non-participant", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile, otherCreatorProfile],
+    });
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: "missing-game",
+      }),
+      { state: "unavailable" },
+    );
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: otherCreatorProfile.accountId,
+        gameId: startedGame.id,
+      }),
+      { state: "unavailable" },
+    );
+  });
+
   it("creates one in-app nudge notification for an overdue current section", async () => {
     let currentTime = Date.parse("2026-06-01T12:00:00.000Z");
     const repository = createTestPendingGameRepository({
@@ -2162,6 +2370,156 @@ describe("Pending Game repository", () => {
     ]);
   });
 
+  it("loads only the Game Play Surface allowlist through its Supabase RPC", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const state = await repository.loadGamePlaySurface({
+      accountId: creatorProfile.accountId,
+      gameId: "supabase-started-game-1",
+    });
+
+    assert.deepEqual(supabase.rpcCalls, ["load_game_play_surface"]);
+    assert.deepEqual(supabase.rpcParams, [
+      { target_game_id: "supabase-started-game-1" },
+    ]);
+    assert.deepEqual(supabase.tableCalls, []);
+    assert.deepEqual(state, {
+      state: "active",
+      game: {
+        id: "supabase-started-game-1",
+        rowCount: 1,
+        participants: [
+          { gamerTag: creatorProfile.gamerTag },
+          { gamerTag: inviteeProfile.gamerTag },
+        ],
+      },
+      currentSection: {
+        id: "supabase-section-1",
+        entryKind: "adjective",
+        sectionIndex: 0,
+        sectionCount: 1,
+        rows: [{ rowIndex: 0, value: "" }],
+      },
+    });
+    const stateJson = JSON.stringify(state);
+    assert.equal(stateJson.includes("profile-id"), false);
+    assert.equal(stateJson.includes("account"), false);
+    assert.equal(stateJson.includes("other-participant-section"), false);
+  });
+
+  it("fails closed when the Game Play Surface RPC payload is malformed", async () => {
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+      gamePlaySurface: {
+        state: "active",
+        game: {
+          id: "supabase-started-game-1",
+          rowCount: 1,
+          participants: [
+            { gamerTag: creatorProfile.gamerTag },
+            { profile_id: inviteeProfile.profileId },
+          ],
+        },
+        currentSection: {
+          id: "supabase-section-1",
+          entryKind: "adjective",
+          sectionIndex: 0,
+          sectionCount: 1,
+          rows: [{ rowIndex: 0, value: "" }],
+        },
+      },
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: "supabase-started-game-1",
+      }),
+      { state: "unavailable" },
+    );
+  });
+
+  it("recovers every non-active Game Play Surface RPC state through the allowlist", async () => {
+    const game = {
+      id: "supabase-started-game-1",
+      rowCount: 1,
+      participants: [
+        { gamerTag: creatorProfile.gamerTag },
+        { gamerTag: inviteeProfile.gamerTag },
+      ],
+    };
+    const cases = [
+      {
+        name: "waiting",
+        response: { state: "waiting", game },
+        expected: { state: "waiting", game },
+      },
+      {
+        name: "completed",
+        response: { state: "completed", game },
+        expected: { state: "completed", game },
+      },
+      {
+        name: "revealed",
+        response: {
+          state: "revealed",
+          game,
+          phrases: ["Brisk teapot cloud"],
+        },
+        expected: {
+          state: "revealed",
+          game,
+          phrases: ["Brisk teapot cloud"],
+        },
+      },
+      {
+        name: "cancelled",
+        response: { state: "cancelled", game },
+        expected: { state: "cancelled", game },
+      },
+      {
+        name: "stale unavailable",
+        response: {
+          state: "unavailable",
+          game: {
+            ...game,
+            profileId: creatorProfile.profileId,
+          },
+        },
+        expected: { state: "unavailable" },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const supabase = createFakePendingGameSupabase({
+        creatorProfile,
+        inviteeProfile,
+        gamePlaySurface: testCase.response,
+      });
+      const repository = createSupabasePendingGameRepository({ supabase });
+
+      const state = await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: "supabase-started-game-1",
+      });
+
+      assert.deepEqual(state, testCase.expected, testCase.name);
+      assert.deepEqual(supabase.rpcCalls, ["load_game_play_surface"]);
+      assert.deepEqual(supabase.tableCalls, []);
+      assert.equal(
+        "phrases" in state,
+        testCase.name === "revealed",
+        testCase.name,
+      );
+    }
+  });
+
   it("loads completed multiplayer history through Supabase RPC", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,
@@ -2538,6 +2896,7 @@ describe("Pending Game repository", () => {
 
 function createFakePendingGameSupabase({
   creatorProfile,
+  gamePlaySurface,
   inviteeProfile,
   pendingGameExpiresAt = "2999-01-01T00:00:00.000Z",
 }) {
@@ -2609,6 +2968,19 @@ function createFakePendingGameSupabase({
             creatorProfile,
             inviteeProfile,
           }),
+          error: null,
+        };
+      }
+
+      if (functionName === "load_game_play_surface") {
+        assert.deepEqual(Object.keys(params), ["target_game_id"]);
+        return {
+          data:
+            gamePlaySurface ??
+            createFakeGamePlaySurface({
+              creatorProfile,
+              inviteeProfile,
+            }),
           error: null,
         };
       }
@@ -3135,6 +3507,36 @@ function createFakeMultiplayerDashboard({ creatorProfile, inviteeProfile }) {
         revealed: true,
       },
     ],
+  };
+}
+
+function createFakeGamePlaySurface({ creatorProfile, inviteeProfile }) {
+  return {
+    state: "active",
+    game: {
+      id: "supabase-started-game-1",
+      row_count: 1,
+      pending_game_id: "supabase-pending-game-1",
+      participants: [
+        {
+          gamer_tag: creatorProfile.gamerTag,
+          profile_id: creatorProfile.profileId,
+        },
+        {
+          gamer_tag: inviteeProfile.gamerTag,
+          profile_id: inviteeProfile.profileId,
+        },
+      ],
+    },
+    current_section: {
+      id: "supabase-section-1",
+      entry_kind: "adjective",
+      participant_profile_id: creatorProfile.profileId,
+      section_count: 1,
+      participant_section_index: 0,
+      other_participant_section_id: "other-participant-section-1",
+      rows: [{ row_index: 0, value: "" }],
+    },
   };
 }
 

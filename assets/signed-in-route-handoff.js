@@ -3,12 +3,29 @@ const DEFAULT_TTL_MS = 10 * 60 * 1000;
 
 export function createSignedInRouteHandoff({
   allowedRoutes,
+  isAllowedRoute,
   key = DEFAULT_KEY,
   now = () => Date.now(),
   storage,
   ttlMs = DEFAULT_TTL_MS,
 } = {}) {
   const routeAllowlist = new Set(allowedRoutes ?? []);
+
+  function routeIsAllowed(route) {
+    if (typeof route !== "string") {
+      return false;
+    }
+
+    if (routeAllowlist.has(route)) {
+      return true;
+    }
+
+    try {
+      return Boolean(isAllowedRoute?.(route));
+    } catch {
+      return false;
+    }
+  }
 
   function clear() {
     try {
@@ -34,7 +51,7 @@ export function createSignedInRouteHandoff({
     try {
       const entry = JSON.parse(rawEntry);
       if (
-        !routeAllowlist.has(entry?.route) ||
+        !routeIsAllowed(entry?.route) ||
         !Number.isFinite(entry?.createdAt)
       ) {
         clear();
@@ -66,7 +83,7 @@ export function createSignedInRouteHandoff({
       return entry.route;
     },
     preserve(route) {
-      if (!routeAllowlist.has(route)) {
+      if (!routeIsAllowed(route)) {
         clear();
         return false;
       }

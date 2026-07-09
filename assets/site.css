@@ -831,6 +831,7 @@ h1 {
 .help-panel,
 .game-panel,
 .pending-game-panel,
+.game-play-surface,
 .favourites-panel,
 .account-profile-panel {
   border-radius: 8px;
@@ -892,6 +893,54 @@ h1 {
 .pending-game-panel {
   margin-top: 18px;
   padding: clamp(18px, 4vw, 28px);
+}
+
+.game-play-surface {
+  margin-top: 18px;
+  padding: clamp(18px, 4vw, 28px);
+}
+
+.game-play-surface > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.game-play-surface > .secondary-button {
+  margin-top: 18px;
+}
+
+.game-play-surface-skeleton {
+  display: grid;
+  gap: 12px;
+}
+
+.game-play-surface-skeleton-line {
+  display: block;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 118, 110, 0.1),
+    rgba(15, 118, 110, 0.2),
+    rgba(15, 118, 110, 0.1)
+  );
+}
+
+.game-play-surface-skeleton-line--title {
+  width: 35%;
+}
+
+.game-play-surface-skeleton-line--full {
+  width: 100%;
+}
+
+.game-play-surface-skeleton-line--wide {
+  width: 72%;
+}
+
+.game-play-surface-skeleton-line--action {
+  width: 48%;
 }
 
 .game-panel::before {

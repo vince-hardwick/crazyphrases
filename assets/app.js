@@ -173,6 +173,8 @@ const ROUTES = {
   favourites: "#/favourites",
   settings: "#/settings",
 };
+const GAME_PLAY_SURFACE_ROUTE_PATTERN =
+  /^#\/play\/multiplayer\/games\/([^/]+)$/;
 const signedInRouteReconciliationDelaysMs = [0, 100, 500, 1500, 3000, 6000, 10000];
 const PENDING_GAME_LOOKUP_FEEDBACK_VISIBLE_MS = 3000;
 const PENDING_GAME_LOOKUP_FEEDBACK_FADE_MS = 300;
@@ -183,6 +185,7 @@ const signedInOnlyRoutes = new Set([
 ]);
 const signedInRouteHandoff = createSignedInRouteHandoff({
   allowedRoutes: signedInOnlyRoutes,
+  isAllowedRoute: isSignedInOnlyRoute,
   storage: window.localStorage,
 });
 
@@ -195,7 +198,7 @@ const initialHashIsSupabaseAuthCallback = isSupabaseAuthCallbackHash(
 let pendingSupabaseAuthCallbackHash = initialHashIsSupabaseAuthCallback;
 let preserveNextAnonymousRouteHandoff = initialHashIsSupabaseAuthCallback;
 let currentRoute = normaliseRoute(window.location.hash);
-let requestedSignedInRoute = signedInOnlyRoutes.has(currentRoute)
+let requestedSignedInRoute = isSignedInOnlyRoute(currentRoute)
   ? currentRoute
   : null;
 let entryCandidateProvider = null;
@@ -287,6 +290,8 @@ let batchFavouriteToggleButton = null;
 let favouriteToggleRequestId = 0;
 let pendingFavouriteToggleRequests = [];
 let pendingGamePanel = null;
+let gamePlaySurface = null;
+let gamePlaySurfaceRenderRequestId = 0;
 let pendingGameLookupKeyInput = null;
 let pendingGameRowCountSelect = null;
 let pendingGameNudgeTimeoutSelect = null;
@@ -735,12 +740,29 @@ function normaliseRoute(hash) {
     hash === ROUTES.playSolo ||
     hash === ROUTES.playMultiplayer ||
     hash === ROUTES.favourites ||
-    hash === ROUTES.settings
+    hash === ROUTES.settings ||
+    isGamePlaySurfaceRoute(hash)
   ) {
     return hash;
   }
 
   return ROUTES.playSolo;
+}
+
+function getGamePlaySurfaceStartedGameId(route) {
+  if (typeof route !== "string") {
+    return null;
+  }
+
+  return GAME_PLAY_SURFACE_ROUTE_PATTERN.exec(route)?.[1] ?? null;
+}
+
+function isGamePlaySurfaceRoute(route) {
+  return getGamePlaySurfaceStartedGameId(route) !== null;
+}
+
+function isSignedInOnlyRoute(route) {
+  return signedInOnlyRoutes.has(route) || isGamePlaySurfaceRoute(route);
 }
 
 function ensureHashRoute(route) {
@@ -757,7 +779,7 @@ function setPlayMenuOpen(isOpen) {
 }
 
 function scheduleSignedInRouteHashReconciliation(route) {
-  if (!signedInOnlyRoutes.has(route)) {
+  if (!isSignedInOnlyRoute(route)) {
     return;
   }
 
@@ -806,7 +828,7 @@ function resolvePendingSupabaseAuthCallbackHash() {
 }
 
 function preserveCurrentSignedInRouteForHostedAuth() {
-  if (signedInOnlyRoutes.has(currentRoute)) {
+  if (isSignedInOnlyRoute(currentRoute)) {
     requestedSignedInRoute = currentRoute;
     signedInRouteHandoff.preserve(currentRoute);
     return;
@@ -820,7 +842,7 @@ function updateAnonymousRequestedSignedInRoute(
   route,
   { preserveStoredHandoff = false } = {},
 ) {
-  if (signedInOnlyRoutes.has(route)) {
+  if (isSignedInOnlyRoute(route)) {
     requestedSignedInRoute = route;
     return;
   }
@@ -835,7 +857,7 @@ function updateAnonymousRequestedSignedInRoute(
 
 function renderRoute() {
   const isSignedIn = accountShell.persistenceAuthority.type === "account";
-  const routeNeedsAccount = signedInOnlyRoutes.has(currentRoute);
+  const routeNeedsAccount = isSignedInOnlyRoute(currentRoute);
 
   primaryNav.hidden = accountShell.mode !== "signed-in";
   updatePrimaryNavState();
@@ -844,6 +866,7 @@ function renderRoute() {
     gamePanel.hidden = true;
     removeAccountProfilePanel();
     removePendingGamePanel();
+    removeGamePlaySurface();
     removeFavouritesPanel();
     renderSignInRequiredGate(currentRoute);
     return;
@@ -859,6 +882,7 @@ function renderRoute() {
   if (currentRoute === ROUTES.favourites) {
     gamePanel.hidden = true;
     removePendingGamePanel();
+    removeGamePlaySurface();
     renderFavourites();
     return;
   }
@@ -866,20 +890,31 @@ function renderRoute() {
   if (currentRoute === ROUTES.settings) {
     gamePanel.hidden = true;
     removePendingGamePanel();
+    removeGamePlaySurface();
     removeFavouritesPanel();
     renderAccountProfilePanel(accountShell);
+    return;
+  }
+
+  if (isGamePlaySurfaceRoute(currentRoute)) {
+    gamePanel.hidden = true;
+    removePendingGamePanel();
+    removeFavouritesPanel();
+    renderGamePlaySurfaceRoute(currentRoute);
     return;
   }
 
   if (currentRoute === ROUTES.playMultiplayer) {
     gamePanel.hidden = true;
     removeFavouritesPanel();
+    removeGamePlaySurface();
     renderPendingGamePanel();
     return;
   }
 
   gamePanel.hidden = false;
   removeFavouritesPanel();
+  removeGamePlaySurface();
   renderGame();
   if (accountShell.persistenceAuthority.type === "account") {
     removePendingGamePanel();
@@ -906,6 +941,96 @@ function renderSignInRequiredGate(route) {
 
   routeGate.replaceChildren(heading, copy);
   routeGate.hidden = false;
+}
+
+function ensureGamePlaySurface() {
+  if (gamePlaySurface) {
+    return gamePlaySurface;
+  }
+
+  gamePlaySurface = document.createElement("section");
+  gamePlaySurface.className = "game-play-surface";
+  gamePlaySurface.dataset.gamePlaySurface = "";
+  routeGate.after(gamePlaySurface);
+  return gamePlaySurface;
+}
+
+function removeGamePlaySurface() {
+  gamePlaySurfaceRenderRequestId += 1;
+  gamePlaySurface?.remove();
+  gamePlaySurface = null;
+}
+
+function renderGamePlaySurfaceRoute(route) {
+  const startedGameId = getGamePlaySurfaceStartedGameId(route);
+  if (!startedGameId) {
+    return;
+  }
+
+  const surface = ensureGamePlaySurface();
+  const renderRequestId = ++gamePlaySurfaceRenderRequestId;
+  surface.dataset.gamePlaySurfaceState = "loading";
+  surface.dataset.startedGameId = startedGameId;
+  surface.setAttribute("aria-busy", "true");
+  surface.replaceChildren(
+    createGamePlaySurfaceSkeleton(),
+    createScreenReaderText("Loading game."),
+  );
+
+  window.setTimeout(() => {
+    if (
+      renderRequestId !== gamePlaySurfaceRenderRequestId ||
+      surface !== gamePlaySurface ||
+      currentRoute !== route ||
+      accountShell.persistenceAuthority.type !== "account"
+    ) {
+      return;
+    }
+
+    renderGamePlaySurfaceUnavailable(surface);
+  }, 0);
+}
+
+function createGamePlaySurfaceSkeleton() {
+  const loading = document.createElement("div");
+  loading.className = "game-play-surface-skeleton";
+  loading.dataset.gamePlaySurfaceSkeleton = "";
+  loading.setAttribute("aria-hidden", "true");
+
+  for (const lineClassName of [
+    "game-play-surface-skeleton-line--title",
+    "game-play-surface-skeleton-line--full",
+    "game-play-surface-skeleton-line--wide",
+    "game-play-surface-skeleton-line--action",
+  ]) {
+    const line = document.createElement("span");
+    line.className = `game-play-surface-skeleton-line ${lineClassName}`;
+    loading.append(line);
+  }
+
+  return loading;
+}
+
+function renderGamePlaySurfaceUnavailable(surface) {
+  surface.dataset.gamePlaySurfaceState = "unavailable";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Game unavailable.";
+
+  const copy = document.createElement("p");
+  copy.textContent = "This game cannot be opened from this account.";
+
+  const returnButton = document.createElement("button");
+  returnButton.type = "button";
+  returnButton.className = "secondary-button";
+  returnButton.textContent = "Return to Multiplayer";
+  returnButton.addEventListener("click", () => {
+    ensureHashRoute(ROUTES.playMultiplayer);
+  });
+
+  surface.replaceChildren(heading, copy, returnButton);
 }
 
 function updatePrimaryNavState() {
@@ -6265,7 +6390,7 @@ async function applyAccountShell(shell) {
   if (
     accountShell.persistenceAuthority.type === "account" &&
     restoredSignedInRoute &&
-    signedInOnlyRoutes.has(restoredSignedInRoute)
+    isSignedInOnlyRoute(restoredSignedInRoute)
   ) {
     currentRoute = restoredSignedInRoute;
     requestedSignedInRoute = null;
@@ -6316,7 +6441,7 @@ function applySignedOutShell() {
   hidePersistenceRecovery();
   requestedSignedInRoute = null;
   signedInRouteHandoff.clear();
-  if (signedInOnlyRoutes.has(currentRoute)) {
+  if (isSignedInOnlyRoute(currentRoute)) {
     currentRoute = ROUTES.playSolo;
     ensureHashRoute(ROUTES.playSolo);
   }

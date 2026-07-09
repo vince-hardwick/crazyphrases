@@ -41,6 +41,23 @@ describe("signed-in route handoff", () => {
     assert.equal(storage.getItem("handoff"), null);
   });
 
+  it("preserves a route accepted by the dynamic route policy", () => {
+    const storage = createMemoryStorage();
+    const gameRoute = "#/play/multiplayer/games/started-game-123";
+    const handoff = createSignedInRouteHandoff({
+      allowedRoutes: ["#/favourites"],
+      isAllowedRoute(route) {
+        return route === gameRoute;
+      },
+      now: () => 1000,
+      storage,
+      ttlMs: 10_000,
+    });
+
+    assert.equal(handoff.preserve(gameRoute), true);
+    assert.equal(handoff.consume({ hasAccountSession: true }), gameRoute);
+  });
+
   it("clears malformed or tampered stored requests without redirecting", () => {
     const storage = createMemoryStorage();
     const handoff = createSignedInRouteHandoff({

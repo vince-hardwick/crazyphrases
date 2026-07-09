@@ -4993,43 +4993,43 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("preserves a hosted Auth route handoff through a Supabase callback hash", async () => {
+  it("consumes a Game Play Surface handoff only after sign-in", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
     });
-    await context.addInitScript(() => {
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const gameRoute = "#/play/multiplayer/games/started-game-123";
+
+    await page.goto(staticServer.origin);
+    await page.evaluate((route) => {
       window.localStorage.setItem(
         "crazyphrases.signedInRouteHandoff.v1",
         JSON.stringify({
           createdAt: Date.now(),
-          route: "#/favourites",
+          route,
         }),
       );
-    });
-    const page = await context.newPage();
-    const assertNoConsoleErrors = trackConsoleErrors(page);
+    }, gameRoute);
+    await page.reload();
 
-    await page.goto(
-      `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
-    );
-    await page.waitForFunction(() => window.location.hash === "#/play/solo");
+    assert.equal(new URL(page.url()).hash, "");
     await assertAnonymousAccountIconVisible(page);
-    await assertNoFavouritesPanelDom(page);
-    const preservedHandoff = await page.evaluate(() =>
-      JSON.parse(
-        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
-      ),
-    );
-    assert.equal(preservedHandoff.route, "#/favourites");
-    assert.equal(Number.isFinite(preservedHandoff.createdAt), true);
+    await assertNoPendingGameDom(page);
+    assert.equal(await page.locator("[data-game-play-surface]").count(), 0);
 
     await signInWithLocalTestAccount(page);
     await assertSignedInAccountAffordance(page);
-    assert.equal(new URL(page.url()).hash, "#/favourites");
-    await assertFavouriteSurfaceMounted(page);
+    await page.waitForFunction(
+      (route) =>
+        window.location.hash === route &&
+        document.querySelectorAll("[data-game-play-surface]").length === 1,
+      gameRoute,
+    );
+    await assertTextVisible(page, "Game unavailable.");
     assert.equal(
       await page.evaluate(() =>
         window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
@@ -5038,6 +5038,65 @@ describe("solo browser smoke", () => {
     );
 
     assertNoConsoleErrors();
+  });
+
+  it("preserves a Game Play Surface handoff through a Supabase callback hash", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const gameRoute = "#/play/multiplayer/games/started-game-123";
+
+    await page.goto(`${staticServer.origin}/${gameRoute}`);
+    await assertTextVisible(page, "Sign in to play Multiplayer");
+    await page.evaluate((route) => {
+      window.localStorage.setItem(
+        "crazyphrases.signedInRouteHandoff.v1",
+        JSON.stringify({
+          createdAt: Date.now(),
+          route,
+        }),
+      );
+    }, gameRoute);
+
+    const callbackPage = await context.newPage();
+    const assertNoCallbackConsoleErrors = trackConsoleErrors(callbackPage);
+    await callbackPage.goto(
+      `${staticServer.origin}/#access_token=test-token&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=magiclink`,
+    );
+    await callbackPage.waitForFunction(() => window.location.hash === "#/play/solo");
+    await assertAnonymousAccountIconVisible(callbackPage);
+    await assertNoFavouritesPanelDom(callbackPage);
+    const preservedHandoff = await callbackPage.evaluate(() =>
+      JSON.parse(
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+    );
+    assert.equal(preservedHandoff.route, gameRoute);
+    assert.equal(Number.isFinite(preservedHandoff.createdAt), true);
+
+    await signInWithLocalTestAccount(callbackPage);
+    await assertSignedInAccountAffordance(callbackPage);
+    await callbackPage.waitForFunction(
+      (route) =>
+        window.location.hash === route &&
+        document.querySelectorAll("[data-game-play-surface]").length === 1,
+      gameRoute,
+    );
+    await assertTextVisible(callbackPage, "Game unavailable.");
+    assert.equal(
+      await callbackPage.evaluate(() =>
+        window.localStorage.getItem("crazyphrases.signedInRouteHandoff.v1"),
+      ),
+      null,
+    );
+
+    assertNoConsoleErrors();
+    assertNoCallbackConsoleErrors();
   });
 
   it("preserves a hosted Auth route handoff when callback cleanup runs before sign-in", async () => {
@@ -5371,6 +5430,92 @@ describe("solo browser smoke", () => {
       { label: "Game status", value: "Waiting for responses", status: "" },
       { label: "Nudge after", value: "3 days", status: "" },
     ]);
+
+    assertNoConsoleErrors();
+  });
+
+  it("gates and restores a Game Play Surface deep link before showing a safe unavailable state", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const gameRoute = "#/play/multiplayer/games/started-game-123";
+
+    await page.goto(`${staticServer.origin}/${gameRoute}`);
+    await assertTextVisible(page, "Sign in to play Multiplayer");
+    await assertNoPendingGameDom(page);
+    assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
+    await page.evaluate(() => {
+      window.__gamePlaySurfaceSkeletonObserved = false;
+      const observer = new MutationObserver(() => {
+        if (document.querySelector("[data-game-play-surface-skeleton]")) {
+          window.__gamePlaySurfaceSkeletonObserved = true;
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+
+    await signInWithLocalTestAccount(page);
+    await assertSignedInAccountAffordance(page);
+    await page.waitForFunction(
+      (route) =>
+        window.location.hash === route &&
+        document.querySelectorAll("[data-game-play-surface]").length === 1,
+      gameRoute,
+    );
+    assert.equal(new URL(page.url()).hash, gameRoute);
+    assert.equal(
+      await page.evaluate(() => window.__gamePlaySurfaceSkeletonObserved),
+      true,
+    );
+    await assertNoPendingGameDom(page);
+    await assertTextVisible(page, "Game unavailable.");
+    await assertTextVisible(
+      page,
+      "This game cannot be opened from this account.",
+    );
+
+    await page.getByRole("button", { name: "Return to Multiplayer" }).click();
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    await assertPendingGameSurfaceMounted(page);
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps a malformed Game Play Surface id inside the signed-in unavailable fallback", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+    const gameRoute = "#/play/multiplayer/games/bad_id";
+
+    await page.goto(`${staticServer.origin}/${gameRoute}`);
+    await assertTextVisible(page, "Sign in to play Multiplayer");
+    await assertNoPendingGameDom(page);
+
+    await signInWithLocalTestAccount(page);
+    await assertSignedInAccountAffordance(page);
+    await page.waitForFunction(
+      (route) =>
+        window.location.hash === route &&
+        document.querySelectorAll("[data-game-play-surface]").length === 1,
+      gameRoute,
+    );
+    await assertTextVisible(page, "Game unavailable.");
+    await assertNoPendingGameDom(page);
 
     assertNoConsoleErrors();
   });

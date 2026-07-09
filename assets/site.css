@@ -1489,6 +1489,7 @@ h1 {
   gap: 12px;
   align-items: end;
   margin-top: 12px;
+  padding-bottom: calc(1.2em + 8px);
 }
 
 .pending-game-field {
@@ -1526,12 +1527,16 @@ h1 {
 
 .pending-game-submit-group {
   display: grid;
+  position: relative;
   justify-items: end;
   gap: 6px;
 }
 
 .pending-game-lookup-feedback {
-  max-width: 16rem;
+  position: absolute;
+  inset: calc(100% + 6px) 0 auto auto;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 32px));
   min-height: 1.2em;
   margin: 0;
   color: var(--danger);
@@ -1540,7 +1545,7 @@ h1 {
   line-height: 1.2;
   opacity: 0;
   text-align: right;
-  transition: opacity 140ms ease;
+  transition: opacity 280ms ease-in-out;
 }
 
 .pending-game-lookup-feedback.is-visible {
@@ -1606,7 +1611,7 @@ h1 {
 .multiplayer-bucket .pending-game-card {
   display: grid;
   gap: 8px;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
@@ -1614,8 +1619,10 @@ h1 {
 
 .pending-game-card-row {
   display: grid;
-  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, auto) auto;
+  justify-content: start;
+  column-gap: 12px;
+  row-gap: 4px;
   align-items: start;
 }
 

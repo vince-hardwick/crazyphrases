@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
+**Status:** Historical/completed source implementation at `ed5e0f4`. This plan
+does not authorise hosted Supabase migration application, deployment, or
+browser smoke; use the Supabase and deployment runbooks with separate approval.
+
 **Goal:** Add a narrow, participant-authorised Started Game loader for issue #228 without depending on the Multiplayer dashboard payload.
 
 **Architecture:** The browser calls one authenticated public RPC, load_game_play_surface(target_game_id uuid). Its security-invoker wrapper delegates to a private security-definer loader, which authorises auth.uid() before constructing a deliberately small JSON state. Both local and Supabase repositories expose loadGamePlaySurface({ accountId, gameId }); #229 will consume it to render the interface.
@@ -25,8 +29,8 @@
 - tests/pending-game.test.mjs: public repository seam and Supabase adapter tests.
 - supabase/migrations/20260709225028_participant_scoped_started_game_loader.sql: private authorising loader and authenticated public wrapper.
 - tests/supabase-migration-surface.test.mjs: migration signature, grant, and no-broad-access assertions.
-- docs/superpowers/plans/2026-07-09-participant-scoped-started-game-loader.md: this active plan.
-- docs/superpowers/README.md: active-plan ledger entry.
+- docs/superpowers/plans/2026-07-09-participant-scoped-started-game-loader.md: this historical implementation plan.
+- docs/superpowers/README.md: plan-status ledger entry.
 
 ---
 
@@ -89,7 +93,7 @@
 
   Expected: all pending-game tests pass, including six new state tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
       git add assets/pending-game.js tests/pending-game.test.mjs
       git commit -m "Add participant-scoped local game loader"
@@ -147,7 +151,7 @@
 
   Expected: all pending-game tests pass; fake Supabase sees only the loader RPC.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
       git add assets/pending-game.js tests/pending-game.test.mjs
       git commit -m "Load game play state through narrow RPC"
@@ -211,7 +215,7 @@
 
   Expected: all migration-surface tests pass, including function/privilege/no-broad-access assertions.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
       git add supabase/migrations tests/supabase-migration-surface.test.mjs
       git commit -m "Add participant-scoped game loader RPC"
@@ -249,7 +253,7 @@
 
   Comment on #228 with the exact RPC name, state union, concealment boundary, test evidence, and that the source migration still needs separately approved hosted application.
 
-- [ ] **Step 5: Commit the plan-status closeout**
+- [x] **Step 5: Commit the plan-status closeout**
 
       git add docs/superpowers/README.md docs/superpowers/plans/2026-07-09-participant-scoped-started-game-loader.md
       git commit -m "Record started game loader plan"

@@ -3803,8 +3803,9 @@ function renderNotificationBulkReadAction() {
   const button = document.createElement("button");
   const label = "Mark all as read";
   button.type = "button";
-  button.className = "notification-mark-all-read";
+  button.className = "notification-mark-all-read tooltip-action";
   button.dataset.notificationMarkAllRead = "";
+  button.dataset.tooltip = label;
   button.setAttribute("aria-label", label);
   button.append(
     createFontAwesomeIcon("solid", "list-check"),
@@ -3856,8 +3857,9 @@ function renderNotificationRow(notification) {
     const markReadButton = document.createElement("button");
     const label = `Mark notification as read: ${message}`;
     markReadButton.type = "button";
-    markReadButton.className = "notification-mark-read";
+    markReadButton.className = "notification-mark-read tooltip-action";
     markReadButton.dataset.notificationMarkRead = notification.id;
+    markReadButton.dataset.tooltip = "Mark as read";
     markReadButton.setAttribute("aria-label", label);
     markReadButton.append(
       createFontAwesomeIcon("solid", "circle-check"),

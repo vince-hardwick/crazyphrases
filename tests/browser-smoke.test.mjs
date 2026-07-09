@@ -2028,14 +2028,43 @@ describe("solo browser smoke", () => {
         .count(),
       1,
     );
-    await expectFontAwesomeClass(
-      notificationPanel.getByRole("button", { name: "Mark all as read" }),
-      "fa-solid",
-      "fa-list-check",
+    const markAllAsReadButton = notificationPanel.getByRole("button", {
+      name: "Mark all as read",
+    });
+    await expectFontAwesomeClass(markAllAsReadButton, "fa-solid", "fa-list-check");
+    await expectDefaultTooltip(markAllAsReadButton, "Mark all as read");
+    assert.deepEqual(
+      await notificationPanel
+        .locator("[data-notification-mark-all-read]")
+        .evaluate((button) => ({
+          className: button.className,
+          tooltip: button.getAttribute("data-tooltip"),
+        })),
+      {
+        className: "notification-mark-all-read tooltip-action",
+        tooltip: "Mark all as read",
+      },
     );
     assert.equal(
       await notificationPanel.locator("[data-notification-mark-read] i.fa-solid.fa-circle-check").count(),
       4,
+    );
+    const markNotificationAsReadButton = notificationPanel.getByRole("button", {
+      name: "Mark notification as read: Newest unread notification.",
+    });
+    await expectDefaultTooltip(
+      markNotificationAsReadButton,
+      "Mark as read",
+    );
+    assert.deepEqual(
+      await markNotificationAsReadButton.evaluate((button) => ({
+        className: button.className,
+        tooltip: button.getAttribute("data-tooltip"),
+      })),
+      {
+        className: "notification-mark-read tooltip-action",
+        tooltip: "Mark as read",
+      },
     );
     assert.equal(
       await notificationPanel.getByText("Unread", { exact: true }).count(),
@@ -3843,6 +3872,53 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps Multiplayer invite controls stable when lookup miss feedback appears", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 920, height: 520 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+
+    await page.locator("[data-pending-game-lookup-key-input]").fill("missing-gamer");
+    await page.locator("[data-pending-game-row-count]").selectOption("15");
+    await page.locator("[data-pending-game-nudge-timeout]").selectOption("48");
+
+    const before = await readPendingGameInviteControlGeometry(page);
+    await page.getByRole("button", { name: "Invite" }).click();
+
+    const feedback = page.locator("[data-pending-game-lookup-feedback]");
+    await assertTextVisible(feedback, "No gamer found under that gamer tag.");
+    const after = await readPendingGameInviteControlGeometry(page);
+    assertStableGeometry(before, after, [
+      "lookupInput",
+      "rowCountSelect",
+      "nudgeTimeoutSelect",
+      "inviteButton",
+    ]);
+
+    const feedbackGeometry = await feedback.boundingBox();
+    assert.ok(feedbackGeometry, "Expected visible lookup feedback geometry");
+    const feedbackRight = feedbackGeometry.x + feedbackGeometry.width;
+    assert.ok(
+      feedbackGeometry.y >= after.inviteButton.bottom,
+      `Expected lookup feedback below Invite button, got feedback y ${feedbackGeometry.y} and button bottom ${after.inviteButton.bottom}`,
+    );
+    assert.ok(
+      Math.abs(feedbackRight - after.inviteButton.right) <= 1,
+      `Expected lookup feedback right edge to align with Invite button, got ${feedbackRight} and ${after.inviteButton.right}`,
+    );
+
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
   it("removes creator-cancelled Pending Games from Sent invitations", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -4342,6 +4418,7 @@ describe("solo browser smoke", () => {
 
     await assertTextVisible(page, "Completed batches");
     await assertMultiplayerCardBodyTypography(page);
+    await assertMultiplayerCardSpacing(page);
     await assertNoHorizontalOverflow(page);
 
     assertNoConsoleErrors();
@@ -7655,6 +7732,47 @@ async function assertPendingInvitationCardHierarchy(page, sectionHeading) {
   );
 }
 
+async function readPendingGameInviteControlGeometry(page) {
+  return page.evaluate(() => {
+    const readRect = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        return null;
+      }
+      const rect = element.getBoundingClientRect();
+      return {
+        bottom: rect.bottom,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        width: rect.width,
+      };
+    };
+
+    return {
+      inviteButton: readRect("[data-pending-game-submit]"),
+      lookupInput: readRect("[data-pending-game-lookup-key-input]"),
+      nudgeTimeoutSelect: readRect("[data-pending-game-nudge-timeout]"),
+      rowCountSelect: readRect("[data-pending-game-row-count]"),
+    };
+  });
+}
+
+function assertStableGeometry(before, after, keys) {
+  for (const key of keys) {
+    assert.ok(before[key], `Expected before geometry for ${key}`);
+    assert.ok(after[key], `Expected after geometry for ${key}`);
+    for (const property of ["left", "top", "width", "height"]) {
+      const delta = Math.abs(before[key][property] - after[key][property]);
+      assert.ok(
+        delta <= 1,
+        `Expected ${key}.${property} to stay stable, before ${before[key][property]} after ${after[key][property]}`,
+      );
+    }
+  }
+}
+
 async function assertMultiplayerInviteCopy(page) {
   const multiplayerHeading = page.getByRole("heading", {
     name: "Multiplayer",
@@ -7819,6 +7937,83 @@ async function assertMultiplayerCardBodyTypography(page) {
   assert.ok(
     typography.revealButton.fontWeight > typography.completedValue.fontWeight,
     `Expected Reveal phrases button weight ${typography.revealButton.fontWeight} to exceed completed value weight ${typography.completedValue.fontWeight}`,
+  );
+}
+
+async function assertMultiplayerCardSpacing(page) {
+  const metrics = await page.evaluate(() => {
+    const invitationCard = document.querySelector(
+      "[data-pending-game-summary] .pending-game-card",
+    );
+    const participantRow = [
+      ...(invitationCard?.querySelectorAll("[data-pending-game-card-row]") ?? []),
+    ].find((row) => row.querySelector("[data-pending-game-card-status]"));
+    const label = participantRow?.querySelector("[data-pending-game-card-label]");
+    const value = participantRow?.querySelector("[data-pending-game-card-value]");
+    const status = participantRow?.querySelector("[data-pending-game-card-status]");
+
+    if (!invitationCard || !participantRow || !label || !value || !status) {
+      return null;
+    }
+
+    const readRect = (element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+      };
+    };
+    const readTextRect = (element) => {
+      const textNode = [...element.childNodes].find(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim(),
+      );
+      if (!textNode) {
+        return readRect(element);
+      }
+
+      const range = document.createRange();
+      range.selectNodeContents(textNode);
+      const rect = range.getBoundingClientRect();
+      range.detach();
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+      };
+    };
+    const cardStyle = getComputedStyle(invitationCard);
+    const rowStyle = getComputedStyle(participantRow);
+    const cardRect = readRect(invitationCard);
+    const labelRect = readTextRect(label);
+    const valueRect = readTextRect(value);
+    const statusRect = readRect(status);
+
+    return {
+      cardInlinePadding: Number.parseFloat(cardStyle.paddingLeft),
+      gapAfterLabel: valueRect.left - labelRect.right,
+      gapAfterValue: statusRect.left - valueRect.right,
+      gridColumnGap: Number.parseFloat(rowStyle.columnGap),
+      rightPadding: cardRect.right - statusRect.right,
+    };
+  });
+
+  assert.notEqual(metrics, null);
+  assert.ok(
+    metrics.cardInlinePadding >= 16,
+    `Expected multiplayer cards to have at least 16px inline padding, got ${metrics.cardInlinePadding}px`,
+  );
+  assert.ok(
+    metrics.gridColumnGap >= 12,
+    `Expected readable card column gap, got ${metrics.gridColumnGap}px`,
+  );
+  assert.ok(
+    metrics.gapAfterValue <= metrics.gapAfterLabel * 2,
+    `Expected value/status gap ${metrics.gapAfterValue}px to stay visually associated with label/value gap ${metrics.gapAfterLabel}px`,
+  );
+  assert.ok(
+    metrics.rightPadding >= 16,
+    `Expected status to keep at least 16px right padding, got ${metrics.rightPadding}px`,
   );
 }
 

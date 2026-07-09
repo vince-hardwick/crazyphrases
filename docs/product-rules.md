@@ -700,7 +700,8 @@ Unread notification rows use a Font Awesome `circle-check` icon for the row-leve
 as read` action. Already-read rows do not show a redundant row-level read action, but
 remain selectable when they have a target. The notification panel uses a Font Awesome
 `list-check` icon for the bulk `Mark all as read` action when unread notifications
-exist.
+exist. Both icon-only read actions show lightweight hover/focus tooltips: row-level
+actions show `Mark as read`, and the bulk action shows `Mark all as read`.
 
 When an unread notification row has both a target and a row-level `Mark as read` action,
 the row body remains the target-navigation action and the `circle-check` is a distinct
@@ -1407,9 +1408,11 @@ briefly shows a Font Awesome check icon for about 1.5 seconds, then restores the
 envelope icon and `Invite` label.
 If invite lookup fails because no matching Account is found, show the existing failure
 copy, such as `No gamer found under that gamer tag.`, below the `Invite` button with the
-copy and button aligned on their right edges. Keep the failure copy visible for about
-1.5 seconds, then fade it away instead of leaving persistent status text between the
-form and the invitation lists.
+copy and button aligned on their right edges. Showing or hiding this temporary feedback
+must not move, resize, or realign the lookup field, phrase-count select, nudge-timeout
+select, or `Invite` button. Keep the failure copy visible for about 1.5 seconds, then
+fade it away instead of leaving persistent status text between the form and the
+invitation lists.
 The current MVP invite UI includes creator cancellation for Pending Games
 before start and unrevealed Started Games, seven-day Pending Game invite
 expiry, and configurable in-app nudge timeouts. It still does not add Share

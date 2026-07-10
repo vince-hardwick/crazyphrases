@@ -175,6 +175,17 @@ Feature slices move through environments in order:
 11. Approve the queued `production` GitHub Environment deployment only after test acceptance passes.
 12. After the required closeout for the merged PR is complete, delete the merged feature branch from GitHub and prune stale local tracking refs. For runtime changes, closeout includes production deployment and post-promotion verification. For source-only or docs-only changes that do not request promotion, closeout is the successful `main` CI run plus any required issue/documentation updates.
 
+### Docs-Only Pull-Request Self-Review
+
+Under ADR 0028, Codex may self-review, mark ready, and merge a docs-only pull
+request autonomously. The complete diff must contain only prose documentation;
+it must not include executable source, runtime assets, tests, workflows,
+dependencies, configuration, Supabase migrations, or deployment-payload files.
+Codex must still complete a standards-and-spec self-review, ensure the latest
+`CI / Verify static site` check passes, and resolve all review threads. This
+exception preserves the protected pull-request path and does not authorise a
+direct push, ruleset bypass, or any environment deployment.
+
 The anonymous solo MVP may replace the homepage in `dev` and `test` during review. Production should keep the holding page until the slice is accepted for production promotion.
 
 `dev` is shared. Each approved feature-branch deployment overwrites the previous `dev` deployment. Use the GitHub run history to confirm which branch and commit are currently deployed.

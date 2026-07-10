@@ -3,10 +3,11 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
 **Status:** Historical/completed source implementation at `ed5e0f4`, hosted
-migration application at `20260710065313`, and separately approved `dev`
-deployment/smoke for runtime source head `1d5e0c5` (deploy-dev run
-`29080495804`). This plan did not authorise those actions; their evidence is
-recorded under the Supabase and deployment runbooks after separate approval.
+migration application at `20260710065313`, and separately approved `dev`,
+`test`, and production deployments/smokes. PR #236 merged as `ca03c62` and
+promotion run `29083136156` completed. This plan did not authorise those
+actions; their evidence is recorded in `docs/planning/supabase-state-ledger.md`
+and the runbooks define the separately approved operational procedure.
 
 **Goal:** Add a narrow, participant-authorised Started Game loader for issue #228 without depending on the Multiplayer dashboard payload.
 

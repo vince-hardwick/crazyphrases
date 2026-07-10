@@ -1753,6 +1753,12 @@ h1 {
   gap: 12px;
 }
 
+.multiplayer-section-status {
+  min-height: 1.3em;
+  margin: 0;
+  color: var(--muted);
+}
+
 .started-game-turn-form h3 {
   margin: 0;
   font-size: 1.05rem;

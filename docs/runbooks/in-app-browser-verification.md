@@ -263,7 +263,7 @@ For the signed-in foundation, local and deployment smoke should check:
 
 Local committed smoke uses the localhost-only test sign-in fixture so it can run without Supabase, Google OAuth, or live data mutation. Hosted `dev`/`test` smoke may use real Supabase Auth after the relevant deployment approval. A deliberately configured non-production test sign-in fixture is also acceptable if a future implementation exposes one for hosted `dev`/`test`; do not expose such a fixture to production without a separate ADR.
 
-Any smoke that starts, replaces, saves, removes, or deletes hosted signed-in account data needs explicit user approval for that mutation. Deployment approval alone authorizes deploying files; it does not authorize extra live data mutation beyond the verified deployment path. When hosted mutation is approved for smoke testing, restore or remove any records created or modified by the test before closeout unless the owner explicitly accepts the changed state.
+For an approved functional change, hosted `dev` or `test` smoke may create, update, and delete only isolated test records needed to exercise the changed behaviour; treat this as pre-authorised functional verification. Deployment approval alone still authorises only the file deployment. The smoke must remove every record it created or changed before closeout, unless the owner explicitly accepts the changed state. Any hosted mutation outside that functional-smoke scope still needs explicit user approval.
 
 ## Static Asset Cache Check
 

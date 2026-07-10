@@ -757,6 +757,10 @@ function getGamePlaySurfaceStartedGameId(route) {
   return GAME_PLAY_SURFACE_ROUTE_PATTERN.exec(route)?.[1] ?? null;
 }
 
+function createGamePlaySurfaceRoute(startedGameId) {
+  return `#/play/multiplayer/games/${startedGameId}`;
+}
+
 function isGamePlaySurfaceRoute(route) {
   return getGamePlaySurfaceStartedGameId(route) !== null;
 }
@@ -969,6 +973,7 @@ function renderGamePlaySurfaceRoute(route) {
 
   const surface = ensureGamePlaySurface();
   const renderRequestId = ++gamePlaySurfaceRenderRequestId;
+  const accountId = accountShell.accountId;
   surface.dataset.gamePlaySurfaceState = "loading";
   surface.dataset.startedGameId = startedGameId;
   surface.setAttribute("aria-busy", "true");
@@ -977,18 +982,51 @@ function renderGamePlaySurfaceRoute(route) {
     createScreenReaderText("Loading game."),
   );
 
-  window.setTimeout(() => {
-    if (
-      renderRequestId !== gamePlaySurfaceRenderRequestId ||
-      surface !== gamePlaySurface ||
-      currentRoute !== route ||
-      accountShell.persistenceAuthority.type !== "account"
-    ) {
-      return;
-    }
+  void pendingGameRepository
+    .loadGamePlaySurface({
+      accountId,
+      gameId: startedGameId,
+    })
+    .then((gamePlayState) => {
+      if (
+        renderRequestId !== gamePlaySurfaceRenderRequestId ||
+        surface !== gamePlaySurface ||
+        currentRoute !== route ||
+        !isCurrentAccountSession(accountId)
+      ) {
+        return;
+      }
 
-    renderGamePlaySurfaceUnavailable(surface);
-  }, 0);
+      if (gamePlayState.state === "active") {
+        renderGamePlaySurfaceActive(surface, gamePlayState.currentSection);
+        return;
+      }
+
+      renderGamePlaySurfaceUnavailable(surface);
+    })
+    .catch(() => {
+      if (
+        renderRequestId !== gamePlaySurfaceRenderRequestId ||
+        surface !== gamePlaySurface ||
+        currentRoute !== route ||
+        !isCurrentAccountSession(accountId)
+      ) {
+        return;
+      }
+
+      renderGamePlaySurfaceUnavailable(surface);
+    });
+}
+
+function renderGamePlaySurfaceActive(surface, currentSection) {
+  surface.dataset.gamePlaySurfaceState = "active";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Your turn";
+
+  surface.replaceChildren(heading, renderMultiplayerSectionForm(currentSection));
 }
 
 function createGamePlaySurfaceSkeleton() {
@@ -3547,7 +3585,16 @@ function renderAwaitingYourEntries(gameSummary) {
   const card = document.createElement("div");
   card.className = "pending-game-card";
   card.append(...renderMultiplayerBatchCardRows(gameSummary, "Awaiting your entries"));
-  card.append(renderMultiplayerSectionForm(gameSummary.currentSection));
+
+  const takeTurnButton = document.createElement("button");
+  takeTurnButton.type = "button";
+  takeTurnButton.className = "primary-button";
+  takeTurnButton.textContent = "Take turn";
+  takeTurnButton.addEventListener("click", () => {
+    ensureHashRoute(createGamePlaySurfaceRoute(gameSummary.id));
+  });
+
+  card.append(takeTurnButton);
   return card;
 }
 
@@ -3840,9 +3887,6 @@ function renderMultiplayerParticipantSummary(batchSummary) {
 function renderMultiplayerSectionForm(currentSection) {
   const form = document.createElement("form");
   form.className = "started-game-turn-form";
-  form.addEventListener("submit", (event) => {
-    void submitMultiplayerSection(event, currentSection);
-  });
 
   const heading = document.createElement("div");
   heading.className = "section-heading";
@@ -3868,8 +3912,17 @@ function renderMultiplayerSectionForm(currentSection) {
   submitButton.className = "primary-button";
   submitButton.textContent = "Submit section";
 
+  const status = document.createElement("p");
+  status.className = "multiplayer-section-status";
+  status.dataset.multiplayerSectionStatus = "";
+  status.setAttribute("aria-live", "polite");
+
+  form.addEventListener("submit", (event) => {
+    void submitMultiplayerSection(event, currentSection, status);
+  });
+
   heading.append(kicker, title);
-  form.append(heading, list, submitButton);
+  form.append(heading, list, submitButton, status);
   return form;
 }
 
@@ -4376,13 +4429,14 @@ function getMultiplayerSectionTitle(entryKind) {
   return entryKind === "adjective" ? "Enter adjectives" : "Enter nouns";
 }
 
-async function submitMultiplayerSection(event, currentSection) {
+async function submitMultiplayerSection(event, currentSection, sectionStatus) {
   event.preventDefault();
   if (accountShell.persistenceAuthority.type !== "account") {
     return;
   }
 
   const accountId = accountShell.accountId;
+  const submittedRoute = currentRoute;
   const form = event.currentTarget;
   const entries = [...form.querySelectorAll("[data-multiplayer-section-input]")]
     .map((input) => ({
@@ -4390,7 +4444,10 @@ async function submitMultiplayerSection(event, currentSection) {
       value: input.value,
     }));
 
-  pendingGameStatus.textContent = "";
+  if (pendingGameStatus) {
+    pendingGameStatus.textContent = "";
+  }
+  sectionStatus.textContent = "";
 
   try {
     await pendingGameRepository.submitMultiplayerSection({
@@ -4398,14 +4455,21 @@ async function submitMultiplayerSection(event, currentSection) {
       entries,
       sectionId: currentSection.id,
     });
-    if (!isCurrentAccountSession(accountId)) {
+    if (!isCurrentAccountSession(accountId) || currentRoute !== submittedRoute) {
       return;
     }
 
-    await refreshMultiplayerSurfaces();
+    await refreshMultiplayerSurfaces({ accountId, expectedRoute: submittedRoute });
   } catch {
-    if (isCurrentAccountSession(accountId) && pendingGameStatus) {
-      pendingGameStatus.textContent = "Section could not be submitted. Try again.";
+    if (!isCurrentAccountSession(accountId) || currentRoute !== submittedRoute) {
+      return;
+    }
+
+    const failureMessage = "Section could not be submitted. Try again.";
+    if (sectionStatus) {
+      sectionStatus.textContent = failureMessage;
+    } else if (pendingGameStatus) {
+      pendingGameStatus.textContent = failureMessage;
     }
   }
 }
@@ -4452,13 +4516,24 @@ async function revealMultiplayerBatch(gameId) {
   }
 }
 
-async function refreshMultiplayerSurfaces() {
+async function refreshMultiplayerSurfaces({
+  accountId = accountShell.accountId,
+  expectedRoute = currentRoute,
+} = {}) {
   if (accountShell.persistenceAuthority.type !== "account") {
     return;
   }
 
-  const accountId = accountShell.accountId;
   if (!(await loadMultiplayerDashboard({ accountId }))) {
+    return;
+  }
+
+  if (!isCurrentAccountSession(accountId) || currentRoute !== expectedRoute) {
+    return;
+  }
+
+  if (isGamePlaySurfaceRoute(currentRoute)) {
+    ensureHashRoute(ROUTES.playMultiplayer);
     return;
   }
 

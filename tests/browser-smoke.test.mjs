@@ -4233,24 +4233,53 @@ describe("solo browser smoke", () => {
       { label: "Phrase count", value: "15", status: "" },
       { label: "Game status", value: "Awaiting your entries", status: "" },
     ]);
+    await assertMultiplayerDashboardIsSummaryOnly(page);
+    await page.getByRole("button", { name: "Take turn" }).click();
+    await page.waitForFunction(() =>
+      /^#\/play\/multiplayer\/games\//.test(window.location.hash),
+    );
+    await waitForTextVisible(page, "Your turn");
+    assert.equal(
+      await page.locator("[data-game-play-surface] .section-kicker").innerText(),
+      "Section 1 of 1",
+    );
+    await assertTextVisible(page, "Enter adjectives");
+    assert.equal(
+      await page.locator("[data-multiplayer-section-input]").count(),
+      15,
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Return to Multiplayer" })
+        .count(),
+      0,
+    );
     assert.equal(await page.locator("[data-reveal-panel]").isHidden(), true);
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting your entries");
+    await assertMultiplayerDashboardIsSummaryOnly(page);
+    await page.getByRole("button", { name: "Take turn" }).click();
+    await waitForTextVisible(page, "Your turn");
     await submitMultiplayerSection(page, "teapot");
+    await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting your entries");
     assert.equal(
       await page
         .getByText(
           "Batch with Player and Invitee Two is now complete and available to reveal.",
-        )
+      )
         .count(),
       0,
     );
+    await page.getByRole("button", { name: "Take turn" }).click();
+    await waitForTextVisible(page, "Your turn");
     await submitMultiplayerSection(page, "ladder");
+    await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting other player entries");
+    await waitForMultiplayerBucketCard(page, "Awaiting other player entries");
     await assertMultiplayerBucketCardRows(page, "Awaiting other player entries", [
       { label: "Player 1", value: "Player", status: "" },
       { label: "Player 2", value: "Invitee Two", status: "" },
@@ -4266,7 +4295,10 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
+    await page.getByRole("button", { name: "Take turn" }).click();
+    await waitForTextVisible(page, "Your turn");
     await submitMultiplayerSection(page, "brisk");
+    await openMultiplayerRoute(page);
     await assertTextVisible(page, "Completed batches");
     await assertMultiplayerBucketCardRows(page, "Completed batches", [
       { label: "Player 1", value: "Player", status: "" },
@@ -4304,6 +4336,70 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Reveal phrases" }).click();
     await assertTextVisible(page, "Completed phrase batch");
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps a failed Game Play Surface submission retryable with local feedback", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await interceptLocalTestPendingGameSectionSubmissions(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+    await openActiveMultiplayerSection(page);
+    await failNextLocalTestPendingGameSectionSubmission(page);
+    await submitMultiplayerSection(page, "brisk");
+
+    await assertTextVisible(page, "Section could not be submitted. Try again.");
+    assert.equal(await page.locator("[data-multiplayer-section-status]").count(), 1);
+    assert.equal(await page.locator(".started-game-turn-form").count(), 1);
+    assert.equal(await page.locator("[data-multiplayer-section-input]").count(), 10);
+    assert.equal(
+      await page.getByRole("button", { name: "Submit section" }).isVisible(),
+      true,
+    );
+
+    await submitMultiplayerSection(page, "brisk");
+    await page.waitForFunction(
+      () => window.location.hash === "#/play/multiplayer",
+    );
+    await waitForTextVisible(page, "Awaiting other player entries");
+
+    assertNoConsoleErrors();
+  });
+
+  it("does not restore Multiplayer after a delayed Game Play Surface submission leaves the route", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await interceptLocalTestPendingGameSectionSubmissions(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+    await openActiveMultiplayerSection(page);
+    await delayNextLocalTestPendingGameSectionSubmission(page);
+    await submitMultiplayerSection(page, "brisk");
+    await page.waitForFunction(() => window.__pendingGameSubmitStarted === true);
+
+    await openFavouritesRoute(page);
+    await releaseDelayedLocalTestPendingGameSectionSubmission(page);
+    await page.waitForTimeout(50);
+
+    assert.equal(new URL(page.url()).hash, "#/favourites");
+    assert.equal(await page.locator("[data-favourites-panel]").isVisible(), true);
+    assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
 
     assertNoConsoleErrors();
   });
@@ -4419,14 +4515,17 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "teapot");
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "ladder");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "brisk");
-    await assertTextVisible(page, "Completed batches");
+    await waitForTextVisible(page, "Completed batches");
     assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 
     await assertNoHorizontalOverflow(page);
@@ -4608,14 +4707,17 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "teapot");
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "ladder");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "brisk");
-    await assertTextVisible(page, "Completed batches");
+    await waitForTextVisible(page, "Completed batches");
     assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 
     await page.getByRole("button", { name: "Reveal phrases" }).click();
@@ -4724,12 +4826,15 @@ describe("solo browser smoke", () => {
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "teapot");
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "ladder");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "brisk");
     await page.getByRole("button", { name: "Reveal phrases" }).click();
 
@@ -6563,6 +6668,44 @@ async function submitMultiplayerSection(page, word) {
   await page.getByRole("button", { name: "Submit section" }).click();
 }
 
+async function openActiveMultiplayerSection(page) {
+  await page.getByRole("button", { name: "Take turn" }).click();
+  await waitForTextVisible(page, "Your turn");
+}
+
+async function createStartedLocalMultiplayerGame(page, { rowCount }) {
+  await signInWithLocalTestAccount(page);
+  await openMultiplayerRoute(page);
+  await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+  await page.locator("[data-pending-game-row-count]").selectOption(rowCount);
+  await page.getByRole("button", { name: "Invite" }).click();
+  await assertTextVisible(page, "Sent invitations");
+
+  await signOutFromAccountMenu(page);
+  await signInWithLocalTestAccount(page, { invitee: true });
+  await openMultiplayerRoute(page);
+  await page.getByRole("button", { name: "Accept invite from Player" }).click();
+  await assertTextVisible(page, "Game invite accepted.");
+
+  await signOutFromAccountMenu(page);
+  await signInWithLocalTestAccount(page);
+  await openMultiplayerRoute(page);
+  await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
+  await assertTextVisible(page, "Game started. Your turn is ready.");
+}
+
+async function assertMultiplayerDashboardIsSummaryOnly(page) {
+  const dashboard = page.locator("[data-multiplayer-dashboard]");
+  for (const selector of [
+    "[data-multiplayer-section-input]",
+    ".started-game-turn-form",
+    ".section-kicker",
+    ".started-game-turn-row",
+  ]) {
+    assert.equal(await dashboard.locator(selector).count(), 0);
+  }
+}
+
 async function waitForDice(page) {
   await page.locator("[data-dice-row-index='0']").waitFor({ state: "visible" });
   await page.waitForFunction(
@@ -7598,6 +7741,72 @@ async function delayLocalTestPendingGameInviteCreation(context) {
   });
 }
 
+async function interceptLocalTestPendingGameSectionSubmissions(context) {
+  await context.addInitScript(() => {
+    window.__pendingGameSubmitInterceptor = null;
+    window.__pendingGameSubmitStarted = false;
+    window.__releasePendingGameSubmit = null;
+  });
+
+  await context.route("**/assets/pending-game.js*", async (route) => {
+    const pendingGameSource = await readFile(
+      resolve(workspaceRoot, "assets/pending-game.js"),
+      "utf8",
+    );
+    const interceptedPendingGameSource = pendingGameSource.replace(
+      /export function createLocalTestPendingGameRepository\(options = \{\}\) \{\r?\n  return createTestPendingGameRepository\(options\);\r?\n\}/,
+      `export function createLocalTestPendingGameRepository(options = {}) {
+  const repository = createTestPendingGameRepository(options);
+  return {
+    ...repository,
+    async submitMultiplayerSection(args) {
+      if (typeof globalThis.__pendingGameSubmitInterceptor === "function") {
+        return globalThis.__pendingGameSubmitInterceptor(args, () =>
+          repository.submitMultiplayerSection(args),
+        );
+      }
+
+      return repository.submitMultiplayerSection(args);
+    },
+  };
+}`,
+    );
+
+    assert.notEqual(interceptedPendingGameSource, pendingGameSource);
+    await route.fulfill({
+      body: interceptedPendingGameSource,
+      contentType: "text/javascript; charset=utf-8",
+    });
+  });
+}
+
+async function failNextLocalTestPendingGameSectionSubmission(page) {
+  await page.evaluate(() => {
+    window.__pendingGameSubmitInterceptor = async () => {
+      window.__pendingGameSubmitInterceptor = null;
+      throw new Error("Local test section submission failed.");
+    };
+  });
+}
+
+async function delayNextLocalTestPendingGameSectionSubmission(page) {
+  await page.evaluate(() => {
+    window.__pendingGameSubmitInterceptor = async (_args, submit) => {
+      window.__pendingGameSubmitStarted = true;
+      await new Promise((resolve) => {
+        window.__releasePendingGameSubmit = resolve;
+      });
+      return submit();
+    };
+  });
+}
+
+async function releaseDelayedLocalTestPendingGameSectionSubmission(page) {
+  await page.evaluate(() => {
+    window.__releasePendingGameSubmit?.();
+  });
+}
+
 async function releaseDelayedPendingGameInviteCreation(page) {
   await page.evaluate(() => {
     window.__releasePendingGameCreate?.();
@@ -7812,6 +8021,18 @@ async function assertMultiplayerBucketCardRows(page, sectionHeading, expectedRow
   }, sectionHeading);
 
   assert.deepEqual(actualRows, expectedRows);
+}
+
+async function waitForMultiplayerBucketCard(page, sectionHeading) {
+  await page.waitForFunction((headingText) => {
+    const section = [...document.querySelectorAll(".multiplayer-bucket")].find(
+      (candidate) =>
+        candidate.querySelector(".multiplayer-section-heading")?.textContent.trim() ===
+        headingText,
+    );
+
+    return Boolean(section?.querySelector(".pending-game-card"));
+  }, sectionHeading);
 }
 
 async function getPendingInvitationCardValues(page, sectionHeading, rowLabel) {

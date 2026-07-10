@@ -1134,10 +1134,18 @@ function createReturnToMultiplayerButton() {
       accountShell.persistenceAuthority.type === "account"
         ? accountShell.accountId
         : null;
-    ensureHashRoute(ROUTES.playMultiplayer);
-    if (accountId) {
-      void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
+    if (accountId && window.location.hash !== ROUTES.playMultiplayer) {
+      window.addEventListener(
+        "hashchange",
+        () => {
+          void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({
+            accountId,
+          });
+        },
+        { once: true },
+      );
     }
+    ensureHashRoute(ROUTES.playMultiplayer);
   });
   return returnButton;
 }
@@ -4689,7 +4697,7 @@ async function refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({
 
   if (
     !isCurrentAccountSession(accountId) ||
-    window.location.hash !== ROUTES.playMultiplayer
+    currentRoute !== ROUTES.playMultiplayer
   ) {
     return;
   }

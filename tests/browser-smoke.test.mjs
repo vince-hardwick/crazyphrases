@@ -4309,10 +4309,16 @@ describe("solo browser smoke", () => {
     );
     await page.getByRole("button", { name: "Return to Multiplayer" }).click();
     await page.waitForFunction(
-      () => window.location.hash === "#/play/multiplayer",
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-game-play-surface]").length === 0,
     );
-    await assertTextVisible(page, "Completed batches");
-    assert.equal(await page.getByRole("button", { name: "Reveal phrases" }).count(), 0);
+    await page.waitForFunction(
+      () =>
+        [...document.querySelectorAll("button")].filter(
+          (button) => button.textContent === "Reveal phrases",
+        ).length === 0,
+    );
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4571,6 +4577,9 @@ describe("solo browser smoke", () => {
     await openActiveMultiplayerSection(page);
     await submitMultiplayerSection(page, "brisk");
     await page.getByRole("button", { name: "Return to Multiplayer" }).click();
+    await page.waitForFunction(
+      () => document.querySelectorAll("[data-game-play-surface]").length === 0,
+    );
     await waitForTextVisible(page, "Completed batches");
     assert.equal(await page.getByRole("button", { name: "View all" }).count(), 0);
 

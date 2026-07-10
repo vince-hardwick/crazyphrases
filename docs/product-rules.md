@@ -1577,15 +1577,22 @@ because invite acceptance and turn-taking are separate lifecycle moments. After 
 Creator starts the Game, the invitee should reach the Game-scoped Game Play Surface
 through the actionable `entries_needed` notification or the dashboard `Take turn`
 action.
-After a successful Multiplayer section submission, the participant should stay on the
-Game-scoped entry route when another assigned section is immediately available for that
-participant. If the participant has no remaining available section and the batch is not
-complete, the route should show a waiting state with a clear return action to the
-Multiplayer dashboard. If the submission completes the batch, the route should show the
-participant-scoped `Reveal phrases` action. Once the participant has revealed the batch,
-the same Game-scoped surface should show the completed phrase batch. If the Game is
-cancelled, expired, or no longer accessible, the route should show a local unavailable
-state and offer return to the Multiplayer dashboard.
+After a successful Multiplayer section submission, the participant must stay on the
+Game-scoped entry route and immediately refresh its participant-scoped state without
+waiting for a Multiplayer dashboard payload. If another assigned section is immediately
+available for that participant, the route should show it. If the participant has no
+remaining available section and the batch is not complete, the route should show a
+waiting state with a clear return action to the Multiplayer dashboard. If the submission
+completes the batch, the route should show the participant-scoped `Reveal phrases`
+action. Once the participant has revealed the batch, the same Game-scoped surface should
+show the completed phrase batch. A dashboard refresh may run separately so a later return
+shows current summary data, but it must not block or replace the focused Game state. If
+Reveal fails, the completed Game-scoped surface should keep one retryable `Reveal phrases`
+action and show `Phrases could not be revealed. Try again.` locally. If the Game is
+cancelled and the participant-scoped loader authorises that disclosure, the route should
+show the specific cancelled state and offer return to the Multiplayer dashboard. Expired,
+invalid, or no-longer-accessible Games should use the generic unavailable state and offer
+the same return action.
 
 Signed-in participants can open a dedicated completed multiplayer history view
 from the `Completed batches` dashboard bucket only when more than five completed

@@ -634,6 +634,16 @@ preserve their original history.
   Play Surface so active Entry input, waiting, Reveal, and revealed Batch states are no
   longer subsumed inside dashboard cards. Implementation is tracked by child issues
   #227, #228, #229, #230, #231, and #232.
+- **Current source-only status**: The unmerged issue #231 branch keeps a participant on
+  the Game Play Surface after section submission, rendering the next section, waiting,
+  participant-scoped Reveal, revealed Batch, or authorised cancellation state from the
+  existing narrow loader. It adds no database migration or hosted authority. A
+  participant-scoped refresh is immediate; the dashboard can refresh independently for a
+  later `Return to Multiplayer` action. Fresh branch-head `dev` deployment and visible
+  two-account browser validation remain required before merge. The optional runbook path
+  that pre-authorises isolated records for an approved functional change is not selected
+  for this slice: any hosted game-data smoke or fixture cleanup still needs separate
+  immediate approval.
 - **Remaining risk**: The first Multiplayer destination sequence has hosted coverage
   for the route gate, mutually exclusive destinations, dashboard buckets, completed
   history entry point, actionable notification routing, and anonymous account-only DOM

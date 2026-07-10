@@ -2,9 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
-**Status:** Historical/completed source implementation at `ed5e0f4`. This plan
-does not authorise hosted Supabase migration application, deployment, or
-browser smoke; use the Supabase and deployment runbooks with separate approval.
+**Status:** Historical/completed source implementation at `ed5e0f4` and hosted
+migration application at `20260710065313` after separate owner approval. This
+plan did not authorise the hosted mutation, deployment, or browser smoke; use
+the Supabase and deployment runbooks with separate approval.
 
 **Goal:** Add a narrow, participant-authorised Started Game loader for issue #228 without depending on the Multiplayer dashboard payload.
 

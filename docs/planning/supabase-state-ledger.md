@@ -60,6 +60,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260702163310` | `gamer_tag_snapshot_rpc_cleanup` | Applied after explicit owner approval; source corrected after failed generic dollar-quote attempt; RPC payloads and grants verified. |
 | `20260702180134` | `legacy_identity_column_cleanup` | Applied after explicit owner approval; source corrected after failed directory backfill attempt; schema, grants, functions, and production smoke verified. |
 | `20260703163721` | `remediate_supabase_advisor_lints` | Applied after task-specific owner request; database advisor WARN/ERROR findings resolved and authenticated RPC smoke verified. |
+| `20260710065313` | `participant_scoped_started_game_loader` | Applied after explicit owner approval; function security, grants, and unauthenticated unavailable-state path verified. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
@@ -596,6 +597,27 @@ current game, and clear through `Start again`.
 
 The signed-in foundation was then promoted through `test` and production by the
 documented GitHub Environment gates.
+
+## Participant-Scoped Started Game Loader Hosted Application
+
+After explicit owner approval on 2026-07-10, source migration
+`supabase/migrations/20260709225028_participant_scoped_started_game_loader.sql`
+from PR #236 commit `ed5e0f43a66eca2e0d6fa7cab75b58cdb444d2ab` applied to the
+live `crazyphrases` project through Supabase MCP as hosted migration
+`20260710065313 participant_scoped_started_game_loader`.
+
+Read-only verification confirmed `private.load_game_play_surface(uuid)` is a
+`SECURITY DEFINER` function with an empty `search_path`; its public wrapper is
+`SECURITY INVOKER` with the same empty path. `anon` and `service_role` cannot
+execute either function, while `authenticated` can. A contextless call to
+`public.load_game_play_surface(gen_random_uuid())` returned exactly
+`{"state":"unavailable"}`. This application created no Game, Pending Game,
+participant, section, entry, reveal, notification, or Auth data. The security
+advisor retained only the existing leaked-password-protection warning and the
+performance advisor retained only the three pre-existing unused-index infos.
+
+No `dev`, `test`, or production deployment or browser smoke occurred during
+this hosted migration application. Those remain separately approval-gated.
 
 ## Current Known Hosted-State Notes
 

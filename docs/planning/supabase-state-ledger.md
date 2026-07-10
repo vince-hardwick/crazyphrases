@@ -60,6 +60,7 @@ reloaded, and resumed that entry. A read-only hosted SQL check confirmed one
 | `20260702163310` | `gamer_tag_snapshot_rpc_cleanup` | Applied after explicit owner approval; source corrected after failed generic dollar-quote attempt; RPC payloads and grants verified. |
 | `20260702180134` | `legacy_identity_column_cleanup` | Applied after explicit owner approval; source corrected after failed directory backfill attempt; schema, grants, functions, and production smoke verified. |
 | `20260703163721` | `remediate_supabase_advisor_lints` | Applied after task-specific owner request; database advisor WARN/ERROR findings resolved and authenticated RPC smoke verified. |
+| `20260710065313` | `participant_scoped_started_game_loader` | Applied after explicit owner approval; function security, grants, and unauthenticated unavailable-state path verified. |
 
 Source-controlled migration
 `supabase/migrations/20260619151000_creator_multiplayer_cancellation.sql`
@@ -584,6 +585,7 @@ Read-only hosted SQL confirmed:
 | 2026-07-09 | Labelled Multiplayer dashboard cards test write/cleanup smoke | PR #221 merged to `main` as merge commit `4142b1079aea7d77a2fa6ad34771f3f8ea41fca8` and closed issue #208. Main CI run `29020150927` passed, and promotion run `29020150958` deployed the merge commit to `test` after owner approval for the `Deploy main to test` GitHub Environment gate; `Promote website / Verify static site` passed and `Deploy main to test` succeeded from 2026-07-09T13:15:04Z to 2026-07-09T13:17:13Z. Visible read-only `test` verification at `https://test.crazyphrases.com/?codexSmoke=4142b1079aea7d77a2fa6ad34771f3f8ea41fca8#/play/multiplayer` confirmed Account-backed mode for `vhCoder`, first-party assets stamped with the merge commit, no `__ASSET_VERSION__` placeholders, no framework overlay, no horizontal overflow, and empty browser warning/error logs. After explicit owner approval for hosted `test` game-data mutation and cleanup, the visible UI created a 15-phrase Pending Game invite from `vhCoder` to existing invitee `test-player` as Pending Game `8fa07cbd-6314-49f2-9459-08ed0112d0ae`; hosted SQL accepted the invitee participant `7db8385a-57e0-4d91-a488-b203e6425949`, and the visible UI started Started Game `4921e768-59bf-49a5-a9c4-fd0ca61c24ad`. Visible `test` verification confirmed labelled rows without trailing colons in `Sent invitations`, `Awaiting your entries`, and `Awaiting other player entries`. The visible creator UI submitted the creator section, and authenticated hosted `public.submit_multiplayer_section(uuid, jsonb)` calls under the invitee context submitted the remaining two sections so the visible `Completed batches` card could be verified with `Player 1`, `Player 2`, `Phrase count`, and `Game status` labels and no trailing colons. Cleanup deleted five notifications, 45 section entries, three section assignments, two Started Game participants, one Started Game, two Pending Game participants, and one Pending Game. Follow-up hosted SQL confirmed zero rows remained for the smoke Pending Game, Started Game, section, reveal, participant, and notification targets, plus zero recent `vhCoder`/`test-player` Pending or Started Game rows. A final visible `test` reload showed `Awaiting your entries`, `Awaiting other player entries`, and `Completed batches` empty, no `test-player` smoke artefact, regular `Notifications`, no horizontal overflow, stamped assets still at `4142b1079aea7d77a2fa6ad34771f3f8ea41fca8`, and empty browser warning/error logs. The promotion workflow remained waiting at the separate `Deploy main to production` GitHub Environment gate pending explicit production approval. |
 | 2026-07-09 | Labelled Multiplayer dashboard cards production promotion smoke passed | After separate explicit owner approval, promotion run `29020150958` deployed PR #221 merge commit `4142b1079aea7d77a2fa6ad34771f3f8ea41fca8` to production. The `Deploy main to production` job succeeded from 2026-07-09T13:45:11Z to 2026-07-09T13:45:27Z after strict FTPS target verification, Supabase runtime config rendering, asset stamping, and FTPS upload. Visible read-only production verification at `https://www.crazyphrases.com/?codexSmoke=4142b1079aea7d77a2fa6ad34771f3f8ea41fca8-prod#/play/multiplayer` confirmed Account-backed mode for `vhCoder`, first-party `favicon.ico`, `site.css`, `app.js`, and homepage logo assets stamped with merge commit `4142b1079aea7d77a2fa6ad34771f3f8ea41fca8`, no unstamped first-party assets, no `__ASSET_VERSION__` placeholders, visible Multiplayer buckets `Awaiting your entries`, `Awaiting other player entries`, and `Completed batches` empty, no `test-player` smoke artefact, localhost-only test sign-in controls hidden, no old `Gamer Name` or `Handle` copy, no framework overlay, no horizontal overflow, and empty browser warning/error logs. Opening and closing the `How to play` panel exercised a read-only interaction on the production route. No production Pending Game, notification, profile, or other hosted game data was created, updated, or cleaned up during this production smoke. |
 | 2026-07-09 | Notification and Multiplayer UI polish promotion smoke passed | PR #224 merged to `main` as merge commit `a78d7fcbceb98c32c327ef403d5ed41210e1d2c6`. Main CI run `29030373155` passed, and promotion run `29030373206` completed `Promote website / Verify static site`, `Deploy main to test`, and `Deploy main to production` after the separate owner approvals. Visible `test` and production browser smokes at `#/play/multiplayer` confirmed Account-backed mode for `vhCoder`, `app.js` and `site.css` stamped with `a78d7fcbceb98c32c327ef403d5ed41210e1d2c6`, and the missing Gamer Tag feedback `No gamer found under that gamer tag.` appearing below the `Invite` button with the feedback and button right edges aligned. The smokes measured stable lookup input, phrase-count select, nudge-timeout select, and `Invite` button geometry before, during, and after the feedback; confirmed the `opacity 0.28s ease-in-out` transition, roughly 3-second visible window, fade-out, and clear; and recorded empty browser warning/error logs. The shipped slice also added hover/focus tooltips for row-level notification `Mark as read` and bulk `Mark all as read` icon actions. No production Pending Game, notification, profile, or other hosted game data was created, updated, or cleaned up during the production smoke; the missing lookup exercised the read-only lookup-miss path and created no invitation. |
+| 2026-07-10 | Participant-scoped Started Game loader dev smoke | PR #236 runtime source head `1d5e0c57fb384c683e4d49bed45e0a6e23182f93` deployed to `dev` through approved deploy-dev run `29080495804` attempt 2. Static verification, strict FTPS target verification, Supabase runtime-config rendering, asset stamping, and FTPS upload all succeeded. Visible signed-in `dev` smoke confirmed the Multiplayer dashboard mounted, `assets/app.js` was stamped with the exact runtime source head, and browser error logs were empty. Both malformed ID `bad_id` and an unknown valid UUID opened only the generic `Game unavailable.` state with `This game cannot be opened from this account.`; the valid UUID exercised the deployed authenticated loader path and disclosed no game data. The smoke was read-only and created, changed, or cleaned up no hosted game, notification, profile, Auth, or other data. |
 
 ## Signed-In Persistence Evidence
 
@@ -596,6 +598,29 @@ current game, and clear through `Start again`.
 
 The signed-in foundation was then promoted through `test` and production by the
 documented GitHub Environment gates.
+
+## Participant-Scoped Started Game Loader Hosted Application
+
+After explicit owner approval on 2026-07-10, source migration
+`supabase/migrations/20260709225028_participant_scoped_started_game_loader.sql`
+from PR #236 commit `ed5e0f43a66eca2e0d6fa7cab75b58cdb444d2ab` applied to the
+live `crazyphrases` project through Supabase MCP as hosted migration
+`20260710065313 participant_scoped_started_game_loader`.
+
+Read-only verification confirmed `private.load_game_play_surface(uuid)` is a
+`SECURITY DEFINER` function with an empty `search_path`; its public wrapper is
+`SECURITY INVOKER` with the same empty path. `anon` and `service_role` cannot
+execute either function, while `authenticated` can. A contextless call to
+`public.load_game_play_surface(gen_random_uuid())` returned exactly
+`{"state":"unavailable"}`. This application created no Game, Pending Game,
+participant, section, entry, reveal, notification, or Auth data. The security
+advisor retained only the existing leaked-password-protection warning and the
+performance advisor retained only the three pre-existing unused-index infos.
+
+A separately approved `dev` deployment and signed-in browser smoke completed
+after the hosted migration application; its immutable runtime evidence is
+recorded in `Deployment And Smoke Evidence` above. `test` and production
+deployment and smoke remain separately approval-gated.
 
 ## Current Known Hosted-State Notes
 

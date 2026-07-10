@@ -383,6 +383,24 @@ export function createTestPendingGameRepository({
       });
     },
 
+    async loadGamePlaySurface({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+
+      const profile = profilesByAccountId.get(accountId);
+      if (!profile) {
+        return { state: "unavailable" };
+      }
+
+      return createGamePlaySurfaceState({
+        assignedSections,
+        gameId,
+        pendingGames,
+        profile,
+        revealedMultiplayerBatches,
+      });
+    },
+
     async listCompletedMultiplayerHistory({ accountId, cursor, pageSize }) {
       assertAccountId(accountId);
 
@@ -978,6 +996,16 @@ export function createSupabasePendingGameRepository({
       const response = await supabase.rpc("list_multiplayer_dashboard");
       assertNoSupabaseError(response, "Could not load Multiplayer dashboard");
       return recoverMultiplayerDashboard(response.data);
+    },
+
+    async loadGamePlaySurface({ accountId, gameId }) {
+      assertAccountId(accountId);
+      assertText(gameId, "A Started Game id is required.");
+      const response = await supabase.rpc("load_game_play_surface", {
+        target_game_id: gameId,
+      });
+      assertNoSupabaseError(response, "Could not load Game Play Surface");
+      return recoverGamePlaySurface(response.data);
     },
 
     async listCompletedMultiplayerHistory({ accountId, cursor, pageSize }) {
@@ -1652,6 +1680,79 @@ function createMultiplayerDashboard({
   };
 }
 
+function createGamePlaySurfaceState({
+  assignedSections,
+  gameId,
+  pendingGames,
+  profile,
+  revealedMultiplayerBatches,
+}) {
+  const pendingGame = pendingGames.find(
+    (candidate) => candidate.startedGameId === gameId,
+  );
+  const isParticipant = pendingGame?.participants.some(
+    (participant) => participant.profileId === profile.profileId,
+  );
+  if (!pendingGame || !isParticipant) {
+    return { state: "unavailable" };
+  }
+
+  const game = createGamePlaySurfaceGameDto({ gameId, pendingGame });
+  if (pendingGame.status === "cancelled") {
+    return { state: "cancelled", game };
+  }
+  if (pendingGame.status !== "started") {
+    return { state: "unavailable" };
+  }
+
+  const currentSection = findCurrentAssignedSection({
+    assignedSections,
+    gameId,
+    participantProfileId: profile.profileId,
+  });
+  if (currentSection) {
+    return {
+      state: "active",
+      game,
+      currentSection: createCurrentSectionDto(currentSection, {
+        sectionCount: assignedSections.filter(
+          (section) =>
+            section.gameId === gameId &&
+            section.participantProfileId === profile.profileId,
+        ).length,
+      }),
+    };
+  }
+
+  if (!isGameComplete({ assignedSections, gameId })) {
+    return { state: "waiting", game };
+  }
+
+  if (
+    isBatchRevealed({
+      gameId,
+      profileId: profile.profileId,
+      revealedMultiplayerBatches,
+    })
+  ) {
+    return {
+      state: "revealed",
+      game,
+      phrases: renderMultiplayerPhrases({ assignedSections, gameId }),
+    };
+  }
+
+  return { state: "completed", game };
+}
+
+function createGamePlaySurfaceGameDto({ gameId, pendingGame }) {
+  return {
+    id: gameId,
+    rowCount: pendingGame.rowCount,
+    participants: pendingGame.participants.map(toMultiplayerParticipantDto),
+  };
+}
+
 function createCurrentSectionBatches({ assignedSections, pendingGames, profile }) {
   const gameIdsForProfile = new Set(
     assignedSections
@@ -2287,6 +2388,111 @@ function recoverMultiplayerDashboard(dashboardRow) {
       ? { hasMoreCompletedBatches }
       : {}),
   };
+}
+
+function recoverGamePlaySurface(surfaceRow) {
+  const game = recoverGamePlaySurfaceGame(surfaceRow?.game);
+  if (surfaceRow?.state === "unavailable" || !game) {
+    return { state: "unavailable" };
+  }
+
+  if (
+    surfaceRow.state === "waiting" ||
+    surfaceRow.state === "completed" ||
+    surfaceRow.state === "cancelled"
+  ) {
+    return { state: surfaceRow.state, game };
+  }
+
+  if (surfaceRow.state === "active") {
+    const currentSection = recoverGamePlaySurfaceCurrentSection(
+      surfaceRow.currentSection ?? surfaceRow.current_section,
+      { rowCount: game.rowCount },
+    );
+    return currentSection
+      ? { state: "active", game, currentSection }
+      : { state: "unavailable" };
+  }
+
+  if (surfaceRow.state === "revealed") {
+    const phrases = Array.isArray(surfaceRow.phrases)
+      ? surfaceRow.phrases.map((phrase) =>
+          typeof phrase === "string" ? phrase : null,
+        )
+      : null;
+    return phrases?.every(Boolean)
+      ? { state: "revealed", game, phrases }
+      : { state: "unavailable" };
+  }
+
+  return { state: "unavailable" };
+}
+
+function recoverGamePlaySurfaceGame(gameRow) {
+  const id = recoverOptionalText(gameRow?.id);
+  const rowCount = gameRow?.rowCount ?? gameRow?.row_count;
+  const participantRows = Array.isArray(gameRow?.participants)
+    ? gameRow.participants
+    : null;
+  const participants = participantRows?.map((participant) => ({
+    gamerTag: recoverOptionalParticipantGamerTag(participant),
+  }));
+
+  if (
+    !id ||
+    !Number.isInteger(rowCount) ||
+    rowCount < 1 ||
+    participantRows?.length !== 2 ||
+    !participants?.every((participant) => participant.gamerTag)
+  ) {
+    return null;
+  }
+
+  return { id, rowCount, participants };
+}
+
+function recoverGamePlaySurfaceCurrentSection(sectionRow, { rowCount }) {
+  const id = recoverOptionalText(sectionRow?.id);
+  const entryKind = recoverOptionalText(
+    sectionRow?.entryKind ?? sectionRow?.entry_kind,
+  );
+  const sectionIndex =
+    sectionRow?.sectionIndex ?? sectionRow?.participant_section_index;
+  const sectionCount = sectionRow?.sectionCount ?? sectionRow?.section_count;
+  const rows = Array.isArray(sectionRow?.rows)
+    ? sectionRow.rows.map((row) => ({
+        rowIndex: row?.rowIndex ?? row?.row_index,
+        value: typeof row?.value === "string" ? row.value : null,
+      }))
+    : null;
+
+  if (
+    !id ||
+    !entryKind ||
+    !Number.isInteger(sectionIndex) ||
+    sectionIndex < 0 ||
+    !Number.isInteger(sectionCount) ||
+    sectionCount < 1 ||
+    sectionIndex >= sectionCount ||
+    rows?.length !== rowCount ||
+    !rows.every(
+      (row, rowIndex) =>
+        row.rowIndex === rowIndex &&
+        typeof row.value === "string",
+    )
+  ) {
+    return null;
+  }
+
+  return { id, entryKind, sectionIndex, sectionCount, rows };
+}
+
+function recoverOptionalText(value) {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+
+  return value.trim();
 }
 
 function recoverCompletedMultiplayerHistoryPage(historyRow) {

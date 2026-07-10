@@ -92,6 +92,9 @@ const remediateSupabaseAdvisorLintsMigrationUrl = findMigrationUrl(
 const pendingGameInviteNotificationsMigrationUrl = findMigrationUrl(
   "pending_game_invite_notifications",
 );
+const participantScopedStartedGameLoaderMigrationUrl = findMigrationUrl(
+  "participant_scoped_started_game_loader",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -2109,6 +2112,103 @@ describe("Supabase migration surface", () => {
       migration,
       /grant execute on function public\.list_completed_multiplayer_history\(integer, bigint, uuid\)\s+to authenticated/,
     );
+  });
+
+  it("adds a participant-scoped Started Game loader without direct table authority", () => {
+    assert.equal(existsSync(participantScopedStartedGameLoaderMigrationUrl), true);
+    assert.ok(
+      participantScopedStartedGameLoaderMigrationUrl.pathname >
+        pendingGameInviteNotificationsMigrationUrl.pathname,
+      "the Game Play Surface loader must follow the current multiplayer RPCs",
+    );
+
+    const migration = readFileSync(
+      participantScopedStartedGameLoaderMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /create or replace function private\.load_game_play_surface\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.match(migration, /returns jsonb/);
+    assert.match(migration, /security definer/);
+    assert.match(migration, /set search_path = ''/);
+    assert.match(migration, /caller_account_id uuid := \(select auth\.uid\(\)\)/);
+    assert.match(
+      migration,
+      /from public\.game_participants as participant[\s\S]*?where participant\.game_id = target_game_id[\s\S]*?and participant\.profile_id = caller_profile_id/,
+    );
+    assert.match(
+      migration,
+      /private\.multiplayer_batch_is_complete\(target_game_id\)/,
+    );
+    assert.match(
+      migration,
+      /private\.render_multiplayer_phrases\(target_game_id\)/,
+    );
+    assert.match(migration, /'state', 'unavailable'/);
+    assert.match(
+      migration,
+      /if target_pending_game\.status <> 'started' then[\s\S]*?'state', 'unavailable'/,
+    );
+    assert.match(migration, /'state', 'cancelled'/);
+    assert.match(migration, /'state', 'active'/);
+    assert.match(migration, /'state', 'waiting'/);
+    assert.match(migration, /'state', 'completed'/);
+    assert.match(migration, /'state', 'revealed'/);
+    assert.match(migration, /'currentSection'/);
+    assert.match(migration, /'entryKind'/);
+    assert.match(migration, /'sectionIndex'/);
+    assert.match(migration, /'sectionCount'/);
+    assert.match(migration, /'rowIndex'/);
+    assert.match(migration, /'gamerTag'/);
+    assert.match(
+      migration,
+      /create or replace function public\.load_game_play_surface\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.match(migration, /security invoker/);
+    assert.match(
+      migration,
+      /select private\.load_game_play_surface\(target_game_id\)/,
+    );
+
+    for (const role of ["public", "anon", "service_role"]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.load_game_play_surface\\(uuid\\)\\s+from ${role}`,
+        ),
+      );
+    }
+    assert.match(
+      migration,
+      /grant execute on function private\.load_game_play_surface\(uuid\)\s+to authenticated/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.load_game_play_surface\(uuid\)\s+from public, anon, authenticated, service_role/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.load_game_play_surface\(uuid\)\s+to authenticated/,
+    );
+
+    for (const tableName of [
+      "games",
+      "game_participants",
+      "game_section_assignments",
+      "game_section_entries",
+      "multiplayer_batch_reveals",
+    ]) {
+      assert.doesNotMatch(
+        migration,
+        new RegExp(`grant\\s+[^;]*on\\s+table\\s+public\\.${tableName}`, "i"),
+      );
+    }
+    assert.doesNotMatch(migration, /'profileId'/);
+    assert.doesNotMatch(migration, /'accountId'/);
+    assert.doesNotMatch(migration, /'pendingGameId'/);
   });
 });
 

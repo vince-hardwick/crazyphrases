@@ -1002,6 +1002,26 @@ function renderGamePlaySurfaceRoute(route) {
         return;
       }
 
+      if (gamePlayState.state === "waiting") {
+        renderGamePlaySurfaceWaiting(surface);
+        return;
+      }
+
+      if (gamePlayState.state === "completed") {
+        renderGamePlaySurfaceCompleted(surface, gamePlayState.game);
+        return;
+      }
+
+      if (gamePlayState.state === "revealed") {
+        renderGamePlaySurfaceRevealed(surface, gamePlayState.phrases);
+        return;
+      }
+
+      if (gamePlayState.state === "cancelled") {
+        renderGamePlaySurfaceCancelled(surface);
+        return;
+      }
+
       renderGamePlaySurfaceUnavailable(surface);
     })
     .catch(() => {
@@ -1027,6 +1047,99 @@ function renderGamePlaySurfaceActive(surface, currentSection) {
   heading.textContent = "Your turn";
 
   surface.replaceChildren(heading, renderMultiplayerSectionForm(currentSection));
+}
+
+function renderGamePlaySurfaceWaiting(surface) {
+  surface.dataset.gamePlaySurfaceState = "waiting";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Awaiting other player entries.";
+
+  surface.replaceChildren(heading, createReturnToMultiplayerButton());
+}
+
+function renderGamePlaySurfaceCompleted(surface, game) {
+  surface.dataset.gamePlaySurfaceState = "completed";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Batch complete.";
+
+  const revealButton = document.createElement("button");
+  revealButton.type = "button";
+  revealButton.className = "primary-button";
+  revealButton.textContent = "Reveal phrases";
+  revealButton.addEventListener("click", () => {
+    void revealMultiplayerBatch(game.id);
+  });
+
+  const status = document.createElement("p");
+  status.className = "multiplayer-section-status";
+  status.dataset.gamePlaySurfaceStatus = "";
+  status.setAttribute("aria-live", "polite");
+
+  surface.replaceChildren(
+    heading,
+    revealButton,
+    status,
+    createReturnToMultiplayerButton(),
+  );
+}
+
+function renderGamePlaySurfaceRevealed(surface, phrases) {
+  surface.dataset.gamePlaySurfaceState = "revealed";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Completed phrase batch";
+
+  const list = document.createElement("ol");
+  list.className = "phrase-list";
+  list.replaceChildren(
+    ...phrases.map((phrase) => {
+      const item = document.createElement("li");
+      item.textContent = phrase;
+      return item;
+    }),
+  );
+
+  surface.replaceChildren(heading, list, createReturnToMultiplayerButton());
+}
+
+function renderGamePlaySurfaceCancelled(surface) {
+  surface.dataset.gamePlaySurfaceState = "cancelled";
+  surface.removeAttribute("aria-busy");
+
+  const heading = document.createElement("h2");
+  heading.className = "route-heading";
+  heading.textContent = "Game cancelled.";
+
+  const copy = document.createElement("p");
+  copy.textContent = "The game creator cancelled this game before reveal.";
+
+  surface.replaceChildren(heading, copy, createReturnToMultiplayerButton());
+}
+
+function createReturnToMultiplayerButton() {
+  const returnButton = document.createElement("button");
+  returnButton.type = "button";
+  returnButton.className = "secondary-button";
+  returnButton.textContent = "Return to Multiplayer";
+  returnButton.addEventListener("click", () => {
+    const accountId =
+      accountShell.persistenceAuthority.type === "account"
+        ? accountShell.accountId
+        : null;
+    ensureHashRoute(ROUTES.playMultiplayer);
+    if (accountId) {
+      void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
+    }
+  });
+  return returnButton;
 }
 
 function createGamePlaySurfaceSkeleton() {
@@ -1060,15 +1173,7 @@ function renderGamePlaySurfaceUnavailable(surface) {
   const copy = document.createElement("p");
   copy.textContent = "This game cannot be opened from this account.";
 
-  const returnButton = document.createElement("button");
-  returnButton.type = "button";
-  returnButton.className = "secondary-button";
-  returnButton.textContent = "Return to Multiplayer";
-  returnButton.addEventListener("click", () => {
-    ensureHashRoute(ROUTES.playMultiplayer);
-  });
-
-  surface.replaceChildren(heading, copy, returnButton);
+  surface.replaceChildren(heading, copy, createReturnToMultiplayerButton());
 }
 
 function updatePrimaryNavState() {
@@ -4480,14 +4585,23 @@ async function revealMultiplayerBatch(gameId) {
   }
 
   const accountId = accountShell.accountId;
-  pendingGameStatus.textContent = "";
+  const submittedRoute = currentRoute;
+  if (pendingGameStatus) {
+    pendingGameStatus.textContent = "";
+  }
 
   try {
     const revealed = await pendingGameRepository.revealMultiplayerBatch({
       accountId,
       gameId,
     });
-    if (!isCurrentAccountSession(accountId)) {
+    if (!isCurrentAccountSession(accountId) || currentRoute !== submittedRoute) {
+      return;
+    }
+
+    if (isGamePlaySurfaceRoute(currentRoute)) {
+      renderGamePlaySurfaceRoute(currentRoute);
+      void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
       return;
     }
 
@@ -4502,6 +4616,20 @@ async function revealMultiplayerBatch(gameId) {
       renderCompletedMultiplayerHistory();
     }
   } catch {
+    if (
+      isCurrentAccountSession(accountId) &&
+      currentRoute === submittedRoute &&
+      isGamePlaySurfaceRoute(currentRoute)
+    ) {
+      const surfaceStatus = gamePlaySurface?.querySelector(
+        "[data-game-play-surface-status]",
+      );
+      if (surfaceStatus) {
+        surfaceStatus.textContent = "Phrases could not be revealed. Try again.";
+      }
+      return;
+    }
+
     try {
       if (!(await loadMultiplayerDashboard({ accountId }))) {
         return;
@@ -4524,6 +4652,16 @@ async function refreshMultiplayerSurfaces({
     return;
   }
 
+  if (!isCurrentAccountSession(accountId) || currentRoute !== expectedRoute) {
+    return;
+  }
+
+  if (isGamePlaySurfaceRoute(currentRoute)) {
+    renderGamePlaySurfaceRoute(currentRoute);
+    void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
+    return;
+  }
+
   if (!(await loadMultiplayerDashboard({ accountId }))) {
     return;
   }
@@ -4532,8 +4670,27 @@ async function refreshMultiplayerSurfaces({
     return;
   }
 
-  if (isGamePlaySurfaceRoute(currentRoute)) {
-    ensureHashRoute(ROUTES.playMultiplayer);
+  renderPendingGamePanel();
+}
+
+async function refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({
+  accountId,
+}) {
+  let loadedDashboard;
+  try {
+    loadedDashboard = await loadMultiplayerDashboard({ accountId });
+  } catch {
+    return;
+  }
+
+  if (!loadedDashboard) {
+    return;
+  }
+
+  if (
+    !isCurrentAccountSession(accountId) ||
+    window.location.hash !== ROUTES.playMultiplayer
+  ) {
     return;
   }
 

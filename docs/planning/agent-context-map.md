@@ -68,6 +68,7 @@ For large documents, search for the relevant heading first and then read that se
 | Sandboxed public HTTPS checks fail before HTTP with `Invoke-WebRequest: Authentication failed`, `curl.exe` Schannel `SEC_E_NO_CREDENTIALS`, or `AcquireCredentialsHandle failed` | `docs/runbooks/cloudflare-dns-and-access.md` section `Codex Sandbox TLS Client Failures` |
 | Browser side pane not visible, localhost refused, or Playwright wrapper limitations | `docs/runbooks/in-app-browser-verification.md` - use the failure-mode checklist before falling back to standalone or Edge-backed Playwright. |
 | Branch-based dev deployment, protected `main`, required CI check, and main promotion | `docs/decisions/0009-branch-based-dev-and-main-promotion.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
+| Autonomous docs-only pull-request self-review and merge | `docs/decisions/0028-autonomous-docs-only-pr-merge.md`, `docs/runbooks/cloudflare-dns-and-access.md` |
 | Production static hosting | `docs/runbooks/live-static-hosting.md` |
 | Git and GitHub CLI authentication from Codex, including sandboxed `401`, invalid-token, unauthenticated `403`, rate-limit, Windows keyring, `gh workflow run`, `gh run view`, issue, and PR commands | `docs/runbooks/github-cli-auth-for-codex.md` |
 | Node, npm, npx, and package installs from Codex | `docs/runbooks/node-npm-for-codex.md` |

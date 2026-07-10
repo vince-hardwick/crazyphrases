@@ -31,6 +31,7 @@ This directory holds durable architecture, governance, deployment, lifecycle, an
 - `0025-original-uploaded-avatar-cover-fit.md` - current original-file Uploaded Avatar storage and cover-fit rendering boundary.
 - `0026-pending-game-invite-notification-authority.md` - database-owned Pending Game invite notification creation authority.
 - `0027-game-scoped-multiplayer-play-surface.md` - Game-scoped Multiplayer Game Play Surface, participant-state read boundary, and dashboard-summary separation.
+- `0028-autonomous-docs-only-pr-merge.md` - autonomous self-review and merge authority for documentation-only pull requests.
 
 ## Status Values
 

@@ -687,14 +687,15 @@ The notification panel lists unread items first, then read items, newest first w
 each group. The bell is only a panel toggle: opening or closing it must not mark any
 notification read. A notification may become read when the participant selects that
 notification and is routed to its relevant destination, such as `#/play/multiplayer` for
-invite, turn, or nudge notifications; when the participant reaches the relevant
+an invite or dashboard target, or `#/play/multiplayer/games/<started-game-id>` for a
+current-section or completed-batch target; when the participant reaches the relevant
 destination through another route without opening the notification panel first; when the
 participant uses a row-level `Mark as read` action; or when the participant uses a bulk
-`Mark all as read` action. Notifications without a concrete target should remain
-readable through the explicit row-level or bulk read actions. Notifications without a
-concrete target are not clickable navigation rows. They render as static notification
-content with a row-level `Mark as read` action when unread; once read, they are static
-read-only content.
+`Mark all as read` action. Notifications without a concrete target should remain readable
+through the explicit row-level or bulk read actions. Notifications without a concrete
+target are not clickable navigation rows. They render as static notification content with
+a row-level `Mark as read` action when unread; once read, they are static read-only
+content.
 
 The notification panel behaves as a dropdown-style surface owned by the bell. Keyboard
 activation of the bell opens the panel and moves focus into the panel heading, list, or
@@ -767,10 +768,11 @@ notification text is bold, read notification text is unbolded, accessible labell
 communicates read state for assistive technology, and the row-level `Mark as read`
 checkmark is removed once that notification becomes read. Do not show visible `Unread`
 or `Read` status text in each row. Target-row accessible names should include message,
-read state, and action, such as `Unread: You can submit entries... Open Multiplayer`.
-Read target rows can use `Read: ... Open Multiplayer`. Row-level checkmark accessible
-names should identify the exact notification being changed, such as `Mark notification
-as read: You can submit entries...`.
+read state, and a route-neutral action, such as
+`Unread: You can submit entries... Open notification target`. Read target rows can use
+`Read: ... Open notification target`. Row-level checkmark accessible names should
+identify the exact notification being changed, such as `Mark notification as read: You
+can submit entries...`.
 
 Bulk `Mark all as read` may partially succeed. Successfully updated notifications become
 read, failed notifications stay unread, the unread badge/count reflects the remaining

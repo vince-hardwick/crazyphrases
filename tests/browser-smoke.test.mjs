@@ -1917,11 +1917,11 @@ describe("solo browser smoke", () => {
     ]);
     assert.equal(
       await notificationItems.nth(0).getAttribute("aria-label"),
-      "Unread: Newest unread notification. Open Multiplayer",
+      "Unread: Newest unread notification. Open notification target",
     );
     assert.equal(
       await notificationItems.nth(1).getAttribute("aria-label"),
-      "Unread: Older unread notification. Open Multiplayer",
+      "Unread: Older unread notification. Open notification target",
     );
     await expectFontAwesomeClass(
       notificationItems.nth(1),
@@ -1930,7 +1930,7 @@ describe("solo browser smoke", () => {
     );
     assert.equal(
       await notificationItems.nth(2).getAttribute("aria-label"),
-      "Read: Already read notification. Open Multiplayer",
+      "Read: Already read notification. Open notification target",
     );
     const itemStyles = await notificationItems.evaluateAll((items) =>
       items.map((item) => ({
@@ -2016,7 +2016,7 @@ describe("solo browser smoke", () => {
     );
     assert.equal(
       await notificationItems.nth(0).getAttribute("aria-label"),
-      `Unread: ${LONG_TARGET_NOTIFICATION_MESSAGE} Open Multiplayer`,
+      `Unread: ${LONG_TARGET_NOTIFICATION_MESSAGE} Open notification target`,
     );
     assert.equal(
       await notificationItems.nth(4).getAttribute("aria-label"),
@@ -2136,7 +2136,7 @@ describe("solo browser smoke", () => {
     ]);
     assert.equal(
       await notificationItems.nth(0).getAttribute("aria-label"),
-      "Read: Newest unread notification. Open Multiplayer",
+      "Read: Newest unread notification. Open notification target",
     );
     assert.equal(
       await notificationItems.nth(0).getAttribute("data-notification-status"),
@@ -2145,7 +2145,7 @@ describe("solo browser smoke", () => {
     assert.equal(await notificationToggle.evaluate((button) => button.dataset.unreadCount), "1");
     await assertActiveElementMatches(page, {
       selector: "[data-notification-panel] .notification-item",
-      accessibleName: "Read: Newest unread notification. Open Multiplayer",
+      accessibleName: "Read: Newest unread notification. Open notification target",
     });
 
     assertNoConsoleErrors();
@@ -2297,7 +2297,7 @@ describe("solo browser smoke", () => {
       .filter({ hasText: "Older unread notification." });
     assert.equal(
       await failedItem.getAttribute("aria-label"),
-      "Unread: Older unread notification. Open Multiplayer",
+      "Unread: Older unread notification. Open notification target",
     );
     assert.equal(
       await failedItem.getAttribute("data-notification-status"),
@@ -4191,6 +4191,107 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("routes the Game Creator to an active Game Play Surface after starting an accepted Game", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+    await page.locator("[data-pending-game-lookup-key-input]").fill("INVITEE TWO");
+    await page.locator("[data-pending-game-row-count]").selectOption("10");
+    await page.getByRole("button", { name: "Invite" }).click();
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page, { invitee: true });
+    await openMultiplayerRoute(page);
+    await page
+      .getByRole("button", { name: "Accept invite from Player" })
+      .click();
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+    await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
+
+    await page.waitForFunction(
+      () =>
+        /^#\/play\/multiplayer\/games\//.test(window.location.hash) &&
+        document.querySelector("[data-game-play-surface]")?.dataset
+          .gamePlaySurfaceState === "active",
+    );
+    await waitForTextVisible(page, "Your turn");
+    assert.equal(
+      await page.locator("[data-multiplayer-section-input]").count(),
+      10,
+    );
+    assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
+
+    assertNoConsoleErrors();
+  });
+
+  it("refreshes the Game Creator's Multiplayer dashboard after starting an accepted Game", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+    await openMultiplayerRoute(page);
+
+    const takeTurnButton = page.getByRole("button", { name: "Take turn" });
+    await takeTurnButton.waitFor({ state: "visible", timeout: 5000 });
+    assert.equal(await takeTurnButton.count(), 1);
+
+    assertNoConsoleErrors();
+  });
+
+  it("marks the Game Creator's entries-needed notification read on the Game Play Surface after reload", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routePersistentStartedGameRepository(context);
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "0",
+    );
+    await page.reload();
+    await signInWithLocalTestAccount(page);
+    await page.waitForFunction(
+      () =>
+        /^#\/play\/multiplayer\/games\//.test(window.location.hash) &&
+        document.querySelector("[data-game-play-surface]")?.dataset
+          .gamePlaySurfaceState === "active",
+    );
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-notification-toggle]")?.dataset
+          .unreadCount === "0",
+    );
+
+    assertNoConsoleErrors();
+  });
+
   it("lets multiplayer participants submit sections and reveal independently", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -4224,17 +4325,6 @@ describe("solo browser smoke", () => {
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
 
-    await assertTextVisible(page, "Game started. Your turn is ready.");
-    await assertTextVisible(page, "Started");
-    await assertTextVisible(page, "Awaiting your entries");
-    await assertMultiplayerBucketCardRows(page, "Awaiting your entries", [
-      { label: "Player 1", value: "Player", status: "" },
-      { label: "Player 2", value: "Invitee Two", status: "" },
-      { label: "Phrase count", value: "15", status: "" },
-      { label: "Game status", value: "Awaiting your entries", status: "" },
-    ]);
-    await assertMultiplayerDashboardIsSummaryOnly(page);
-    await page.getByRole("button", { name: "Take turn" }).click();
     await page.waitForFunction(() =>
       /^#\/play\/multiplayer\/games\//.test(window.location.hash),
     );
@@ -4455,7 +4545,7 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
-  it("routes actionable notifications to the Multiplayer destination", async () => {
+  it("routes actionable entries-needed notifications to the Game Play Surface", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
 
@@ -4485,7 +4575,6 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
-    await assertTextVisible(page, "Game started. Your turn is ready.");
 
     await signOutFromAccountMenu(page);
     await signInWithLocalTestAccount(page, { invitee: true });
@@ -4510,14 +4599,14 @@ describe("solo browser smoke", () => {
 
     await page.waitForFunction(
       () =>
-        window.location.hash === "#/play/multiplayer" &&
-        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+        /^#\/play\/multiplayer\/games\//.test(window.location.hash) &&
+        document.querySelector("[data-game-play-surface]")?.dataset
+          .gamePlaySurfaceState === "active",
     );
-    assert.equal(new URL(page.url()).hash, "#/play/multiplayer");
     assert.equal(await page.locator("[data-game-panel]").isHidden(), true);
-    await assertPendingGameSurfaceMounted(page);
-    await assertTextVisible(page, "Awaiting your entries");
+    await waitForTextVisible(page, "Your turn");
     await assertNoFavouritesPanelDom(page);
+    assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
     assert.equal(await page.locator("[data-notification-panel]").isHidden(), true);
     await page.waitForFunction(
       () =>
@@ -4528,6 +4617,155 @@ describe("solo browser smoke", () => {
       await page.getByRole("button", { name: "Notifications" }).isVisible(),
       true,
     );
+
+    assertNoConsoleErrors();
+  });
+
+  it("keeps an entries-needed notification unread when its Game Play Surface state changes before render", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      gamePlaySurfaceStates: [
+        {
+          currentSection: {
+            entryKind: "noun",
+            gameId: "started-game-newest",
+            id: "started-game-newest-section",
+            rowCount: 10,
+            rows: Array.from({ length: 10 }, (_, rowIndex) => ({ rowIndex, value: "" })),
+            sectionCount: 2,
+            sectionIndex: 0,
+          },
+          state: "active",
+        },
+        { state: "unavailable" },
+      ],
+      includeTargetDashboard: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 2 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Newest unread notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        window.location.hash === "#/play/multiplayer" &&
+        document.querySelectorAll("[data-pending-game-panel]").length === 1,
+    );
+    assert.equal(await page.locator("[data-game-play-surface]").count(), 0);
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), []);
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Notifications, 2 unread" })
+        .isVisible(),
+      true,
+    );
+
+    assertNoConsoleErrors();
+  });
+
+  it("routes actionable batch-complete notifications to the Game Play Surface", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page, { invitee: true });
+    await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
+    await submitMultiplayerSection(page, "teapot");
+    await waitForTextVisible(page, "Section 2 of 2");
+    await submitMultiplayerSection(page, "ladder");
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page);
+    await openMultiplayerRoute(page);
+    await openActiveMultiplayerSection(page);
+    await submitMultiplayerSection(page, "brisk");
+    await waitForTextVisible(page, "Reveal phrases");
+
+    await signOutFromAccountMenu(page);
+    await signInWithLocalTestAccount(page, { invitee: true });
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({
+        hasText:
+          "Batch with Player and Invitee Two is now complete and available to reveal.",
+      })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        /^#\/play\/multiplayer\/games\//.test(window.location.hash) &&
+        document.querySelector("[data-game-play-surface]")?.dataset
+          .gamePlaySurfaceState === "completed",
+    );
+    await waitForTextVisible(page, "Reveal phrases");
+    assert.equal(await page.locator("[data-pending-game-panel]").count(), 0);
+
+    assertNoConsoleErrors();
+  });
+
+  it("routes a batch-complete notification to the revealed Game Play Surface", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await routeSeededNotificationRepository(context, {
+      gamePlaySurfaceStates: [
+        { phrases: ["Brisk teapot ladder"], state: "revealed" },
+        { phrases: ["Brisk teapot ladder"], state: "revealed" },
+      ],
+      includeCompletedTargetNotification: true,
+    });
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await signInWithLocalTestAccount(page);
+    await openFavouritesRoute(page);
+    await page.getByRole("button", { name: "Notifications, 3 unread" }).click();
+    await page
+      .locator("[data-notification-panel] .notification-item")
+      .filter({ hasText: "Completed batch notification." })
+      .click();
+
+    await page.waitForFunction(
+      () =>
+        /^#\/play\/multiplayer\/games\//.test(window.location.hash) &&
+        document.querySelector("[data-game-play-surface]")?.dataset
+          .gamePlaySurfaceState === "revealed",
+    );
+    await waitForTextVisible(page, "Completed phrase batch");
+    await page.waitForFunction(
+      () => window.__notificationReadCalls.length === 1,
+    );
+    assert.deepEqual(await page.evaluate(() => window.__notificationReadCalls), [
+      { accountId: "test-account", notificationId: "notification-unread-completed" },
+    ]);
 
     assertNoConsoleErrors();
   });
@@ -4820,6 +5058,11 @@ describe("solo browser smoke", () => {
     await signInWithLocalTestAccount(page);
     await openMultiplayerRoute(page);
     await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
+    await page.waitForFunction(() =>
+      /^#\/play\/multiplayer\/games\//.test(window.location.hash),
+    );
+
+    await openMultiplayerRoute(page);
     await assertTextVisible(page, "Awaiting your entries");
 
     await page
@@ -6768,7 +7011,10 @@ async function submitMultiplayerSection(page, word) {
 }
 
 async function openActiveMultiplayerSection(page) {
-  await page.getByRole("button", { name: "Take turn" }).click();
+  const takeTurnButton = page.getByRole("button", { name: "Take turn" });
+  if ((await takeTurnButton.count()) > 0) {
+    await takeTurnButton.click();
+  }
   await waitForTextVisible(page, "Your turn");
 }
 
@@ -6790,7 +7036,10 @@ async function createStartedLocalMultiplayerGame(page, { rowCount }) {
   await signInWithLocalTestAccount(page);
   await openMultiplayerRoute(page);
   await page.getByRole("button", { name: "Start game with Invitee Two" }).click();
-  await assertTextVisible(page, "Game started. Your turn is ready.");
+  await page.waitForFunction(
+    () => /^#\/play\/multiplayer\/games\//.test(window.location.hash),
+  );
+  await waitForTextVisible(page, "Your turn");
 }
 
 async function assertMultiplayerDashboardIsSummaryOnly(page) {
@@ -7453,11 +7702,154 @@ async function waitForRouteCopyButtonsDisabled(page) {
   });
 }
 
+async function routePersistentStartedGameRepository(context) {
+  await context.route("**/assets/pending-game.js*", async (route) => {
+    const pendingGameSource = await readFile(
+      resolve(workspaceRoot, "assets/pending-game.js"),
+      "utf8",
+    );
+    const persistentStartedGameSource = pendingGameSource.replace(
+      /export function createLocalTestPendingGameRepository\(options = \{\}\) \{\r?\n  return createTestPendingGameRepository\(options\);\r?\n\}/,
+      `export function createLocalTestPendingGameRepository(options = {}) {
+  const repository = createTestPendingGameRepository({
+    ...options,
+    createStartedGameId: () => "started-game-reload",
+  });
+  const storageKey = "crazyphrases.test.persistedStartedGame.v1";
+
+  function loadStartedGame() {
+    try {
+      return JSON.parse(window.localStorage.getItem(storageKey));
+    } catch {
+      return null;
+    }
+  }
+
+  function saveStartedGame(startedGame) {
+    window.localStorage.setItem(storageKey, JSON.stringify(startedGame));
+  }
+
+  function createCurrentSection() {
+    return {
+      id: "started-game-reload-section",
+      entryKind: "adjective",
+      sectionIndex: 0,
+      sectionCount: 2,
+      rows: Array.from({ length: 10 }, (_, rowIndex) => ({
+        rowIndex,
+        value: "",
+      })),
+    };
+  }
+
+  return {
+    ...repository,
+    async startPendingGame(args) {
+      const startedGame = await repository.startPendingGame(args);
+      saveStartedGame({
+        gameId: startedGame.id,
+        notificationStatus: "unread",
+      });
+      return startedGame;
+    },
+    async listMultiplayerDashboard({ accountId }) {
+      const startedGame = loadStartedGame();
+      if (accountId !== "test-account" || !startedGame) {
+        return repository.listMultiplayerDashboard({ accountId });
+      }
+
+      return {
+        awaitingYourEntries: [
+          {
+            id: startedGame.gameId,
+            pendingGameId: "pending-game-reload",
+            rowCount: 10,
+            participants: [
+              { gamerTag: "Player" },
+              { gamerTag: "Invitee Two" },
+            ],
+            currentSection: createCurrentSection(),
+          },
+        ],
+        awaitingOtherPlayerEntries: [],
+        completedBatches: [],
+      };
+    },
+    async loadGamePlaySurface({ accountId, gameId }) {
+      const startedGame = loadStartedGame();
+      if (
+        accountId === "test-account" &&
+        startedGame?.gameId === gameId
+      ) {
+        return {
+          state: "active",
+          currentSection: createCurrentSection(),
+        };
+      }
+
+      return repository.loadGamePlaySurface({ accountId, gameId });
+    },
+    async listInAppNotifications({ accountId }) {
+      const startedGame = loadStartedGame();
+      if (accountId !== "test-account" || !startedGame) {
+        return repository.listInAppNotifications({ accountId });
+      }
+
+      return [
+        {
+          id: "notification-started-game-reload",
+          type: "entries_needed",
+          status: startedGame.notificationStatus,
+          message: "Your entries are needed.",
+          accountId,
+          createdAt: "2026-07-11T09:00:00.000Z",
+          targetGameId: startedGame.gameId,
+          targetAssignmentId: "started-game-reload-section",
+        },
+      ];
+    },
+    async markInAppNotificationRead({ accountId, notificationId }) {
+      const startedGame = loadStartedGame();
+      if (
+        accountId === "test-account" &&
+        notificationId === "notification-started-game-reload" &&
+        startedGame
+      ) {
+        const updatedGame = {
+          ...startedGame,
+          notificationStatus: "read",
+        };
+        saveStartedGame(updatedGame);
+        return {
+          id: notificationId,
+          type: "entries_needed",
+          status: "read",
+          accountId,
+          targetGameId: updatedGame.gameId,
+          targetAssignmentId: "started-game-reload-section",
+        };
+      }
+
+      return repository.markInAppNotificationRead({ accountId, notificationId });
+    },
+  };
+}`,
+    );
+
+    assert.notEqual(persistentStartedGameSource, pendingGameSource);
+    await route.fulfill({
+      body: persistentStartedGameSource,
+      contentType: "text/javascript; charset=utf-8",
+    });
+  });
+}
+
 async function routeSeededNotificationRepository(
   context,
   {
     includeCompletedTargetNotification = false,
     includeDuplicateTargetNotifications = false,
+    gamePlaySurfaceStates = null,
     includeLongNotificationMessages = false,
     includeMismatchedTargetNotification = false,
     includePendingTargetInvite = false,
@@ -7622,6 +8014,21 @@ ${completedBatchSeed}
       ];
     },`
     : "";
+  const gamePlaySurfaceStateSetup = Array.isArray(gamePlaySurfaceStates)
+    ? `
+    let gamePlaySurfaceStateIndex = 0;
+    const gamePlaySurfaceStates = ${JSON.stringify(gamePlaySurfaceStates)};`
+    : "";
+  const gamePlaySurfaceStateOverride = Array.isArray(gamePlaySurfaceStates)
+    ? `
+    async loadGamePlaySurface({ accountId, gameId }) {
+      const state = gamePlaySurfaceStates[
+        Math.min(gamePlaySurfaceStateIndex, gamePlaySurfaceStates.length - 1)
+      ];
+      gamePlaySurfaceStateIndex += 1;
+      return structuredClone(state);
+    },`
+    : "";
   await context.route("**/assets/pending-game.js*", async (route) => {
     const pendingGameSource = await readFile(
       resolve(workspaceRoot, "assets/pending-game.js"),
@@ -7665,11 +8072,13 @@ ${mismatchedTargetNotificationSeed}
     },
 ${staticNotificationSeed}
   ];
+${gamePlaySurfaceStateSetup}
 
   return {
     ...repository,
 ${pendingInviteOverride}
 ${targetDashboardOverride}
+${gamePlaySurfaceStateOverride}
     async listInAppNotifications({ accountId }) {
       return notifications
         .filter((notification) => notification.accountId === accountId)

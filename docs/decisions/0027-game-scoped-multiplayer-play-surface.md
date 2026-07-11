@@ -4,8 +4,8 @@
 
 Accepted.
 
-Implementation is planned through PRD issue #226 and child issues #227, #228,
-#229, #230, #231, and #232.
+Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
+and #231 are complete; #230 and #232 remain open.
 
 ## Context
 

@@ -634,22 +634,20 @@ preserve their original history.
   Play Surface so active Entry input, waiting, Reveal, and revealed Batch states are no
   longer subsumed inside dashboard cards. Implementation is tracked by child issues
   #227, #228, #229, #230, #231, and #232.
-- **Current source-only status**: The unmerged issue #231 branch keeps a participant on
-  the Game Play Surface after section submission, rendering the next section, waiting,
-  participant-scoped Reveal, revealed Batch, or authorised cancellation state from the
-  existing narrow loader. It adds no database migration or hosted authority. A
-  participant-scoped refresh is immediate; the dashboard can refresh independently for a
-  later `Return to Multiplayer` action. Fresh branch-head `dev` deployment and visible
-  two-account browser validation remain required before merge. The optional runbook path
-  that pre-authorises isolated records for an approved functional change is not selected
-  for this slice: any hosted game-data smoke or fixture cleanup still needs separate
-  immediate approval.
-- **Remaining risk**: The first Multiplayer destination sequence has hosted coverage
-  for the route gate, mutually exclusive destinations, dashboard buckets, completed
-  history entry point, actionable notification routing, and anonymous account-only DOM
-  absence. Production validation for issue #119 was read-only; data-backed notification
-  routing remains covered by the approved hosted `test` write/cleanup smoke rather than
-  production data mutation.
+- **Completed lifecycle route**: Issue #231 shipped in PR #241, merged to `main` as
+  `ac520efdf1558b28078f6b75916051776f51f5d2`, with no migration or hosted authority
+  change. Its approved `dev` two-account smoke covered next-section, waiting, Reveal,
+  revealed-Batch, authorised-cancellation, and return flows. The bounded dev fixtures
+  and their notifications were removed and verified absent afterwards. The merged
+  commit was promoted through `test` and production; both authenticated route smokes
+  were read-only and created no test or production game data.
+- **Remaining work**: Issue #230 adds dice-based Multiplayer Entry Assist. Issue #232
+  routes successful Game starts and actionable `entries_needed` / `batch_complete`
+  notifications to the Game Play Surface; it is unblocked by #231.
+- **Remaining risk**: Game-start and notification targets still fall back to the
+  Multiplayer dashboard until #232 lands. Dice Entry Assist remains unavailable in
+  Multiplayer until #230 lands; neither gap changes the database-owned participant or
+  Reveal authority.
 
 ### Notification top-bar affordance
 

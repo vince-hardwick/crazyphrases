@@ -113,6 +113,9 @@ let notificationPanel = document.querySelector("[data-notification-panel]");
 let notificationPanelFeedbackMessage = "";
 let notificationPanelOrder = [];
 let notificationTargetNavigationInProgress = false;
+let pendingGamePlaySurfaceNotificationNavigation = null;
+let renderedGamePlaySurfaceNotificationTarget = null;
+let gamePlaySurfaceImplicitReadInProgress = false;
 const primaryNav = document.querySelector("[data-primary-nav]");
 const playMenuRoot = document.querySelector("[data-play-menu-root]");
 const playMenuToggle = document.querySelector("[data-play-menu-toggle]");
@@ -863,6 +866,10 @@ function renderRoute() {
   const isSignedIn = accountShell.persistenceAuthority.type === "account";
   const routeNeedsAccount = isSignedInOnlyRoute(currentRoute);
 
+  if (!isGamePlaySurfaceRoute(currentRoute)) {
+    clearPendingGamePlaySurfaceNotificationNavigation();
+  }
+
   primaryNav.hidden = accountShell.mode !== "signed-in";
   updatePrimaryNavState();
 
@@ -961,6 +968,7 @@ function ensureGamePlaySurface() {
 
 function removeGamePlaySurface() {
   gamePlaySurfaceRenderRequestId += 1;
+  renderedGamePlaySurfaceNotificationTarget = null;
   gamePlaySurface?.remove();
   gamePlaySurface = null;
 }
@@ -974,6 +982,7 @@ function renderGamePlaySurfaceRoute(route) {
   const surface = ensureGamePlaySurface();
   const renderRequestId = ++gamePlaySurfaceRenderRequestId;
   const accountId = accountShell.accountId;
+  renderedGamePlaySurfaceNotificationTarget = null;
   surface.dataset.gamePlaySurfaceState = "loading";
   surface.dataset.startedGameId = startedGameId;
   surface.setAttribute("aria-busy", "true");
@@ -999,30 +1008,74 @@ function renderGamePlaySurfaceRoute(route) {
 
       if (gamePlayState.state === "active") {
         renderGamePlaySurfaceActive(surface, gamePlayState.currentSection);
+        const targetContext = getGamePlaySurfaceNotificationTargetContext({
+          gamePlayState,
+          route,
+        });
+        renderedGamePlaySurfaceNotificationTarget = {
+          accountId,
+          route,
+          targetContext,
+        };
+        void markUnreadNotificationsForRenderedGamePlaySurfaceTarget({
+          accountId,
+          route,
+          targetContext,
+        });
+        finishGamePlaySurfaceNotificationNavigation({
+          accountId,
+          gamePlayState,
+          route,
+        });
         return;
       }
 
       if (gamePlayState.state === "waiting") {
         renderGamePlaySurfaceWaiting(surface);
+        finishGamePlaySurfaceNotificationNavigation({
+          accountId,
+          gamePlayState,
+          route,
+        });
         return;
       }
 
       if (gamePlayState.state === "completed") {
         renderGamePlaySurfaceCompleted(surface, gamePlayState.game);
+        finishGamePlaySurfaceNotificationNavigation({
+          accountId,
+          gamePlayState,
+          route,
+        });
         return;
       }
 
       if (gamePlayState.state === "revealed") {
         renderGamePlaySurfaceRevealed(surface, gamePlayState.phrases);
+        finishGamePlaySurfaceNotificationNavigation({
+          accountId,
+          gamePlayState,
+          route,
+        });
         return;
       }
 
       if (gamePlayState.state === "cancelled") {
         renderGamePlaySurfaceCancelled(surface);
+        finishGamePlaySurfaceNotificationNavigation({
+          accountId,
+          gamePlayState,
+          route,
+        });
         return;
       }
 
       renderGamePlaySurfaceUnavailable(surface);
+      finishGamePlaySurfaceNotificationNavigation({
+        accountId,
+        gamePlayState,
+        route,
+      });
     })
     .catch(() => {
       if (
@@ -1035,6 +1088,7 @@ function renderGamePlaySurfaceRoute(route) {
       }
 
       renderGamePlaySurfaceUnavailable(surface);
+      finishGamePlaySurfaceNotificationNavigation({ accountId, route });
     });
 }
 
@@ -3603,15 +3657,10 @@ async function startPendingGame(pendingGameId) {
       createdPendingGames,
       createPendingGameFromStartedGame(startedGame),
     );
-    if (!(await loadMultiplayerDashboard({ accountId }))) {
-      return;
-    }
-
-    renderPendingGamePanel();
-    pendingGameStatus.textContent =
-      multiplayerDashboard.awaitingYourEntries.length > 0
-        ? "Game started. Your turn is ready."
-        : "Game started. Waiting for another participant.";
+    currentRoute = createGamePlaySurfaceRoute(startedGame.id);
+    ensureHashRoute(currentRoute);
+    renderRoute();
+    void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
   } catch {
     if (isCurrentAccountSession(accountId) && pendingGameStatus) {
       pendingGameStatus.textContent = "Game could not be started. Try again.";
@@ -4248,32 +4297,186 @@ function getNotificationCreatedTime(notification) {
 
 function getNotificationAccessibleLabel(notification, message) {
   const state = notification.status === "unread" ? "Unread" : "Read";
-  const action = getNotificationTargetRoute(notification) ? "Open Multiplayer" : "Notification";
+  const action = getNotificationTargetRoute(notification)
+    ? "Open notification target"
+    : "Notification";
   return `${state}: ${message} ${action}`;
 }
 
-function handleNotificationItemClick(notification) {
+async function handleNotificationItemClick(notification) {
   closeNotificationPanel();
-  const targetRoute = getNotificationTargetRoute(notification);
+  if (accountShell.persistenceAuthority.type !== "account") {
+    return;
+  }
+
+  const accountId = accountShell.accountId;
+  const navigation = await resolveNotificationTargetNavigation({
+    accountId,
+    notification,
+  });
   if (
-    !targetRoute ||
-    accountShell.persistenceAuthority.type !== "account"
+    !navigation ||
+    !isCurrentAccountSession(accountId)
   ) {
     return;
   }
 
   notificationTargetNavigationInProgress = true;
-  currentRoute = targetRoute;
-  ensureHashRoute(targetRoute);
+  currentRoute = navigation.route;
+  if (navigation.targetContext && isGamePlaySurfaceRoute(navigation.route)) {
+    pendingGamePlaySurfaceNotificationNavigation = {
+      accountId,
+      notification,
+      route: navigation.route,
+    };
+  }
+  ensureHashRoute(navigation.route);
   renderRoute();
+  if (pendingGamePlaySurfaceNotificationNavigation) {
+    return;
+  }
+
   void markRenderedNotificationTargetRead(notification, {
     reportMissingTarget: true,
     reportReadFailure: true,
+    targetContext: navigation.targetContext,
   }).finally(() => {
-    window.setTimeout(() => {
-      notificationTargetNavigationInProgress = false;
-    }, 0);
+    finishNotificationTargetNavigation();
   });
+}
+
+function finishGamePlaySurfaceNotificationNavigation({
+  accountId,
+  gamePlayState = null,
+  route,
+}) {
+  const pendingNavigation = pendingGamePlaySurfaceNotificationNavigation;
+  if (
+    !pendingNavigation ||
+    pendingNavigation.accountId !== accountId ||
+    pendingNavigation.route !== route
+  ) {
+    return;
+  }
+
+  pendingGamePlaySurfaceNotificationNavigation = null;
+  const targetContext = getGamePlaySurfaceNotificationTargetContext({
+    gamePlayState,
+    route,
+  });
+  if (
+    !targetContext ||
+    !notificationMatchesTargetContext(
+      pendingNavigation.notification,
+      targetContext,
+    )
+  ) {
+    currentRoute = ROUTES.playMultiplayer;
+    ensureHashRoute(currentRoute);
+    renderRoute();
+    void refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({ accountId });
+    finishNotificationTargetNavigation();
+    return;
+  }
+
+  void markRenderedNotificationTargetRead(pendingNavigation.notification, {
+    reportMissingTarget: true,
+    reportReadFailure: true,
+    targetContext,
+  }).finally(() => {
+    finishNotificationTargetNavigation();
+  });
+}
+
+function getGamePlaySurfaceNotificationTargetContext({ gamePlayState, route }) {
+  const gameId = getGamePlaySurfaceStartedGameId(route);
+  if (!gameId || !gamePlayState) {
+    return null;
+  }
+
+  if (gamePlayState.state === "active" && gamePlayState.currentSection) {
+    return {
+      assignmentId: gamePlayState.currentSection.id,
+      gameId,
+      kind: "current-section",
+    };
+  }
+
+  if (["completed", "revealed"].includes(gamePlayState.state)) {
+    return { gameId, kind: "completed-batch" };
+  }
+
+  return null;
+}
+
+function clearPendingGamePlaySurfaceNotificationNavigation() {
+  if (!pendingGamePlaySurfaceNotificationNavigation) {
+    return;
+  }
+
+  pendingGamePlaySurfaceNotificationNavigation = null;
+  finishNotificationTargetNavigation();
+}
+
+function finishNotificationTargetNavigation() {
+  window.setTimeout(() => {
+    notificationTargetNavigationInProgress = false;
+  }, 0);
+}
+
+async function resolveNotificationTargetNavigation({ accountId, notification }) {
+  const fallbackRoute = getNotificationTargetRoute(notification);
+  if (!fallbackRoute) {
+    return null;
+  }
+
+  if (!notification.targetGameId) {
+    return { route: fallbackRoute };
+  }
+
+  try {
+    const gamePlayState = await pendingGameRepository.loadGamePlaySurface({
+      accountId,
+      gameId: notification.targetGameId,
+    });
+    if (notification.type === "entries_needed") {
+      const currentSection = gamePlayState.currentSection;
+      if (
+        gamePlayState.state !== "active" ||
+        !currentSection ||
+        (notification.targetAssignmentId &&
+          currentSection.id !== notification.targetAssignmentId)
+      ) {
+        return { route: fallbackRoute };
+      }
+
+      return {
+        route: createGamePlaySurfaceRoute(notification.targetGameId),
+        targetContext: {
+          assignmentId: currentSection.id,
+          gameId: notification.targetGameId,
+          kind: "current-section",
+        },
+      };
+    }
+
+    if (
+      notification.type === "batch_complete" &&
+      ["completed", "revealed"].includes(gamePlayState.state)
+    ) {
+      return {
+        route: createGamePlaySurfaceRoute(notification.targetGameId),
+        targetContext: {
+          gameId: notification.targetGameId,
+          kind: "completed-batch",
+        },
+      };
+    }
+
+    return { route: fallbackRoute };
+  } catch {
+    return { route: fallbackRoute };
+  }
 }
 
 async function handleNotificationMarkRead(notificationId) {
@@ -4372,6 +4575,50 @@ async function markUnreadNotificationsForRenderedMultiplayerTargets() {
   }
 }
 
+async function markUnreadNotificationsForRenderedGamePlaySurfaceTarget({
+  accountId,
+  route,
+  targetContext,
+}) {
+  if (
+    gamePlaySurfaceImplicitReadInProgress ||
+    !targetContext ||
+    !isCurrentAccountSession(accountId) ||
+    currentRoute !== route ||
+    pendingGamePlaySurfaceNotificationNavigation?.accountId === accountId &&
+      pendingGamePlaySurfaceNotificationNavigation.route === route
+  ) {
+    return;
+  }
+
+  const targetNotifications = inAppNotifications.filter(
+    (notification) =>
+      notification.status === "unread" &&
+      notificationMatchesTargetContext(notification, targetContext),
+  );
+  if (targetNotifications.length === 0) {
+    return;
+  }
+
+  gamePlaySurfaceImplicitReadInProgress = true;
+  let changed = false;
+  try {
+    for (const notification of targetNotifications) {
+      if (!isCurrentAccountSession(accountId) || currentRoute !== route) {
+        return;
+      }
+
+      changed = (await persistNotificationRead(notification.id)) || changed;
+    }
+  } finally {
+    gamePlaySurfaceImplicitReadInProgress = false;
+  }
+
+  if (changed && isCurrentAccountSession(accountId) && currentRoute === route) {
+    renderNotificationDropdown();
+  }
+}
+
 async function markUnreadPendingGameNotificationsRead(pendingGameId) {
   const targetNotifications = inAppNotifications.filter(
     (notification) =>
@@ -4393,10 +4640,15 @@ async function markUnreadPendingGameNotificationsRead(pendingGameId) {
 
 async function markRenderedNotificationTargetRead(
   notification,
-  { reportMissingTarget = false, reportReadFailure = false } = {},
+  {
+    reportMissingTarget = false,
+    reportReadFailure = false,
+    targetContext = null,
+  } = {},
 ) {
-  const targetContext = findRenderedNotificationTargetContext(notification);
-  if (!targetContext) {
+  const resolvedTargetContext =
+    targetContext ?? findRenderedNotificationTargetContext(notification);
+  if (!resolvedTargetContext) {
     if (reportMissingTarget && pendingGameStatus) {
       pendingGameStatus.textContent =
         "Notification target could not be found. It may no longer be available.";
@@ -4407,7 +4659,7 @@ async function markRenderedNotificationTargetRead(
   const targetNotifications = inAppNotifications.filter(
     (candidate) =>
       candidate.status === "unread" &&
-      notificationMatchesTargetContext(candidate, targetContext),
+      notificationMatchesTargetContext(candidate, resolvedTargetContext),
   );
   if (targetNotifications.length === 0) {
     return false;
@@ -4695,14 +4947,25 @@ async function refreshMultiplayerDashboardAfterGamePlaySurfaceUpdate({
     return;
   }
 
+  if (!isCurrentAccountSession(accountId)) {
+    return;
+  }
+
+  if (currentRoute === ROUTES.playMultiplayer) {
+    renderPendingGamePanel();
+    return;
+  }
+
+  const renderedTarget = renderedGamePlaySurfaceNotificationTarget;
   if (
-    !isCurrentAccountSession(accountId) ||
-    currentRoute !== ROUTES.playMultiplayer
+    !renderedTarget ||
+    renderedTarget.accountId !== accountId ||
+    renderedTarget.route !== currentRoute
   ) {
     return;
   }
 
-  renderPendingGamePanel();
+  void markUnreadNotificationsForRenderedGamePlaySurfaceTarget(renderedTarget);
 }
 
 async function persistNotificationRead(notificationId) {

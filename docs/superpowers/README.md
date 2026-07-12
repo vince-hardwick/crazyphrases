@@ -64,6 +64,7 @@ runbooks, backlog entries, or GitHub issue state.
 | `specs/2026-06-25-uploaded-avatar-circular-crop-derived-image-prd.md` | Published PRD provenance. #64 shipped through PR #78 and production promotion; #79 shipped through PR #92 and production promotion. ADR 0025 supersedes this cropper model for current Uploaded Avatar storage/rendering. | GitHub issues #64, #79, and #188; ADRs 0019, 0021, and 0025; `docs/product-rules.md`; `docs/backlog.md`; `docs/planning/supabase-state-ledger.md` |
 | `specs/2026-06-26-signed-in-favourites-design.md` | Approved design provenance. Implementation is complete; do not treat this as pending design or implementation work. | `docs/product-rules.md`, `docs/backlog.md`, `assets/app.js`, `assets/site.css`, `tests/browser-smoke.test.mjs` |
 | `specs/2026-07-06-ui-style-rationalisation-design.md` | Historical/completed. Implemented through `plans/2026-07-06-ui-style-rationalisation.md`; future changes should use product rules, source files, and tests as authority. | `docs/product-rules.md`, `assets/site.css`, `assets/app.js`, `assets/clipboard.js`, `tests/repository-hygiene.test.mjs`, `tests/clipboard.test.mjs`, `tests/browser-smoke.test.mjs` |
+| `specs/2026-07-12-multiplayer-entry-assist-design.md` | Active approved design for issue #230; implementation has not started. | GitHub issue #230, ADRs 0024 and 0027, `docs/product-rules.md` |
 
 ## Adding Future Plans Or Specs
 

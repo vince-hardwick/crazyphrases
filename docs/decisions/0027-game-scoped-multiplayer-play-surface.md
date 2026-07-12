@@ -66,6 +66,15 @@ target the Game Play Surface when the target Game still has a participant task.
 The dashboard remains the fallback when the target Game no longer has a current
 participant task or when the route cannot load an authorised Game state.
 
+For Multiplayer Entry Assist, database-owned Game-start logic pins
+server-approved immutable Word Bank Shard references for the Started Game. The
+browser does not choose candidate content, paths, versions, or curation tiers.
+The participant-scoped loader may return only the active Entry Kind's pinned
+reference, and the browser loads that exact static shard rather than resolving a
+newer manifest entry. This preserves ADR 0024's static delivery boundary and
+keeps suggestions stable for the Started Game without exposing another
+participant's section or entries.
+
 ## Consequences
 
 - Active Multiplayer phrase entry is no longer visually or conceptually
@@ -82,6 +91,9 @@ participant task or when the route cannot load an authorised Game state.
 - Multiplayer Entry Assist should be available on the Game Play Surface for
   supported Entry Kinds without revealing another participant's assigned section
   or entries.
+- Entry Assist reference or shard failures should disable only the affected dice
+  affordance. They must not block typed entry, section submission, or otherwise
+  turn an authorised active Game Play Surface into an unavailable Game.
 - Future agents should not move active Multiplayer section input back into
   `Awaiting your entries` cards as a simplification unless this decision is
   deliberately superseded.

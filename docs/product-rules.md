@@ -1561,6 +1561,16 @@ Solo for supported Entry Kinds. Dice suggestions must use the Game's pinned cand
 snapshot for the relevant Entry Kind, respect the Account's Entry Assist Safety Setting
 where applicable, and never reveal or infer another participant's assigned section or
 entries.
+
+For the family-friendly MVP, a Started Multiplayer Game pins server-approved immutable
+Word Bank Shard references for its supported Entry Kinds. The browser must not choose or
+alter candidate content, shard paths, versions, or curation tiers. The participant-scoped
+Game Play Surface loader returns only the active Entry Kind's applicable reference, and
+the Entry Candidate Provider loads that exact immutable shard rather than substituting a
+newer manifest version. Missing, malformed, unsupported, or unavailable Entry Assist
+data disables only the affected dice affordance; typed entry and section submission
+remain available, and the authorised Game Play Surface remains active.
+
 Actionable `entries_needed` notifications should open the same Game-scoped Game Play
 Surface directly rather than stopping on the Multiplayer dashboard. Actionable
 `batch_complete` notifications should also open that Game-scoped surface, landing on

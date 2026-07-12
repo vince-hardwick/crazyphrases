@@ -5,7 +5,7 @@
 Accepted.
 
 Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
-and #231 are complete; #230 and #232 remain open.
+#231, and #232 are complete; #230 remains open.
 
 ## Context
 

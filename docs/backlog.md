@@ -641,13 +641,13 @@ preserve their original history.
   and their notifications were removed and verified absent afterwards. The merged
   commit was promoted through `test` and production; both authenticated route smokes
   were read-only and created no test or production game data.
-- **Remaining work**: Issue #230 adds dice-based Multiplayer Entry Assist. Issue #232
-  routes successful Game starts and actionable `entries_needed` / `batch_complete`
-  notifications to the Game Play Surface; it is unblocked by #231.
-- **Remaining risk**: Game-start and notification targets still fall back to the
-  Multiplayer dashboard until #232 lands. Dice Entry Assist remains unavailable in
-  Multiplayer until #230 lands; neither gap changes the database-owned participant or
-  Reveal authority.
+- **Completed lifecycle route**: Issue #232 shipped in PR #243, merged to `main` as
+  `f7ff98ac91666286c3463c873ec5e2f878d62240`. Successful Game starts and actionable
+  `entries_needed` / `batch_complete` notifications now route to the Game Play Surface;
+  invalid or stale targets retain the Multiplayer-dashboard fallback.
+- **Remaining work and risk**: Issue #230 adds dice-based Multiplayer Entry Assist.
+  That affordance remains unavailable in Multiplayer until #230 lands; this gap does
+  not change the database-owned participant or Reveal authority.
 
 ### Notification top-bar affordance
 

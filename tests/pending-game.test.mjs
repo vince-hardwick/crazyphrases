@@ -646,6 +646,18 @@ describe("Pending Game repository", () => {
         entryKind: "adjective",
         sectionIndex: 0,
         sectionCount: 1,
+        entryAssist: {
+          state: "available",
+          reference: {
+            entryKind: "adjective",
+            version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+            path: "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+            candidateCount: 114,
+            familyFriendly: true,
+            sourceId: "esdb-scowl-v2",
+            sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+          },
+        },
         rows: Array.from({ length: 10 }, (_, rowIndex) => ({
           rowIndex,
           value: "",
@@ -658,6 +670,44 @@ describe("Pending Game repository", () => {
     assert.equal(stateJson.includes(inviteeProfile.accountId), false);
     assert.equal(stateJson.includes(inviteeProfile.profileId), false);
     assert.equal(stateJson.includes("started-game-1-section-invitee-1"), false);
+  });
+
+  it("pins the approved Entry Assist shard reference for the active section", async () => {
+    const repository = createTestPendingGameRepository({
+      createPendingGameId: () => "pending-game-1",
+      createStartedGameId: () => "started-game-1",
+      profiles: [creatorProfile, inviteeProfile],
+    });
+    const startedGame = await startAcceptedLocalGame(repository);
+
+    const state = await repository.loadGamePlaySurface({
+      accountId: creatorProfile.accountId,
+      gameId: startedGame.id,
+    });
+
+    assert.deepEqual(state.currentSection.entryAssist, {
+      state: "available",
+      reference:
+        state.currentSection.entryKind === "adjective"
+          ? {
+              entryKind: "adjective",
+              version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+              path: "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+              candidateCount: 114,
+              familyFriendly: true,
+              sourceId: "esdb-scowl-v2",
+              sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+            }
+          : {
+              entryKind: "noun",
+              version: "2026-07-05-esdb-v2-1e5b7d3-noun-tracer",
+              path: "assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json",
+              candidateCount: 240,
+              familyFriendly: true,
+              sourceId: "esdb-scowl-v2",
+              sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+            },
+    });
   });
 
   it("loads a waiting Game Play Surface state after the participant submits their sections", async () => {
@@ -2402,6 +2452,18 @@ describe("Pending Game repository", () => {
         entryKind: "adjective",
         sectionIndex: 0,
         sectionCount: 1,
+        entryAssist: {
+          state: "available",
+          reference: {
+            entryKind: "adjective",
+            version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+            path: "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+            candidateCount: 114,
+            familyFriendly: true,
+            sourceId: "esdb-scowl-v2",
+            sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+          },
+        },
         rows: [{ rowIndex: 0, value: "" }],
       },
     });
@@ -2409,6 +2471,51 @@ describe("Pending Game repository", () => {
     assert.equal(stateJson.includes("profile-id"), false);
     assert.equal(stateJson.includes("account"), false);
     assert.equal(stateJson.includes("other-participant-section"), false);
+  });
+
+  it("keeps an active Game Play Surface with a malformed Entry Assist reference", async () => {
+    const expectedGame = {
+      id: "supabase-started-game-1",
+      rowCount: 1,
+      participants: [
+        { gamerTag: creatorProfile.gamerTag },
+        { gamerTag: inviteeProfile.gamerTag },
+      ],
+    };
+    const expectedSection = {
+      id: "supabase-section-1",
+      entryKind: "adjective",
+      sectionIndex: 0,
+      sectionCount: 1,
+      rows: [{ rowIndex: 0, value: "" }],
+    };
+    const gamePlaySurface = createFakeGamePlaySurface({
+      creatorProfile,
+      inviteeProfile,
+    });
+    gamePlaySurface.current_section.entry_assist.reference.path =
+      "https://example.invalid/shard.json";
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+      gamePlaySurface,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    assert.deepEqual(
+      await repository.loadGamePlaySurface({
+        accountId: creatorProfile.accountId,
+        gameId: "supabase-started-game-1",
+      }),
+      {
+        state: "active",
+        game: expectedGame,
+        currentSection: {
+          ...expectedSection,
+          entryAssist: { state: "unavailable" },
+        },
+      },
+    );
   });
 
   it("fails closed when the Game Play Surface RPC payload is malformed", async () => {
@@ -3535,6 +3642,21 @@ function createFakeGamePlaySurface({ creatorProfile, inviteeProfile }) {
       section_count: 1,
       participant_section_index: 0,
       other_participant_section_id: "other-participant-section-1",
+      entry_assist: {
+        state: "available",
+        reference: {
+          entry_kind: "adjective",
+          version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+          path: "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+          candidate_count: 114,
+          family_friendly: true,
+          source_id: "esdb-scowl-v2",
+          source_version: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+          profile_id: creatorProfile.profileId,
+          other_entry_kind: "noun",
+          arbitrary_field: "must not escape",
+        },
+      },
       rows: [{ row_index: 0, value: "" }],
     },
   };

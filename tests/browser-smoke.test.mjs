@@ -4341,6 +4341,67 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("keeps typed Multiplayer submission available when Entry Assist is unavailable", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.route(
+      "**/assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 114,
+              candidates: ["brisk"],
+              entryKind: "adjective",
+              version: "metadata-mismatch",
+            }),
+          ),
+        });
+      },
+    );
+    await context.route(
+      "**/assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 240,
+              candidates: ["teapot"],
+              entryKind: "noun",
+              version: "metadata-mismatch",
+            }),
+          ),
+        });
+      },
+    );
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+
+    const dice = page.locator("[data-multiplayer-dice-row-index='0']");
+    assert.equal(await dice.isDisabled(), true);
+    assert.equal(await dice.getAttribute("aria-label"), "Random word unavailable");
+    assert.equal(await dice.getAttribute("title"), "Random word unavailable");
+
+    await submitMultiplayerSection(page, "typed");
+    await waitForTextVisible(page, "Awaiting other player entries.");
+    assert.equal(
+      await page.getByText("Section could not be submitted", { exact: false }).count(),
+      0,
+    );
+    assert.equal(await page.getByText("Game unavailable.", { exact: true }).count(), 0);
+    assertNoConsoleErrors();
+  });
+
   it("refreshes the Game Creator's Multiplayer dashboard after starting an accepted Game", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();

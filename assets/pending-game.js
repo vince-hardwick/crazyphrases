@@ -2540,7 +2540,10 @@ function recoverGamePlaySurfaceCurrentSection(sectionRow, { rowCount }) {
 }
 
 function recoverGamePlaySurfaceEntryAssist(entryAssistRow, entryKind) {
-  if (entryAssistRow?.state !== "available") {
+  if (
+    entryAssistRow?.state !== "available" ||
+    !["adjective", "noun"].includes(entryKind)
+  ) {
     return { state: "unavailable" };
   }
 

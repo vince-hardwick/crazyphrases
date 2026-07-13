@@ -2518,6 +2518,45 @@ describe("Pending Game repository", () => {
     );
   });
 
+  it("keeps an unsupported Multiplayer Entry Kind active with Entry Assist unavailable", async () => {
+    const gamePlaySurface = createFakeGamePlaySurface({
+      creatorProfile,
+      inviteeProfile,
+    });
+    gamePlaySurface.current_section.entry_kind = "verb";
+    gamePlaySurface.current_section.entry_assist = {
+      state: "available",
+      reference: {
+        entry_kind: "verb",
+        version: "unsupported-verb-v1",
+        path: "assets/word-bank/shards/verb.unsupported-verb-v1.json",
+        candidate_count: 1,
+        family_friendly: true,
+        source_id: "unsupported-test-source",
+        source_version: "unsupported-test-source-v1",
+      },
+    };
+    const supabase = createFakePendingGameSupabase({
+      creatorProfile,
+      inviteeProfile,
+      gamePlaySurface,
+    });
+    const repository = createSupabasePendingGameRepository({ supabase });
+
+    const state = await repository.loadGamePlaySurface({
+      accountId: creatorProfile.accountId,
+      gameId: "supabase-started-game-1",
+    });
+
+    assert.equal(state.state, "active");
+    assert.equal(state.currentSection.entryKind, "verb");
+    assert.deepEqual(state.currentSection.entryAssist, {
+      state: "unavailable",
+    });
+    assert.deepEqual(state.currentSection.rows, [{ rowIndex: 0, value: "" }]);
+    assert.equal("reference" in state.currentSection.entryAssist, false);
+  });
+
   it("fails closed when the Game Play Surface RPC payload is malformed", async () => {
     const supabase = createFakePendingGameSupabase({
       creatorProfile,

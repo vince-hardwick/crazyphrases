@@ -4144,9 +4144,14 @@ function renderMultiplayerSectionRow(row, currentSection, diceState) {
   diceButton.type = "button";
   diceButton.className = "dice-button";
   diceButton.dataset.multiplayerDiceRowIndex = String(row.rowIndex);
-  diceButton.ariaLabel =
-    `Generate ${currentSection.entryKind} for phrase ${row.rowIndex + 1}`;
-  diceButton.title = `Generate ${currentSection.entryKind}`;
+  const entryAssistAvailable = diceState.candidates.length > 0;
+  diceButton.disabled = !entryAssistAvailable;
+  diceButton.ariaLabel = entryAssistAvailable
+    ? `Generate ${currentSection.entryKind} for phrase ${row.rowIndex + 1}`
+    : "Random word unavailable";
+  diceButton.title = entryAssistAvailable
+    ? `Generate ${currentSection.entryKind}`
+    : "Random word unavailable";
   diceButton.addEventListener("click", () => {
     const unusedCandidates = diceState.candidates.filter(
       (candidate) => !diceState.usedValues.has(candidate),

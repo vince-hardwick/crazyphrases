@@ -1,8 +1,10 @@
 # Multiplayer Game Play Surface Entry Assist Design
 
-> **Status:** Approved design for GitHub issue #230. Implementation has not
-> started. Current product and architecture authority remains
-> `docs/product-rules.md` and ADRs 0024 and 0027.
+> **Status:** Implemented in source for GitHub issue #230. The hosted migration,
+> deployment, functional smoke, promotion, cleanup, and tracker closeout remain
+> approval-gated. Current product and architecture authority is
+> `docs/product-rules.md` and ADRs 0024 and 0027; operational continuation is
+> Task 6 of the implementation plan.
 
 ## Goal
 
@@ -71,10 +73,12 @@ fetches the immutable static asset and accepts it only when its Entry Kind,
 version, path, curation tier, and candidate records match the pinned contract.
 It never substitutes the manifest's newer reference for a Started Game.
 
-The Multiplayer form owns only transient dice interaction state. Clicking dice
-fills or replaces the selected input locally and creates no hosted mutation.
-The existing participant-section submission remains the sole mutation that
-persists those entries.
+The currently rendered authorised Multiplayer form owns only transient dice
+interaction state, including repeat avoidance. That state is not persisted
+across renders or shared across participants. Clicking dice fills or replaces
+the selected input locally and creates no hosted mutation. The existing
+participant-section submission remains the sole mutation that persists those
+entries.
 
 ## Failure Behaviour
 

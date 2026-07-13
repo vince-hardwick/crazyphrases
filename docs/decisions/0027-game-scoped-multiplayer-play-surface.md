@@ -5,7 +5,9 @@
 Accepted.
 
 Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
-#231, and #232 are complete; #230 remains open.
+#231, and #232 are complete. Issue #230 is source-complete on its feature
+branch, but remains open until its approval-gated hosted migration, deployment,
+functional smoke, promotion, cleanup, and tracker closeout are complete.
 
 ## Context
 
@@ -75,6 +77,20 @@ newer manifest entry. This preserves ADR 0024's static delivery boundary and
 keeps suggestions stable for the Started Game without exposing another
 participant's section or entries.
 
+The approved references live in a private registry with no browser-role table
+privileges. Game start serialises the complete schema-version-1 adjective/noun
+reference set onto the Started Game; the snapshot stores immutable references,
+not candidate arrays, and browser roles receive no direct column read or write
+authority. The current approved references are the family-friendly-only
+`2026-07-05-esdb-v2-1e5b7d3-tracer` adjective shard and
+`2026-07-05-esdb-v2-1e5b7d3-noun-tracer` noun shard.
+
+Multiplayer repeat avoidance is presentation state owned by the currently
+rendered authorised form. It is not persisted for the lifetime of the Started
+Game and is not shared between participants. Persisting or sharing that state
+would require a separate privacy-safe authority decision; route or environment
+detection must not grant it.
+
 ## Consequences
 
 - Active Multiplayer phrase entry is no longer visually or conceptually
@@ -94,6 +110,9 @@ participant's section or entries.
 - Entry Assist reference or shard failures should disable only the affected dice
   affordance. They must not block typed entry, section submission, or otherwise
   turn an authorised active Game Play Surface into an unavailable Game.
+- The participant-scoped loader discloses an Entry Assist reference only for an
+  authorised active section. Waiting, completed, revealed, cancelled, and
+  unavailable states disclose no reference.
 - Future agents should not move active Multiplayer section input back into
   `Awaiting your entries` cards as a simplification unless this decision is
   deliberately superseded.

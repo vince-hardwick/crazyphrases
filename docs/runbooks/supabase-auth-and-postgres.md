@@ -1104,6 +1104,125 @@ Hosted application, schema verification, deployment smoke, and promotion
 evidence for Pending Game, Account Profile, private favourites, and signed-in
 persistence slices is recorded in `docs/planning/supabase-state-ledger.md`.
 
+## Multiplayer Entry Assist Hosted Migration
+
+The source-controlled migration is:
+
+```text
+supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql
+```
+
+It creates `private.word_bank_shard_registry`, registers the exact approved
+family-friendly adjective and noun shard references, adds the private
+schema-version-1 `public.games.entry_candidate_snapshot` reference snapshot,
+backfills existing Started Games, and updates the participant-scoped loader.
+The registry and snapshot column are server-owned: `anon` and `authenticated`
+must receive no direct registry privileges and no `SELECT` grant on the snapshot
+column. The loader may disclose only the active section's matching reference.
+
+The approved registry rows are:
+
+| Entry Kind | Version | Asset path | Candidates |
+| --- | --- | --- | ---: |
+| adjective | `2026-07-05-esdb-v2-1e5b7d3-tracer` | `assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json` | 114 |
+| noun | `2026-07-05-esdb-v2-1e5b7d3-noun-tracer` | `assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json` | 240 |
+
+Both rows must have `family_friendly = true`, `source_id =
+'esdb-scowl-v2'`, and source version
+`1e5b7d3a72f47a71da5d28686c1dd4b397178485`. Issue #247 owns any later
+Account safety setting or opt-in candidate tier; do not widen this migration.
+
+Hosted application remains Task 6 and requires explicit owner approval. After
+approval, use the authenticated Supabase MCP against project
+`egnudphshvqdhrotxrfs` in this exact sequence:
+
+1. `list_migrations` and retain the pre-apply result.
+2. `apply_migration` with name `pin_multiplayer_entry_assist_shards` and the
+   complete contents of the source migration above.
+3. `list_migrations` again and require exactly one new hosted migration with
+   that name.
+4. Run the following read-only statements through `execute_sql`.
+5. Run `get_advisors` once with type `security` and once with type
+   `performance`; compare both results with the pre-apply posture and require no
+   new `WARN` or `ERROR` finding.
+
+Registry and Started Game readback:
+
+```sql
+select entry_kind, version, asset_path, candidate_count, family_friendly,
+       source_id, source_version
+from private.word_bank_shard_registry
+order by entry_kind;
+
+select count(*) as game_count,
+       count(*) filter (where entry_candidate_snapshot is null) as null_snapshots,
+       count(*) filter (
+         where entry_candidate_snapshot ->> 'schemaVersion' <> '1'
+            or not (entry_candidate_snapshot -> 'entryKinds'
+              ?& array['adjective', 'noun'])
+       ) as invalid_snapshots
+from public.games;
+```
+
+Privilege, trigger, constraint, and function readback:
+
+```sql
+select role_name,
+       has_table_privilege(role_name, 'private.word_bank_shard_registry', 'SELECT')
+         as registry_select,
+       has_table_privilege(role_name, 'private.word_bank_shard_registry', 'INSERT')
+         as registry_insert,
+       has_table_privilege(role_name, 'private.word_bank_shard_registry', 'UPDATE')
+         as registry_update,
+       has_table_privilege(role_name, 'private.word_bank_shard_registry', 'DELETE')
+         as registry_delete,
+       has_column_privilege(role_name, 'public.games',
+         'entry_candidate_snapshot', 'SELECT') as snapshot_select
+from (values ('anon'), ('authenticated')) as roles(role_name);
+
+select tgname, tgenabled
+from pg_catalog.pg_trigger
+where tgrelid = 'public.games'::pg_catalog.regclass
+  and tgname = 'pin_started_game_entry_candidate_snapshot'
+  and not tgisinternal;
+
+select conname, pg_catalog.pg_get_constraintdef(oid) as definition
+from pg_catalog.pg_constraint
+where conrelid = 'public.games'::pg_catalog.regclass
+  and conname = 'games_entry_candidate_snapshot_shape';
+
+select n.nspname, p.proname, p.prosecdef,
+       p.proconfig,
+       has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute,
+       has_function_privilege('authenticated', p.oid, 'EXECUTE')
+         as authenticated_execute
+from pg_catalog.pg_proc as p
+join pg_catalog.pg_namespace as n on n.oid = p.pronamespace
+where (n.nspname, p.proname) in (
+  ('private', 'build_default_entry_candidate_snapshot'),
+  ('private', 'pin_started_game_entry_candidate_snapshot'),
+  ('private', 'load_game_play_surface'),
+  ('public', 'load_game_play_surface')
+)
+order by n.nspname, p.proname;
+```
+
+Require exactly the two approved registry rows, zero null or invalid snapshots,
+all five browser privilege booleans per role to be false, the enabled trigger
+and constraint to exist, and every listed function to retain an empty
+`search_path`. The private loader must remain `SECURITY DEFINER`; its public
+wrapper must remain `SECURITY INVOKER`; only the documented authenticated loader
+execution path may be available to the browser.
+
+Stop immediately on an application error, partial or unexpected migration
+history, row mismatch, non-zero null/invalid snapshot count, privilege leak,
+function-security mismatch, or new advisor `WARN`/`ERROR`. Do not deploy runtime
+code against a partially verified schema. A failed `apply_migration` should
+roll back transactionally; confirm migration history and schema state before
+retrying. After a successful apply, do not attempt an ad-hoc destructive down
+migration: stop, preserve evidence, and prepare a separately reviewed corrective
+migration or restore route with explicit owner approval.
+
 ## Pending Game Browser Wiring
 
 The source-controlled browser repository adapter lives in:

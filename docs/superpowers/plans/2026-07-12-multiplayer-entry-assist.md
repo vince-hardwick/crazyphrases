@@ -1,5 +1,10 @@
 # Multiplayer Entry Assist Implementation Plan
 
+> **Status:** Tasks 1-5 are implemented and verified in source. Task 6 is the
+> only resumable route and remains approval-gated for publish, hosted migration,
+> deployment, functional smoke, bounded cleanup, promotion, and tracker
+> closeout. Issue #230 remains open.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add family-friendly dice-based Entry Assist to the active Multiplayer Game Play Surface using server-approved immutable Word Bank Shard references pinned to each Started Game.

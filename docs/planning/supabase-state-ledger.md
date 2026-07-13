@@ -627,6 +627,39 @@ browser smokes are complete. Their immutable runtime evidence is recorded in
 `Deployment And Smoke Evidence` above; no additional deployment or smoke is
 pending for this slice.
 
+## Multiplayer Entry Assist Pending Hosted Application
+
+As of 2026-07-13, issue #230 is implemented in source through runtime commit
+`879c80b`, with source migration
+`supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`.
+The source contract adds the private approved-reference registry, pins a
+schema-version-1 adjective/noun reference snapshot to each Started Game,
+discloses only the active authorised section's reference, loads that exact
+immutable family-friendly shard, and preserves typed section submission when
+dice are unavailable. Multiplayer repeat avoidance is transient to the
+currently rendered authorised form; it is not persisted or shared across
+participants.
+
+No hosted Supabase migration, schema backfill, deployment, hosted data mutation,
+browser smoke, cleanup, test promotion, or production promotion was performed by
+Tasks 1-5. Hosted migration application must follow the approval-gated commands,
+readback, advisor checks, and stop rules in
+`docs/runbooks/supabase-auth-and-postgres.md`. Record the assigned hosted
+migration version, immutable readback evidence, deployment run ids, exact commit
+stamps, bounded fixture ids and cleanup counts here during Task 6. Issue #230 and
+parent PRD #226 remain open until that evidence and tracker closeout are
+complete. Issues #245, #246, and #247 remain deferred follow-up routes; issue
+#89 remains untouched.
+
+Task 5 source verification on 2026-07-13 reproduced 114 adjective and 240 noun
+candidates with `npm run word-bank:check`; the focused provider, repository,
+migration-surface, browser, and hygiene set passed 247/247 tests; and the full
+`npm test` suite passed 371/371 tests across 23 suites. Both working-tree and
+branch `git diff --check` passed. Scope inspection found only issue #230 runtime,
+tests, migration, plan/spec, and owning documentation, with no root image assets,
+scratch/output, generated review artefacts, credentials, secrets, tokens, or
+environment files.
+
 ## Current Known Hosted-State Notes
 
 - Current security advisor output has no database RLS/no-policy findings and no

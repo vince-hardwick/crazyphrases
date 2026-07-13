@@ -630,7 +630,7 @@ pending for this slice.
 ## Multiplayer Entry Assist Pending Hosted Application
 
 As of 2026-07-13, issue #230 is implemented in source through runtime commit
-`879c80b`, with source migration
+`879c80b` and corrective migration commit `48498a9`, with source migration
 `supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`.
 The source contract adds the private approved-reference registry, pins a
 schema-version-1 adjective/noun reference snapshot to each Started Game,
@@ -640,16 +640,56 @@ dice are unavailable. Multiplayer repeat avoidance is transient to the
 currently rendered authorised form; it is not persisted or shared across
 participants.
 
-No hosted Supabase migration, schema backfill, deployment, hosted data mutation,
-browser smoke, cleanup, test promotion, or production promotion was performed by
-Tasks 1-5. Hosted migration application must follow the approval-gated commands,
-readback, advisor checks, and stop rules in
-`docs/runbooks/supabase-auth-and-postgres.md`. Record the assigned hosted
-migration version, immutable readback evidence, deployment run ids, exact commit
-stamps, bounded fixture ids and cleanup counts here during Task 6. Issue #230 and
-parent PRD #226 remain open until that evidence and tracker closeout are
-complete. Issues #245, #246, and #247 remain deferred follow-up routes; issue
-#89 remains untouched.
+After explicit owner approval on 2026-07-13, Codex attempted to apply the exact
+then-current source migration to hosted project `egnudphshvqdhrotxrfs`. The
+transaction failed and rolled back on PostgreSQL 17 with SQLSTATE `42725`,
+an ambiguous operator-resolution error at the exact constraint expression
+`entry_candidate_snapshot -> 'entryKinds' - 'adjective' - 'noun'`.
+
+Post-failure read-only migration-history verification matched the pre-apply
+history exactly: `20260710065313 participant_scoped_started_game_loader`
+remained the latest hosted migration and no Multiplayer Entry Assist migration
+row was recorded. Read-only catalogue checks explicitly proved that every new
+schema object from the rolled-back migration was absent:
+
+- `private.word_bank_shard_registry` did not exist;
+- `public.games.entry_candidate_snapshot` did not exist;
+- trigger `pin_started_game_entry_candidate_snapshot` did not exist;
+- constraint `games_entry_candidate_snapshot_shape` did not exist; and
+- new helper functions `private.build_default_entry_candidate_snapshot()` and
+  `private.pin_started_game_entry_candidate_snapshot()` did not exist.
+
+A separate read-only SQL reproduction of the unparenthesised expression failed
+with the same `42725` ambiguous-operator error. The read-only hypothesis
+`('entryKinds' JSONB extraction) - 'adjective' - 'noun'`, written as
+`(entry_candidate_snapshot -> 'entryKinds') - 'adjective' - 'noun'`, returned
+the intended empty JSONB object and its comparison with `'{}'::jsonb` succeeded.
+
+The corrective TDD cycle added a migration-surface assertion for the exact
+parenthesised form. RED failed 0/1 against the hosted-failing expression;
+GREEN passed 1/1 after the one-line source correction. The migration-surface and
+repository-hygiene set then passed 29/29 tests across two suites, the full
+`npm test` suite passed 371/371 tests across 23 suites, and `git diff --check`
+passed. Corrective commit `48498a9` contains only the SQL parenthesisation and
+its regression assertion.
+
+The pre-apply advisor baseline remains unchanged. Security retains the existing
+WARN `auth_leaked_password_protection`. Performance retains only INFO
+`unused_index` findings for `in_app_notifications_target_assignment_game_idx`,
+`game_turns_game_id_idx`, and
+`in_app_notifications_target_pending_game_id_idx`.
+
+No hosted migration was applied by the failed attempt, and no deployment,
+hosted data mutation, browser smoke, cleanup, test promotion, or production
+promotion occurred. PR #248 remains draft. Because commit `48498a9` changes the
+exact SQL that was previously approved, a fresh explicit owner approval is
+required before any hosted retry. A later approved retry must follow the
+commands, readback, advisor checks, and stop rules in
+`docs/runbooks/supabase-auth-and-postgres.md`; record its assigned hosted
+migration version and subsequent runtime evidence here only after they exist.
+Issue #230 and parent PRD #226 remain open until that evidence and tracker
+closeout are complete. Issues #245, #246, and #247 remain deferred follow-up
+routes; issue #89 remains untouched.
 
 Task 5 source verification on 2026-07-13 reproduced 114 adjective and 240 noun
 candidates with `npm run word-bank:check`; the focused provider, repository,

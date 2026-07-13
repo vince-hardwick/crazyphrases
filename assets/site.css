@@ -1772,7 +1772,7 @@ h1 {
 
 .started-game-turn-row {
   display: grid;
-  grid-template-columns: minmax(72px, 96px) minmax(0, 1fr);
+  grid-template-columns: minmax(72px, 96px) minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   color: var(--muted);

@@ -511,7 +511,7 @@ In a Supabase repository recovery test, supply an otherwise valid active Game Pl
 
 - [ ] **Step 6: Run unsupported coverage and verify RED then GREEN**
 
-First run before the repository option is implemented and observe FAIL:
+First run before unsupported Entry Kind recovery is implemented and observe FAIL:
 
 ```powershell
 node --test --test-name-pattern="unsupported Multiplayer Entry Kind" tests/pending-game.test.mjs tests/browser-smoke.test.mjs

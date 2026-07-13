@@ -29,6 +29,49 @@ export function createManifestBackedEntryCandidateProvider({
       return loadManifest({ refresh: true });
     },
 
+    async loadPinnedEntryCandidateValues(reference) {
+      const validatedReference = validatePinnedReference(reference);
+
+      if (!validatedReference || typeof fetchJson !== "function") {
+        return [];
+      }
+
+      const cacheKey = getShardCacheKey(
+        validatedReference.entryKind,
+        validatedReference,
+      );
+      const cachedShard = loadedShardsByVersion.get(cacheKey);
+
+      if (
+        cachedShard?.pinnedReference &&
+        pinnedReferencesMatch(cachedShard.pinnedReference, validatedReference)
+      ) {
+        return [...cachedShard.candidates];
+      }
+
+      try {
+        const shard = await fetchJson(validatedReference.path);
+        const candidates = getPinnedShardCandidates(shard, validatedReference)
+          .map(getEntryCandidateValue)
+          .map(cleanWhitespace)
+          .filter(Boolean);
+
+        if (candidates.length > 0) {
+          loadedShardsByVersion.set(cacheKey, {
+            candidates,
+            entryKind: validatedReference.entryKind,
+            path: validatedReference.path,
+            pinnedReference: { ...validatedReference },
+            version: validatedReference.version,
+          });
+        }
+
+        return candidates;
+      } catch {
+        return [];
+      }
+    },
+
     async loadEntryKind(entryKind) {
       if (pendingLoads.has(entryKind)) {
         return pendingLoads.get(entryKind);
@@ -162,6 +205,41 @@ function getShardCacheKey(entryKind, shardReference) {
   return `${entryKind}:${shardReference.version ?? ""}:${shardReference.path}`;
 }
 
+function validatePinnedReference(reference) {
+  if (
+    !reference ||
+    typeof reference.entryKind !== "string" ||
+    cleanWhitespace(reference.entryKind) === "" ||
+    typeof reference.version !== "string" ||
+    cleanWhitespace(reference.version) === "" ||
+    typeof reference.path !== "string" ||
+    !/^assets\/word-bank\/shards\/[a-z0-9.-]+\.json$/.test(reference.path) ||
+    !Number.isInteger(reference.candidateCount) ||
+    reference.candidateCount <= 0 ||
+    reference.familyFriendly !== true ||
+    typeof reference.sourceId !== "string" ||
+    cleanWhitespace(reference.sourceId) === "" ||
+    typeof reference.sourceVersion !== "string" ||
+    cleanWhitespace(reference.sourceVersion) === ""
+  ) {
+    return null;
+  }
+
+  return reference;
+}
+
+function pinnedReferencesMatch(left, right) {
+  return [
+    "entryKind",
+    "version",
+    "path",
+    "candidateCount",
+    "familyFriendly",
+    "sourceId",
+    "sourceVersion",
+  ].every((field) => left[field] === right[field]);
+}
+
 function uniqueEntryKinds(entryKinds) {
   return [...new Set(entryKinds.filter((entryKind) => typeof entryKind === "string"))];
 }
@@ -224,6 +302,31 @@ function getShardCandidates(shard, { entryKind, version }) {
       candidate.safetyStatus === "familyFriendly" &&
       candidate.curationStatus === "accepted",
   );
+}
+
+function getPinnedShardCandidates(shard, reference) {
+  if (
+    !shard ||
+    shard.schemaVersion !== 1 ||
+    shard.entryKind !== reference.entryKind ||
+    shard.version !== reference.version ||
+    shard.familyFriendly !== true ||
+    shard.source?.id !== reference.sourceId ||
+    shard.source?.version !== reference.sourceVersion ||
+    !Array.isArray(shard.candidates) ||
+    shard.candidates.length !== reference.candidateCount ||
+    !shard.candidates.every(
+      (candidate) =>
+        candidate?.entryKind === reference.entryKind &&
+        candidate.safetyStatus === "familyFriendly" &&
+        candidate.curationStatus === "accepted" &&
+        cleanWhitespace(getEntryCandidateValue(candidate)) !== "",
+    )
+  ) {
+    return [];
+  }
+
+  return shard.candidates;
 }
 
 function cleanWhitespace(value) {

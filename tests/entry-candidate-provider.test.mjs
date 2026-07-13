@@ -7,6 +7,205 @@ import {
 } from "../assets/entry-candidate-provider.js";
 
 describe("manifest-backed Entry Candidate provider", () => {
+  it("loads the exact pinned immutable shard", async () => {
+    const pinnedReference = {
+      entryKind: "noun",
+      version: "noun-v1",
+      path: "assets/word-bank/shards/noun.v1.json",
+      candidateCount: 1,
+      familyFriendly: true,
+      sourceId: "test-source",
+      sourceVersion: "source-v1",
+    };
+    const fetchPaths = [];
+    const provider = createManifestBackedEntryCandidateProvider({
+      manifest: {
+        entryKinds: {
+          noun: {
+            entryKind: "noun",
+            version: "noun-v2",
+            path: "assets/word-bank/shards/noun.v2.json",
+          },
+        },
+      },
+      fetchJson: async (path) => {
+        fetchPaths.push(path);
+
+        if (path !== pinnedReference.path) {
+          throw new Error(`Unexpected fetch path: ${path}`);
+        }
+
+        return {
+          schemaVersion: 1,
+          entryKind: "noun",
+          version: "noun-v1",
+          familyFriendly: true,
+          source: {
+            id: "test-source",
+            version: "source-v1",
+          },
+          candidates: [
+            {
+              canonicalText: "teapot",
+              entryKind: "noun",
+              safetyStatus: "familyFriendly",
+              curationStatus: "accepted",
+            },
+          ],
+        };
+      },
+    });
+
+    assert.deepEqual(
+      await provider.loadPinnedEntryCandidateValues(pinnedReference),
+      ["teapot"],
+    );
+    assert.deepEqual(fetchPaths, [pinnedReference.path]);
+  });
+
+  it("rejects mismatched pinned shard contracts", async (testContext) => {
+    const pinnedReference = {
+      entryKind: "noun",
+      version: "noun-v1",
+      path: "assets/word-bank/shards/noun.v1.json",
+      candidateCount: 1,
+      familyFriendly: true,
+      sourceId: "test-source",
+      sourceVersion: "source-v1",
+    };
+    const validShard = {
+      schemaVersion: 1,
+      entryKind: "noun",
+      version: "noun-v1",
+      familyFriendly: true,
+      source: {
+        id: "test-source",
+        version: "source-v1",
+      },
+      candidates: [
+        {
+          canonicalText: "teapot",
+          entryKind: "noun",
+          safetyStatus: "familyFriendly",
+          curationStatus: "accepted",
+        },
+      ],
+    };
+    const cases = [
+      {
+        name: "wrong schema version",
+        shard: { ...validShard, schemaVersion: 2 },
+      },
+      {
+        name: "wrong Entry Kind",
+        shard: { ...validShard, entryKind: "adjective" },
+      },
+      {
+        name: "wrong version",
+        shard: { ...validShard, version: "noun-v2" },
+      },
+      {
+        name: "wrong source id",
+        shard: {
+          ...validShard,
+          source: { ...validShard.source, id: "other-source" },
+        },
+      },
+      {
+        name: "wrong source version",
+        shard: {
+          ...validShard,
+          source: { ...validShard.source, version: "source-v2" },
+        },
+      },
+      {
+        name: "not family friendly",
+        shard: { ...validShard, familyFriendly: false },
+      },
+      {
+        name: "wrong candidate count",
+        shard: {
+          ...validShard,
+          candidates: [
+            ...validShard.candidates,
+            {
+              ...validShard.candidates[0],
+              canonicalText: "kettle",
+            },
+          ],
+        },
+      },
+      {
+        name: "one potentially-offensive candidate",
+        shard: {
+          ...validShard,
+          candidates: [
+            {
+              ...validShard.candidates[0],
+              safetyStatus: "potentiallyOffensive",
+            },
+          ],
+        },
+      },
+      {
+        name: "candidate with the wrong Entry Kind",
+        shard: {
+          ...validShard,
+          candidates: [
+            {
+              ...validShard.candidates[0],
+              entryKind: "adjective",
+            },
+          ],
+        },
+      },
+      {
+        name: "candidate not accepted by curation",
+        shard: {
+          ...validShard,
+          candidates: [
+            {
+              ...validShard.candidates[0],
+              curationStatus: "rejected",
+            },
+          ],
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      await testContext.test(testCase.name, async () => {
+        const provider = createManifestBackedEntryCandidateProvider({
+          fetchJson: async () => testCase.shard,
+        });
+
+        assert.deepEqual(
+          await provider.loadPinnedEntryCandidateValues(pinnedReference),
+          [],
+        );
+      });
+    }
+
+    await testContext.test("path outside the immutable shard root", async () => {
+      let fetchCount = 0;
+      const provider = createManifestBackedEntryCandidateProvider({
+        fetchJson: async () => {
+          fetchCount += 1;
+          return validShard;
+        },
+      });
+
+      assert.deepEqual(
+        await provider.loadPinnedEntryCandidateValues({
+          ...pinnedReference,
+          path: "assets/noun.v1.json",
+        }),
+        [],
+      );
+      assert.equal(fetchCount, 0);
+    });
+  });
+
   it("checks the manifest on demand and caches a loaded immutable shard version", async () => {
     const fetchCalls = [];
     const provider = createManifestBackedEntryCandidateProvider({

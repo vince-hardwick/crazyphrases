@@ -170,7 +170,7 @@ begin
         and pg_catalog.jsonb_typeof(entry_candidate_snapshot -> 'entryKinds') = 'object'
         and entry_candidate_snapshot -> 'entryKinds' ?& array['adjective', 'noun']
         and (
-          entry_candidate_snapshot -> 'entryKinds' - 'adjective' - 'noun'
+          (entry_candidate_snapshot -> 'entryKinds') - 'adjective' - 'noun'
         ) = '{}'::jsonb
         and entry_candidate_snapshot -> 'entryKinds' -> 'adjective'
           ->> 'entryKind' = 'adjective'

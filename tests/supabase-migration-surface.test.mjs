@@ -2245,6 +2245,10 @@ describe("Supabase migration surface", () => {
     );
     assert.match(
       migration,
+      /\(entry_candidate_snapshot -> 'entryKinds'\) - 'adjective' - 'noun'/,
+    );
+    assert.match(
+      migration,
       /create trigger pin_started_game_entry_candidate_snapshot/,
     );
     assert.match(migration, /'entryAssist'/);

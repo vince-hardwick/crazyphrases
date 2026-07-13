@@ -7,10 +7,16 @@ Accepted.
 Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
 #231, and #232 are complete. Issue #230 is source-complete on its feature branch,
 and its corrected hosted migration was applied and verified as
-`20260713092820 pin_multiplayer_entry_assist_shards`. It remains open until the
-approval-gated final-head deployment, functional smoke, promotion, cleanup, and
-tracker closeout are complete; this hosted receipt does not establish runtime UI
-completion.
+`20260713092820 pin_multiplayer_entry_assist_shards`. Approved development
+workflow run `29240601750` deployed source head
+`901ca431fd87808a902316674465689795926170`; a visible two-Account smoke verified
+pinned adjective and noun dice, typed submission, concealment through Reveal,
+and clean responsive/browser state, followed by separately approved bounded
+fixture cleanup and zero-targeted-row readback. Recording that evidence creates
+a new feature-branch head, so issue #230 and draft PR #248 remain open until that
+new exact head receives a fresh approved development deployment and the separate
+merge, test, production, and tracker-closeout gates complete. No merge, test or
+production verification, promotion, or tracker closure has occurred.
 
 ## Context
 

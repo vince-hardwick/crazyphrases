@@ -2,10 +2,13 @@
 
 > **Status:** Implemented in source for GitHub issue #230, with the corrected
 > hosted migration applied and verified as
-> `20260713092820 pin_multiplayer_entry_assist_shards`. Final-head deployment,
-> functional smoke, promotion, cleanup, and tracker closeout remain
-> approval-gated; runtime UI completion is not yet established. Current product
-> and architecture authority is
+> `20260713092820 pin_multiplayer_entry_assist_shards`. Development workflow run
+> `29240601750` deployed source head
+> `901ca431fd87808a902316674465689795926170`; the visible two-Account functional
+> smoke and bounded cleanup are complete for that head. Recording this evidence
+> changes the branch head, so a fresh approved final-head development deployment,
+> merge, test, production, and tracker closeout remain approval-gated. Current
+> product and architecture authority is
 > `docs/product-rules.md` and ADRs 0024 and 0027; operational continuation is
 > Task 6 of the implementation plan.
 
@@ -136,11 +139,21 @@ entries.
 
 ### Hosted functional seam
 
-The hosted schema and authority contract is verified. After an approved
-final-head development deployment, a visible two-Account smoke still needs to
-cover adjective and noun dice assistance, section submission, concealment, and
-bounded fixture cleanup. Data mutation, deployment, test promotion, and
-production promotion retain their separate documented approval boundaries.
+The hosted schema and authority contract is verified. Approved development
+workflow run `29240601750` deployed source head
+`901ca431fd87808a902316674465689795926170` with its exact asset stamp. The visible
+two-Account smoke covered adjective and noun dice assistance, selected-row-only
+replacement, focus return, typed section submission, concealment through Reveal,
+`Batch complete.`, empty console logs, no framework overlay, and `815/815`
+document/body widths. A normal Edge refresh initially retained the pre-deployment
+static view; one hard refresh loaded the exact build, after which the full flow
+passed. Separately approved bounded cleanup removed only the fixture Game data,
+including the one owner-triggered `curiosity` reveal, proved zero targeted rows,
+and preserved both Auth users, Account Profiles, and Account Profile Directory
+rows. The evidence commit creates a new branch head, so a fresh approved
+development deployment for that exact head remains required before merge. Test
+promotion, production promotion, and tracker closeout retain their separate
+documented approval boundaries.
 
 ## TDD Sequence
 
@@ -172,7 +185,10 @@ change. Tests do not target private rendering helpers.
 
 Implementation must update the owning product rule, ADR, migration runbook,
 backlog status, and hosted-state ledger where their state changes. Hosted
-migration verification is complete, but issue #230 closes only after automated
-tests, approved final-head development deployment, visible functional smoke,
-required promotion verification, bounded cleanup, and tracker reconciliation
-complete. Parent PRD #226 closes only when no accepted child scope remains open.
+migration verification and the source-head
+`901ca431fd87808a902316674465689795926170` development smoke and cleanup are
+complete, but issue #230 closes only after automated tests, a fresh approved
+development deployment of the evidence-bearing final branch head, required test
+and production promotion verification, durable closeout evidence, and tracker
+reconciliation complete. Parent PRD #226 closes only when no accepted child
+scope remains open.

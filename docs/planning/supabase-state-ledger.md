@@ -724,15 +724,13 @@ password protection WARN was unchanged and there was no new WARN or ERROR.
 Performance advisors had no delta: the three baseline INFO findings remained
 unchanged.
 
-This receipt verifies the hosted schema and authority contract only. No
-deployment, GitHub Environment approval, browser smoke, fixture mutation,
-cleanup, merge, test promotion, production promotion, or tracker closure has
-occurred. Draft PR #248 and issue #230 remain open, as does parent PRD #226.
-The next gate is a fresh approved final-head `dev` deployment followed by the
-separately authorised runtime checks in Task 6; this documentation commit changes
-the final branch head, so no older deployment can satisfy that gate. Issues
-#245, #246, and #247 remain open deferred follow-up routes; issue #89 remains
-open, untouched, and deferred.
+At the time of this migration receipt, it verified the hosted schema and
+authority contract only; no deployment, browser smoke, fixture mutation, or
+cleanup had yet occurred. The separately approved development runtime and
+cleanup evidence is recorded below. No merge, test promotion, production
+promotion, or tracker closure has occurred. Draft PR #248 and issue #230 remain
+open, as does parent PRD #226. Issues #245, #246, and #247 remain open deferred
+follow-up routes; issue #89 remains open, untouched, and deferred.
 
 Task 5 source verification on 2026-07-13 reproduced 114 adjective and 240 noun
 candidates with `npm run word-bank:check`; the focused provider, repository,
@@ -742,6 +740,71 @@ branch `git diff --check` passed. Scope inspection found only issue #230 runtime
 tests, migration, plan/spec, and owning documentation, with no root image assets,
 scratch/output, generated review artefacts, credentials, secrets, tokens, or
 environment files.
+
+### Development Deployment, Functional Smoke, And Cleanup Receipt
+
+On 2026-07-13, the separately approved development workflow run `29240601750`
+completed successfully for source head
+`901ca431fd87808a902316674465689795926170`. Deployed assets carried that exact
+commit stamp. A normal Edge refresh initially retained the pre-deployment static
+view; one hard refresh loaded the exact deployed build, after which the complete
+`test-player` flow passed. This is a cache observation, not a failed acceptance
+criterion.
+
+The separately approved two-Account development smoke used creator Account
+`f222c9a8-e424-4156-a378-c34eabc71bbf`, Account Profile
+`005089ee-a35b-47e1-808b-a4d9b892fe32` (`vhCoder`), and invitee Account
+`bf5c0e41-ea1c-4fa2-908d-830983ae806b`, Account Profile
+`b942b452-5032-4c1d-aaf5-070e25fdaad0` (`test-player`). Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab` started as Game
+`747e4630-ac40-4600-85cc-8641745711cd` with two Pending Game participants, two
+Game participants, three assignments, 30 submitted section entries, and five
+notifications.
+
+The Started Game snapshot exposed only the active pinned adjective or noun
+reference. The adjective candidate count was `114` and the noun candidate count
+was `240`. Noun dice changed `window` to `bookcase`; adjective dice changed
+`solemn` to `misty`; and the second participant also generated `pencil`. Every
+generated value was present in the corresponding pinned shard. Only the selected
+row changed and focus returned to its input. Typed entries, including
+`curiosity`, `wonder`, and `memory`, submitted normally. Other-participant
+sections and entries remained concealed until Reveal. Both Accounts reached
+`Batch complete.` without console warnings or errors, a framework overlay, or
+horizontal overflow; the visible in-app browser reported document and body
+widths of `815/815`.
+
+Before cleanup, the owner manually selected Reveal for `curiosity`. Readback
+therefore found exactly one reveal,
+`fdb6d7f5-4d30-4358-94f6-85a7aedc556c`, for Account Profile
+`b942b452-5032-4c1d-aaf5-070e25fdaad0`. That reveal was intentionally included
+in the separately approved bounded cleanup scope.
+
+Transactionally guarded development cleanup deleted only Started Game
+`747e4630-ac40-4600-85cc-8641745711cd` and Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab`. Cascades removed two Pending Game
+participants, two Game participants, three assignments, 30 section entries, one
+reveal, and five notifications. Legacy Game Turn and Game Entry counts were zero
+before and after cleanup.
+
+Post-cleanup SQL proved zero targeted Pending Games, Games, Pending Game
+participants, Game participants, assignments, section entries, Game Turns, Game
+Entries, reveals, and notifications. It also proved that both Auth users, both
+Account Profiles, and both Account Profile Directory rows remained present.
+Visible post-cleanup verification refreshed the deleted Game route and displayed
+`Game unavailable.`, returned to an empty Multiplayer dashboard, and opened an
+empty notification panel with `You have no notifications yet.` Browser logs
+remained empty, no framework overlay appeared, and document and body widths
+remained `815/815`.
+
+This development receipt completes Task 6 Steps 4-6 against deployed source head
+`901ca431fd87808a902316674465689795926170`. Recording the evidence changes the
+feature-branch head, so workflow run `29240601750` cannot satisfy the final-head
+development gate. Task 6 Step 7 is the current route: commit this evidence, run
+the full source verification, push the new head, and obtain a fresh approved
+development deployment for that exact head before Step 8. Draft PR #248, issue
+#230, and parent PRD #226 remain open. No merge, test deployment or smoke,
+production promotion, or tracker closure has occurred. Issues #245, #246, and
+#247 and issue #89 remain open, untouched, and deferred.
 
 ## Current Known Hosted-State Notes
 

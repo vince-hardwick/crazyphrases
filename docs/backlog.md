@@ -645,7 +645,7 @@ preserve their original history.
   `f7ff98ac91666286c3463c873ec5e2f878d62240`. Successful Game starts and actionable
   `entries_needed` / `batch_complete` notifications now route to the Game Play Surface;
   invalid or stale targets retain the Multiplayer-dashboard fallback.
-- **Hosted migration verified; runtime validation pending**: Issue #230 implements
+- **Development runtime verified; final-head redeployment pending**: Issue #230 implements
   dice-based Multiplayer Entry Assist on its feature branch, including the private
   approved-reference registry, Started Game reference snapshot, active-only loader
   disclosure, exact pinned-shard provider path, accessible dice controls, and typed-entry
@@ -654,18 +654,34 @@ preserve their original history.
   `20260713092820 pin_multiplayer_entry_assist_shards`. Readback verified the exact
   approved adjective and noun registry rows, zero existing Games, the snapshot shape,
   trigger, function security modes, empty `search_path` values, browser-role denial, no
-  new security WARN/ERROR, and no performance-advisor delta. The issue stays open until a
-  fresh final-head `dev` deployment, visible two-Account smoke, bounded cleanup, `test`
-  and production promotion, durable evidence, and tracker reconciliation complete.
+  new security WARN/ERROR, and no performance-advisor delta. Approved development workflow
+  run `29240601750` deployed source head
+  `901ca431fd87808a902316674465689795926170` with the exact asset stamp. The visible
+  two-Account smoke proved pinned adjective and noun dice, selected-row-only replacement,
+  focus return, typed submission, participant concealment through Reveal, `Batch complete.`,
+  empty logs, no framework overlay, and `815/815` document/body widths. One hard refresh was
+  needed after a normal Edge refresh retained the pre-deployment static view; the exact
+  deployed build then passed, so this remains a cache observation rather than a failed
+  acceptance criterion. Separately approved guarded cleanup removed only Pending Game
+  `91d72b95-b022-4a4f-9239-9f2d2a5bfaab`, Started Game
+  `747e4630-ac40-4600-85cc-8641745711cd`, and their bounded dependent rows, including the
+  one owner-triggered `curiosity` reveal. Readback proved zero targeted rows and preserved
+  both Auth users, Account Profiles, and Account Profile Directory rows. Because this
+  evidence changes the feature-branch head, Task 6 Step 7 now requires commit, full source
+  verification, push, and a fresh approved `dev` deployment for the new exact head before
+  merge. Issue #230 and draft PR #248 stay open until final-head development verification,
+  `test` and production promotion, durable closeout evidence, and tracker reconciliation
+  complete.
 - **Deferred follow-up routes**: Noun-shard expansion/rebalancing remains issue #245;
   future built-in Entry Kind shards remain issue #246; and Account Entry Assist Safety
   Setting UI, persistence, and opt-in candidates remain issue #247. These issues remain
   open and are not issue #230 scope. Hosted auth-provider enhancement issue #89 remains
   open, untouched, and deferred.
-- **Remaining risk**: Hosted schema verification did not exercise runtime UI behaviour,
-  deployed asset stamps, two-Account participant concealment, section submission, or
-  bounded fixture cleanup. No Started Game data existed or was mutated during migration
-  verification. Those remaining checks retain their separate Task 6 approval gates.
+- **Remaining risk**: Development runtime UI behaviour and bounded cleanup are verified
+  only for deployed source head `901ca431fd87808a902316674465689795926170`. The new
+  documentation head still needs its own approved development deployment and visible
+  final-head confirmation before merge. `test`, production, durable closeout, and tracker
+  reconciliation retain their separate Task 6 approval gates; none has occurred.
 
 ### Notification top-bar affordance
 

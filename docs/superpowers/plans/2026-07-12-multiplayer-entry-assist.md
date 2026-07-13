@@ -1,10 +1,12 @@
 # Multiplayer Entry Assist Implementation Plan
 
-> **Status:** Tasks 1-5 are implemented and verified in source. Task 6 Steps 1-3
-> are complete, including hosted migration verification. Resume at Step 4; the
-> final-head `dev` deployment, functional smoke, bounded cleanup, merge,
-> promotion, and tracker closeout remain approval-gated. Issue #230 remains open,
-> and runtime UI completion is not yet established.
+> **Status:** Tasks 1-5 and Task 6 Steps 1-6 are complete, including hosted
+> migration verification, development workflow run `29240601750` for source head
+> `901ca431fd87808a902316674465689795926170`, the visible two-Account functional
+> smoke, and bounded cleanup. Resume at Step 7: commit and verify this evidence,
+> push the new head, then obtain a fresh approved development deployment for that
+> exact final head. Merge, test, production, promotion, and tracker closeout
+> remain approval-gated. Issue #230 and draft PR #248 remain open.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -660,14 +662,23 @@ applied to project `egnudphshvqdhrotxrfs` as hosted migration
 approved adjective and noun rows, zero existing Games, snapshot shape, trigger,
 function security modes, empty `search_path` values, browser-role denial, no new
 security WARN/ERROR, and no performance-advisor delta. The full immutable receipt
-is in `docs/planning/supabase-state-ledger.md`. No deployment, browser smoke,
-hosted fixture mutation, cleanup, merge, promotion, or tracker closure occurred.
+is in `docs/planning/supabase-state-ledger.md`. At the time of this migration
+receipt, no deployment, browser smoke, hosted fixture mutation, cleanup, merge,
+promotion, or tracker closure had occurred; the later separately approved
+development receipt is recorded in Steps 4-6 below.
 
-- [ ] **Step 4: Stop for the `Deploy branch to dev` environment approval**
+- [x] **Step 4: Stop for the `Deploy branch to dev` environment approval**
 
 Request the documented dev deployment for the final branch head. If GitHub waits for Environment approval, pause until the owner confirms approval. Require the workflow to complete successfully with the exact source head stamped into deployed assets.
 
-- [ ] **Step 5: Stop for hosted dev Game-data mutation approval**
+Receipt on 2026-07-13: after the separate GitHub Environment approval,
+development workflow run `29240601750` completed successfully for source head
+`901ca431fd87808a902316674465689795926170`, and deployed assets carried that
+exact stamp. A normal Edge refresh initially retained the pre-deployment static
+view; one hard refresh loaded the exact build. This is a cache observation, not
+a failed acceptance criterion.
+
+- [x] **Step 5: Stop for hosted dev Game-data mutation approval**
 
 Before creating a two-Account fixture, state the exact creator/invitee Accounts, Pending Game/Game scope, expected rows, and bounded cleanup target. Wait for explicit approval.
 
@@ -680,13 +691,56 @@ After approval, use the visible in-app browser route from `docs/runbooks/in-app-
 - typed edits and normal section submission still work;
 - no console errors or horizontal overflow occur.
 
-- [ ] **Step 6: Stop for bounded dev cleanup confirmation**
+Receipt on 2026-07-13: after separate fixture approval, the two-Account smoke
+used creator Account/Profile `f222c9a8-e424-4156-a378-c34eabc71bbf` /
+`005089ee-a35b-47e1-808b-a4d9b892fe32` (`vhCoder`) and invitee Account/Profile
+`bf5c0e41-ea1c-4fa2-908d-830983ae806b` /
+`b942b452-5032-4c1d-aaf5-070e25fdaad0` (`test-player`). Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab` started as Game
+`747e4630-ac40-4600-85cc-8641745711cd` with two Pending Game participants, two
+Game participants, three assignments, 30 submitted section entries, and five
+notifications. The active snapshot exposed only the pinned adjective reference
+with 114 candidates or noun reference with 240 candidates. Noun dice changed
+`window` to `bookcase`; adjective dice changed `solemn` to `misty`; and the
+second participant generated `pencil`. Every value belonged to its pinned shard,
+only the selected row changed, and focus returned to its input. Typed
+`curiosity`, `wonder`, and `memory` entries submitted normally, while the other
+participant's section and entries remained concealed until Reveal. Both Accounts
+reached `Batch complete.` with no console warnings or errors, framework overlay,
+or horizontal overflow; document and body widths were `815/815`.
+
+- [x] **Step 6: Stop for bounded dev cleanup confirmation**
 
 Present the exact Pending Game id, Started Game id, participants, assignments, entries, reveals, and notifications to delete. After confirmation, remove only those fixtures and run read-only SQL proving zero targeted rows remain. Do not delete Account Profiles or Auth users.
+
+Receipt on 2026-07-13: before cleanup, the owner manually selected Reveal for
+`curiosity`; readback found exactly one reveal,
+`fdb6d7f5-4d30-4358-94f6-85a7aedc556c`, for Account Profile
+`b942b452-5032-4c1d-aaf5-070e25fdaad0`, and it was intentionally included in
+the separately approved cleanup scope. Transactionally guarded cleanup deleted
+only Started Game `747e4630-ac40-4600-85cc-8641745711cd` and Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab`. Cascades removed two Pending Game
+participants, two Game participants, three assignments, 30 section entries, one
+reveal, and five notifications. Legacy Game Turn and Game Entry counts were zero
+before and after cleanup. Post-cleanup SQL proved zero targeted Pending Games,
+Games, participants, assignments, section entries, Game Turns, Game Entries,
+reveals, and notifications, while both Auth users, Account Profiles, and Account
+Profile Directory rows remained. Visible verification showed `Game unavailable.`
+on the deleted Game route, an empty Multiplayer dashboard, and
+`You have no notifications yet.` in the notification panel. Browser logs stayed
+empty, no framework overlay appeared, and widths remained `815/815`.
 
 - [ ] **Step 7: Record dev evidence before the final deploy gate**
 
 If dev evidence requires tracked documentation changes, commit them, rerun `npm test`, and request a fresh approved dev deployment for that new final branch head. An older deployment does not satisfy the final-head gate.
+
+Current route: commit this six-document development receipt, run the full source
+verification, push the new branch head, and obtain a fresh approved development
+deployment for that exact head. Workflow run `29240601750` verified
+`901ca431fd87808a902316674465689795926170` but cannot satisfy the new final-head
+gate after this evidence commit. Keep issue #230 and draft PR #248 open. Do not
+merge or begin test, production, promotion, or tracker closeout before this gate
+passes. Issues #245, #246, and #247 and issue #89 remain open and deferred.
 
 - [ ] **Step 8: Mark ready and merge without closing #230**
 

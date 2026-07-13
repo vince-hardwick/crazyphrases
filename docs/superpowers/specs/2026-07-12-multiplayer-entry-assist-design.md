@@ -1,8 +1,11 @@
 # Multiplayer Game Play Surface Entry Assist Design
 
-> **Status:** Implemented in source for GitHub issue #230. The hosted migration,
-> deployment, functional smoke, promotion, cleanup, and tracker closeout remain
-> approval-gated. Current product and architecture authority is
+> **Status:** Implemented in source for GitHub issue #230, with the corrected
+> hosted migration applied and verified as
+> `20260713092820 pin_multiplayer_entry_assist_shards`. Final-head deployment,
+> functional smoke, promotion, cleanup, and tracker closeout remain
+> approval-gated; runtime UI completion is not yet established. Current product
+> and architecture authority is
 > `docs/product-rules.md` and ADRs 0024 and 0027; operational continuation is
 > Task 6 of the implementation plan.
 
@@ -133,10 +136,11 @@ entries.
 
 ### Hosted functional seam
 
-After an approved development deployment, a visible two-Account smoke covers
-adjective and noun dice assistance, section submission, concealment, and bounded
-fixture cleanup. Hosted migration, data mutation, deployment, test promotion,
-and production promotion retain their separate documented approval boundaries.
+The hosted schema and authority contract is verified. After an approved
+final-head development deployment, a visible two-Account smoke still needs to
+cover adjective and noun dice assistance, section submission, concealment, and
+bounded fixture cleanup. Data mutation, deployment, test promotion, and
+production promotion retain their separate documented approval boundaries.
 
 ## TDD Sequence
 
@@ -167,8 +171,8 @@ change. Tests do not target private rendering helpers.
 ## Completion Route
 
 Implementation must update the owning product rule, ADR, migration runbook,
-backlog status, and hosted-state ledger where their state changes. Issue #230
-closes only after automated tests, approved development deployment, visible
-functional smoke, required promotion verification, bounded cleanup, and tracker
-reconciliation complete. Parent PRD #226 closes only when no accepted child
-scope remains open.
+backlog status, and hosted-state ledger where their state changes. Hosted
+migration verification is complete, but issue #230 closes only after automated
+tests, approved final-head development deployment, visible functional smoke,
+required promotion verification, bounded cleanup, and tracker reconciliation
+complete. Parent PRD #226 closes only when no accepted child scope remains open.

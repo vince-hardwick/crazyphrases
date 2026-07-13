@@ -5,9 +5,12 @@
 Accepted.
 
 Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
-#231, and #232 are complete. Issue #230 is source-complete on its feature
-branch, but remains open until its approval-gated hosted migration, deployment,
-functional smoke, promotion, cleanup, and tracker closeout are complete.
+#231, and #232 are complete. Issue #230 is source-complete on its feature branch,
+and its corrected hosted migration was applied and verified as
+`20260713092820 pin_multiplayer_entry_assist_shards`. It remains open until the
+approval-gated final-head deployment, functional smoke, promotion, cleanup, and
+tracker closeout are complete; this hosted receipt does not establish runtime UI
+completion.
 
 ## Context
 

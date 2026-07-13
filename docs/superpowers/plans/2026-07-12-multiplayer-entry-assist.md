@@ -1,9 +1,10 @@
 # Multiplayer Entry Assist Implementation Plan
 
-> **Status:** Tasks 1-5 are implemented and verified in source. Task 6 is the
-> only resumable route and remains approval-gated for publish, hosted migration,
-> deployment, functional smoke, bounded cleanup, promotion, and tracker
-> closeout. Issue #230 remains open.
+> **Status:** Tasks 1-5 are implemented and verified in source. Task 6 Steps 1-3
+> are complete, including hosted migration verification. Resume at Step 4; the
+> final-head `dev` deployment, functional smoke, bounded cleanup, merge,
+> promotion, and tracker closeout remain approval-gated. Issue #230 remains open,
+> and runtime UI completion is not yet established.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -628,15 +629,15 @@ Expected: PASS with a clean worktree.
 - Consumes a clean, fully verified final source head from Task 5.
 - Produces merged, promoted, visibly verified issue #230 completion and parent PRD #226 closure, with separate documentation closeout if post-merge evidence cannot live in the feature PR.
 
-- [ ] **Step 1: Push and open a draft PR without auto-closing #230**
+- [x] **Step 1: Push and open a draft PR without auto-closing #230**
 
 Push `codex/issue230-multiplayer-entry-assist` and open a draft PR whose body uses `Refs #230`, not `Closes #230`. Explain that the issue remains open until migration, deployment, functional smoke, cleanup, and promotion evidence complete.
 
-- [ ] **Step 2: Verify PR checks and review state**
+- [x] **Step 2: Verify PR checks and review state**
 
 Require `CI / Verify static site` green, inspect the patch, resolve all review threads, and keep the PR draft until the hosted development gate succeeds.
 
-- [ ] **Step 3: Stop for explicit hosted migration approval**
+- [x] **Step 3: Stop for explicit hosted migration approval**
 
 Before any DDL, present the exact generated migration name, target Supabase project, schema objects, privileges, backfill, and rollback/stop conditions. Wait for explicit owner approval.
 
@@ -650,6 +651,17 @@ After approval, apply the source migration through the connected Supabase migrat
 - security and performance advisors introduce no new WARN/ERROR findings.
 
 Stop on any mismatch; do not deploy runtime code against a partially verified schema.
+
+Receipt on 2026-07-13: after renewed explicit owner approval for the corrected
+committed SQL, source migration
+`supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`
+applied to project `egnudphshvqdhrotxrfs` as hosted migration
+`20260713092820 pin_multiplayer_entry_assist_shards`. Readback verified the exact
+approved adjective and noun rows, zero existing Games, snapshot shape, trigger,
+function security modes, empty `search_path` values, browser-role denial, no new
+security WARN/ERROR, and no performance-advisor delta. The full immutable receipt
+is in `docs/planning/supabase-state-ledger.md`. No deployment, browser smoke,
+hosted fixture mutation, cleanup, merge, promotion, or tracker closure occurred.
 
 - [ ] **Step 4: Stop for the `Deploy branch to dev` environment approval**
 

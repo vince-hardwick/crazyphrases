@@ -627,7 +627,7 @@ browser smokes are complete. Their immutable runtime evidence is recorded in
 `Deployment And Smoke Evidence` above; no additional deployment or smoke is
 pending for this slice.
 
-## Multiplayer Entry Assist Pending Hosted Application
+## Multiplayer Entry Assist Hosted Migration Verification
 
 As of 2026-07-13, issue #230 is implemented in source through runtime commit
 `879c80b` and corrective migration commit `48498a9`, with source migration
@@ -673,23 +673,66 @@ repository-hygiene set then passed 29/29 tests across two suites, the full
 passed. Corrective commit `48498a9` contains only the SQL parenthesisation and
 its regression assertion.
 
-The pre-apply advisor baseline remains unchanged. Security retains the existing
-WARN `auth_leaked_password_protection`. Performance retains only INFO
+The pre-apply security baseline contained only the existing WARN
+`auth_leaked_password_protection`. The performance baseline contained only INFO
 `unused_index` findings for `in_app_notifications_target_assignment_game_idx`,
 `game_turns_game_id_idx`, and
 `in_app_notifications_target_pending_game_id_idx`.
 
-No hosted migration was applied by the failed attempt, and no deployment,
-hosted data mutation, browser smoke, cleanup, test promotion, or production
-promotion occurred. PR #248 remains draft. Because commit `48498a9` changes the
-exact SQL that was previously approved, a fresh explicit owner approval is
-required before any hosted retry. A later approved retry must follow the
-commands, readback, advisor checks, and stop rules in
-`docs/runbooks/supabase-auth-and-postgres.md`; record its assigned hosted
-migration version and subsequent runtime evidence here only after they exist.
-Issue #230 and parent PRD #226 remain open until that evidence and tracker
-closeout are complete. Issues #245, #246, and #247 remain deferred follow-up
-routes; issue #89 remains untouched.
+The owner then renewed explicit approval for the corrected committed SQL. Fresh
+pre-apply inspection confirmed the target as project
+`egnudphshvqdhrotxrfs` (`crazyphrases`, `ACTIVE_HEALTHY`, `eu-west-2`,
+PostgreSQL `17.6.1.127`) and confirmed migration history still did not contain
+the Multiplayer Entry Assist migration. The corrected committed source migration
+`supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`
+applied successfully as hosted migration
+`20260713092820 pin_multiplayer_entry_assist_shards`.
+
+Read-only registry verification returned exactly these two approved rows:
+
+- adjective version `2026-07-05-esdb-v2-1e5b7d3-tracer`, asset path
+  `assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json`,
+  and candidate count `114`; and
+- noun version `2026-07-05-esdb-v2-1e5b7d3-noun-tracer`, asset path
+  `assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json`,
+  and candidate count `240`.
+
+Both rows were `family_friendly = true` with source id `esdb-scowl-v2` and
+source version `1e5b7d3a72f47a71da5d28686c1dd4b397178485`. A `public.games`
+readback returned `game_count = 0`, `null_snapshots = 0`, and
+`invalid_snapshots = 0`: no Started Game data existed to backfill, and none was
+mutated. For both `anon` and `authenticated`, registry `SELECT`, `INSERT`,
+`UPDATE`, and `DELETE` privileges were all false, and direct
+`entry_candidate_snapshot` column `SELECT` was false.
+
+Catalogue verification confirmed trigger
+`pin_started_game_entry_candidate_snapshot` exists and is enabled `O`, while
+constraint `games_entry_candidate_snapshot_shape` enforces the intended
+schema-version-1 snapshot with exactly the adjective and noun Entry Kind keys.
+All four functions have an empty `search_path`.
+`private.build_default_entry_candidate_snapshot()` is `SECURITY INVOKER` with
+no browser execute;
+`private.pin_started_game_entry_candidate_snapshot()` is `SECURITY DEFINER`
+with no browser execute; `private.load_game_play_surface(uuid)` is
+`SECURITY DEFINER` with authenticated-only execute; and
+`public.load_game_play_surface(uuid)` is `SECURITY INVOKER` with
+authenticated-only execute.
+
+Post-apply security advisors added only the expected INFO
+`rls_enabled_no_policy_private_word_bank_shard_registry`; the existing leaked
+password protection WARN was unchanged and there was no new WARN or ERROR.
+Performance advisors had no delta: the three baseline INFO findings remained
+unchanged.
+
+This receipt verifies the hosted schema and authority contract only. No
+deployment, GitHub Environment approval, browser smoke, fixture mutation,
+cleanup, merge, test promotion, production promotion, or tracker closure has
+occurred. Draft PR #248 and issue #230 remain open, as does parent PRD #226.
+The next gate is a fresh approved final-head `dev` deployment followed by the
+separately authorised runtime checks in Task 6; this documentation commit changes
+the final branch head, so no older deployment can satisfy that gate. Issues
+#245, #246, and #247 remain open deferred follow-up routes; issue #89 remains
+open, untouched, and deferred.
 
 Task 5 source verification on 2026-07-13 reproduced 114 adjective and 240 noun
 candidates with `npm run word-bank:check`; the focused provider, repository,

@@ -645,21 +645,27 @@ preserve their original history.
   `f7ff98ac91666286c3463c873ec5e2f878d62240`. Successful Game starts and actionable
   `entries_needed` / `batch_complete` notifications now route to the Game Play Surface;
   invalid or stale targets retain the Multiplayer-dashboard fallback.
-- **Source-complete route awaiting hosted validation**: Issue #230 implements
+- **Hosted migration verified; runtime validation pending**: Issue #230 implements
   dice-based Multiplayer Entry Assist on its feature branch, including the private
   approved-reference registry, Started Game reference snapshot, active-only loader
   disclosure, exact pinned-shard provider path, accessible dice controls, and typed-entry
-  fallback. The source migration remains unapplied and the issue stays open until the
-  separately approved hosted migration, final-head `dev` deployment, visible two-Account
-  smoke, bounded cleanup, `test` and production promotion, durable evidence, and tracker
-  reconciliation complete.
+  fallback. After renewed explicit owner approval, the corrected source migration applied
+  to project `egnudphshvqdhrotxrfs` as hosted migration
+  `20260713092820 pin_multiplayer_entry_assist_shards`. Readback verified the exact
+  approved adjective and noun registry rows, zero existing Games, the snapshot shape,
+  trigger, function security modes, empty `search_path` values, browser-role denial, no
+  new security WARN/ERROR, and no performance-advisor delta. The issue stays open until a
+  fresh final-head `dev` deployment, visible two-Account smoke, bounded cleanup, `test`
+  and production promotion, durable evidence, and tracker reconciliation complete.
 - **Deferred follow-up routes**: Noun-shard expansion/rebalancing remains issue #245;
   future built-in Entry Kind shards remain issue #246; and Account Entry Assist Safety
-  Setting UI, persistence, and opt-in candidates remain issue #247. These are not issue
-  #230 scope. Hosted auth-provider enhancement issue #89 remains untouched and deferred.
-- **Remaining risk**: Source verification cannot prove hosted registry contents,
-  backfill, grants, function security modes, advisor posture, deployed asset stamps,
-  participant concealment, or fixture cleanup. Those are Task 6 approval-gated checks.
+  Setting UI, persistence, and opt-in candidates remain issue #247. These issues remain
+  open and are not issue #230 scope. Hosted auth-provider enhancement issue #89 remains
+  open, untouched, and deferred.
+- **Remaining risk**: Hosted schema verification did not exercise runtime UI behaviour,
+  deployed asset stamps, two-Account participant concealment, section submission, or
+  bounded fixture cleanup. No Started Game data existed or was mutated during migration
+  verification. Those remaining checks retain their separate Task 6 approval gates.
 
 ### Notification top-bar affordance
 

@@ -33,6 +33,40 @@ describe("solo browser smoke", () => {
     await staticServer?.close();
   });
 
+  it("waits until matching body text is Playwright-visible", async () => {
+    const regressionBrowser = await chromium.launch();
+    let page;
+
+    try {
+      page = await regressionBrowser.newPage();
+      await page.setContent(
+        '<p data-delayed-text style="font-size: 0">Delayed visible text</p>',
+      );
+
+      const delayedText = page.getByText("Delayed visible text");
+      assert.equal(await page.locator("body").innerText(), "Delayed visible text");
+      assert.equal(await delayedText.isVisible(), false);
+
+      const visibleTextWait = waitForTextVisible(page, "Delayed visible text").then(
+        () => null,
+        (error) => error,
+      );
+      await page.evaluate(() => undefined);
+      await delayedText.evaluate((element) => {
+        element.style.fontSize = "16px";
+      });
+      const visibilityError = await visibleTextWait;
+      if (visibilityError) {
+        throw visibilityError;
+      }
+
+      assert.equal(await delayedText.isVisible(), true);
+    } finally {
+      await page?.close();
+      await regressionBrowser.close();
+    }
+  });
+
   it("completes the full flow in a mobile-constrained viewport", async () => {
     staticServer = await startStaticServer();
     browser = await chromium.launch();
@@ -7292,11 +7326,11 @@ async function assertTextVisible(page, text) {
 }
 
 async function waitForTextVisible(page, text) {
-  await page.waitForFunction(
-    (expectedText) => document.body?.innerText.includes(expectedText),
-    text,
-  );
-  await assertTextVisible(page, text);
+  await page
+    .getByText(text)
+    .filter({ visible: true })
+    .first()
+    .waitFor({ state: "visible" });
 }
 
 async function expectFontAwesomeClass(locator, ...classNames) {

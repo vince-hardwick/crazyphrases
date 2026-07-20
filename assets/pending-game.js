@@ -3,6 +3,29 @@ const ALLOWED_ROW_COUNTS = new Set([10, 15, 20, 25, 30]);
 const ALLOWED_NUDGE_TIMEOUT_HOURS = new Set([24, 48, 72, 168]);
 const COMPLETED_HISTORY_FIRST_PAGE_LIMIT = 20;
 const PENDING_GAME_INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_ENTRY_CANDIDATE_SNAPSHOT = Object.freeze({
+  schemaVersion: 1,
+  entryKinds: Object.freeze({
+    adjective: Object.freeze({
+      entryKind: "adjective",
+      version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+      path: "assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json",
+      candidateCount: 114,
+      familyFriendly: true,
+      sourceId: "esdb-scowl-v2",
+      sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+    }),
+    noun: Object.freeze({
+      entryKind: "noun",
+      version: "2026-07-05-esdb-v2-1e5b7d3-noun-tracer",
+      path: "assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json",
+      candidateCount: 240,
+      familyFriendly: true,
+      sourceId: "esdb-scowl-v2",
+      sourceVersion: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+    }),
+  }),
+});
 
 export function createTestPendingGameRepository({
   completedHistorySeedCount = 0,
@@ -38,6 +61,7 @@ export function createTestPendingGameRepository({
   const inAppNotifications = [];
   const pendingGameExpiryTimes = new Map();
   const revealedMultiplayerBatches = [];
+  const startedGameEntryCandidateSnapshots = new Map();
   const startedTurns = [];
   let multiplayerCompletionOrder = 0;
   let revealFailureCount = 0;
@@ -289,6 +313,10 @@ export function createTestPendingGameRepository({
       assignedSections.push(
         ...createStartedGameAssignedSections({ now, pendingGame, startedGame }),
       );
+      startedGameEntryCandidateSnapshots.set(
+        startedGame.id,
+        DEFAULT_ENTRY_CANDIDATE_SNAPSHOT,
+      );
       inAppNotifications.push(
         ...createGameStartedNotifications({
           accountIdsByProfileId,
@@ -398,6 +426,7 @@ export function createTestPendingGameRepository({
         pendingGames,
         profile,
         revealedMultiplayerBatches,
+        startedGameEntryCandidateSnapshots,
       });
     },
 
@@ -1686,6 +1715,7 @@ function createGamePlaySurfaceState({
   pendingGames,
   profile,
   revealedMultiplayerBatches,
+  startedGameEntryCandidateSnapshots,
 }) {
   const pendingGame = pendingGames.find(
     (candidate) => candidate.startedGameId === gameId,
@@ -1715,6 +1745,10 @@ function createGamePlaySurfaceState({
       state: "active",
       game,
       currentSection: createCurrentSectionDto(currentSection, {
+        entryAssist: createEntryAssistDto(
+          startedGameEntryCandidateSnapshots.get(gameId),
+          currentSection.entryKind,
+        ),
         sectionCount: assignedSections.filter(
           (section) =>
             section.gameId === gameId &&
@@ -1938,7 +1972,7 @@ function createCompletedBatchRevealSummary({
   };
 }
 
-function createCurrentSectionDto(section, { sectionCount }) {
+function createCurrentSectionDto(section, { entryAssist, sectionCount }) {
   const entriesByRowIndex = new Map(
     section.entries.map((entry) => [entry.rowIndex, entry.value]),
   );
@@ -1948,11 +1982,19 @@ function createCurrentSectionDto(section, { sectionCount }) {
     entryKind: section.entryKind,
     sectionIndex: section.participantSectionIndex,
     sectionCount,
+    ...(entryAssist ? { entryAssist } : {}),
     rows: Array.from({ length: section.rowCount }, (_, rowIndex) => ({
       rowIndex,
       value: entriesByRowIndex.get(rowIndex) ?? "",
     })),
   };
+}
+
+function createEntryAssistDto(snapshot, entryKind) {
+  const reference = snapshot?.entryKinds?.[entryKind];
+  return reference
+    ? { state: "available", reference: { ...reference } }
+    : { state: "unavailable" };
 }
 
 function toNotificationDto(notification) {
@@ -2484,7 +2526,75 @@ function recoverGamePlaySurfaceCurrentSection(sectionRow, { rowCount }) {
     return null;
   }
 
-  return { id, entryKind, sectionIndex, sectionCount, rows };
+  return {
+    id,
+    entryKind,
+    sectionIndex,
+    sectionCount,
+    entryAssist: recoverGamePlaySurfaceEntryAssist(
+      sectionRow?.entryAssist ?? sectionRow?.entry_assist,
+      entryKind,
+    ),
+    rows,
+  };
+}
+
+function recoverGamePlaySurfaceEntryAssist(entryAssistRow, entryKind) {
+  if (
+    entryAssistRow?.state !== "available" ||
+    !["adjective", "noun"].includes(entryKind)
+  ) {
+    return { state: "unavailable" };
+  }
+
+  const reference = recoverPinnedEntryAssistReference(
+    entryAssistRow.reference,
+  );
+  return reference?.entryKind === entryKind
+    ? { state: "available", reference }
+    : { state: "unavailable" };
+}
+
+function recoverPinnedEntryAssistReference(referenceRow) {
+  const entryKind = recoverOptionalText(
+    referenceRow?.entryKind ?? referenceRow?.entry_kind,
+  );
+  const version = recoverOptionalText(referenceRow?.version);
+  const path = recoverOptionalText(referenceRow?.path);
+  const candidateCount =
+    referenceRow?.candidateCount ?? referenceRow?.candidate_count;
+  const familyFriendly =
+    referenceRow?.familyFriendly ?? referenceRow?.family_friendly;
+  const sourceId = recoverOptionalText(
+    referenceRow?.sourceId ?? referenceRow?.source_id,
+  );
+  const sourceVersion = recoverOptionalText(
+    referenceRow?.sourceVersion ?? referenceRow?.source_version,
+  );
+
+  if (
+    !entryKind ||
+    !version ||
+    !path ||
+    !/^assets\/word-bank\/shards\/[a-z0-9.-]+\.json$/.test(path) ||
+    !Number.isInteger(candidateCount) ||
+    candidateCount < 1 ||
+    familyFriendly !== true ||
+    !sourceId ||
+    !sourceVersion
+  ) {
+    return null;
+  }
+
+  return {
+    entryKind,
+    version,
+    path,
+    candidateCount,
+    familyFriendly,
+    sourceId,
+    sourceVersion,
+  };
 }
 
 function recoverOptionalText(value) {

@@ -1558,9 +1558,22 @@ while Multiplayer uses Account-scoped participant-section authority, remote
 submission, waiting states, and Reveal state.
 Multiplayer section entry should include the same dice-based Entry Assist affordance as
 Solo for supported Entry Kinds. Dice suggestions must use the Game's pinned candidate
-snapshot for the relevant Entry Kind, respect the Account's Entry Assist Safety Setting
-where applicable, and never reveal or infer another participant's assigned section or
-entries.
+reference snapshot for the relevant Entry Kind and never reveal or infer another
+participant's assigned section or entries. The current Multiplayer MVP uses only
+`familyFriendly` / `accepted` candidates; Account-level opt-in candidate tiers remain
+deferred.
+
+For the family-friendly MVP, a Started Multiplayer Game pins server-approved immutable
+Word Bank Shard references for its supported Entry Kinds. The browser must not choose or
+alter candidate content, shard paths, versions, or curation tiers. The participant-scoped
+Game Play Surface loader returns only the active Entry Kind's applicable reference, and
+the Entry Candidate Provider loads that exact immutable shard rather than substituting a
+newer manifest version. Missing, malformed, unsupported, or unavailable Entry Assist
+data disables only the affected dice affordance with `Random word unavailable`; typed
+entry and section submission remain available, and the authorised Game Play Surface
+remains active. Waiting, completed, revealed, cancelled, and unavailable loader states
+must not disclose an Entry Assist reference.
+
 Actionable `entries_needed` notifications should open the same Game-scoped Game Play
 Surface directly rather than stopping on the Multiplayer dashboard. Actionable
 `batch_complete` notifications should also open that Game-scoped surface, landing on
@@ -1664,9 +1677,11 @@ unreviewed source compounds are not accepted production Word Bank candidates.
 In MVP, clicking dice fills the target input immediately with a candidate. The
 participant can edit the value or click dice again to replace it.
 
-Dice assistance avoids repeating the same word within one game when possible, per entry
-kind. If the available candidate list is exhausted, repeats are allowed rather than
-failing.
+Solo dice assistance avoids repeating the same word within one local Game when possible,
+per Entry Kind. Multiplayer avoids repeats only within the currently rendered authorised
+form: this transient state is not persisted across form renders or shared across
+participants. In either mode, if the available candidate list is exhausted, repeats are
+allowed rather than failing.
 
 ### Word bank
 
@@ -1706,8 +1721,9 @@ replaced in place.
 The app checks the Word Bank manifest at app start or first Entry Assist use, fetches
 shards lazily per Entry Kind, and does not background-poll for shard changes during
 play. If a newer shard version is discovered, it is used for newly started games after
-the shard is fetched. A game already in progress keeps using the shard versions it
-started with, so dice repeat-avoidance and phrase rendering do not change mid-game.
+the shard is fetched. A Game already in progress keeps using the shard versions it
+started with, so its candidate pool does not change mid-Game. Multiplayer repeat
+avoidance remains transient to the currently rendered authorised form.
 
 Production Word Bank Shards carry minimal entry metadata rather than bare strings only.
 Entry Assist may still fill a plain candidate value into the input, but the shard format
@@ -1751,14 +1767,20 @@ file and must not be treated as the production manifest or a production shard.
 The first production Word Bank rollout publishes adjective and noun shards for the
 Default Template: 114 family-friendly adjective candidates and 240 family-friendly noun
 candidates from pinned ESDB / SCOWL v2 source commit
-`1e5b7d3a72f47a71da5d28686c1dd4b397178485`. Runtime Entry Assist checks the manifest
-at app start, loads shards lazily for the Entry Kinds used by a Game when that Game
-starts, and stores a serialised candidate snapshot on the started Game so later
-manifest or shard changes cannot alter that Game's dice suggestions, repeat avoidance,
-or Phrase Rendering. The bundled seed remains the fallback for adjective and noun
-categories, and should expand to future built-in Entry Kinds before dice actions for
-those Entry Kinds are exposed. The runtime must not substitute candidates from another
-Entry Kind for any missing shard or seed fallback.
+`1e5b7d3a72f47a71da5d28686c1dd4b397178485`. Their immutable references are:
+
+- adjective: version `2026-07-05-esdb-v2-1e5b7d3-tracer`, path
+  `assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json`;
+- noun: version `2026-07-05-esdb-v2-1e5b7d3-noun-tracer`, path
+  `assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json`.
+
+Runtime Entry Assist checks the manifest for Solo and stores local candidate state for a
+local Game. Started Multiplayer Games instead store a database-owned serialised snapshot
+of the approved immutable references, and load the exact active reference on demand, so
+later manifest changes cannot alter their candidate pool. The bundled seed remains the
+Solo fallback for adjective and noun categories; Multiplayer reference or shard failure
+must disable only dice and must not fall forward to the manifest or seed. The runtime
+must not substitute candidates from another Entry Kind.
 
 For the first production rollout, Word Bank manifests and shards deploy through the
 normal app deployment payload. They must not use a separate publishing channel or live

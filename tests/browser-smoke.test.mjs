@@ -33,6 +33,40 @@ describe("solo browser smoke", () => {
     await staticServer?.close();
   });
 
+  it("waits until matching body text is Playwright-visible", async () => {
+    const regressionBrowser = await chromium.launch();
+    let page;
+
+    try {
+      page = await regressionBrowser.newPage();
+      await page.setContent(
+        '<p data-delayed-text style="font-size: 0">Delayed visible text</p>',
+      );
+
+      const delayedText = page.getByText("Delayed visible text");
+      assert.equal(await page.locator("body").innerText(), "Delayed visible text");
+      assert.equal(await delayedText.isVisible(), false);
+
+      const visibleTextWait = waitForTextVisible(page, "Delayed visible text").then(
+        () => null,
+        (error) => error,
+      );
+      await page.evaluate(() => undefined);
+      await delayedText.evaluate((element) => {
+        element.style.fontSize = "16px";
+      });
+      const visibilityError = await visibleTextWait;
+      if (visibilityError) {
+        throw visibilityError;
+      }
+
+      assert.equal(await delayedText.isVisible(), true);
+    } finally {
+      await page?.close();
+      await regressionBrowser.close();
+    }
+  });
+
   it("completes the full flow in a mobile-constrained viewport", async () => {
     staticServer = await startStaticServer();
     browser = await chromium.launch();
@@ -4236,6 +4270,172 @@ describe("solo browser smoke", () => {
     assertNoConsoleErrors();
   });
 
+  it("uses the Started Game's pinned shard for Multiplayer dice Entry Assist", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const currentShardRequests = [];
+    await context.route("**/assets/word-bank/manifest.json*", async (route) => {
+      await route.fulfill({
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify({
+          schemaVersion: 1,
+          version: "test-current-manifest",
+          entryKinds: {
+            adjective: {
+              entryKind: "adjective",
+              version: "current-adjective",
+              path: "assets/word-bank/shards/adjective.current.json",
+            },
+            noun: {
+              entryKind: "noun",
+              version: "current-noun",
+              path: "assets/word-bank/shards/noun.current.json",
+            },
+          },
+        }),
+      });
+    });
+    await context.route("**/assets/word-bank/shards/*.current.json*", async (route) => {
+      currentShardRequests.push(route.request().url());
+      await route.abort();
+    });
+    await context.route(
+      "**/assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 114,
+              candidates: ["brisk", "nimble"],
+              entryKind: "adjective",
+              version: "2026-07-05-esdb-v2-1e5b7d3-tracer",
+            }),
+          ),
+        });
+      },
+    );
+    await context.route(
+      "**/assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 240,
+              candidates: ["teapot", "ladder"],
+              entryKind: "noun",
+              version: "2026-07-05-esdb-v2-1e5b7d3-noun-tracer",
+            }),
+          ),
+        });
+      },
+    );
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+
+    const entryKind = /adjectives/i.test(
+      await page.locator("[data-game-play-surface] h3").innerText(),
+    )
+      ? "adjective"
+      : "noun";
+    const candidates =
+      entryKind === "adjective" ? ["brisk", "nimble"] : ["teapot", "ladder"];
+    const diceButtons = page.locator("[data-multiplayer-dice-row-index]");
+    assert.equal(await diceButtons.count(), 10);
+    for (let rowIndex = 0; rowIndex < 10; rowIndex += 1) {
+      const button = page.getByRole("button", {
+        name: `Generate ${entryKind} for phrase ${rowIndex + 1}`,
+        exact: true,
+      });
+      assert.equal(await button.isEnabled(), true);
+    }
+
+    const firstDice = page.locator("[data-multiplayer-dice-row-index='0']");
+    const firstInput = page.locator("[data-multiplayer-section-input='0']");
+    await firstDice.click();
+    const firstValue = await firstInput.inputValue();
+    await firstDice.click();
+    const secondValue = await firstInput.inputValue();
+
+    assert.equal(candidates.includes(firstValue), true);
+    assert.equal(candidates.includes(secondValue), true);
+    assert.notEqual(secondValue, firstValue);
+    assert.equal(await firstInput.evaluate((input) => input === document.activeElement), true);
+    assert.deepEqual(currentShardRequests, []);
+    await assertNoHorizontalOverflow(page);
+    assertNoConsoleErrors();
+  });
+
+  it("keeps typed Multiplayer submission available when Entry Assist is unavailable", async () => {
+    staticServer ??= await startStaticServer();
+    browser ??= await chromium.launch();
+
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    await context.route(
+      "**/assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 114,
+              candidates: ["brisk"],
+              entryKind: "adjective",
+              version: "metadata-mismatch",
+            }),
+          ),
+        });
+      },
+    );
+    await context.route(
+      "**/assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json*",
+      async (route) => {
+        await route.fulfill({
+          contentType: "application/json; charset=utf-8",
+          body: JSON.stringify(
+            createPinnedEntryAssistShard({
+              candidateCount: 240,
+              candidates: ["teapot"],
+              entryKind: "noun",
+              version: "metadata-mismatch",
+            }),
+          ),
+        });
+      },
+    );
+
+    const page = await context.newPage();
+    const assertNoConsoleErrors = trackConsoleErrors(page);
+
+    await page.goto(staticServer.origin);
+    await createStartedLocalMultiplayerGame(page, { rowCount: "10" });
+
+    const dice = page.locator("[data-multiplayer-dice-row-index='0']");
+    assert.equal(await dice.isDisabled(), true);
+    assert.equal(await dice.getAttribute("aria-label"), "Random word unavailable");
+    assert.equal(await dice.getAttribute("title"), "Random word unavailable");
+
+    await submitMultiplayerSection(page, "typed");
+    await waitForTextVisible(page, "Awaiting other player entries.");
+    assert.equal(
+      await page.getByText("Section could not be submitted", { exact: false }).count(),
+      0,
+    );
+    assert.equal(await page.getByText("Game unavailable.", { exact: true }).count(), 0);
+    assertNoConsoleErrors();
+  });
+
   it("refreshes the Game Creator's Multiplayer dashboard after starting an accepted Game", async () => {
     staticServer ??= await startStaticServer();
     browser ??= await chromium.launch();
@@ -6876,6 +7076,31 @@ function createFillState(rowCount) {
   };
 }
 
+function createPinnedEntryAssistShard({
+  candidateCount,
+  candidates,
+  entryKind,
+  version,
+}) {
+  return {
+    schemaVersion: 1,
+    entryKind,
+    version,
+    familyFriendly: true,
+    source: {
+      id: "esdb-scowl-v2",
+      version: "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+    },
+    candidates: Array.from({ length: candidateCount }, (_, candidateIndex) => ({
+      canonicalText: candidates[candidateIndex % candidates.length],
+      entryKind,
+      candidateForm: "singleWord",
+      safetyStatus: "familyFriendly",
+      curationStatus: "accepted",
+    })),
+  };
+}
+
 function createPngFilePayload({ height, width }) {
   return {
     buffer: createPngBuffer({ height, width }),
@@ -7101,11 +7326,11 @@ async function assertTextVisible(page, text) {
 }
 
 async function waitForTextVisible(page, text) {
-  await page.waitForFunction(
-    (expectedText) => document.body?.innerText.includes(expectedText),
-    text,
-  );
-  await assertTextVisible(page, text);
+  await page
+    .getByText(text)
+    .filter({ visible: true })
+    .first()
+    .waitFor({ state: "visible" });
 }
 
 async function expectFontAwesomeClass(locator, ...classNames) {

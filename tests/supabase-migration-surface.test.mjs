@@ -95,6 +95,9 @@ const pendingGameInviteNotificationsMigrationUrl = findMigrationUrl(
 const participantScopedStartedGameLoaderMigrationUrl = findMigrationUrl(
   "participant_scoped_started_game_loader",
 );
+const pinMultiplayerEntryAssistShardsMigrationUrl = findMigrationUrl(
+  "pin_multiplayer_entry_assist_shards",
+);
 
 describe("Supabase migration surface", () => {
   it("creates signed-in current games with RLS and account-owned policies", () => {
@@ -2209,6 +2212,116 @@ describe("Supabase migration surface", () => {
     assert.doesNotMatch(migration, /'profileId'/);
     assert.doesNotMatch(migration, /'accountId'/);
     assert.doesNotMatch(migration, /'pendingGameId'/);
+  });
+
+  it("pins approved Multiplayer Entry Assist shard references without browser authority", () => {
+    assert.equal(existsSync(pinMultiplayerEntryAssistShardsMigrationUrl), true);
+    assert.ok(
+      pinMultiplayerEntryAssistShardsMigrationUrl.pathname >
+        participantScopedStartedGameLoaderMigrationUrl.pathname,
+      "Entry Assist shard pinning must follow the participant-scoped loader",
+    );
+
+    const migration = readFileSync(
+      pinMultiplayerEntryAssistShardsMigrationUrl,
+      "utf8",
+    );
+
+    assert.match(
+      migration,
+      /create table if not exists private\.word_bank_shard_registry/,
+    );
+    assert.match(
+      migration,
+      /alter table private\.word_bank_shard_registry enable row level security/,
+    );
+    assert.match(
+      migration,
+      /revoke all on table private\.word_bank_shard_registry from public, anon, authenticated, service_role/,
+    );
+    assert.match(
+      migration,
+      /add column if not exists entry_candidate_snapshot jsonb/,
+    );
+    assert.match(
+      migration,
+      /\(entry_candidate_snapshot -> 'entryKinds'\) - 'adjective' - 'noun'/,
+    );
+    assert.match(
+      migration,
+      /create trigger pin_started_game_entry_candidate_snapshot/,
+    );
+    assert.match(migration, /'entryAssist'/);
+    assert.match(migration, /'state', 'available'/);
+    assert.match(migration, /'state', 'unavailable'/);
+    assert.doesNotMatch(
+      migration,
+      /grant\s+select\s*\([^)]*entry_candidate_snapshot/i,
+    );
+
+    assert.match(
+      migration,
+      /create or replace function private\.build_default_entry_candidate_snapshot\(\)/,
+    );
+    assert.match(migration, /stable\s+security invoker\s+set search_path = ''/);
+    assert.match(
+      migration,
+      /create or replace function private\.pin_started_game_entry_candidate_snapshot\(\)/,
+    );
+    assert.match(migration, /security definer\s+set search_path = ''/);
+    assert.match(migration, /\(select auth\.uid\(\)\) is null/);
+
+    for (const functionName of [
+      "build_default_entry_candidate_snapshot",
+      "pin_started_game_entry_candidate_snapshot",
+    ]) {
+      assert.match(
+        migration,
+        new RegExp(
+          `revoke all on function private\\.${functionName}\\(\\)\\s+from public, anon, authenticated, service_role`,
+        ),
+      );
+    }
+
+    assert.match(
+      migration,
+      /create or replace function private\.load_game_play_surface\(\s*target_game_id uuid\s*\)/,
+    );
+    assert.match(migration, /caller_account_id uuid := \(select auth\.uid\(\)\)/);
+    assert.match(migration, /caller_account_id is null/);
+    assert.match(
+      migration,
+      /from public\.game_participants as participant[\s\S]*?where participant\.game_id = target_game_id[\s\S]*?and participant\.profile_id = caller_profile_id/,
+    );
+    assert.match(
+      migration,
+      /create or replace function public\.load_game_play_surface\(\s*target_game_id uuid\s*\)[\s\S]*?security invoker[\s\S]*?set search_path = ''/,
+    );
+    assert.match(
+      migration,
+      /revoke all on function public\.load_game_play_surface\(uuid\)\s+from public, anon, authenticated, service_role/,
+    );
+    assert.match(
+      migration,
+      /grant execute on function public\.load_game_play_surface\(uuid\)\s+to authenticated/,
+    );
+
+    for (const tableName of [
+      "games",
+      "game_participants",
+      "game_section_assignments",
+      "game_section_entries",
+      "multiplayer_batch_reveals",
+    ]) {
+      assert.doesNotMatch(
+        migration,
+        new RegExp(`grant\\s+[^;]*on\\s+table\\s+public\\.${tableName}`, "i"),
+      );
+    }
+    assert.doesNotMatch(
+      migration,
+      /grant\s+[^;]*on\s+table\s+private\.word_bank_shard_registry/i,
+    );
   });
 });
 

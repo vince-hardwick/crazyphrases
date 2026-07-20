@@ -627,6 +627,185 @@ browser smokes are complete. Their immutable runtime evidence is recorded in
 `Deployment And Smoke Evidence` above; no additional deployment or smoke is
 pending for this slice.
 
+## Multiplayer Entry Assist Hosted Migration Verification
+
+As of 2026-07-13, issue #230 is implemented in source through runtime commit
+`879c80b` and corrective migration commit `48498a9`, with source migration
+`supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`.
+The source contract adds the private approved-reference registry, pins a
+schema-version-1 adjective/noun reference snapshot to each Started Game,
+discloses only the active authorised section's reference, loads that exact
+immutable family-friendly shard, and preserves typed section submission when
+dice are unavailable. Multiplayer repeat avoidance is transient to the
+currently rendered authorised form; it is not persisted or shared across
+participants.
+
+After explicit owner approval on 2026-07-13, Codex attempted to apply the exact
+then-current source migration to hosted project `egnudphshvqdhrotxrfs`. The
+transaction failed and rolled back on PostgreSQL 17 with SQLSTATE `42725`,
+an ambiguous operator-resolution error at the exact constraint expression
+`entry_candidate_snapshot -> 'entryKinds' - 'adjective' - 'noun'`.
+
+Post-failure read-only migration-history verification matched the pre-apply
+history exactly: `20260710065313 participant_scoped_started_game_loader`
+remained the latest hosted migration and no Multiplayer Entry Assist migration
+row was recorded. Read-only catalogue checks explicitly proved that every new
+schema object from the rolled-back migration was absent:
+
+- `private.word_bank_shard_registry` did not exist;
+- `public.games.entry_candidate_snapshot` did not exist;
+- trigger `pin_started_game_entry_candidate_snapshot` did not exist;
+- constraint `games_entry_candidate_snapshot_shape` did not exist; and
+- new helper functions `private.build_default_entry_candidate_snapshot()` and
+  `private.pin_started_game_entry_candidate_snapshot()` did not exist.
+
+A separate read-only SQL reproduction of the unparenthesised expression failed
+with the same `42725` ambiguous-operator error. The read-only hypothesis
+`('entryKinds' JSONB extraction) - 'adjective' - 'noun'`, written as
+`(entry_candidate_snapshot -> 'entryKinds') - 'adjective' - 'noun'`, returned
+the intended empty JSONB object and its comparison with `'{}'::jsonb` succeeded.
+
+The corrective TDD cycle added a migration-surface assertion for the exact
+parenthesised form. RED failed 0/1 against the hosted-failing expression;
+GREEN passed 1/1 after the one-line source correction. The migration-surface and
+repository-hygiene set then passed 29/29 tests across two suites, the full
+`npm test` suite passed 371/371 tests across 23 suites, and `git diff --check`
+passed. Corrective commit `48498a9` contains only the SQL parenthesisation and
+its regression assertion.
+
+The pre-apply security baseline contained only the existing WARN
+`auth_leaked_password_protection`. The performance baseline contained only INFO
+`unused_index` findings for `in_app_notifications_target_assignment_game_idx`,
+`game_turns_game_id_idx`, and
+`in_app_notifications_target_pending_game_id_idx`.
+
+The owner then renewed explicit approval for the corrected committed SQL. Fresh
+pre-apply inspection confirmed the target as project
+`egnudphshvqdhrotxrfs` (`crazyphrases`, `ACTIVE_HEALTHY`, `eu-west-2`,
+PostgreSQL `17.6.1.127`) and confirmed migration history still did not contain
+the Multiplayer Entry Assist migration. The corrected committed source migration
+`supabase/migrations/20260713014439_pin_multiplayer_entry_assist_shards.sql`
+applied successfully as hosted migration
+`20260713092820 pin_multiplayer_entry_assist_shards`.
+
+Read-only registry verification returned exactly these two approved rows:
+
+- adjective version `2026-07-05-esdb-v2-1e5b7d3-tracer`, asset path
+  `assets/word-bank/shards/adjective.2026-07-05-esdb-v2-1e5b7d3-tracer.json`,
+  and candidate count `114`; and
+- noun version `2026-07-05-esdb-v2-1e5b7d3-noun-tracer`, asset path
+  `assets/word-bank/shards/noun.2026-07-05-esdb-v2-1e5b7d3-noun-tracer.json`,
+  and candidate count `240`.
+
+Both rows were `family_friendly = true` with source id `esdb-scowl-v2` and
+source version `1e5b7d3a72f47a71da5d28686c1dd4b397178485`. A `public.games`
+readback returned `game_count = 0`, `null_snapshots = 0`, and
+`invalid_snapshots = 0`: no Started Game data existed to backfill, and none was
+mutated. For both `anon` and `authenticated`, registry `SELECT`, `INSERT`,
+`UPDATE`, and `DELETE` privileges were all false, and direct
+`entry_candidate_snapshot` column `SELECT` was false.
+
+Catalogue verification confirmed trigger
+`pin_started_game_entry_candidate_snapshot` exists and is enabled `O`, while
+constraint `games_entry_candidate_snapshot_shape` enforces the intended
+schema-version-1 snapshot with exactly the adjective and noun Entry Kind keys.
+All four functions have an empty `search_path`.
+`private.build_default_entry_candidate_snapshot()` is `SECURITY INVOKER` with
+no browser execute;
+`private.pin_started_game_entry_candidate_snapshot()` is `SECURITY DEFINER`
+with no browser execute; `private.load_game_play_surface(uuid)` is
+`SECURITY DEFINER` with authenticated-only execute; and
+`public.load_game_play_surface(uuid)` is `SECURITY INVOKER` with
+authenticated-only execute.
+
+Post-apply security advisors added only the expected INFO
+`rls_enabled_no_policy_private_word_bank_shard_registry`; the existing leaked
+password protection WARN was unchanged and there was no new WARN or ERROR.
+Performance advisors had no delta: the three baseline INFO findings remained
+unchanged.
+
+At the time of this migration receipt, it verified the hosted schema and
+authority contract only; no deployment, browser smoke, fixture mutation, or
+cleanup had yet occurred. The separately approved development runtime and
+cleanup evidence is recorded below. No merge, test promotion, production
+promotion, or tracker closure has occurred. Draft PR #248 and issue #230 remain
+open, as does parent PRD #226. Issues #245, #246, and #247 remain open deferred
+follow-up routes; issue #89 remains open, untouched, and deferred.
+
+Task 5 source verification on 2026-07-13 reproduced 114 adjective and 240 noun
+candidates with `npm run word-bank:check`; the focused provider, repository,
+migration-surface, browser, and hygiene set passed 247/247 tests; and the full
+`npm test` suite passed 371/371 tests across 23 suites. Both working-tree and
+branch `git diff --check` passed. Scope inspection found only issue #230 runtime,
+tests, migration, plan/spec, and owning documentation, with no root image assets,
+scratch/output, generated review artefacts, credentials, secrets, tokens, or
+environment files.
+
+### Development Deployment, Functional Smoke, And Cleanup Receipt
+
+On 2026-07-13, the separately approved development workflow run `29240601750`
+completed successfully for source head
+`901ca431fd87808a902316674465689795926170`. Deployed assets carried that exact
+commit stamp. A normal Edge refresh initially retained the pre-deployment static
+view; one hard refresh loaded the exact deployed build, after which the complete
+`test-player` flow passed. This is a cache observation, not a failed acceptance
+criterion.
+
+The separately approved two-Account development smoke used creator Account
+`f222c9a8-e424-4156-a378-c34eabc71bbf`, Account Profile
+`005089ee-a35b-47e1-808b-a4d9b892fe32` (`vhCoder`), and invitee Account
+`bf5c0e41-ea1c-4fa2-908d-830983ae806b`, Account Profile
+`b942b452-5032-4c1d-aaf5-070e25fdaad0` (`test-player`). Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab` started as Game
+`747e4630-ac40-4600-85cc-8641745711cd` with two Pending Game participants, two
+Game participants, three assignments, 30 submitted section entries, and five
+notifications.
+
+The Started Game snapshot exposed only the active pinned adjective or noun
+reference. The adjective candidate count was `114` and the noun candidate count
+was `240`. Noun dice changed `window` to `bookcase`; adjective dice changed
+`solemn` to `misty`; and the second participant also generated `pencil`. Every
+generated value was present in the corresponding pinned shard. Only the selected
+row changed and focus returned to its input. Typed entries, including
+`curiosity`, `wonder`, and `memory`, submitted normally. Other-participant
+sections and entries remained concealed until Reveal. Both Accounts reached
+`Batch complete.` without console warnings or errors, a framework overlay, or
+horizontal overflow; the visible in-app browser reported document and body
+widths of `815/815`.
+
+Before cleanup, the owner manually selected Reveal for `curiosity`. Readback
+therefore found exactly one reveal,
+`fdb6d7f5-4d30-4358-94f6-85a7aedc556c`, for Account Profile
+`b942b452-5032-4c1d-aaf5-070e25fdaad0`. That reveal was intentionally included
+in the separately approved bounded cleanup scope.
+
+Transactionally guarded development cleanup deleted only Started Game
+`747e4630-ac40-4600-85cc-8641745711cd` and Pending Game
+`91d72b95-b022-4a4f-9239-9f2d2a5bfaab`. Cascades removed two Pending Game
+participants, two Game participants, three assignments, 30 section entries, one
+reveal, and five notifications. Legacy Game Turn and Game Entry counts were zero
+before and after cleanup.
+
+Post-cleanup SQL proved zero targeted Pending Games, Games, Pending Game
+participants, Game participants, assignments, section entries, Game Turns, Game
+Entries, reveals, and notifications. It also proved that both Auth users, both
+Account Profiles, and both Account Profile Directory rows remained present.
+Visible post-cleanup verification refreshed the deleted Game route and displayed
+`Game unavailable.`, returned to an empty Multiplayer dashboard, and opened an
+empty notification panel with `You have no notifications yet.` Browser logs
+remained empty, no framework overlay appeared, and document and body widths
+remained `815/815`.
+
+This development receipt completes Task 6 Steps 4-6 against deployed source head
+`901ca431fd87808a902316674465689795926170`. Recording the evidence changes the
+feature-branch head, so workflow run `29240601750` cannot satisfy the final-head
+development gate. Task 6 Step 7 is the current route: commit this evidence, run
+the full source verification, push the new head, and obtain a fresh approved
+development deployment for that exact head before Step 8. Draft PR #248, issue
+#230, and parent PRD #226 remain open. No merge, test deployment or smoke,
+production promotion, or tracker closure has occurred. Issues #245, #246, and
+#247 and issue #89 remain open, untouched, and deferred.
+
 ## Current Known Hosted-State Notes
 
 - Current security advisor output has no database RLS/no-policy findings and no

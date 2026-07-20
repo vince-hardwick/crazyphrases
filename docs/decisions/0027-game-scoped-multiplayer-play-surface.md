@@ -5,7 +5,18 @@
 Accepted.
 
 Implementation is tracked by PRD issue #226. Child issues #227, #228, #229,
-#231, and #232 are complete; #230 remains open.
+#231, and #232 are complete. Issue #230 is source-complete on its feature branch,
+and its corrected hosted migration was applied and verified as
+`20260713092820 pin_multiplayer_entry_assist_shards`. Approved development
+workflow run `29240601750` deployed source head
+`901ca431fd87808a902316674465689795926170`; a visible two-Account smoke verified
+pinned adjective and noun dice, typed submission, concealment through Reveal,
+and clean responsive/browser state, followed by separately approved bounded
+fixture cleanup and zero-targeted-row readback. Recording that evidence creates
+a new feature-branch head, so issue #230 and draft PR #248 remain open until that
+new exact head receives a fresh approved development deployment and the separate
+merge, test, production, and tracker-closeout gates complete. No merge, test or
+production verification, promotion, or tracker closure has occurred.
 
 ## Context
 
@@ -66,6 +77,29 @@ target the Game Play Surface when the target Game still has a participant task.
 The dashboard remains the fallback when the target Game no longer has a current
 participant task or when the route cannot load an authorised Game state.
 
+For Multiplayer Entry Assist, database-owned Game-start logic pins
+server-approved immutable Word Bank Shard references for the Started Game. The
+browser does not choose candidate content, paths, versions, or curation tiers.
+The participant-scoped loader may return only the active Entry Kind's pinned
+reference, and the browser loads that exact static shard rather than resolving a
+newer manifest entry. This preserves ADR 0024's static delivery boundary and
+keeps suggestions stable for the Started Game without exposing another
+participant's section or entries.
+
+The approved references live in a private registry with no browser-role table
+privileges. Game start serialises the complete schema-version-1 adjective/noun
+reference set onto the Started Game; the snapshot stores immutable references,
+not candidate arrays, and browser roles receive no direct column read or write
+authority. The current approved references are the family-friendly-only
+`2026-07-05-esdb-v2-1e5b7d3-tracer` adjective shard and
+`2026-07-05-esdb-v2-1e5b7d3-noun-tracer` noun shard.
+
+Multiplayer repeat avoidance is presentation state owned by the currently
+rendered authorised form. It is not persisted for the lifetime of the Started
+Game and is not shared between participants. Persisting or sharing that state
+would require a separate privacy-safe authority decision; route or environment
+detection must not grant it.
+
 ## Consequences
 
 - Active Multiplayer phrase entry is no longer visually or conceptually
@@ -82,6 +116,12 @@ participant task or when the route cannot load an authorised Game state.
 - Multiplayer Entry Assist should be available on the Game Play Surface for
   supported Entry Kinds without revealing another participant's assigned section
   or entries.
+- Entry Assist reference or shard failures should disable only the affected dice
+  affordance. They must not block typed entry, section submission, or otherwise
+  turn an authorised active Game Play Surface into an unavailable Game.
+- The participant-scoped loader discloses an Entry Assist reference only for an
+  authorised active section. Waiting, completed, revealed, cancelled, and
+  unavailable states disclose no reference.
 - Future agents should not move active Multiplayer section input back into
   `Awaiting your entries` cards as a simplification unless this decision is
   deliberately superseded.

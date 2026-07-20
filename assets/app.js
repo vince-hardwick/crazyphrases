@@ -996,7 +996,7 @@ function renderGamePlaySurfaceRoute(route) {
       accountId,
       gameId: startedGameId,
     })
-    .then((gamePlayState) => {
+    .then(async (gamePlayState) => {
       if (
         renderRequestId !== gamePlaySurfaceRenderRequestId ||
         surface !== gamePlaySurface ||
@@ -1007,7 +1007,34 @@ function renderGamePlaySurfaceRoute(route) {
       }
 
       if (gamePlayState.state === "active") {
-        renderGamePlaySurfaceActive(surface, gamePlayState.currentSection);
+        let entryCandidates = [];
+        if (
+          gamePlayState.currentSection.entryAssist?.state === "available" &&
+          typeof entryCandidateProvider?.loadPinnedEntryCandidateValues === "function"
+        ) {
+          try {
+            entryCandidates = await entryCandidateProvider.loadPinnedEntryCandidateValues(
+              gamePlayState.currentSection.entryAssist.reference,
+            );
+          } catch {
+            entryCandidates = [];
+          }
+        }
+
+        if (
+          renderRequestId !== gamePlaySurfaceRenderRequestId ||
+          surface !== gamePlaySurface ||
+          currentRoute !== route ||
+          !isCurrentAccountSession(accountId)
+        ) {
+          return;
+        }
+
+        renderGamePlaySurfaceActive(
+          surface,
+          gamePlayState.currentSection,
+          entryCandidates,
+        );
         const targetContext = getGamePlaySurfaceNotificationTargetContext({
           gamePlayState,
           route,
@@ -1092,7 +1119,7 @@ function renderGamePlaySurfaceRoute(route) {
     });
 }
 
-function renderGamePlaySurfaceActive(surface, currentSection) {
+function renderGamePlaySurfaceActive(surface, currentSection, entryCandidates) {
   surface.dataset.gamePlaySurfaceState = "active";
   surface.removeAttribute("aria-busy");
 
@@ -1100,7 +1127,10 @@ function renderGamePlaySurfaceActive(surface, currentSection) {
   heading.className = "route-heading";
   heading.textContent = "Your turn";
 
-  surface.replaceChildren(heading, renderMultiplayerSectionForm(currentSection));
+  surface.replaceChildren(
+    heading,
+    renderMultiplayerSectionForm(currentSection, entryCandidates),
+  );
 }
 
 function renderGamePlaySurfaceWaiting(surface) {
@@ -4046,9 +4076,13 @@ function renderMultiplayerParticipantSummary(batchSummary) {
   return summary;
 }
 
-function renderMultiplayerSectionForm(currentSection) {
+function renderMultiplayerSectionForm(currentSection, entryCandidates) {
   const form = document.createElement("form");
   form.className = "started-game-turn-form";
+  const diceState = {
+    candidates: entryCandidates,
+    usedValues: new Set(),
+  };
 
   const heading = document.createElement("div");
   heading.className = "section-heading";
@@ -4065,7 +4099,7 @@ function renderMultiplayerSectionForm(currentSection) {
   list.className = "started-game-turn-list";
   list.replaceChildren(
     ...currentSection.rows.map((row) =>
-      renderMultiplayerSectionRow(row, currentSection),
+      renderMultiplayerSectionRow(row, currentSection, diceState),
     ),
   );
 
@@ -4088,14 +4122,15 @@ function renderMultiplayerSectionForm(currentSection) {
   return form;
 }
 
-function renderMultiplayerSectionRow(row, currentSection) {
-  const label = document.createElement("label");
-  label.className = "started-game-turn-row";
+function renderMultiplayerSectionRow(row, currentSection, diceState) {
+  const rowElement = document.createElement("div");
+  rowElement.className = "started-game-turn-row";
 
-  const text = document.createElement("span");
-  text.textContent = `Phrase ${row.rowIndex + 1}`;
+  const label = document.createElement("label");
+  label.textContent = `Phrase ${row.rowIndex + 1}`;
 
   const input = document.createElement("input");
+  input.id = `multiplayer-section-input-${row.rowIndex}`;
   input.type = "text";
   input.autocomplete = "off";
   input.required = true;
@@ -4103,9 +4138,39 @@ function renderMultiplayerSectionRow(row, currentSection) {
   input.dataset.multiplayerSectionInput = String(row.rowIndex);
   input.placeholder =
     currentSection.entryKind === "adjective" ? "brisk" : "teapot";
+  label.htmlFor = input.id;
 
-  label.append(text, input);
-  return label;
+  const diceButton = document.createElement("button");
+  diceButton.type = "button";
+  diceButton.className = "dice-button";
+  diceButton.dataset.multiplayerDiceRowIndex = String(row.rowIndex);
+  const entryAssistAvailable = diceState.candidates.length > 0;
+  diceButton.disabled = !entryAssistAvailable;
+  diceButton.ariaLabel = entryAssistAvailable
+    ? `Generate ${currentSection.entryKind} for phrase ${row.rowIndex + 1}`
+    : "Random word unavailable";
+  diceButton.title = entryAssistAvailable
+    ? `Generate ${currentSection.entryKind}`
+    : "Random word unavailable";
+  diceButton.addEventListener("click", () => {
+    const unusedCandidates = diceState.candidates.filter(
+      (candidate) => !diceState.usedValues.has(candidate),
+    );
+    const selectableCandidates =
+      unusedCandidates.length > 0 ? unusedCandidates : diceState.candidates;
+    if (selectableCandidates.length === 0) {
+      return;
+    }
+
+    const candidate =
+      selectableCandidates[Math.floor(Math.random() * selectableCandidates.length)];
+    diceState.usedValues.add(candidate);
+    input.value = candidate;
+    input.focus();
+  });
+
+  rowElement.append(label, input, diceButton);
+  return rowElement;
 }
 
 function renderNotificationDropdown() {

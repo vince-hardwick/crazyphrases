@@ -645,43 +645,22 @@ preserve their original history.
   `f7ff98ac91666286c3463c873ec5e2f878d62240`. Successful Game starts and actionable
   `entries_needed` / `batch_complete` notifications now route to the Game Play Surface;
   invalid or stale targets retain the Multiplayer-dashboard fallback.
-- **Development runtime verified; final-head redeployment pending**: Issue #230 implements
-  dice-based Multiplayer Entry Assist on its feature branch, including the private
-  approved-reference registry, Started Game reference snapshot, active-only loader
-  disclosure, exact pinned-shard provider path, accessible dice controls, and typed-entry
-  fallback. After renewed explicit owner approval, the corrected source migration applied
-  to project `egnudphshvqdhrotxrfs` as hosted migration
-  `20260713092820 pin_multiplayer_entry_assist_shards`. Readback verified the exact
-  approved adjective and noun registry rows, zero existing Games, the snapshot shape,
-  trigger, function security modes, empty `search_path` values, browser-role denial, no
-  new security WARN/ERROR, and no performance-advisor delta. Approved development workflow
-  run `29240601750` deployed source head
-  `901ca431fd87808a902316674465689795926170` with the exact asset stamp. The visible
-  two-Account smoke proved pinned adjective and noun dice, selected-row-only replacement,
-  focus return, typed submission, participant concealment through Reveal, `Batch complete.`,
-  empty logs, no framework overlay, and `815/815` document/body widths. One hard refresh was
-  needed after a normal Edge refresh retained the pre-deployment static view; the exact
-  deployed build then passed, so this remains a cache observation rather than a failed
-  acceptance criterion. Separately approved guarded cleanup removed only Pending Game
-  `91d72b95-b022-4a4f-9239-9f2d2a5bfaab`, Started Game
-  `747e4630-ac40-4600-85cc-8641745711cd`, and their bounded dependent rows, including the
-  one owner-triggered `curiosity` reveal. Readback proved zero targeted rows and preserved
-  both Auth users, Account Profiles, and Account Profile Directory rows. Because this
-  evidence changes the feature-branch head, Task 6 Step 7 now requires commit, full source
-  verification, push, and a fresh approved `dev` deployment for the new exact head before
-  merge. Issue #230 and draft PR #248 stay open until final-head development verification,
-  `test` and production promotion, durable closeout evidence, and tracker reconciliation
-  complete.
+- **Completed Game Play Surface Entry Assist**: Issue #230 shipped through PR #248,
+  merged to `main` as `ccd2d3438b034d5504554846a61f3db19a05fbd8`. The final
+  source passed automated verification, approved hosted migration verification,
+  two-Account functional testing in `dev` and `test`, and bounded fixture cleanup that
+  preserved the named Accounts and Profiles. Promotion run `29750676111` attempt 2
+  deployed the exact merge commit to production, where visible read-only smoke confirmed
+  commit-stamped assets and transitive modules, desktop and mobile layout, and a clean
+  repeat browser load. Issue #230 and parent PRD #226 are closed as completed.
 - **Deferred follow-up routes**: Noun-shard expansion/rebalancing remains issue #245;
   future built-in Entry Kind shards remain issue #246; and Account Entry Assist Safety
   Setting UI, persistence, and opt-in candidates remain issue #247. These issues remain
   open and are not issue #230 scope. Hosted auth-provider enhancement issue #89 remains
   open, untouched, and deferred.
-- **Remaining risk**: Development runtime UI behaviour and bounded cleanup are verified
-  only for deployed source head `901ca431fd87808a902316674465689795926170`. The new
-  documentation head still needs its own approved development deployment and visible
-  final-head confirmation before merge. `test`, production, durable closeout, and tracker
-  reconciliation retain their separate Task 6 approval gates; none has occurred.
+- **Remaining risk**: No accepted Game Play Surface Entry Assist scope remains open.
+  Future Word Bank quality, Entry Kind expansion, and Account safety-setting work remain
+  separately deferred under issues #245, #246, and #247.
 
 ### Notification top-bar affordance
 

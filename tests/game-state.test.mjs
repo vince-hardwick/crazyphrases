@@ -27,6 +27,12 @@ import {
 const seedWordBank = JSON.parse(
   readFileSync(new URL("../assets/word-bank-seed.json", import.meta.url), "utf8"),
 );
+const entryAssistWeightPolicy = JSON.parse(
+  readFileSync(
+    new URL("../assets/word-bank/entry-assist-weight-policy.json", import.meta.url),
+    "utf8",
+  ),
+);
 
 describe("anonymous solo game state", () => {
   it("starts the default template with a concealed active section in resolved order", () => {
@@ -392,6 +398,70 @@ describe("anonymous solo game state", () => {
       game.sections[0].rows.map((row) => row.value),
       ["brisk", "calm", "brisk"],
     );
+  });
+
+  it("applies the global weight policy to metadata-bearing Game-pinned candidates", () => {
+    const entryCandidateProvider = {
+      getEntryCandidates() {
+        return [
+          {
+            canonicalText: "brisk",
+            entryKind: "adjective",
+            commonnessGrade: "common",
+          },
+          {
+            canonicalText: "calm",
+            entryKind: "adjective",
+            commonnessGrade: "common",
+          },
+          {
+            canonicalText: "wondrous",
+            entryKind: "adjective",
+            commonnessGrade: "rare",
+          },
+        ];
+      },
+      createSnapshot() {
+        return {
+          schemaVersion: 1,
+          entryKinds: {
+            adjective: {
+              candidates: ["brisk", "calm", "wondrous"],
+              candidateRecords: [
+                {
+                  canonicalText: "brisk",
+                  entryKind: "adjective",
+                  commonnessGrade: "common",
+                },
+                {
+                  canonicalText: "calm",
+                  entryKind: "adjective",
+                  commonnessGrade: "common",
+                },
+                {
+                  canonicalText: "wondrous",
+                  entryKind: "adjective",
+                  commonnessGrade: "rare",
+                },
+              ],
+            },
+          },
+        };
+      },
+    };
+    const rolls = [0.8, 0.99];
+    let game = startGame(createAnonymousSoloGame({ rowCount: 1, random: () => 0 }), {
+      entryCandidateProvider,
+    });
+
+    game = generateEntryCandidate(game, {
+      rowIndex: 0,
+      entryCandidateProvider,
+      weightPolicy: entryAssistWeightPolicy,
+      random: () => rolls.shift(),
+    });
+
+    assert.equal(game.sections[0].rows[0].value, "calm");
   });
 
   it("pins Entry Candidate values for a started game until a new game starts", async () => {

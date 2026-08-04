@@ -24,6 +24,7 @@ import {
   createManifestBackedEntryCandidateProvider,
   hasEntryCandidates,
 } from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
+import { selectEntryCandidate } from "./entry-assist-weight-policy.js?v=__ASSET_VERSION__";
 import { writePlainText } from "./clipboard.js?v=__ASSET_VERSION__";
 import {
   loadCurrentAnonymousSoloGame,
@@ -66,6 +67,8 @@ import { createSignedInRouteHandoff } from "./signed-in-route-handoff.js?v=__ASS
 
 const seedWordBankUrl = "assets/word-bank-seed.json?v=__ASSET_VERSION__";
 const wordBankManifestPath = "assets/word-bank/manifest.json";
+const entryAssistWeightPolicyPath =
+  "assets/word-bank/entry-assist-weight-policy.json";
 const FONT_AWESOME_KIT_SCRIPT_URL = "https://kit.fontawesome.com/613901cfcc.js";
 const COMPLETED_MULTIPLAYER_HISTORY_PAGE_SIZE = 20;
 const AVATAR_UPLOAD_MAX_BYTES = 1024 * 1024;
@@ -205,6 +208,7 @@ let requestedSignedInRoute = isSignedInOnlyRoute(currentRoute)
   ? currentRoute
   : null;
 let entryCandidateProvider = null;
+let entryAssistWeightPolicy = null;
 let accountShell = createSignedOutShell();
 let hostedAuthSession = null;
 let hostedAuthAvailable = false;
@@ -608,6 +612,7 @@ entryForm.addEventListener("click", (event) => {
   game = generateEntryCandidate(game, {
     rowIndex,
     entryCandidateProvider,
+    weightPolicy: entryAssistWeightPolicy,
   });
   void persistGame();
   renderGame();
@@ -1010,10 +1015,10 @@ function renderGamePlaySurfaceRoute(route) {
         let entryCandidates = [];
         if (
           gamePlayState.currentSection.entryAssist?.state === "available" &&
-          typeof entryCandidateProvider?.loadPinnedEntryCandidateValues === "function"
+          typeof entryCandidateProvider?.loadPinnedEntryCandidateRecords === "function"
         ) {
           try {
-            entryCandidates = await entryCandidateProvider.loadPinnedEntryCandidateValues(
+            entryCandidates = await entryCandidateProvider.loadPinnedEntryCandidateRecords(
               gamePlayState.currentSection.entryAssist.reference,
             );
           } catch {
@@ -4082,6 +4087,7 @@ function renderMultiplayerSectionForm(currentSection, entryCandidates) {
   const diceState = {
     candidates: entryCandidates,
     usedValues: new Set(),
+    entryKind: currentSection.entryKind,
   };
 
   const heading = document.createElement("div");
@@ -4153,18 +4159,17 @@ function renderMultiplayerSectionRow(row, currentSection, diceState) {
     ? `Generate ${currentSection.entryKind}`
     : "Random word unavailable";
   diceButton.addEventListener("click", () => {
-    const unusedCandidates = diceState.candidates.filter(
-      (candidate) => !diceState.usedValues.has(candidate),
-    );
-    const selectableCandidates =
-      unusedCandidates.length > 0 ? unusedCandidates : diceState.candidates;
-    if (selectableCandidates.length === 0) {
+    const candidate = selectEntryCandidate(diceState.candidates, {
+      entryKind: diceState.entryKind,
+      policy: entryAssistWeightPolicy,
+      usedCandidateKeys: [...diceState.usedValues],
+    });
+
+    if (!candidate) {
       return;
     }
 
-    const candidate =
-      selectableCandidates[Math.floor(Math.random() * selectableCandidates.length)];
-    diceState.usedValues.add(candidate);
+    diceState.usedValues.add(candidate.trim().toLocaleLowerCase("en-GB"));
     input.value = candidate;
     input.focus();
   });
@@ -6841,11 +6846,14 @@ function getGameEntryKinds(gameToStart) {
 }
 
 async function loadWordBank() {
-  const [seedWordBankResult] = await Promise.allSettled([
+  const [seedWordBankResult, weightPolicyResult] = await Promise.allSettled([
     fetchWordBankJson(seedWordBankUrl),
+    fetchVersionedWordBankAsset(entryAssistWeightPolicyPath),
   ]);
   const seedWordBank =
     seedWordBankResult.status === "fulfilled" ? seedWordBankResult.value : null;
+  entryAssistWeightPolicy =
+    weightPolicyResult.status === "fulfilled" ? weightPolicyResult.value : null;
 
   entryCandidateProvider = createManifestBackedEntryCandidateProvider({
     fetchJson: fetchVersionedWordBankAsset,

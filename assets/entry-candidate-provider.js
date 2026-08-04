@@ -30,6 +30,15 @@ export function createManifestBackedEntryCandidateProvider({
     },
 
     async loadPinnedEntryCandidateValues(reference) {
+      const candidates = await this.loadPinnedEntryCandidateRecords(reference);
+
+      return candidates
+        .map(getEntryCandidateValue)
+        .map(cleanWhitespace)
+        .filter(Boolean);
+    },
+
+    async loadPinnedEntryCandidateRecords(reference) {
       const validatedReference = validatePinnedReference(reference);
 
       if (!validatedReference || typeof fetchJson !== "function") {
@@ -46,15 +55,12 @@ export function createManifestBackedEntryCandidateProvider({
         cachedShard?.pinnedReference &&
         pinnedReferencesMatch(cachedShard.pinnedReference, validatedReference)
       ) {
-        return [...cachedShard.candidates];
+        return cloneCandidates(cachedShard.candidates);
       }
 
       try {
         const shard = await fetchJson(validatedReference.path);
-        const candidates = getPinnedShardCandidates(shard, validatedReference)
-          .map(getEntryCandidateValue)
-          .map(cleanWhitespace)
-          .filter(Boolean);
+        const candidates = getPinnedShardCandidates(shard, validatedReference);
 
         if (candidates.length > 0) {
           loadedShardsByVersion.set(cacheKey, {
@@ -66,7 +72,7 @@ export function createManifestBackedEntryCandidateProvider({
           });
         }
 
-        return candidates;
+        return cloneCandidates(candidates);
       } catch {
         return [];
       }
@@ -155,9 +161,11 @@ export function createManifestBackedEntryCandidateProvider({
             }
           : seedProvider;
         const candidates = getEntryCandidateValues(provider, entryKind);
+        const candidateRecords = getEntryCandidateRecords(provider, entryKind);
 
         snapshotEntryKinds[entryKind] = {
           candidates,
+          candidateRecords,
           entryKind,
           source: loadedShard ? "wordBankShard" : "seed",
           version:
@@ -264,6 +272,27 @@ export function getEntryCandidateValues(entryCandidateProvider, entryKind) {
     .filter(Boolean);
 }
 
+export function getEntryCandidateRecords(entryCandidateProvider, entryKind) {
+  if (
+    !entryCandidateProvider ||
+    typeof entryCandidateProvider.getEntryCandidates !== "function"
+  ) {
+    return [];
+  }
+
+  const candidates = entryCandidateProvider.getEntryCandidates(entryKind);
+
+  if (!Array.isArray(candidates)) {
+    return [];
+  }
+
+  return cloneCandidates(
+    candidates.filter(
+      (candidate) => cleanWhitespace(getEntryCandidateValue(candidate)) !== "",
+    ),
+  );
+}
+
 export function hasEntryCandidates(entryCandidateProvider, entryKind) {
   return getEntryCandidateValues(entryCandidateProvider, entryKind).length > 0;
 }
@@ -331,4 +360,12 @@ function getPinnedShardCandidates(shard, reference) {
 
 function cleanWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
+}
+
+function cloneCandidates(candidates) {
+  return candidates.map((candidate) =>
+    candidate && typeof candidate === "object"
+      ? structuredClone(candidate)
+      : candidate,
+  );
 }

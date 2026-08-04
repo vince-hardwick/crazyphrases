@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   createManifestBackedEntryCandidateProvider,
+  getEntryCandidateRecords,
   getEntryCandidateValues,
 } from "../assets/entry-candidate-provider.js";
 
@@ -504,5 +505,14 @@ describe("manifest-backed Entry Candidate provider", () => {
     await provider.loadEntryKind("noun");
 
     assert.deepEqual(getEntryCandidateValues(provider, "noun"), ["alarm clock"]);
+    assert.deepEqual(getEntryCandidateRecords(provider, "noun"), [
+      {
+        canonicalText: "alarm clock",
+        entryKind: "noun",
+        candidateForm: "openCompound",
+        safetyStatus: "familyFriendly",
+        curationStatus: "accepted",
+      },
+    ]);
   });
 });

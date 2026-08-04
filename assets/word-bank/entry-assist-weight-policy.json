@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "2026-08-04-default-6-3-1",
+  "entryKinds": {
+    "adjective": {
+      "gradeWeights": {
+        "common": 6,
+        "lessCommon": 3,
+        "rare": 1
+      }
+    },
+    "noun": {
+      "nounSemanticBands": [
+        "People and Groups",
+        "Animals and Plants",
+        "Body",
+        "Food and Drink",
+        "Places",
+        "Made Objects",
+        "Nature and Materials",
+        "Actions and Events",
+        "Ideas and Communication",
+        "Feelings and Conditions",
+        "Measures and Relationships"
+      ],
+      "gradeWeights": {
+        "common": 6,
+        "lessCommon": 3,
+        "rare": 1
+      }
+    }
+  }
+}

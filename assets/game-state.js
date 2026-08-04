@@ -1,7 +1,9 @@
 import {
   createSeedBackedEntryCandidateProvider,
+  getEntryCandidateRecords,
   getEntryCandidateValues,
 } from "./entry-candidate-provider.js?v=__ASSET_VERSION__";
+import { selectEntryCandidate } from "./entry-assist-weight-policy.js?v=__ASSET_VERSION__";
 
 const DEFAULT_SECTIONS = [
   { kind: "adjective", label: "Enter adjectives" },
@@ -118,12 +120,18 @@ export function updateEntry(game, { rowIndex, value }) {
 
 export function generateEntryCandidate(
   game,
-  { rowIndex, entryCandidateProvider, wordBank, random = Math.random },
+  {
+    rowIndex,
+    entryCandidateProvider,
+    wordBank,
+    weightPolicy,
+    random = Math.random,
+  },
 ) {
   assertStarted(game);
 
   const activeSection = getActiveSection(game);
-  const candidates = getCandidateValues(
+  const candidates = getCandidateRecords(
     { entryCandidateProvider, game, wordBank },
     activeSection.kind,
   );
@@ -132,9 +140,11 @@ export function generateEntryCandidate(
     throw new Error(`No candidates available for ${activeSection.kind}.`);
   }
 
-  const candidate = chooseCandidate(candidates, {
+  const candidate = selectEntryCandidate(candidates, {
+    entryKind: activeSection.kind,
+    policy: weightPolicy,
     random,
-    used: game.usedCandidates?.[activeSection.kind] ?? [],
+    usedCandidateKeys: game.usedCandidates?.[activeSection.kind] ?? [],
   });
 
   const updatedGame = updateEntry(game, { rowIndex, value: candidate });
@@ -282,6 +292,20 @@ function getCandidateValues({ entryCandidateProvider, game, wordBank }, entryKin
   return getEntryCandidateValues(provider, entryKind);
 }
 
+function getCandidateRecords({ entryCandidateProvider, game, wordBank }, entryKind) {
+  const snapshotRecords = getSnapshotCandidateRecords(game, entryKind);
+
+  if (snapshotRecords) {
+    return snapshotRecords;
+  }
+
+  const provider =
+    entryCandidateProvider ??
+    (wordBank ? createSeedBackedEntryCandidateProvider(wordBank) : null);
+
+  return getEntryCandidateRecords(provider, entryKind);
+}
+
 function normalizeEntryForDisplay(
   value,
   { entryKind, entryCandidateProvider, game, wordBank },
@@ -293,17 +317,6 @@ function normalizeEntryForDisplay(
   ).find((word) => candidateKey(word) === candidateKey(cleanedValue));
 
   return candidate ?? cleanedValue;
-}
-
-function chooseCandidate(candidates, { random, used }) {
-  const usedCandidateKeys = new Set(used);
-  const unusedCandidates = candidates.filter(
-    (candidate) => !usedCandidateKeys.has(candidateKey(candidate)),
-  );
-  const candidatePool =
-    unusedCandidates.length > 0 ? unusedCandidates : candidates;
-
-  return candidatePool[Math.floor(random() * candidatePool.length)];
 }
 
 function candidateKey(candidate) {
@@ -336,6 +349,24 @@ function getSnapshotCandidateValues(game, entryKind) {
 
   if (snapshotEntry && Array.isArray(snapshotEntry.candidates)) {
     return snapshotEntry.candidates.map(cleanWhitespace).filter(Boolean);
+  }
+
+  return null;
+}
+
+function getSnapshotCandidateRecords(game, entryKind) {
+  const snapshotEntry = game?.entryCandidateSnapshot?.entryKinds?.[entryKind];
+
+  if (snapshotEntry && Array.isArray(snapshotEntry.candidateRecords)) {
+    return structuredClone(snapshotEntry.candidateRecords);
+  }
+
+  if (Array.isArray(snapshotEntry)) {
+    return [...snapshotEntry];
+  }
+
+  if (snapshotEntry && Array.isArray(snapshotEntry.candidates)) {
+    return [...snapshotEntry.candidates];
   }
 
   return null;

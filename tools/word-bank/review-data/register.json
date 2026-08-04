@@ -43,13 +43,20 @@
       "entryKind": "noun",
       "path": "tranches/noun-baseline.json",
       "purpose": "baseline",
-      "lifecycle": "planned"
+      "lifecycle": "complete"
     },
     {
       "id": "adjective-baseline",
       "entryKind": "adjective",
       "path": "tranches/adjective-baseline.json",
       "purpose": "baseline",
+      "lifecycle": "planned"
+    },
+    {
+      "id": "noun-semantic-gap-001",
+      "entryKind": "noun",
+      "path": "tranches/noun-semantic-gap-001.json",
+      "purpose": "semanticGap",
       "lifecycle": "planned"
     }
   ]

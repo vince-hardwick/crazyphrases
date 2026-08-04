@@ -138,6 +138,7 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
+            tools/**
 
   preflight-dev:
     name: Verify dev FTPS target

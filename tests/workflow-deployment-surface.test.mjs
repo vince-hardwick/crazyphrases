@@ -35,6 +35,7 @@ const requiredSourceOnlyExcludes = [
   "package-lock.json",
   "supabase/**",
   "tests/**",
+  "tools/**",
 ];
 
 const automaticDevDeploymentPaths = [".htaccess", "index.html", "assets/**"];

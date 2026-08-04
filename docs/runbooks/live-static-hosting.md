@@ -32,6 +32,7 @@ Source-only paths must stay out of FTPS uploads:
 - `package-lock.json`
 - `supabase/`
 - `tests/`
+- `tools/`
 
 The payload contract is protected by `.github/workflows/deploy-dev.yml`,
 `.github/workflows/promote.yml`, and
@@ -58,7 +59,7 @@ The live web root is the hosting account directory that currently displays `Inde
 
 The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
 
-The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`. Runtime image assets referenced from `index.html`, such as `assets/img/crazy_phrases_homepage_logo.png`, `assets/img/crazy_phrases_homepage_logo_dark.png`, and `assets/img/favicon.ico`, must also use the deployed asset-version query string. Runtime data assets fetched by browser code, such as `assets/word-bank-seed.json`, `assets/word-bank/manifest.json`, and production Word Bank shard files, must use a deployed asset-version query string when referenced from JavaScript.
+The deployed `.htaccess` file also allows long-lived immutable caching for `.css` and `.js` files. Those files must remain referenced through commit-stamped URLs such as `assets/app.js?v=<commit-sha>` and `./game-state.js?v=<commit-sha>`. Runtime image assets referenced from `index.html`, such as `assets/img/crazy_phrases_homepage_logo.png`, `assets/img/crazy_phrases_homepage_logo_dark.png`, and `assets/img/favicon.ico`, must also use the deployed asset-version query string. Runtime data assets fetched by browser code, such as `assets/word-bank-seed.json`, `assets/word-bank/manifest.json`, `assets/word-bank/entry-assist-weight-policy.json`, and production Word Bank shard files, must use a deployed asset-version query string when referenced from JavaScript.
 
 ## GitHub Actions Deployment
 
@@ -77,7 +78,7 @@ The `FTP_SERVER` value must point to a direct FTP/FTPS endpoint, not a Cloudflar
 
 The promotion workflow verifies required files, runs available static-site tests, checks for insecure `http://` asset references, deploys the merged `main` commit to `test`, then waits for production approval before uploading the same workflow run's commit over FTPS.
 
-The static hosting payload is intentionally limited to runtime web files. Source-only repository paths such as `.gitattributes`, `.gitignore`, `.github/`, `docs/`, `tests/`, `output/`, `supabase/`, `package.json`, and `package-lock.json` must stay out of FTPS uploads for `dev`, `test`, and `production`.
+The static hosting payload is intentionally limited to runtime web files. Source-only repository paths such as `.gitattributes`, `.gitignore`, `.github/`, `docs/`, `tests/`, `tools/`, `output/`, `supabase/`, `package.json`, and `package-lock.json` must stay out of FTPS uploads for `dev`, `test`, and `production`.
 
 Non-production environment DNS, runtime access control, feature-branch `dev` deployment, and the full promotion sequence are covered by `docs/runbooks/cloudflare-dns-and-access.md`.
 

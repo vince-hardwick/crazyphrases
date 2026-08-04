@@ -158,10 +158,9 @@ async function initialiseReviewData(programme) {
 
 async function checkReviewData(programme, { nounCatalogue, adjectiveCatalogue }) {
   const actualIndex = await readJson(path.join(reviewDataRoot, "register.json"));
-  const actualTranches = await Promise.all(
-    actualIndex.tranches.map((reference) =>
-      readJson(path.join(reviewDataRoot, ...reference.path.split("/"))),
-    ),
+  const actualTranches = await loadRegisteredReviewTranches(
+    reviewDataRoot,
+    actualIndex,
   );
   const actualNounBaseline = actualTranches.find(
     (tranche) => tranche.id === "noun-baseline",
@@ -188,6 +187,14 @@ async function checkReviewData(programme, { nounCatalogue, adjectiveCatalogue })
     tranches: actualTranches,
     requireCompleteCoverage: false,
   });
+}
+
+export async function loadRegisteredReviewTranches(root, index) {
+  return Promise.all(
+    index.tranches.map((reference) =>
+      readJson(path.join(root, ...reference.path.split("/"))),
+    ),
+  );
 }
 
 function assertBaselineEvidence(actual, expected) {

@@ -157,13 +157,15 @@ is validated before an atomic swap, so a partial or failed write never becomes
 authoritative. Recovering a stale lock requires explicit confirmation that no writable
 workbench process remains.
 
-Unfamiliar review terms have discoverable plain-English help available by hover,
-keyboard focus, and click or tap. This help covers ESDB source size, spelling profiles,
-variant levels, source suggestions versus operator decisions, and every Noun Semantic
-Band, with two illustrative nouns per band. The examples explain intended meaning but do
-not become automatic classification precedents. A visible help affordance accompanies
-each affected label, and semantic-band help remains aligned with the canonical glossary
-in `CONTEXT.md` rather than creating UI-only meanings.
+Unfamiliar review terms have discoverable plain-English help available by hover, click
+or tap on the visible help affordance, and by keyboard focus on the associated decision
+control. The help affordances themselves are omitted from the sequential Tab path so
+review moves through decision controls and actions only. This help covers ESDB source
+size, spelling profiles, variant levels, source suggestions versus operator decisions,
+and every Noun Semantic Band, with two illustrative nouns per band. The examples explain
+intended meaning but do not become automatic classification precedents. Semantic-band
+help remains aligned with the canonical glossary in `CONTEXT.md` rather than creating
+UI-only meanings.
 
 The workbench and its validation contract are Entry-Kind-aware rather than noun-only.
 Issue #245 uses them for the noun tranche programme and the fixed re-review of all 114

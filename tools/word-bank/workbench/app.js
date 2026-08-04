@@ -269,7 +269,7 @@ function renderReview() {
   app.innerHTML = `
     <section class="panel">
       <div class="toolbar">
-        <div><p class="eyebrow">${escapeHtml(candidate.trancheId)} · sequence ${candidate.sequence}</p><h2 class="candidate-word">${escapeHtml(candidate.canonicalText)}</h2></div>
+        <div><p class="eyebrow">${escapeHtml(candidate.trancheId)}</p><h2 class="candidate-word">${escapeHtml(candidate.canonicalText)}</h2></div>
         <button type="button" class="secondary" data-home>Back to Register</button>
       </div>
       ${renderProgress(activeTranche.progress)}
@@ -297,8 +297,8 @@ function renderReview() {
 
 function renderBooleanField(field, label, helpText) {
   return `
-    <fieldset>
-      <legend>${escapeHtml(label)} ${helpButton(field, helpText)}</legend>
+    <fieldset class="review-field">
+      <legend>${fieldHeading(label, field, helpText)}</legend>
       <label class="option"><input type="radio" name="${field}" value="true" ${draft[field] === true ? "checked" : ""} /> Yes</label>
       <label class="option"><input type="radio" name="${field}" value="false" ${draft[field] === false ? "checked" : ""} /> No</label>
     </fieldset>
@@ -307,8 +307,8 @@ function renderBooleanField(field, label, helpText) {
 
 function renderCurationDecisionField() {
   return `
-    <fieldset>
-      <legend>Curation Decision ${helpButton("curation", "Accept or Reject is an operator decision. Source suggestions and previously published values are evidence only and never count as a decision.")}</legend>
+    <fieldset class="review-field">
+      <legend>${fieldHeading("Curation Decision", "curation", "Accept or Reject is an operator decision. Source suggestions and previously published values are evidence only and never count as a decision.")}</legend>
       <label class="option"><input type="radio" name="curationDecision" value="Accept" ${draft.curationDecision === "Accept" ? "checked" : ""} /> Accept</label>
       <label class="option"><input type="radio" name="curationDecision" value="Reject" ${draft.curationDecision === "Reject" ? "checked" : ""} /> Reject</label>
     </fieldset>
@@ -317,9 +317,9 @@ function renderCurationDecisionField() {
 
 function renderCommonnessField(candidate) {
   return `
-    <fieldset data-grade-group>
-      <legend>Commonness Grade ${helpButton("commonness", "This is operator-approved familiarity for a contemporary UK audience, not measured frequency or a quality score. ESDB size is only a suggestion.")}</legend>
-      ${Object.entries(commonnessHelp).map(([value, help]) => `<div class="inline"><label class="option"><input type="radio" name="commonnessGrade" value="${value}" ${draft.commonnessGrade === value ? "checked" : ""} /> ${displayGrade(value)}</label>${helpButton(`grade-${value}`, help)}</div>`).join("")}
+    <fieldset class="review-field" data-grade-group>
+      <legend>${fieldHeading("Commonness Grade", "commonness", "This is operator-approved familiarity for a contemporary UK audience, not measured frequency or a quality score. ESDB size is only a suggestion.")}</legend>
+      ${Object.entries(commonnessHelp).map(([value, help]) => `<div class="help-row option-help-row"><label class="option"><input type="radio" name="commonnessGrade" value="${value}" ${draft.commonnessGrade === value ? "checked" : ""} /> ${displayGrade(value)}</label>${helpButton(`grade-${value}`, help)}</div>`).join("")}
       <button type="button" class="secondary" data-use-grade-suggestion ${candidate.suggestions?.commonnessGrade ? "" : "disabled"}>Use suggestion${candidate.suggestions?.commonnessGrade ? `: ${displayGrade(candidate.suggestions.commonnessGrade)}` : " (none)"}</button>
     </fieldset>
   `;
@@ -327,9 +327,9 @@ function renderCommonnessField(candidate) {
 
 function renderBandField(candidate) {
   return `
-    <fieldset data-band-group>
-      <legend>Noun Semantic Band ${helpButton("band", "Choose one Crazy Phrases-owned semantic flavour. Open English WordNet may suggest a band only when all exact noun senses collapse to one band; examples are illustrative, not precedents.")}</legend>
-      ${bandHelp.map(([band, help]) => `<div class="band-row"><label class="option"><input type="radio" name="nounSemanticBand" value="${escapeAttribute(band)}" ${draft.nounSemanticBand === band ? "checked" : ""} /> ${escapeHtml(band)}</label>${helpButton(`band-${band}`, help)}</div>`).join("")}
+    <fieldset class="review-field" data-band-group>
+      <legend>${fieldHeading("Noun Semantic Band", "band", "Choose one Crazy Phrases-owned semantic flavour. Open English WordNet may suggest a band only when all exact noun senses collapse to one band; examples are illustrative, not precedents.")}</legend>
+      ${bandHelp.map(([band, help]) => `<div class="help-row option-help-row"><label class="option"><input type="radio" name="nounSemanticBand" value="${escapeAttribute(band)}" ${draft.nounSemanticBand === band ? "checked" : ""} /> ${escapeHtml(band)}</label>${helpButton(`band-${band}`, help)}</div>`).join("")}
       <button type="button" class="secondary" data-use-band-suggestion ${candidate.suggestions?.nounSemanticBand ? "" : "disabled"}>Use suggestion${candidate.suggestions?.nounSemanticBand ? `: ${escapeHtml(candidate.suggestions.nounSemanticBand)}` : " (unresolved)"}</button>
     </fieldset>
   `;
@@ -520,8 +520,8 @@ function renderEvidence(candidate) {
     <section aria-label="Source evidence">
       <h3>Evidence and suggestions</h3>
       <div class="evidence-grid">
-        <div><strong>ESDB size</strong><br />${escapeHtml(evidence.resolvedSize ?? "Missing")}${helpButton("size-evidence", "ESDB size is an approximate vocabulary-list tier, not measured frequency. Sizes 35–80 are admitted; 85 and 99 are excluded.")}</div>
-        <div><strong>Spelling / variants</strong><br />${escapeHtml(formatSpellings(evidence.spellings))}${helpButton("spelling-evidence", "_ means no dialect-specific alternative. B is British -ise spelling; Z is excluded Oxford-style -ize spelling. Variant levels 0–4 are admitted automatically and describe spelling relationships, not commonness or quality.")}</div>
+        <div><span class="help-row"><strong>ESDB size</strong>${helpButton("size-evidence", "ESDB size is an approximate vocabulary-list tier, not measured frequency. Sizes 35–80 are admitted; 85 and 99 are excluded.")}</span><span>${escapeHtml(evidence.resolvedSize ?? "Missing")}</span></div>
+        <div><span class="help-row"><strong>Spelling / variants</strong>${helpButton("spelling-evidence", "_ means no dialect-specific alternative. B is British -ise spelling; Z is excluded Oxford-style -ize spelling. Variant levels 0–4 are admitted automatically and describe spelling relationships, not commonness or quality.")}</span><span>${escapeHtml(formatSpellings(evidence.spellings))}</span></div>
         <div><strong>Grade suggestion</strong><br />${escapeHtml(suggestion.commonnessGrade ? displayGrade(suggestion.commonnessGrade) : "None")}</div>
         ${candidate.entryKind === "noun" ? `<div><strong>Band suggestion</strong><br />${escapeHtml(suggestion.nounSemanticBand ?? "Unresolved")}</div>` : ""}
       </div>
@@ -534,9 +534,13 @@ function renderProgress(progress) {
   return `<progress value="${progress.reviewed}" max="${progress.total}" aria-label="${progress.percentage}% reviewed"></progress><p>${progress.percentage}% reviewed — ${progress.reviewed} of ${progress.total}</p>`;
 }
 
+function fieldHeading(label, id, text) {
+  return `<span class="help-row"><span>${escapeHtml(label)}</span>${helpButton(id, text)}</span>`;
+}
+
 function helpButton(id, text) {
   const safeId = `help-${String(id).replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}`;
-  return `<button type="button" class="help" aria-label="Help" aria-expanded="false" aria-controls="${safeId}" title="${escapeAttribute(text)}">?</button><span id="${safeId}" class="help-popover" role="tooltip">${escapeHtml(text)}</span>`;
+  return `<button type="button" class="help" tabindex="-1" aria-label="Help" aria-expanded="false" aria-controls="${safeId}" title="${escapeAttribute(text)}">?</button><span id="${safeId}" class="help-popover" role="tooltip">${escapeHtml(text)}</span>`;
 }
 
 function bindHelpButtons() {

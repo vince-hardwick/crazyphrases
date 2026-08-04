@@ -4,6 +4,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import { chromium } from "playwright";
+
 import { createReviewWorkbenchServer } from "../tools/word-bank/review-workbench-server.js";
 
 const resources = [];
@@ -11,6 +13,9 @@ const resources = [];
 afterEach(async () => {
   await Promise.all(
     resources.splice(0).map(async (resource) => {
+      if (resource.browser) {
+        await resource.browser.close();
+      }
       if (resource.server) {
         await resource.server.close();
       }
@@ -77,6 +82,84 @@ describe("Word Bank review workbench server", () => {
       percentage: 50,
     });
     assert.equal(state.activeCandidate.sequence, 2);
+  });
+
+  it("keeps help controls out of the candidate Tab path without duplicating sequence copy", async () => {
+    const page = await openActiveReviewPage();
+
+    const helpButtons = page.locator("button.help");
+    await helpButtons.first().waitFor();
+    assert.ok((await helpButtons.count()) > 0);
+    assert.deepEqual(
+      await helpButtons.evaluateAll((buttons) =>
+        buttons.map((button) => button.tabIndex),
+      ),
+      Array(await helpButtons.count()).fill(-1),
+    );
+
+    const keyboardStops = await page
+      .locator("button, input")
+      .evaluateAll((controls) =>
+        controls
+          .filter((control) => control.tabIndex >= 0 && !control.disabled)
+          .map((control) => ({
+            className: control.className,
+            type: control.getAttribute("type"),
+          })),
+      );
+    assert.equal(
+      keyboardStops.every(
+        ({ className, type }) =>
+          !String(className).split(/\s+/).includes("help") &&
+          (type === "radio" || type === "button" || type === "submit"),
+      ),
+      true,
+    );
+
+    await page.locator("[data-home]").focus();
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await page.locator(':focus[name="ukEnglishEligible"][value="true"]').count(),
+      1,
+    );
+    await page.keyboard.press("Space");
+    assert.equal(
+      await page.locator('[name="ukEnglishEligible"][value="true"]').isChecked(),
+      true,
+    );
+    await page.keyboard.press("Control+Enter");
+    await page.getByText("Family-friendly must be explicitly set.").waitFor();
+    assert.equal(await page.getByRole("heading", { name: "anchor" }).isVisible(), true);
+
+    assert.equal(await page.getByText(/sequence\s+\d+/i).count(), 0);
+    assert.equal(await page.getByText("0% reviewed — 0 of 2").isVisible(), true);
+  });
+
+  it("aligns separated help affordances and reveals field help from decision focus", async () => {
+    const page = await openActiveReviewPage({
+      viewport: { width: 1024, height: 900 },
+    });
+
+    await assertHelpRowsAligned(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await assertHelpRowsAligned(page);
+
+    const ukEnglishYes = page.locator(
+      '[name="ukEnglishEligible"][value="true"]',
+    );
+    await ukEnglishYes.focus();
+    assert.equal(
+      await page.locator("#help-ukenglisheligible").isVisible(),
+      true,
+    );
+
+    const commonGrade = page.locator('[name="commonnessGrade"][value="common"]');
+    await commonGrade.focus();
+    assert.equal(await page.locator("#help-grade-common").isVisible(), true);
+
+    const evidenceHelp = page.locator('[aria-controls="help-size-evidence"]');
+    await evidenceHelp.click();
+    assert.equal(await page.locator("#help-size-evidence").isVisible(), true);
   });
 
   it("opens an additional process read-only and rejects its mutations", async () => {
@@ -258,6 +341,50 @@ function catalogueCandidate(canonicalText, commonnessGrade, nounSemanticBand) {
     sourceEvidence: null,
     suggestions: { commonnessGrade, nounSemanticBand },
   };
+}
+
+async function openActiveReviewPage({ viewport } = {}) {
+  const fixture = await createFixture();
+  const server = await createReviewWorkbenchServer({
+    projectRoot: fixture.projectRoot,
+    reviewDataRoot: fixture.reviewDataRoot,
+    staticRoot: path.resolve("tools", "word-bank", "workbench"),
+    port: 0,
+    isGitCheckpointed: async () => true,
+  });
+  resources.push({ server, root: fixture.projectRoot });
+  const address = await server.listen();
+  const state = await getJson(`${address.origin}/api/state`);
+  await postJson(`${address.origin}/api/start-next`, {
+    expectedIndexHash: state.hashes["register.json"],
+  });
+
+  const browser = await chromium.launch();
+  resources.push({ browser });
+  const page = await browser.newPage(viewport ? { viewport } : undefined);
+  await page.goto(address.origin);
+  await page.getByRole("button", { name: "First pending" }).click();
+  return page;
+}
+
+async function assertHelpRowsAligned(page) {
+  const metrics = await page.locator(".help-row").evaluateAll((rows) =>
+    rows.map((row) => {
+      const label = row.firstElementChild.getBoundingClientRect();
+      const help = row.querySelector("button.help").getBoundingClientRect();
+      const container = row.getBoundingClientRect();
+      return {
+        rightInset: container.right - help.right,
+        separation: help.left - label.right,
+      };
+    }),
+  );
+
+  assert.ok(metrics.length >= 10);
+  for (const metric of metrics) {
+    assert.ok(Math.abs(metric.rightInset) < 1);
+    assert.ok(metric.separation >= 8);
+  }
 }
 
 async function getJson(url) {

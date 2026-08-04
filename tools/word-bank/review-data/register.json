@@ -50,7 +50,7 @@
       "entryKind": "adjective",
       "path": "tranches/adjective-baseline.json",
       "purpose": "baseline",
-      "lifecycle": "planned"
+      "lifecycle": "complete"
     },
     {
       "id": "noun-semantic-gap-001",

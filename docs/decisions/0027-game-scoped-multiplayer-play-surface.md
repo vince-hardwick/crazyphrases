@@ -83,8 +83,11 @@ browser does not choose candidate content, paths, versions, or curation tiers.
 The participant-scoped loader may return only the active Entry Kind's pinned
 reference, and the browser loads that exact static shard rather than resolving a
 newer manifest entry. This preserves ADR 0024's static delivery boundary and
-keeps suggestions stable for the Started Game without exposing another
-participant's section or entries.
+keeps candidate membership stable for the Started Game without exposing
+another participant's section or entries. The current globally loaded Entry
+Assist Weight Policy is not part of the Game snapshot, so selection
+probabilities may change after the application reloads while the pinned
+candidate set remains unchanged.
 
 The approved references live in a private registry with no browser-role table
 privileges. Game start serialises the complete schema-version-1 adjective/noun

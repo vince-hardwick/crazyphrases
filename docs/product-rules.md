@@ -1727,11 +1727,124 @@ avoidance remains transient to the currently rendered authorised form.
 
 Production Word Bank Shards carry minimal entry metadata rather than bare strings only.
 Entry Assist may still fill a plain candidate value into the input, but the shard format
-preserves source id/version, Entry Kind, optional dialect marker, optional commonness or
-playability band, required candidate form such as single word, hyphenated word, or open
-compound, required safety/curation status, and optional inflection or base-form link
-where available. This metadata supports attribution, family-friendly curation, UK/US
-controls, refresh diffs, and future template categories.
+preserves source id/version, Entry Kind, required candidate form such as single word,
+hyphenated word, or open compound, required family-friendly and curation status,
+required Commonness Grade, and a required Noun Semantic Band for noun candidates.
+Default Template candidates must be UK-English Eligible as defined in `CONTEXT.md`;
+optional inflection or base-form links may remain where available. Playability is an
+emergent property of the Game and is not candidate metadata.
+
+The ESDB review pool uses British spelling profile `B` only through variant level 4,
+not the Oxford `Z` profile or variant levels 5–9, and includes neutral/shared entries
+for operator review. Source filtering must exclude explicitly incompatible spelling
+profiles, but ESDB dialect metadata is not sufficient authority for vocabulary or
+sense: every published candidate still requires an operator-approved UK-English
+Eligible decision, without an exclusion rationale.
+
+The local review workbench explains ESDB size as an approximate vocabulary-list tier,
+not measured frequency: lower sizes generally contain more familiar words, size 80 adds
+unusual words still considered current, and size 85 or 99 may include words no longer in
+modern use and is excluded from the Source Catalogue. It explains `_` as not assigned to
+a dialect-specific alternative, `B` as the included British `-ise` profile, and `Z` as
+the excluded British Oxford-style `-ize` profile. Variant level describes a spelling's
+relationship to another form rather than commonness or quality: levels 0–4 mean
+non-variant, include, equal, disagreement, and common variant respectively; levels 5–9
+mean legacy unspecified, acceptable but less common, archaic, uncommon, and invalid or
+misspelt respectively. Only levels 0–4 are admitted automatically, and all source
+evidence remains subordinate to the operator's decisions.
+
+For issue #245, the discoverable noun Source Catalogue always carries the existing 240
+noun candidates into operator re-review irrespective of source size and automatically
+admits new qualifying ESDB candidates through size 80. Size 85 or 99 candidates are
+excluded altogether. Source Catalogue membership makes a candidate available for
+possible review; it does not require every candidate to enter the #245 active review
+queue and does not itself form a completion condition for #245.
+
+The #245 noun review starts by re-reviewing and classifying all existing 240 candidates.
+After that baseline is known, the system silently assembles a fixed 250-candidate #245
+semantic-gap tranche, or all remaining qualifying candidates when fewer exist. It
+excludes baseline and previously assigned candidates, then selects candidates with an
+automatic single-band suggestion from the least-represented accepted Noun Semantic
+Band/Commonness Grade cells, provisionally updating cell counts and using canonical text
+to resolve ties. Semantically unresolved candidates remain for the later catalogue
+programme. If the reviewed result is not yet materially broad enough for operator
+approval, the system repeats the same rule against the updated accepted baseline. After
+the #245 tranche work, every remaining Source Catalogue candidate must eventually enter
+a finite automatically assembled review tranche. A source-controlled Noun Review
+Register defines those tranches and records their progress, while unreviewed later
+tranches remain outside the #245 completion condition.
+
+Issue #245 completes only after all existing 240 nouns and 114 adjectives have received
+their required operator decisions; one or more fixed #245 noun-expansion tranches have
+been completely reviewed until the operator approves a materially broader noun
+allowlist; and the operator approves both final allowlists before publication. The Noun
+Review Register must assign every remaining automatically admitted catalogue candidate
+to exactly one future tranche with explicit progress state. The required metadata,
+weighting, immutable-shard publication, validation, and deployment work must also be
+complete, but reviewing the later registered tranches is continuing curation work and
+does not keep #245 open.
+
+Commonness Grades are `common`, `lessCommon`, and `rare` for both nouns and adjectives.
+ESDB size can seed an operator review: sizes 35/40 suggest `common`, 50/60 suggest
+`lessCommon`, and 70/80 suggest `rare`; sizes 85/99 are excluded, while a missing resolved
+size receives no automatic suggestion. The operator owns the final grade and may override
+any source suggestion without recording a reason. Each accepted noun has exactly one
+Crazy Phrases-owned Noun Semantic Band; semantic references may suggest a band, but the
+operator resolves missing or ambiguous classifications without multi-band weighting.
+
+Issue #245 applies the new commonness, UK-English eligibility, family-friendly review,
+immutable-shard, and weighted-selection requirements to the existing 114 adjective
+candidates, but does not otherwise broaden the adjective allowlist. It may remove an
+existing adjective that fails the new operator review. Broader adjective-corpus coverage
+is separately deferred to issue #250 and does not add semantic bands to adjectives.
+
+The sole automatic semantic-reference source is the pinned Open English WordNet 2025
+core JSON edition. Princeton WordNet is not a second automatic fallback; a missing or
+unresolved Open English WordNet classification remains an operator assignment.
+Automatic lookup uses exact case-normalised noun-lemma text, treating the reference
+format's underscores as spaces, without fuzzy matching or embeddings. Every matched
+noun sense is mapped into the Crazy Phrases taxonomy as follows:
+
+- People and Groups: `person`, `group`;
+- Animals and Plants: `animal`, `plant`;
+- Body: `body`;
+- Food and Drink: `food`;
+- Places: `location`;
+- Made Objects: `artifact`;
+- Nature and Materials: `object`, `substance`, `phenomenon`;
+- Actions and Events: `act`, `event`, `process`;
+- Ideas and Communication: `cognition`, `communication`, `motive`;
+- Feelings and Conditions: `feeling`, `attribute`, `state`;
+- Measures and Relationships: `quantity`, `relation`, `time`, `possession`, `shape`.
+
+The pipeline suggests a band only when every matched sense collapses into one band.
+Cross-band ambiguity, no exact match, or a generic classification requires operator
+assignment. The pipeline does not use phrase testing, confidence thresholds, or
+multi-band weighting.
+Each curated noun persists only the final operator-approved Noun Semantic Band. It does
+not persist matched synset ids, alternative bands, confidence, an override flag, or an
+override reason. The pinned Open English WordNet identity, version, and archive hash are
+recorded once in build and shard provenance rather than repeated per candidate; source
+suggestions remain regenerable evidence rather than runtime metadata.
+
+Entry Assist uses a globally loaded maintainer-controlled weight policy rather than
+pinning weight values to a Game. Noun weights apply to the combination of Noun Semantic
+Band and Commonness Grade and are identical in both noun positions; adjective weights
+apply to Commonness Grade only. All configured weights are finite and strictly positive.
+Selection first chooses a non-empty weighted candidate cell and then chooses uniformly
+within that cell, so corpus size does not determine a semantic band's total likelihood.
+The neutral initial profile gives every noun band, and the adjective grades, relative
+weights of `6` for `common`, `3` for `lessCommon`, and `1` for `rare`. A policy change may
+affect a Started Game after the application next loads or refreshes, while the Game's
+pinned immutable candidate shard remains unchanged. Existing Solo and Multiplayer
+repeat-avoidance behaviour remains unchanged and gains no new persistence or guarantee.
+The policy is a version-controlled static asset in the normal app deployment payload,
+maintained through repository controls rather than an Account setting, admin UI,
+service-backed configuration, independent publishing path, or background polling.
+If no valid policy is available, Entry Assist uses the authorised candidate source with
+the existing uniform selection and repeat-avoidance behaviour; metadata-free seed
+fallback is also uniform. Policy failure does not permit shard or Entry Kind
+substitution, and manual entry remains unaffected.
 
 Production Word Bank candidates are published as positive allowlists with curation
 labels, not as blocklist-only exports from source corpora. Potentially offensive but
@@ -1748,6 +1861,13 @@ The first production Word Bank rollout publishes only family-friendly candidates
 though the shard schema includes safety/curation status. Potentially offensive labelled
 candidates must wait until the signed-in Account Settings toggle, persistence, QA
 process, and copy are implemented together.
+
+Issue #245 curation requires an operator-assigned family-friendly boolean for every
+reviewed candidate and may retain false candidates in source-controlled curation data
+without a rationale. Its default runtime shards publish only true candidates; false
+candidates do not ship as dormant content. Issue #247 owns any later separately
+published opt-in tier, Account setting, persistence, Game snapshot filtering, and
+runtime access.
 
 The production Word Bank schema and build pipeline should support the controlled
 built-in Entry Kind vocabulary, but production should publish shards only for Entry
@@ -1789,10 +1909,11 @@ refresh cadence or curation operations materially diverge from app release caden
 
 The Word Bank build/import pipeline should be source-controlled in this repository,
 including pinned source configuration, extraction and Entry Kind mapping code, curation
-inputs, schema validation, deterministic sample/report generation, and reproducibility
-tests. Generated production shard files should be committed under `assets/word-bank/`
-only when an intentional Word Bank update is in scope; generated review reports may
-remain build artefacts unless deliberately added for review. Generated production Word
+inputs, schema validation, and deterministic output and reproducibility tests. Generated
+production shard files should be committed under `assets/word-bank/` only when an
+intentional Word Bank update is in scope; any generated review reports may remain build
+artefacts unless deliberately added for review, but are not required curation evidence.
+Generated production Word
 Bank JSON assets under `assets/word-bank/` are normalised to LF line endings through
 `.gitattributes`, so Windows checkouts and Word Bank build/check commands do not leave
 line-ending-only asset noise.

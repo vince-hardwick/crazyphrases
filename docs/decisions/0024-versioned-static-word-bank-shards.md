@@ -248,8 +248,9 @@ which resumes at the earliest candidate without a persisted valid decision. Leav
 review surface with unsaved changes requires an explicit Save, Discard, or Cancel choice.
 There is no autosave or bulk decision action. `Ctrl+Enter` invokes **Save & Next**, and
 all decision controls follow a logical keyboard tab order. Successful saves update a
-percentage-labelled progress bar immediately; validation failure retains the current
-candidate and explains every missing or invalid decision.
+percentage-labelled progress bar immediately, return the viewport to the top, and focus
+the first enabled Tab stop on the newly rendered review state. Validation failure retains
+the current candidate and explains every missing or invalid decision.
 
 Reopening a completed tranche uses a selected-candidate correction queue. From the
 read-only tranche summary, the operator selects one or more candidates requiring

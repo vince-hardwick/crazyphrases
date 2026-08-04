@@ -162,6 +162,57 @@ describe("Word Bank review workbench server", () => {
     assert.equal(await page.locator("#help-size-evidence").isVisible(), true);
   });
 
+  it("returns a successful Save & Next to the top and the first Tab stop", async () => {
+    const page = await openActiveReviewPage({
+      viewport: { width: 390, height: 500 },
+    });
+
+    await selectRadioByKeyboard(
+      page,
+      '[name="ukEnglishEligible"][value="true"]',
+    );
+    await selectRadioByKeyboard(page, '[name="familyFriendly"][value="true"]');
+    await selectRadioByKeyboard(
+      page,
+      '[name="curationDecision"][value="Accept"]',
+    );
+    await selectRadioByKeyboard(
+      page,
+      '[name="commonnessGrade"][value="common"]',
+    );
+    await selectRadioByKeyboard(
+      page,
+      '[name="nounSemanticBand"][value="Made Objects"]',
+    );
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    assert.ok((await page.evaluate(() => window.scrollY)) > 0);
+    await page.getByRole("button", { name: "Save & Next" }).click();
+    await page.getByRole("heading", { name: "lantern" }).waitFor();
+
+    const saveResult = await page.evaluate(() => ({
+      candidate: document.querySelector(".candidate-word")?.textContent?.trim(),
+      errors: document.querySelector("[data-errors]")?.textContent?.trim(),
+    }));
+    assert.deepEqual(saveResult, { candidate: "lantern", errors: "" });
+
+    const reset = await page.evaluate(() => {
+      const firstTabStop = document.querySelector(
+        'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"])',
+      );
+      return {
+        activeLabel: document.activeElement?.textContent?.trim(),
+        firstTabStopIsActive: firstTabStop === document.activeElement,
+        scrollY: window.scrollY,
+      };
+    });
+    assert.deepEqual(reset, {
+      activeLabel: "Back to Register",
+      firstTabStopIsActive: true,
+      scrollY: 0,
+    });
+  });
+
   it("opens an additional process read-only and rejects its mutations", async () => {
     const fixture = await createFixture();
     const writer = await createReviewWorkbenchServer({
@@ -385,6 +436,13 @@ async function assertHelpRowsAligned(page) {
     assert.ok(Math.abs(metric.rightInset) < 1);
     assert.ok(metric.separation >= 8);
   }
+}
+
+async function selectRadioByKeyboard(page, selector) {
+  const radio = page.locator(selector);
+  await radio.focus();
+  await page.keyboard.press("Space");
+  assert.equal(await radio.isChecked(), true);
 }
 
 async function getJson(url) {

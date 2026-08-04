@@ -438,12 +438,23 @@ async function saveAndAdvance() {
     });
     dirty = false;
     renderReview();
+    resetReviewViewportAndFocus();
     return true;
   } catch (error) {
     errors = [error.message];
     showErrors(errors);
     return false;
   }
+}
+
+function resetReviewViewportAndFocus() {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  const firstTabStop = [
+    ...document.querySelectorAll(
+      'a[href], button, input, select, textarea, [tabindex]',
+    ),
+  ].find((element) => !element.disabled && element.tabIndex >= 0);
+  firstTabStop?.focus({ preventScroll: true });
 }
 
 async function completeTrancheAction() {

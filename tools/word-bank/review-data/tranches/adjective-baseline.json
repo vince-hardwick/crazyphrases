@@ -1,0 +1,5752 @@
+{
+  "schemaVersion": 1,
+  "id": "adjective-baseline",
+  "entryKind": "adjective",
+  "purpose": "baseline",
+  "candidates": [
+    {
+      "sequence": 1,
+      "canonicalText": "a cappella",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "a cappella",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 1595,
+        "sourceSize": 50,
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "canonicalText": "absurd",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "absurd",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 1359,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "canonicalText": "al dente",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "al dente",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 8451,
+        "sourceSize": 60,
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "canonicalText": "ancient",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "ancient",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 13182,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 5,
+      "canonicalText": "bashful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "bashful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 31593,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 6,
+      "canonicalText": "best-selling",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "best-selling",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 44,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 7,
+      "canonicalText": "bone dry",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "bone dry",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds-auto",
+        "sourceLine": 960,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 8,
+      "canonicalText": "bouncy",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "bouncy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 45047,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "ukfreq",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 9,
+      "canonicalText": "brave",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "brave",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 46662,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 10,
+      "canonicalText": "bright",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "bright",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 47724,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 11,
+      "canonicalText": "brisk",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "brisk",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 47971,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "ukfreq",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 12,
+      "canonicalText": "bubbly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "bubbly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 49601,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 13,
+      "canonicalText": "built-in",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "built-in",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 65,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 14,
+      "canonicalText": "calm",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "calm",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 54412,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 15,
+      "canonicalText": "careful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "careful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 57666,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 16,
+      "canonicalText": "charming",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "charming",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 64007,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 17,
+      "canonicalText": "cheerful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "cheerful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 64744,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 18,
+      "canonicalText": "clearheaded",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "clearheaded",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 94,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 19,
+      "canonicalText": "clever",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "clever",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 71302,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 20,
+      "canonicalText": "cosy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "B",
+            "variantLevel": 0
+          },
+          {
+            "profile": "C",
+            "variantLevel": 4
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "cosy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 87142,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 21,
+      "canonicalText": "crafty",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "crafty",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 87407,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 22,
+      "canonicalText": "crisp",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "crisp",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 89031,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 23,
+      "canonicalText": "crystal clear",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "crystal clear",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 90675,
+        "sourceSize": 60,
+        "sourceTags": [
+          "12dicts",
+          "3of6"
+        ]
+      }
+    },
+    {
+      "sequence": 24,
+      "canonicalText": "curious",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "curious",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 91866,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 25,
+      "canonicalText": "daft",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "daft",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 93894,
+        "sourceSize": 35,
+        "sourceTags": [
+          "ukfreq",
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 26,
+      "canonicalText": "delicate",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "delicate",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 99114,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 27,
+      "canonicalText": "dreamy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "dreamy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 114184,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 28,
+      "canonicalText": "eager",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "eager",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 117401,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 29,
+      "canonicalText": "electric",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "electric",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 120523,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 30,
+      "canonicalText": "fancy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "fancy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 135346,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 31,
+      "canonicalText": "fluffy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "fluffy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 143379,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 32,
+      "canonicalText": "friendly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "friendly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 148757,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 33,
+      "canonicalText": "frosty",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "frosty",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 149434,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 34,
+      "canonicalText": "gentle",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "gentle",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 155081,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 35,
+      "canonicalText": "gleaming",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3esl",
+          "5d+2a"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "gleaming",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 157936,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "5d+2a"
+        ]
+      }
+    },
+    {
+      "sequence": 36,
+      "canonicalText": "glossy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "glossy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 158669,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 37,
+      "canonicalText": "golden",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "golden",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 159911,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 38,
+      "canonicalText": "graceful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "graceful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 161511,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "ukfreq",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 39,
+      "canonicalText": "happy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "happy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 169377,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 40,
+      "canonicalText": "hazy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "hazy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 171291,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 41,
+      "canonicalText": "humble",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "humble",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 182468,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 42,
+      "canonicalText": "inventive",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "inventive",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 198871,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 43,
+      "canonicalText": "jaunty",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "jaunty",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 202987,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 44,
+      "canonicalText": "jolly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "jolly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 204840,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 45,
+      "canonicalText": "kind",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "kind",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 209466,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 46,
+      "canonicalText": "leafy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "leafy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 216751,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 47,
+      "canonicalText": "light-hearted",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "light-hearted",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds-auto",
+        "sourceLine": 5777,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 48,
+      "canonicalText": "lively",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "lively",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 222537,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 49,
+      "canonicalText": "long-standing",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "long-standing",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 344,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 50,
+      "canonicalText": "loopy",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "loopy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 224440,
+        "sourceSize": 50,
+        "sourceTags": [
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 51,
+      "canonicalText": "lucky",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "lucky",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 225957,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 52,
+      "canonicalText": "mellow",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "mellow",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 237074,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 53,
+      "canonicalText": "merry",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "merry",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 238409,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 54,
+      "canonicalText": "misty",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "misty",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 244931,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 55,
+      "canonicalText": "moonlit",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "moonlit",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 248210,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 56,
+      "canonicalText": "muddy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "muddy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 250724,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 57,
+      "canonicalText": "musical",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "musical",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 252602,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 58,
+      "canonicalText": "nimble",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "nimble",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 259550,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 59,
+      "canonicalText": "nosy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "A",
+            "variantLevel": 0
+          },
+          {
+            "profile": "B",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "nosy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 264757,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 60,
+      "canonicalText": "odd",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "odd",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 268168,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 61,
+      "canonicalText": "openhearted",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "openhearted",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 382,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 62,
+      "canonicalText": "peaceful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "peaceful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 285812,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 63,
+      "canonicalText": "peculiar",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "peculiar",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 286308,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 64,
+      "canonicalText": "perky",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "perky",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 289524,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 65,
+      "canonicalText": "playful",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "playful",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 298123,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 66,
+      "canonicalText": "plucky",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "plucky",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 298973,
+        "sourceSize": 35,
+        "sourceTags": [
+          "ukfreq",
+          "3esl",
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 67,
+      "canonicalText": "point-blank",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "point-blank",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 408,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 68,
+      "canonicalText": "polished",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "polished",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 300493,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 69,
+      "canonicalText": "powder blue",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "powder blue",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 304633,
+        "sourceSize": 60,
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 70,
+      "canonicalText": "prickly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "prickly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 308595,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 71,
+      "canonicalText": "proud",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "proud",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 312326,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 72,
+      "canonicalText": "puzzled",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "puzzled",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 315889,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "5d+2a"
+        ]
+      }
+    },
+    {
+      "sequence": 73,
+      "canonicalText": "quiet",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "quiet",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 318186,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 74,
+      "canonicalText": "quirky",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "quirky",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 318554,
+        "sourceSize": 35,
+        "sourceTags": [
+          "ukfreq",
+          "3esl",
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 75,
+      "canonicalText": "radiant",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "radiant",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 319325,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 76,
+      "canonicalText": "rambling",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "rambling",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 320414,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 77,
+      "canonicalText": "rosy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "rosy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 336759,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 78,
+      "canonicalText": "round",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "round",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 337109,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 79,
+      "canonicalText": "shy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "shy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 357286,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 80,
+      "canonicalText": "silly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "silly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 358555,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 81,
+      "canonicalText": "silvery",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "silvery",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 358751,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 82,
+      "canonicalText": "sleepy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "sleepy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 361788,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 83,
+      "canonicalText": "smooth",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "smooth",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 363454,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 84,
+      "canonicalText": "snappy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "snappy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 363804,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 85,
+      "canonicalText": "snug",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "snug",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 364680,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 86,
+      "canonicalText": "solemn",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "solemn",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 365824,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 87,
+      "canonicalText": "sparkly",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "sparkly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 368711,
+        "sourceSize": 60,
+        "sourceTags": [
+          "brif",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 88,
+      "canonicalText": "speedy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "speedy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 369544,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 89,
+      "canonicalText": "spiral",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "spiral",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 370642,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 90,
+      "canonicalText": "sprightly",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "sprightly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 372050,
+        "sourceSize": 50,
+        "sourceTags": [
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 91,
+      "canonicalText": "squiggly",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "squiggly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 372916,
+        "sourceSize": 50,
+        "sourceTags": [
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 92,
+      "canonicalText": "striped",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "brif",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "striped",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 379282,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "brif",
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 93,
+      "canonicalText": "sturdy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "sturdy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 380124,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 94,
+      "canonicalText": "sunny",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "sunny",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 384083,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 95,
+      "canonicalText": "tangled",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "tangled",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 391136,
+        "sourceSize": 40,
+        "sourceTags": [
+          "3esl",
+          "12dicts",
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 96,
+      "canonicalText": "tender",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "tender",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 394681,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 97,
+      "canonicalText": "tiny",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "tiny",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 401286,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 98,
+      "canonicalText": "toothy",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "toothy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 403188,
+        "sourceSize": 50,
+        "sourceTags": [
+          "12dicts",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 99,
+      "canonicalText": "top-notch",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "top-notch",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 512,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 100,
+      "canonicalText": "topsy-turvy",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "topsy-turvy",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "hyphenatedWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 403532,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 101,
+      "canonicalText": "twinkly",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "twinkly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 412539,
+        "sourceSize": 60,
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable"
+        ]
+      }
+    },
+    {
+      "sequence": 102,
+      "canonicalText": "up to date",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "up to date",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds-auto",
+        "sourceLine": 12076,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 103,
+      "canonicalText": "velvety",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ospdadd",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "velvety",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 429644,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ospdadd",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 104,
+      "canonicalText": "vivid",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "vivid",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 433395,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 105,
+      "canonicalText": "wandering",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "wandering",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 435928,
+        "sourceSize": 70,
+        "sourceTags": [
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 106,
+      "canonicalText": "warmhearted",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/compounds",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "warmhearted",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds",
+        "sourceLine": 533,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 107,
+      "canonicalText": "well behaved",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "well behaved",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds-auto",
+        "sourceLine": 12465,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 108,
+      "canonicalText": "well timed",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "well timed",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "openCompound",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/compounds-auto",
+        "sourceLine": 12597,
+        "sourceSize": 0,
+        "sourceTags": []
+      }
+    },
+    {
+      "sequence": 109,
+      "canonicalText": "whispering",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "whispering",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 440817,
+        "sourceSize": 70,
+        "sourceTags": [
+          "5d+2a",
+          "moby"
+        ]
+      }
+    },
+    {
+      "sequence": 110,
+      "canonicalText": "wild",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "wild",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 442060,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 111,
+      "canonicalText": "wobbly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "wobbly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 444029,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 112,
+      "canonicalText": "woolly",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "woolly",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 444867,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "ukfreq",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 113,
+      "canonicalText": "zesty",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "zesty",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 449468,
+        "sourceSize": 60,
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ]
+      }
+    },
+    {
+      "sequence": 114,
+      "canonicalText": "zigzag",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common"
+      },
+      "decision": null,
+      "previouslyPublished": {
+        "canonicalText": "zigzag",
+        "sourceId": "esdb-scowl-v2",
+        "sourceVersion": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+        "entryKind": "adjective",
+        "candidateForm": "singleWord",
+        "safetyStatus": "familyFriendly",
+        "curationStatus": "accepted",
+        "sourceFile": "data/scowl-pre.txt",
+        "sourceLine": 449559,
+        "sourceSize": 35,
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "brif",
+          "3of6",
+          "5d+2a",
+          "moby",
+          "enable",
+          "ukacd"
+        ]
+      }
+    }
+  ]
+}

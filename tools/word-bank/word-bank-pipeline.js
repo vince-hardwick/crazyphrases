@@ -291,19 +291,66 @@ function parseEsdbSourceLine(line, { lineNumber, sourceFile }) {
     return null;
   }
 
-  const sourceSize = Number(line.match(/^\s*(\d+)/)?.[1] ?? 0);
+  const evidenceText = line.slice(0, line.indexOf(":"));
+  const sourceSizes = [...evidenceText.matchAll(/(?:^|\s)(\d{2})(?=\s|$)/g)].map(
+    (match) => Number(match[1]),
+  );
+  const sourceSize = sourceSizes[0] ?? 0;
   const sourceTags = [
-    ...line.slice(0, line.indexOf(":")).matchAll(/\[([^\]]+)\]/g),
+    ...evidenceText.matchAll(/\[([^\]]+)\]/g),
   ].map((match) => match[1]);
+  const spellings = parseEsdbSpellings(beforeTag);
 
   return {
     canonicalText,
     entryKind,
+    sourceSizes,
     sourceFile,
     sourceLine: lineNumber,
     sourceSize,
     sourceTags,
+    spellings,
   };
+}
+
+function parseEsdbSpellings(beforeTag) {
+  const firstColon = beforeTag.indexOf(":");
+  const lastColon = beforeTag.lastIndexOf(":");
+
+  if (firstColon === -1 || firstColon === lastColon) {
+    return [{ profile: "_", variantLevel: 0 }];
+  }
+
+  const spellingText = beforeTag.slice(firstColon + 1, lastColon).trim();
+  const spellings = spellingText
+    .split(/\s+/)
+    .map((token) => token.match(/^([ABZCD_])([.=?v~V@x-]?)$/))
+    .filter(Boolean)
+    .map((match) => ({
+      profile: match[1],
+      variantLevel: variantLevelFromMarker(match[2]),
+    }));
+
+  return spellings.length > 0
+    ? spellings
+    : [{ profile: "_", variantLevel: 0 }];
+}
+
+function variantLevelFromMarker(marker) {
+  return (
+    {
+      "": 0,
+      ".": 1,
+      "=": 2,
+      "?": 3,
+      v: 4,
+      "~": 5,
+      V: 6,
+      "@": 7,
+      "-": 8,
+      x: 9,
+    }[marker] ?? 9
+  );
 }
 
 function validateCurationHeader(curation) {

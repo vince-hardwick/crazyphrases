@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "programmeVersion": "2026-08-04-issue245-initial-review",
+  "catalogue": {
+    "id": "noun-esdb-scowl-v2-1e5b7d3-b0-4-size35-80-oewn-2025",
+    "entryKind": "noun",
+    "candidateCount": 72336,
+    "sha256": "7BBDB11B9176A6318AB1736D36B64CCFC925AEFE512A617D00194FC82B68A136",
+    "source": {
+      "id": "esdb-scowl-v2",
+      "version": "1e5b7d3a72f47a71da5d28686c1dd4b397178485",
+      "archiveSha256": "4A9ACD18D0C16ED595D11458A2DBC226C8A91F93C89970C0F4506444A8F4B161",
+      "sizes": [
+        35,
+        40,
+        50,
+        60,
+        70,
+        80
+      ],
+      "spellingProfiles": [
+        "_",
+        "B"
+      ],
+      "variantLevels": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "semanticReference": {
+      "id": "open-english-wordnet-core",
+      "version": "2025",
+      "archiveSha256": "7D749F6E2C39E6970E4997839DCF6E42FD281F3C2FAE0171D2192BAE8CFA4B51"
+    },
+    "generator": "tools/word-bank/build-review-programme.mjs"
+  },
+  "tranches": [
+    {
+      "id": "noun-baseline",
+      "entryKind": "noun",
+      "path": "tranches/noun-baseline.json",
+      "purpose": "baseline",
+      "lifecycle": "planned"
+    },
+    {
+      "id": "adjective-baseline",
+      "entryKind": "adjective",
+      "path": "tranches/adjective-baseline.json",
+      "purpose": "baseline",
+      "lifecycle": "planned"
+    }
+  ]
+}

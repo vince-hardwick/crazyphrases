@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node --test",
     "word-bank:build": "node tools/word-bank/build-production-word-bank.mjs",
-    "word-bank:check": "node tools/word-bank/build-production-word-bank.mjs --check"
+    "word-bank:check": "node tools/word-bank/build-production-word-bank.mjs --check",
+    "word-bank:review:init": "node tools/word-bank/build-review-programme.mjs --initialise",
+    "word-bank:review:check": "node tools/word-bank/build-review-programme.mjs --check"
   },
   "devDependencies": {
     "playwright": "^1.60.0"

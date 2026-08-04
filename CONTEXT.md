@@ -119,12 +119,87 @@ _Avoid_: Random word helper, bot generator
 A tool that helps produce a candidate entry for a specific slot and row without becoming the participant responsible for that slot.
 _Avoid_: CPU participant, auto-fill
 
+**Entry Assist Weight Policy**:
+A maintainer-controlled policy of strictly positive relative weights for noun Semantic
+Band/Commonness Grade combinations and adjective Commonness Grades. Each weight belongs
+to its whole non-empty candidate cell rather than to every candidate in it, and the
+policy is loaded globally rather than pinned to a Game.
+_Avoid_: Candidate allowlist, per-Game weighting, player preference
+
 **Entry Candidate**:
 A generated suggestion for one entry, selected for a requested entry kind but still
 editable by the participant. An Entry Candidate can be a single word, a hyphenated
 word, or a curated open compound when it behaves as one lexical entry for that entry
 kind.
 _Avoid_: Guaranteed word, validated grammar
+
+**Curation Decision**:
+The operator-approved `Accept` or `Reject` decision for a reviewed Entry Candidate in
+source-controlled curation. Acceptance does not by itself make the candidate eligible
+for or publish it in a runtime shard.
+_Avoid_: Inclusion, shard eligibility, publication status
+
+**Commonness Grade**:
+An operator-approved classification of how familiar an accepted Entry Candidate is to
+a contemporary UK audience. Source evidence can suggest the grade but does not decide
+it.
+_Avoid_: ESDB size, measured frequency, playability score
+
+**Noun Semantic Band**:
+The single operator-approved, Crazy Phrases-owned classification of an accepted noun's
+intended semantic flavour for Entry Assist weighting. Semantic references can suggest a
+band, but do not assign multiple bands to an ambiguous noun.
+_Avoid_: WordNet lexname, sense-weight mixture, playability score
+
+**People and Groups**:
+The Noun Semantic Band for people, social roles, communities, and organised groups.
+_Examples_: Teacher, choir
+
+**Animals and Plants**:
+The Noun Semantic Band for animals, plants, fungi, and recognisable kinds of living organism.
+_Examples_: Otter, oak
+
+**Body**:
+The Noun Semantic Band for body parts, organs, and physical bodily structures.
+_Examples_: Elbow, skeleton
+
+**Food and Drink**:
+The Noun Semantic Band for foods, ingredients, prepared dishes, and drinks.
+_Examples_: Biscuit, lemonade
+
+**Places**:
+The Noun Semantic Band for locations, spaces, geographical features, and places people can occupy or visit.
+_Examples_: Harbour, playground
+
+**Made Objects**:
+The Noun Semantic Band for tangible things made or substantially shaped by people.
+_Examples_: Lantern, bicycle
+
+**Nature and Materials**:
+The Noun Semantic Band for natural objects, substances, materials, weather, and physical phenomena.
+_Examples_: Granite, thunder
+
+**Actions and Events**:
+The Noun Semantic Band for activities, processes, happenings, and occasions.
+_Examples_: Collision, celebration
+
+**Ideas and Communication**:
+The Noun Semantic Band for thoughts, knowledge, messages, reasons, and communicated concepts.
+_Examples_: Rumour, promise
+
+**Feelings and Conditions**:
+The Noun Semantic Band for emotions, qualities, states, illnesses, and other conditions.
+_Examples_: Delight, illness
+
+**Measures and Relationships**:
+The Noun Semantic Band for quantities, periods, shapes, comparisons, possession, and relationships between things.
+_Examples_: Distance, ownership
+
+**UK-English Eligible**:
+An Entry Candidate accepted in contemporary British English, including words shared
+with other English varieties but excluding spellings or senses used only outside UK
+English.
+_Avoid_: Uniquely British, UK-frequency tagged
 
 **Entry Assist Safety Setting**:
 A signed-in Account setting that controls whether Entry Assist excludes Word Bank

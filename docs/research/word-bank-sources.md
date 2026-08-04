@@ -131,6 +131,28 @@ Scores use 1 = poor, 3 = workable, 5 = strong.
 | Open English Wordnet 2025 | 4 | 2 | 4 | 1 | 2 | 1 | 4 | 4 | 4 | Current and clean semantic reference; still not a game-ready Word Bank. |
 | Wiktionary | 2 | 5 | 2 | 1 | 1 | 3 | 1 | 4 | 1 | Defer until other sources fail; too large and licence-heavy for v1. |
 
+## Issue #245 Source Semantics Follow-up
+
+The pinned ESDB revision describes `SIZE` as an approximate vocabulary-list
+tier, with larger values indicating less-common words. It is not a measured
+frequency or UK-audience familiarity score. Sizes 35 and 50 represent the
+small and medium lists; 60 is the default spell-checking size; 70 is the large
+dictionary size; 80 contains unusual words still considered current; and 85
+may include words no longer used in modern English. The `[ukfreq]` tag records
+membership in an older UK frequency-classification source whose quality ESDB
+itself questions; it is supporting evidence, not a UK-dialect or contemporary
+commonness decision.
+
+ESDB represents dialect through spelling and region fields separately from
+source tags. The current Crazy Phrases parser preserves the first numeric size
+and bracketed source tags, but not spelling, region, variant-level, annotation,
+or usage-note semantics. Its last-record-wins deduplication also lets later
+compound-adjustment rows without an explicit size replace a positive
+`scowl-pre.txt` size with `0`. In the shipped shards this affects 24 nouns and
+13 adjectives, all of which have a positive size in `scowl-pre.txt`. Issue #245
+must therefore correct source-record reconciliation and expose UK eligibility
+for operator review before ESDB metadata can seed commonness grades reliably.
+
 ## Implementation Outcome
 
 Use ESDB / SCOWL v2 as the primary production Word Bank source path.
@@ -168,11 +190,12 @@ curated shard sizes, account-level filtering, or refresh cadence require it.
   the full upstream build flow. The first production rollout used a pinned
   archive extraction path instead; future broader ESDB imports should still
   prefer a Unix-like build path or container.
-- The profiling safety filter is intentionally minimal. A real curation pass
-  needs a maintained blocklist, human sample review, and source-specific usage
-  note handling.
-- Counts do not prove comedy/playability. Human sample review is still required
-  before replacing or expanding `assets/word-bank-seed.json`.
+- The profiling safety filter is intentionally minimal. Production expansion
+  therefore requires explicit per-candidate UK-English, family-friendly, and
+  Curation Decisions rather than treating source filtering as approval.
+- Counts do not prove comedy or playability. Issue #245 consequently treats
+  playability as emergent Game behaviour rather than candidate metadata and
+  does not require phrase samples as curation evidence.
 - The scratch counts understate final candidate potential because the profiling
   pass excluded hyphenated words and open compounds. Production curation should
   evaluate those forms deliberately rather than inheriting the scratch filter.

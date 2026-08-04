@@ -654,13 +654,16 @@ preserve their original history.
   commit-stamped assets and transitive modules, desktop and mobile layout, and a clean
   repeat browser load. Issue #230 and parent PRD #226 are closed as completed.
 - **Deferred follow-up routes**: Noun-shard expansion/rebalancing remains issue #245;
-  future built-in Entry Kind shards remain issue #246; and Account Entry Assist Safety
-  Setting UI, persistence, and opt-in candidates remain issue #247. These issues remain
-  open and are not issue #230 scope. Hosted auth-provider enhancement issue #89 remains
+  broader adjective-shard coverage remains issue #250; future built-in Entry Kind shards
+  remain issue #246; and Account Entry Assist Safety Setting UI, persistence, and opt-in
+  candidates remain issue #247. These issues remain open and are not issue #230 scope.
+  Issue #250 is intentionally blocked until both #245 is complete and every tranche in
+  the Noun Review Register has been reviewed, despite the accepted scale and duration of
+  that catalogue-wide noun programme. Hosted auth-provider enhancement issue #89 remains
   open, untouched, and deferred.
 - **Remaining risk**: No accepted Game Play Surface Entry Assist scope remains open.
   Future Word Bank quality, Entry Kind expansion, and Account safety-setting work remain
-  separately deferred under issues #245, #246, and #247.
+  separately deferred under issues #245, #246, #247, and #250.
 
 ### Notification top-bar affordance
 

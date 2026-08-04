@@ -15,94 +15,112 @@ import {
   validateReviewRegister,
 } from "./word-bank-review-programme.js";
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const scriptPath = fileURLToPath(import.meta.url);
+const scriptDir = path.dirname(scriptPath);
 const projectRoot = path.resolve(scriptDir, "..", "..");
 const reviewDataRoot = path.join(scriptDir, "review-data");
-const args = parseArgs(process.argv.slice(2));
 
-const esdbConfig = await readJson(
-  path.join(scriptDir, "source-config", "esdb-scowl-v2.json"),
-);
-const semanticConfig = await readJson(
-  path.join(scriptDir, "source-config", "open-english-wordnet-2025.json"),
-);
-const manifest = await readJson(
-  path.join(projectRoot, "assets", "word-bank", "manifest.json"),
-);
-const publishedNounShard = await readJson(
-  path.join(projectRoot, ...manifest.entryKinds.noun.path.split("/")),
-);
-const publishedAdjectiveShard = await readJson(
-  path.join(projectRoot, ...manifest.entryKinds.adjective.path.split("/")),
-);
+if (path.resolve(process.argv[1] ?? "") === scriptPath) {
+  await main(process.argv.slice(2));
+}
 
-const esdbRoot = await resolveEsdbRoot(esdbConfig);
-const semanticRoot = await resolveSemanticRoot(semanticConfig);
-const sourceRecords = (
-  await Promise.all(
-    esdbConfig.extractFiles
-      .filter((sourceFile) => sourceFile.startsWith("data/"))
-      .map(async (sourceFile) =>
-        parseEsdbSourceText(await readUtf8(path.join(esdbRoot, sourceFile)), {
-          sourceFile,
-        }),
-      ),
-  )
-).flat();
-const semanticSuggestions = buildSemanticSuggestionIndex(
-  await Promise.all(
-    semanticConfig.nounLexnames.map(async (lexname) => ({
-      lexname,
-      synsets: await readJson(path.join(semanticRoot, `noun.${lexname}.json`)),
-    })),
-  ),
-);
-const nounCatalogue = buildSourceCatalogue({
-  entryKind: "noun",
-  sourceRecords,
-  baselineCandidates: publishedNounShard.candidates,
-  semanticSuggestions,
-});
-const adjectiveCatalogue = buildSourceCatalogue({
-  entryKind: "adjective",
-  sourceRecords,
-  baselineCandidates: publishedAdjectiveShard.candidates,
-});
-const adjectiveBaselineTexts = new Set(
-  publishedAdjectiveShard.candidates.map((candidate) => candidate.canonicalText),
-);
-const adjectiveBaselineCatalogue = {
-  ...adjectiveCatalogue,
-  candidates: adjectiveCatalogue.candidates.filter((candidate) =>
-    adjectiveBaselineTexts.has(candidate.canonicalText),
-  ),
-};
-const catalogueIdentity = createCatalogueIdentity({
-  esdbConfig,
-  nounCatalogue,
-  semanticConfig,
-});
-const expected = buildInitialReviewProgramme({
-  nounCatalogue,
-  adjectiveCatalogue: adjectiveBaselineCatalogue,
-  catalogueIdentity,
-  publishedNounCandidates: publishedNounShard.candidates,
-  publishedAdjectiveCandidates: publishedAdjectiveShard.candidates,
-});
-
-if (args.initialise) {
-  await initialiseReviewData(expected);
-  console.log(
-    `Initialised ${expected.nounBaseline.candidates.length} noun and ${expected.adjectiveBaseline.candidates.length} adjective baseline candidates without curation decisions.`,
-  );
-} else {
-  await checkReviewData(expected, {
-    nounCatalogue,
-    adjectiveCatalogue: adjectiveBaselineCatalogue,
+async function main(rawArgs) {
+  const args = parseArgs(rawArgs);
+  const inputs = await loadPinnedReviewInputs();
+  const expected = buildInitialReviewProgramme({
+    nounCatalogue: inputs.nounCatalogue,
+    adjectiveCatalogue: inputs.adjectiveBaselineCatalogue,
+    catalogueIdentity: inputs.catalogueIdentity,
+    publishedNounCandidates: inputs.publishedNounShard.candidates,
+    publishedAdjectiveCandidates: inputs.publishedAdjectiveShard.candidates,
   });
-  console.log(
-    `Validated the review programme against ${nounCatalogue.candidates.length} pinned noun Source Catalogue candidates.`,
+
+  if (args.initialise) {
+    await initialiseReviewData(expected);
+    console.log(
+      `Initialised ${expected.nounBaseline.candidates.length} noun and ${expected.adjectiveBaseline.candidates.length} adjective baseline candidates without curation decisions.`,
+    );
+  } else {
+    await checkReviewData(expected, {
+      nounCatalogue: inputs.nounCatalogue,
+      adjectiveCatalogue: inputs.adjectiveBaselineCatalogue,
+    });
+    console.log(
+      `Validated the review programme against ${inputs.nounCatalogue.candidates.length} pinned noun Source Catalogue candidates.`,
+    );
+  }
+}
+
+export async function loadPinnedReviewInputs() {
+  const esdbConfig = await readJson(
+    path.join(scriptDir, "source-config", "esdb-scowl-v2.json"),
   );
+  const semanticConfig = await readJson(
+    path.join(scriptDir, "source-config", "open-english-wordnet-2025.json"),
+  );
+  const manifest = await readJson(
+    path.join(projectRoot, "assets", "word-bank", "manifest.json"),
+  );
+  const publishedNounShard = await readJson(
+    path.join(projectRoot, ...manifest.entryKinds.noun.path.split("/")),
+  );
+  const publishedAdjectiveShard = await readJson(
+    path.join(projectRoot, ...manifest.entryKinds.adjective.path.split("/")),
+  );
+  const esdbRoot = await resolveEsdbRoot(esdbConfig);
+  const semanticRoot = await resolveSemanticRoot(semanticConfig);
+  const sourceRecords = (
+    await Promise.all(
+      esdbConfig.extractFiles
+        .filter((sourceFile) => sourceFile.startsWith("data/"))
+        .map(async (sourceFile) =>
+          parseEsdbSourceText(await readUtf8(path.join(esdbRoot, sourceFile)), {
+            sourceFile,
+          }),
+        ),
+    )
+  ).flat();
+  const semanticSuggestions = buildSemanticSuggestionIndex(
+    await Promise.all(
+      semanticConfig.nounLexnames.map(async (lexname) => ({
+        lexname,
+        synsets: await readJson(path.join(semanticRoot, `noun.${lexname}.json`)),
+      })),
+    ),
+  );
+  const nounCatalogue = buildSourceCatalogue({
+    entryKind: "noun",
+    sourceRecords,
+    baselineCandidates: publishedNounShard.candidates,
+    semanticSuggestions,
+  });
+  const adjectiveCatalogue = buildSourceCatalogue({
+    entryKind: "adjective",
+    sourceRecords,
+    baselineCandidates: publishedAdjectiveShard.candidates,
+  });
+  const adjectiveBaselineTexts = new Set(
+    publishedAdjectiveShard.candidates.map((candidate) => candidate.canonicalText),
+  );
+  const adjectiveBaselineCatalogue = {
+    ...adjectiveCatalogue,
+    candidates: adjectiveCatalogue.candidates.filter((candidate) =>
+      adjectiveBaselineTexts.has(candidate.canonicalText),
+    ),
+  };
+  const catalogueIdentity = createCatalogueIdentity({
+    esdbConfig,
+    nounCatalogue,
+    semanticConfig,
+  });
+
+  return {
+    adjectiveBaselineCatalogue,
+    catalogueIdentity,
+    nounCatalogue,
+    publishedAdjectiveShard,
+    publishedNounShard,
+  };
 }
 
 function parseArgs(rawArgs) {

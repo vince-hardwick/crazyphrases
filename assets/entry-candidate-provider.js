@@ -1,3 +1,18 @@
+const COMMONNESS_GRADES = new Set(["common", "lessCommon", "rare"]);
+const NOUN_SEMANTIC_BANDS = new Set([
+  "People and Groups",
+  "Animals and Plants",
+  "Body",
+  "Food and Drink",
+  "Places",
+  "Made Objects",
+  "Nature and Materials",
+  "Actions and Events",
+  "Ideas and Communication",
+  "Feelings and Conditions",
+  "Measures and Relationships",
+]);
+
 export function createSeedBackedEntryCandidateProvider(wordBank) {
   return {
     getEntryCandidates(entryKind) {
@@ -336,7 +351,7 @@ function getShardCandidates(shard, { entryKind, version }) {
 function getPinnedShardCandidates(shard, reference) {
   if (
     !shard ||
-    shard.schemaVersion !== 1 ||
+    !new Set([1, 2]).has(shard.schemaVersion) ||
     shard.entryKind !== reference.entryKind ||
     shard.version !== reference.version ||
     shard.familyFriendly !== true ||
@@ -349,6 +364,12 @@ function getPinnedShardCandidates(shard, reference) {
         candidate?.entryKind === reference.entryKind &&
         candidate.safetyStatus === "familyFriendly" &&
         candidate.curationStatus === "accepted" &&
+        (shard.schemaVersion === 1 ||
+          (candidate.ukEnglishEligible === true &&
+            COMMONNESS_GRADES.has(candidate.commonnessGrade) &&
+            (reference.entryKind === "noun"
+              ? NOUN_SEMANTIC_BANDS.has(candidate.nounSemanticBand)
+              : candidate.nounSemanticBand == null))) &&
         cleanWhitespace(getEntryCandidateValue(candidate)) !== "",
     )
   ) {

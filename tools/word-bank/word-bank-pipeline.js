@@ -13,6 +13,21 @@ const ENTRY_KIND_BY_ESDB_POS = new Map([
 const ACCEPTED_CURATION_STATUS = "accepted";
 const FAMILY_FRIENDLY_STATUS = "familyFriendly";
 const SHARD_SCHEMA_VERSION = 1;
+const REVIEWED_SHARD_SCHEMA_VERSION = 2;
+const COMMONNESS_GRADES = new Set(["common", "lessCommon", "rare"]);
+const NOUN_SEMANTIC_BANDS = new Set([
+  "People and Groups",
+  "Animals and Plants",
+  "Body",
+  "Food and Drink",
+  "Places",
+  "Made Objects",
+  "Nature and Materials",
+  "Actions and Events",
+  "Ideas and Communication",
+  "Feelings and Conditions",
+  "Measures and Relationships",
+]);
 
 export function mapEsdbPosToEntryKind(pos) {
   return ENTRY_KIND_BY_ESDB_POS.get(pos) ?? null;
@@ -201,9 +216,137 @@ export function buildProductionWordBanks({
   };
 }
 
+export function buildReviewedDefaultShard({
+  approved,
+  curationVersion,
+  entryKind,
+  includedTrancheIds = [],
+  reviewProgramme,
+  semanticReference,
+  sourceConfig,
+  version,
+} = {}) {
+  if (approved !== true) {
+    throw new Error("Reviewed shard generation requires explicit allowlist approval.");
+  }
+
+  if (!new Set(["adjective", "noun"]).has(entryKind)) {
+    throw new Error("Reviewed shard Entry Kind must be adjective or noun.");
+  }
+
+  if (typeof version !== "string" || version.trim() === "") {
+    throw new Error("Reviewed shard version is required.");
+  }
+
+  if (!Array.isArray(includedTrancheIds) || includedTrancheIds.length === 0) {
+    throw new Error("Reviewed shard requires at least one included tranche.");
+  }
+
+  validateSourceConfig(sourceConfig);
+  const referenceById = new Map(
+    (reviewProgramme?.index?.tranches ?? []).map((reference) => [
+      reference.id,
+      reference,
+    ]),
+  );
+  const trancheById = new Map(
+    (reviewProgramme?.tranches ?? []).map((tranche) => [tranche.id, tranche]),
+  );
+  const candidatesByKey = new Map();
+
+  for (const trancheId of includedTrancheIds) {
+    const reference = referenceById.get(trancheId);
+    const tranche = trancheById.get(trancheId);
+
+    if (
+      !reference ||
+      reference.entryKind !== entryKind ||
+      reference.lifecycle !== "complete" ||
+      !tranche ||
+      tranche.entryKind !== entryKind
+    ) {
+      throw new Error(
+        `Reviewed shard tranche "${trancheId}" must exist and be complete for ${entryKind}.`,
+      );
+    }
+
+    for (const candidate of tranche.candidates) {
+      const errors = validateReviewedDecision(candidate.decision, entryKind);
+
+      if (errors.length > 0) {
+        throw new Error(
+          `Reviewed candidate "${candidate.canonicalText}" is invalid. ${errors.join(" ")}`,
+        );
+      }
+
+      if (
+        candidate.decision.curationDecision !== "Accept" ||
+        candidate.decision.ukEnglishEligible !== true ||
+        candidate.decision.familyFriendly !== true
+      ) {
+        continue;
+      }
+
+      const key = cleanCandidateText(candidate.canonicalText);
+
+      if (candidatesByKey.has(key)) {
+        throw new Error(`Reviewed candidate "${key}" is included more than once.`);
+      }
+
+      const candidateForm = getCandidateForm(key);
+
+      if (candidateForm === "unsupported") {
+        throw new Error(`Reviewed candidate "${key}" has an unsupported form.`);
+      }
+
+      candidatesByKey.set(key, {
+        canonicalText: key,
+        sourceId: sourceConfig.id,
+        sourceVersion: sourceConfig.version,
+        entryKind,
+        candidateForm,
+        safetyStatus: FAMILY_FRIENDLY_STATUS,
+        curationStatus: ACCEPTED_CURATION_STATUS,
+        ukEnglishEligible: true,
+        commonnessGrade: candidate.decision.commonnessGrade,
+        ...(entryKind === "noun"
+          ? { nounSemanticBand: candidate.decision.nounSemanticBand }
+          : {}),
+      });
+    }
+  }
+
+  const shard = {
+    schemaVersion: REVIEWED_SHARD_SCHEMA_VERSION,
+    entryKind,
+    version,
+    familyFriendly: true,
+    source: {
+      id: sourceConfig.id,
+      version: sourceConfig.version,
+      archiveSha256: sourceConfig.archiveSha256,
+      license: sourceConfig.license,
+    },
+    ...(entryKind === "noun"
+      ? { semanticReference: validateSemanticReference(semanticReference) }
+      : {}),
+    curation: {
+      version: curationVersion ?? version,
+      status: "family-friendly-only",
+      includedTrancheIds: [...includedTrancheIds],
+    },
+    candidates: [...candidatesByKey.values()].sort((left, right) =>
+      left.canonicalText.localeCompare(right.canonicalText),
+    ),
+  };
+
+  validateWordBankShard(shard);
+  return shard;
+}
+
 export function validateWordBankShard(shard) {
-  if (shard?.schemaVersion !== SHARD_SCHEMA_VERSION) {
-    throw new Error("Word Bank Shard schemaVersion must be 1.");
+  if (![SHARD_SCHEMA_VERSION, REVIEWED_SHARD_SCHEMA_VERSION].includes(shard?.schemaVersion)) {
+    throw new Error("Word Bank Shard schemaVersion must be 1 or 2.");
   }
 
   if (typeof shard.entryKind !== "string" || shard.entryKind.trim() === "") {
@@ -256,7 +399,79 @@ export function validateWordBankShard(shard) {
         `Word Bank Shard candidate "${candidate.canonicalText}" has incorrect candidateForm.`,
       );
     }
+
+    if (shard.schemaVersion === REVIEWED_SHARD_SCHEMA_VERSION) {
+      const errors = validateReviewedDecision(
+        {
+          curationDecision: "Accept",
+          familyFriendly: candidate.safetyStatus === FAMILY_FRIENDLY_STATUS,
+          ukEnglishEligible: candidate.ukEnglishEligible,
+          commonnessGrade: candidate.commonnessGrade,
+          nounSemanticBand: candidate.nounSemanticBand,
+        },
+        shard.entryKind,
+      );
+
+      if (errors.length > 0) {
+        throw new Error(
+          `Word Bank Shard candidate "${candidate.canonicalText}" has invalid reviewed metadata. ${errors.join(" ")}`,
+        );
+      }
+    }
   }
+
+  if (shard.schemaVersion === REVIEWED_SHARD_SCHEMA_VERSION && shard.entryKind === "noun") {
+    validateSemanticReference(shard.semanticReference);
+  }
+}
+
+function validateReviewedDecision(decision, entryKind) {
+  const errors = [];
+
+  if (typeof decision?.ukEnglishEligible !== "boolean") {
+    errors.push("UK-English eligibility must be explicitly set.");
+  }
+
+  if (typeof decision?.familyFriendly !== "boolean") {
+    errors.push("Family-friendly must be explicitly set.");
+  }
+
+  if (!new Set(["Accept", "Reject"]).has(decision?.curationDecision)) {
+    errors.push("Curation Decision must be Accept or Reject.");
+    return errors;
+  }
+
+  if (decision.curationDecision === "Accept") {
+    if (decision.ukEnglishEligible !== true) {
+      errors.push("Accept requires UK-English eligibility.");
+    }
+
+    if (!COMMONNESS_GRADES.has(decision.commonnessGrade)) {
+      errors.push("Accept requires a Commonness Grade.");
+    }
+
+    if (entryKind === "noun" && !NOUN_SEMANTIC_BANDS.has(decision.nounSemanticBand)) {
+      errors.push("Accept requires a Noun Semantic Band.");
+    }
+
+    if (entryKind !== "noun" && decision.nounSemanticBand != null) {
+      errors.push("Adjective decisions must not persist a Noun Semantic Band.");
+    }
+  } else if (decision.commonnessGrade != null || decision.nounSemanticBand != null) {
+    errors.push("Reject must not retain a Commonness Grade or Noun Semantic Band.");
+  }
+
+  return errors;
+}
+
+function validateSemanticReference(reference) {
+  for (const field of ["id", "version", "archiveSha256"]) {
+    if (typeof reference?.[field] !== "string" || reference[field].trim() === "") {
+      throw new Error(`Noun semantic reference ${field} is required.`);
+    }
+  }
+
+  return structuredClone(reference);
 }
 
 function parseEsdbSourceLine(line, { lineNumber, sourceFile }) {

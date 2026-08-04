@@ -132,6 +132,70 @@ describe("Word Bank review workbench server", () => {
     );
     assert.match(conflict.error, /changed outside the workbench/i);
   });
+
+  it("silently plans only the first semantic gap after baseline completion", async () => {
+    const fixture = await createFixture();
+    let checkpointPaths = [];
+    const server = await createReviewWorkbenchServer({
+      projectRoot: fixture.projectRoot,
+      reviewDataRoot: fixture.reviewDataRoot,
+      port: 0,
+      isGitCheckpointed: async ({ paths }) => {
+        checkpointPaths = paths;
+        return true;
+      },
+      loadNounCatalogue: async () => ({
+        schemaVersion: 1,
+        entryKind: "noun",
+        candidates: [
+          catalogueCandidate("anchor", "common", "Made Objects"),
+          catalogueCandidate("lantern", "common", "Made Objects"),
+          catalogueCandidate("drum", "lessCommon", "Made Objects"),
+          catalogueCandidate("eel", "rare", "Animals and Plants"),
+        ],
+      }),
+      nounPlanningOptions: { limit: 1 },
+    });
+    resources.push({ server, root: fixture.projectRoot });
+    const address = await server.listen();
+    let state = await getJson(`${address.origin}/api/state`);
+    state = await postJson(`${address.origin}/api/start-next`, {
+      expectedIndexHash: state.hashes["register.json"],
+    });
+
+    for (const sequence of [1, 2]) {
+      state = await postJson(`${address.origin}/api/save-next`, {
+        trancheId: "noun-baseline",
+        sequence,
+        decision: acceptedNounDecision("Made Objects"),
+        expectedTrancheHash: state.hashes["tranches/noun-baseline.json"],
+      });
+    }
+
+    state = await postJson(`${address.origin}/api/complete`, {
+      trancheId: "noun-baseline",
+      confirmed: true,
+      expectedIndexHash: state.hashes["register.json"],
+      expectedTrancheHash: state.hashes["tranches/noun-baseline.json"],
+    });
+
+    assert.deepEqual(
+      state.tranches.map(({ id, lifecycle }) => [id, lifecycle]),
+      [
+        ["noun-baseline", "complete"],
+        ["noun-semantic-gap-001", "planned"],
+      ],
+    );
+
+    state = await postJson(`${address.origin}/api/start-next`, {
+      expectedIndexHash: state.hashes["register.json"],
+    });
+    assert.equal(state.tranches[1].lifecycle, "active");
+    assert.deepEqual(
+      checkpointPaths.map((candidate) => path.basename(candidate)).sort(),
+      ["noun-baseline.json", "noun-semantic-gap-001.json", "register.json"],
+    );
+  });
 });
 
 async function createFixture() {
@@ -183,6 +247,16 @@ function acceptedNounDecision(nounSemanticBand) {
     curationDecision: "Accept",
     commonnessGrade: "common",
     nounSemanticBand,
+  };
+}
+
+function catalogueCandidate(canonicalText, commonnessGrade, nounSemanticBand) {
+  return {
+    canonicalText,
+    entryKind: "noun",
+    baseline: false,
+    sourceEvidence: null,
+    suggestions: { commonnessGrade, nounSemanticBand },
   };
 }
 

@@ -64,6 +64,43 @@ describe("manifest-backed Entry Candidate provider", () => {
     assert.deepEqual(fetchPaths, [pinnedReference.path]);
   });
 
+  it("loads metadata-bearing schema-v2 reviewed shards by exact pinned reference", async () => {
+    const reference = {
+      entryKind: "noun",
+      version: "noun-reviewed-v2",
+      path: "assets/word-bank/shards/noun.reviewed-v2.json",
+      candidateCount: 1,
+      familyFriendly: true,
+      sourceId: "test-source",
+      sourceVersion: "source-v2",
+    };
+    const reviewedCandidate = {
+      canonicalText: "lantern",
+      entryKind: "noun",
+      candidateForm: "singleWord",
+      safetyStatus: "familyFriendly",
+      curationStatus: "accepted",
+      ukEnglishEligible: true,
+      commonnessGrade: "common",
+      nounSemanticBand: "Made Objects",
+    };
+    const provider = createManifestBackedEntryCandidateProvider({
+      fetchJson: async () => ({
+        schemaVersion: 2,
+        entryKind: "noun",
+        version: reference.version,
+        familyFriendly: true,
+        source: { id: reference.sourceId, version: reference.sourceVersion },
+        candidates: [reviewedCandidate],
+      }),
+    });
+
+    assert.deepEqual(
+      await provider.loadPinnedEntryCandidateRecords(reference),
+      [reviewedCandidate],
+    );
+  });
+
   it("rejects mismatched pinned shard contracts", async (testContext) => {
     const pinnedReference = {
       entryKind: "noun",

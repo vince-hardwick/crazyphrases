@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { openReviewStore } from "./review-store.js";
 import {
   completeActiveTranche,
+  planNextNounSemanticGap,
   reopenCompletedTranche,
   saveNextDecision,
   startNextTranche,
@@ -21,6 +22,8 @@ export async function createReviewWorkbenchServer({
   staticRoot = path.join(projectRoot, "tools", "word-bank", "workbench"),
   port = 4177,
   isGitCheckpointed = defaultIsGitCheckpointed,
+  loadNounCatalogue = defaultLoadNounCatalogue,
+  nounPlanningOptions = {},
 } = {}) {
   const store = await openReviewStore({ root: reviewDataRoot });
   let listening = false;
@@ -93,7 +96,13 @@ export async function createReviewWorkbenchServer({
       const checkpointed = completedReference
         ? await isGitCheckpointed({
             projectRoot,
-            paths: ["register.json", completedReference.path].map((relativePath) =>
+            paths: [
+              ...new Set([
+                "register.json",
+                completedReference.path,
+                ...state.index.data.tranches.map((reference) => reference.path),
+              ]),
+            ].map((relativePath) =>
               path.join(
                 path.relative(projectRoot, reviewDataRoot),
                 ...relativePath.split("/"),
@@ -154,9 +163,37 @@ export async function createReviewWorkbenchServer({
         body.expectedTrancheHash,
         `${reference.path} changed outside the workbench`,
       );
-      const replacement = completeActiveTranche(state.index.data, loaded.data, {
+      let replacement = completeActiveTranche(state.index.data, loaded.data, {
         confirmed: body.confirmed,
       });
+
+      if (
+        reference.entryKind === "noun" &&
+        reference.purpose === "baseline" &&
+        !replacement.tranches.some(
+          (candidate) =>
+            candidate.entryKind === "noun" &&
+            new Set(["semanticGap", "catalogue"]).has(candidate.purpose),
+        )
+      ) {
+        const catalogue = await loadNounCatalogue();
+        const planned = planNextNounSemanticGap({
+          catalogue,
+          index: replacement,
+          tranches: [...state.tranches.values()].map((candidate) => candidate.data),
+          ...nounPlanningOptions,
+        });
+
+        const plannedReference = planned.index.tranches.find(
+          (candidate) => candidate.id === planned.tranche.id,
+        );
+        await store.create(plannedReference.path, planned.tranche, {
+          validate: (candidate) => validateTrancheShape(candidate, plannedReference),
+        });
+
+        replacement = planned.index;
+      }
+
       await store.save("register.json", replacement, {
         expectedHash: body.expectedIndexHash,
         validate: validateIndexShape,
@@ -393,6 +430,12 @@ async function defaultIsGitCheckpointed({ projectRoot, paths }) {
     { cwd: projectRoot, windowsHide: true },
   );
   return stdout.trim() === "";
+}
+
+async function defaultLoadNounCatalogue() {
+  const { loadPinnedReviewInputs } = await import("./build-review-programme.mjs");
+  const inputs = await loadPinnedReviewInputs();
+  return inputs.nounCatalogue;
 }
 
 async function readJsonBody(request) {

@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 
 import { parseEsdbSourceText } from "../tools/word-bank/word-bank-pipeline.js";
 import {
+  assignRemainingCatalogueTranches,
   assembleSemanticGapTranche,
   buildSemanticSuggestionIndex,
   buildInitialReviewProgramme,
   buildSourceCatalogue,
   completeActiveTranche,
   createBaselineTranche,
+  planNextNounSemanticGap,
+  planRemainingNounCatalogue,
   reconcileEsdbSourceRecords,
   reopenCompletedTranche,
   saveNextDecision,
@@ -341,6 +344,137 @@ describe("Word Bank review programme", () => {
       ["aardvark", "badger", "choir"],
     );
     assert.equal(tranche.purpose, "semanticGap");
+  });
+
+  it("assigns every remaining noun through rotating grade lanes and spread band buckets", () => {
+    const catalogue = fixtureCatalogue(
+      ["baseline", "apple", "apricot", "boat", "cloud", "drum", "eel", "fern"],
+      {
+        apple: ["common", "Animals and Plants"],
+        apricot: ["common", "Animals and Plants"],
+        boat: ["common", "Made Objects"],
+        cloud: ["common", null],
+        drum: ["lessCommon", "Made Objects"],
+        eel: ["rare", "Animals and Plants"],
+        fern: ["rare", "Animals and Plants"],
+      },
+    );
+
+    const tranches = assignRemainingCatalogueTranches({
+      catalogue,
+      assignedCandidateTexts: ["baseline"],
+      idPrefix: "noun-catalogue",
+      limit: 2,
+    });
+
+    assert.deepEqual(
+      tranches.map((tranche) => [
+        tranche.suggestionLane,
+        tranche.candidates.map((candidate) => candidate.canonicalText),
+      ]),
+      [
+        ["common", ["apple", "boat"]],
+        ["lessCommon", ["drum"]],
+        ["rare", ["eel", "fern"]],
+        ["common", ["cloud", "apricot"]],
+      ],
+    );
+    assert.equal(
+      new Set(
+        tranches.flatMap((tranche) =>
+          tranche.candidates.map((candidate) => candidate.canonicalText),
+        ),
+      ).size,
+      7,
+    );
+    assert.ok(tranches.every((tranche) => tranche.purpose === "catalogue"));
+  });
+
+  it("separates automatic semantic-gap planning from approval-gated remaining catalogue assignment", () => {
+    const catalogue = fixtureCatalogue(
+      ["baseline", "apple", "drum", "eel"],
+      {
+        baseline: ["common", "People and Groups"],
+        apple: ["common", "Animals and Plants"],
+        drum: ["lessCommon", "Made Objects"],
+        eel: ["rare", "Animals and Plants"],
+      },
+    );
+    const baseline = createBaselineTranche({
+      id: "noun-baseline",
+      entryKind: "noun",
+      catalogue,
+      candidateTexts: ["baseline"],
+    });
+    baseline.candidates[0].decision = acceptedNounDecision("People and Groups");
+    const index = fixtureIndex([trancheReference(baseline, "complete")]);
+
+    const plannedGap = planNextNounSemanticGap({
+      catalogue,
+      index,
+      tranches: [baseline],
+      limit: 1,
+    });
+
+    assert.deepEqual(
+      [plannedGap.tranche.id, plannedGap.tranche.purpose],
+      ["noun-semantic-gap-001", "semanticGap"],
+    );
+    assert.equal(plannedGap.index.tranches.at(-1).lifecycle, "planned");
+
+    plannedGap.tranche.candidates[0].decision = acceptedNounDecision(
+      "Animals and Plants",
+    );
+    plannedGap.index.tranches.at(-1).lifecycle = "complete";
+    const repeatedGap = planNextNounSemanticGap({
+      catalogue,
+      index: plannedGap.index,
+      tranches: [baseline, plannedGap.tranche],
+      limit: 1,
+    });
+    assert.equal(repeatedGap.tranche.id, "noun-semantic-gap-002");
+    repeatedGap.tranche.candidates[0].decision = acceptedNounDecision(
+      "Made Objects",
+    );
+    repeatedGap.index.tranches.at(-1).lifecycle = "complete";
+    assert.throws(
+      () =>
+        planRemainingNounCatalogue({
+          catalogue,
+          index: repeatedGap.index,
+          tranches: [baseline, plannedGap.tranche, repeatedGap.tranche],
+          approved: false,
+        }),
+      /explicit allowlist approval/i,
+    );
+
+    const plannedRemaining = planRemainingNounCatalogue({
+      catalogue,
+      index: repeatedGap.index,
+      tranches: [baseline, plannedGap.tranche, repeatedGap.tranche],
+      approved: true,
+      limit: 1,
+    });
+
+    assert.deepEqual(
+      plannedRemaining.addedTranches.map((tranche) => [tranche.id, tranche.purpose]),
+      [
+        ["noun-catalogue-001", "catalogue"],
+      ],
+    );
+    assert.doesNotThrow(() =>
+      validateReviewRegister({
+        catalogue,
+        index: plannedRemaining.index,
+        tranches: [
+          baseline,
+          plannedGap.tranche,
+          repeatedGap.tranche,
+          ...plannedRemaining.addedTranches,
+        ],
+        requireCompleteCoverage: true,
+      }),
+    );
   });
 });
 

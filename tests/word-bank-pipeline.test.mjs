@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildProductionWordBank,
+  buildReviewedDefaultShard,
   getCandidateForm,
   mapEsdbPosToEntryKind,
   parseEsdbSourceText,
@@ -245,6 +246,88 @@ describe("Word Bank production pipeline", () => {
       /No supported ESDB source row/i,
     );
   });
+
+  it("builds a schema-v2 default shard only from approved completed review decisions", () => {
+    const reviewProgramme = {
+      index: {
+        tranches: [
+          { id: "noun-baseline", entryKind: "noun", lifecycle: "complete" },
+          { id: "noun-semantic-gap-001", entryKind: "noun", lifecycle: "complete" },
+        ],
+      },
+      tranches: [
+        reviewedTranche("noun-baseline", [
+          reviewedCandidate("anchor", acceptedReviewDecision("Made Objects")),
+          reviewedCandidate("badger", {
+            ...acceptedReviewDecision("Animals and Plants"),
+            familyFriendly: false,
+          }),
+        ]),
+        reviewedTranche("noun-semantic-gap-001", [
+          reviewedCandidate("lantern", acceptedReviewDecision("Made Objects")),
+          reviewedCandidate("rejected", {
+            ukEnglishEligible: false,
+            familyFriendly: true,
+            curationDecision: "Reject",
+            commonnessGrade: null,
+            nounSemanticBand: null,
+          }),
+        ]),
+      ],
+    };
+
+    assert.throws(
+      () =>
+        buildReviewedDefaultShard({
+          approved: false,
+          entryKind: "noun",
+          includedTrancheIds: ["noun-baseline", "noun-semantic-gap-001"],
+          reviewProgramme,
+          sourceConfig,
+          version: "noun-reviewed-v1",
+        }),
+      /explicit allowlist approval/i,
+    );
+
+    const shard = buildReviewedDefaultShard({
+      approved: true,
+      curationVersion: "issue245-reviewed-nouns",
+      entryKind: "noun",
+      includedTrancheIds: ["noun-baseline", "noun-semantic-gap-001"],
+      reviewProgramme,
+      semanticReference: {
+        id: "open-english-wordnet-core",
+        version: "2025",
+        archiveSha256: "OEWNTESTHASH",
+      },
+      sourceConfig,
+      version: "noun-reviewed-v1",
+    });
+
+    assert.equal(shard.schemaVersion, 2);
+    assert.deepEqual(
+      shard.candidates.map((candidate) => candidate.canonicalText),
+      ["anchor", "lantern"],
+    );
+    assert.deepEqual(shard.candidates[0], {
+      canonicalText: "anchor",
+      sourceId: "esdb-scowl-v2",
+      sourceVersion: "test-revision",
+      entryKind: "noun",
+      candidateForm: "singleWord",
+      safetyStatus: "familyFriendly",
+      curationStatus: "accepted",
+      ukEnglishEligible: true,
+      commonnessGrade: "common",
+      nounSemanticBand: "Made Objects",
+    });
+    assert.deepEqual(shard.semanticReference, {
+      id: "open-english-wordnet-core",
+      version: "2025",
+      archiveSha256: "OEWNTESTHASH",
+    });
+    assert.doesNotThrow(() => validateWordBankShard(shard));
+  });
 });
 
 function accepted(canonicalText, overrides = {}) {
@@ -270,5 +353,23 @@ function reviewedCompound(note) {
     reviewer: "codex",
     reviewedOn: "2026-07-05",
     note,
+  };
+}
+
+function reviewedTranche(id, candidates) {
+  return { schemaVersion: 1, id, entryKind: "noun", candidates };
+}
+
+function reviewedCandidate(canonicalText, decision) {
+  return { canonicalText, decision };
+}
+
+function acceptedReviewDecision(nounSemanticBand) {
+  return {
+    ukEnglishEligible: true,
+    familyFriendly: true,
+    curationDecision: "Accept",
+    commonnessGrade: "common",
+    nounSemanticBand,
   };
 }

@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   mkdir,
+  link,
   open,
   readFile,
   rename,
@@ -87,6 +88,67 @@ export async function openReviewStore({ root } = {}) {
       } catch (error) {
         await rm(temporaryPath, { force: true });
         throw error;
+      }
+
+      return {
+        data: replacement,
+        hash: hashText(replacementSource),
+      };
+    },
+    async create(relativePath, replacement, { validate } = {}) {
+      assertOpen(closed);
+
+      if (mode !== "writable") {
+        throw new Error("This review workbench instance is read-only.");
+      }
+
+      if (typeof validate !== "function") {
+        throw new Error("A complete replacement validator is required.");
+      }
+
+      validate(replacement);
+      const targetPath = resolveReviewPath(resolvedRoot, relativePath);
+      const replacementSource = `${JSON.stringify(replacement, null, 2)}\n`;
+      const existing = await readFile(targetPath, "utf8").catch((error) => {
+        if (error?.code === "ENOENT") {
+          return null;
+        }
+
+        throw error;
+      });
+
+      if (existing !== null) {
+        if (existing !== replacementSource) {
+          throw new Error(`${relativePath} already exists with different content.`);
+        }
+
+        return { data: replacement, hash: hashText(existing) };
+      }
+
+      await mkdir(path.dirname(targetPath), { recursive: true });
+      const temporaryPath = path.join(
+        path.dirname(targetPath),
+        `.${path.basename(targetPath)}.${ownerToken}.tmp`,
+      );
+
+      try {
+        await writeFile(temporaryPath, replacementSource, {
+          encoding: "utf8",
+          flag: "wx",
+        });
+        await link(temporaryPath, targetPath);
+      } catch (error) {
+        if (error?.code !== "EEXIST") {
+          throw error;
+        }
+
+        const racedSource = await readFile(targetPath, "utf8");
+
+        if (racedSource !== replacementSource) {
+          throw new Error(`${relativePath} already exists with different content.`);
+        }
+      } finally {
+        await rm(temporaryPath, { force: true });
       }
 
       return {

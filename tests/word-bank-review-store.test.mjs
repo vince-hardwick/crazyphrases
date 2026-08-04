@@ -86,6 +86,31 @@ describe("Word Bank review persistence", () => {
     await store.close();
   });
 
+  it("atomically creates new review files and accepts only identical retries", async () => {
+    const root = await createReviewRoot();
+    const store = await openReviewStore({ root });
+    const replacement = { schemaVersion: 1, candidates: ["anchor"] };
+
+    const created = await store.create("tranches/noun-gap.json", replacement, {
+      validate: () => {},
+    });
+    const retried = await store.create("tranches/noun-gap.json", replacement, {
+      validate: () => {},
+    });
+
+    assert.equal(created.hash, retried.hash);
+    await assert.rejects(
+      () =>
+        store.create(
+          "tranches/noun-gap.json",
+          { schemaVersion: 1, candidates: ["different"] },
+          { validate: () => {} },
+        ),
+      /already exists with different content/i,
+    );
+    await store.close();
+  });
+
   it("requires explicit stale-lock recovery and refuses to recover a live writer", async () => {
     const root = await createReviewRoot();
     const lockPath = path.join(root, ".review.lock");

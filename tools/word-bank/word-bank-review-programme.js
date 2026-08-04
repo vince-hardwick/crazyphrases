@@ -471,6 +471,156 @@ export function assembleSemanticGapTranche({
   };
 }
 
+export function assignRemainingCatalogueTranches({
+  catalogue,
+  assignedCandidateTexts = [],
+  idPrefix = "noun-catalogue",
+  limit = 250,
+} = {}) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 250) {
+    throw new Error("Catalogue tranche limit must be between 1 and 250.");
+  }
+
+  const assigned = new Set(assignedCandidateTexts.map(normalizeCandidateText));
+  const gradeLanes = ["common", "lessCommon", "rare"];
+  const laneQueues = new Map(gradeLanes.map((grade) => [grade, []]));
+
+  for (const grade of gradeLanes) {
+    const laneCandidates = (catalogue?.candidates ?? []).filter(
+      (candidate) =>
+        !assigned.has(normalizeCandidateText(candidate.canonicalText)) &&
+        candidate.suggestions?.commonnessGrade === grade,
+    );
+    laneQueues.set(grade, spreadAcrossSemanticBuckets(laneCandidates));
+  }
+
+  const remainingWithNoLane = (catalogue?.candidates ?? []).filter(
+    (candidate) =>
+      !assigned.has(normalizeCandidateText(candidate.canonicalText)) &&
+      !COMMONNESS_GRADES.has(candidate.suggestions?.commonnessGrade),
+  );
+
+  if (remainingWithNoLane.length > 0) {
+    throw new Error(
+      `Remaining catalogue candidate "${remainingWithNoLane[0].canonicalText}" has no Commonness Grade suggestion lane.`,
+    );
+  }
+
+  const tranches = [];
+  let laneIndex = 0;
+
+  while ([...laneQueues.values()].some((queue) => queue.length > 0)) {
+    const grade = gradeLanes[laneIndex % gradeLanes.length];
+    const queue = laneQueues.get(grade);
+    laneIndex += 1;
+
+    if (queue.length === 0) {
+      continue;
+    }
+
+    const selected = queue.splice(0, limit);
+    const id = `${idPrefix}-${String(tranches.length + 1).padStart(3, "0")}`;
+    tranches.push({
+      ...createBaselineTranche({
+        id,
+        entryKind: "noun",
+        catalogue,
+        candidateTexts: selected.map((candidate) => candidate.canonicalText),
+      }),
+      purpose: "catalogue",
+      suggestionLane: grade,
+    });
+  }
+
+  return tranches;
+}
+
+export function planNextNounSemanticGap({
+  catalogue,
+  index,
+  tranches = [],
+  limit = 250,
+} = {}) {
+  const nounReferences = assertNounPlanningReady(index, tranches);
+
+  if (nounReferences.some((reference) => reference.purpose === "catalogue")) {
+    throw new Error("Remaining noun catalogue tranches are already fixed.");
+  }
+
+  const assignedCandidateTexts = getAssignedNounCandidateTexts(tranches);
+  const acceptedCandidates = tranches
+    .filter((tranche) => tranche.entryKind === "noun")
+    .flatMap((tranche) =>
+      tranche.candidates.map((candidate) => ({
+        ...candidate,
+        entryKind: "noun",
+      })),
+    );
+  const gapNumber =
+    nounReferences.filter((reference) => reference.purpose === "semanticGap").length +
+    1;
+  const semanticGap = assembleSemanticGapTranche({
+    catalogue,
+    assignedCandidateTexts,
+    acceptedCandidates,
+    id: `noun-semantic-gap-${String(gapNumber).padStart(3, "0")}`,
+    limit,
+  });
+  const updatedIndex = clone(index);
+  updatedIndex.tranches.push(createTrancheReference(semanticGap, "planned"));
+
+  return { index: updatedIndex, tranche: semanticGap };
+}
+
+export function planRemainingNounCatalogue({
+  catalogue,
+  index,
+  tranches = [],
+  approved,
+  limit = 250,
+} = {}) {
+  if (approved !== true) {
+    throw new Error("Remaining catalogue planning requires explicit allowlist approval.");
+  }
+
+  const nounReferences = assertNounPlanningReady(index, tranches);
+
+  if (!nounReferences.some((reference) => reference.purpose === "semanticGap")) {
+    throw new Error("At least one semantic-gap tranche must be complete first.");
+  }
+
+  if (nounReferences.some((reference) => reference.purpose === "catalogue")) {
+    throw new Error("Remaining noun catalogue tranches are already fixed.");
+  }
+
+  const addedTranches = assignRemainingCatalogueTranches({
+    catalogue,
+    assignedCandidateTexts: getAssignedNounCandidateTexts(tranches),
+    idPrefix: "noun-catalogue",
+    limit,
+  });
+  const updatedIndex = clone(index);
+  updatedIndex.tranches.push(
+    ...addedTranches.map((tranche) => createTrancheReference(tranche, "planned")),
+  );
+
+  validateReviewRegister({
+    catalogue,
+    index: {
+      ...updatedIndex,
+      tranches: updatedIndex.tranches.filter(
+        (reference) => reference.entryKind === "noun",
+      ),
+    },
+    tranches: [...tranches, ...addedTranches].filter(
+      (tranche) => tranche.entryKind === "noun",
+    ),
+    requireCompleteCoverage: true,
+  });
+
+  return { index: updatedIndex, addedTranches };
+}
+
 export function buildSemanticSuggestionIndex(nounLexnameDocuments = []) {
   const bandsByLemma = new Map();
 
@@ -705,6 +855,78 @@ function registerCandidateKey(entryKind, canonicalText) {
 
 function cellKey(commonnessGrade, nounSemanticBand) {
   return `${commonnessGrade}\u0000${nounSemanticBand}`;
+}
+
+function assertNounPlanningReady(index, tranches) {
+  const nounReferences = (index?.tranches ?? []).filter(
+    (reference) => reference.entryKind === "noun",
+  );
+  const baseline = nounReferences.find(
+    (reference) => reference.purpose === "baseline",
+  );
+
+  if (!baseline || baseline.lifecycle !== "complete") {
+    throw new Error("The noun baseline must be complete before catalogue planning.");
+  }
+
+  const incomplete = nounReferences.find(
+    (reference) => reference.lifecycle !== "complete",
+  );
+
+  if (incomplete) {
+    throw new Error(`Noun tranche "${incomplete.id}" must be complete first.`);
+  }
+
+  const trancheIds = new Set(
+    tranches
+      .filter((tranche) => tranche.entryKind === "noun")
+      .map((tranche) => tranche.id),
+  );
+  const missing = nounReferences.find((reference) => !trancheIds.has(reference.id));
+
+  if (missing) {
+    throw new Error(`Review tranche "${missing.id}" is missing.`);
+  }
+
+  return nounReferences;
+}
+
+function getAssignedNounCandidateTexts(tranches) {
+  return tranches
+    .filter((tranche) => tranche.entryKind === "noun")
+    .flatMap((tranche) =>
+      tranche.candidates.map((candidate) => candidate.canonicalText),
+    );
+}
+
+function spreadAcrossSemanticBuckets(candidates) {
+  const bucketOrder = [...NOUN_SEMANTIC_BANDS, null];
+  const buckets = new Map(bucketOrder.map((band) => [band, []]));
+
+  for (const candidate of candidates) {
+    const band = NOUN_SEMANTIC_BANDS.has(candidate.suggestions?.nounSemanticBand)
+      ? candidate.suggestions.nounSemanticBand
+      : null;
+    buckets.get(band).push(candidate);
+  }
+
+  for (const bucket of buckets.values()) {
+    bucket.sort(compareCandidates);
+  }
+
+  const ordered = [];
+
+  while ([...buckets.values()].some((bucket) => bucket.length > 0)) {
+    for (const band of bucketOrder) {
+      const candidate = buckets.get(band).shift();
+
+      if (candidate) {
+        ordered.push(candidate);
+      }
+    }
+  }
+
+  return ordered;
 }
 
 function attachPublishedEvidence(tranche, publishedCandidates = []) {

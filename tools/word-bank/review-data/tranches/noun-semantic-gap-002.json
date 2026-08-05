@@ -1,0 +1,6853 @@
+{
+  "schemaVersion": 1,
+  "id": "noun-semantic-gap-002",
+  "entryKind": "noun",
+  "purpose": "semanticGap",
+  "candidates": [
+    {
+      "sequence": 1,
+      "canonicalText": "acarus",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 2,
+      "canonicalText": "accentor",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 3,
+      "canonicalText": "adenohypophysis",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 4,
+      "canonicalText": "academic year",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 5,
+      "canonicalText": "accidence",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 6,
+      "canonicalText": "acervulus",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 7,
+      "canonicalText": "acetic anhydride",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 8,
+      "canonicalText": "adnexa",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 9,
+      "canonicalText": "acantha",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 10,
+      "canonicalText": "accusal",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 11,
+      "canonicalText": "acetanilid",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 12,
+      "canonicalText": "acetin",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 13,
+      "canonicalText": "achillea",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 14,
+      "canonicalText": "actinide series",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 15,
+      "canonicalText": "adrenocorticotrophin",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 16,
+      "canonicalText": "angel cake",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 17,
+      "canonicalText": "annuity",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 18,
+      "canonicalText": "atomic number",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 19,
+      "canonicalText": "back country",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 20,
+      "canonicalText": "accelerando",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 21,
+      "canonicalText": "acclamation",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 22,
+      "canonicalText": "accused",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 23,
+      "canonicalText": "acetanilide",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 24,
+      "canonicalText": "acetone body",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 25,
+      "canonicalText": "achira",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 26,
+      "canonicalText": "acid rock",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 27,
+      "canonicalText": "acoustics",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 28,
+      "canonicalText": "actinium",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 29,
+      "canonicalText": "adrenocorticotropic hormone",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 30,
+      "canonicalText": "amontillado",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 31,
+      "canonicalText": "annona",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 32,
+      "canonicalText": "ante",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 33,
+      "canonicalText": "aught",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 34,
+      "canonicalText": "balkline",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 35,
+      "canonicalText": "biosphere",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 36,
+      "canonicalText": "acceptableness",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 37,
+      "canonicalText": "account book",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 38,
+      "canonicalText": "accusative",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 39,
+      "canonicalText": "accuser",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 40,
+      "canonicalText": "acetate rayon",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 41,
+      "canonicalText": "acetylcholine",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 42,
+      "canonicalText": "acidophil",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 43,
+      "canonicalText": "acquittance",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 44,
+      "canonicalText": "acronym",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 45,
+      "canonicalText": "activated carbon",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 46,
+      "canonicalText": "adrenocorticotropin",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 47,
+      "canonicalText": "alga",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 48,
+      "canonicalText": "angel food cake",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 49,
+      "canonicalText": "antrum",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "extra",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 50,
+      "canonicalText": "apple pie",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 51,
+      "canonicalText": "applicability",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 52,
+      "canonicalText": "avoirdupois weight",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 53,
+      "canonicalText": "battle line",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 54,
+      "canonicalText": "bishopric",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 55,
+      "canonicalText": "abseiler",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 56,
+      "canonicalText": "acerbity",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 57,
+      "canonicalText": "acetophenetidin",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 58,
+      "canonicalText": "achiever",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 59,
+      "canonicalText": "achondrite",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 60,
+      "canonicalText": "acid test",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 61,
+      "canonicalText": "acidophile",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 62,
+      "canonicalText": "acre-foot",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 63,
+      "canonicalText": "act",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 64,
+      "canonicalText": "activator",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 65,
+      "canonicalText": "adnoun",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 66,
+      "canonicalText": "adventitia",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 67,
+      "canonicalText": "alley cat",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 68,
+      "canonicalText": "aniseed",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 69,
+      "canonicalText": "aqueous humor",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 70,
+      "canonicalText": "arak",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 71,
+      "canonicalText": "are",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 72,
+      "canonicalText": "azimuth",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 73,
+      "canonicalText": "beam-ends",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 74,
+      "canonicalText": "boom town",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 75,
+      "canonicalText": "absolver",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 76,
+      "canonicalText": "academic freedom",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 77,
+      "canonicalText": "acetylation",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 78,
+      "canonicalText": "achromatic lens",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 79,
+      "canonicalText": "acicula",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 80,
+      "canonicalText": "acidosis",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 81,
+      "canonicalText": "acorn barnacle",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 82,
+      "canonicalText": "acquirement",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 83,
+      "canonicalText": "acrobat",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 84,
+      "canonicalText": "activism",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 85,
+      "canonicalText": "acyl",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "extra",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 86,
+      "canonicalText": "advertence",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 87,
+      "canonicalText": "agate line",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 88,
+      "canonicalText": "agnail",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 89,
+      "canonicalText": "airspace",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 90,
+      "canonicalText": "aloe",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 91,
+      "canonicalText": "anisette",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 92,
+      "canonicalText": "ardent spirits",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 93,
+      "canonicalText": "armful",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 94,
+      "canonicalText": "arteriole",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 95,
+      "canonicalText": "bad debt",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 96,
+      "canonicalText": "bedroom community",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 97,
+      "canonicalText": "borderland",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 98,
+      "canonicalText": "abstracter",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 99,
+      "canonicalText": "academicism",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 100,
+      "canonicalText": "acid dye",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 101,
+      "canonicalText": "acidification",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 102,
+      "canonicalText": "ack-ack",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 103,
+      "canonicalText": "acne",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 104,
+      "canonicalText": "acquaintanceship",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 105,
+      "canonicalText": "acrodont",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 106,
+      "canonicalText": "acrostic",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 107,
+      "canonicalText": "activist",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 108,
+      "canonicalText": "acupressure",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 109,
+      "canonicalText": "acute",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 110,
+      "canonicalText": "adenine",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 111,
+      "canonicalText": "advertency",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 112,
+      "canonicalText": "agio",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 113,
+      "canonicalText": "akaryote",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 114,
+      "canonicalText": "aloe vera",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 115,
+      "canonicalText": "amusement park",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 116,
+      "canonicalText": "antipasto",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 117,
+      "canonicalText": "armagnac",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 118,
+      "canonicalText": "auricle",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 119,
+      "canonicalText": "autumn",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 120,
+      "canonicalText": "bagful",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 121,
+      "canonicalText": "behind",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 122,
+      "canonicalText": "benthos",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 123,
+      "canonicalText": "bowling green",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 124,
+      "canonicalText": "abstractionist",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 125,
+      "canonicalText": "academism",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 126,
+      "canonicalText": "acidimetry",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 127,
+      "canonicalText": "acquisitiveness",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 128,
+      "canonicalText": "acreage",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 129,
+      "canonicalText": "acrogen",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 130,
+      "canonicalText": "acrolein",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 131,
+      "canonicalText": "actinometer",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 132,
+      "canonicalText": "actor",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 133,
+      "canonicalText": "acuity",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 134,
+      "canonicalText": "ad",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 135,
+      "canonicalText": "adaption",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 136,
+      "canonicalText": "adsorbent",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 137,
+      "canonicalText": "aeromechanics",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 138,
+      "canonicalText": "agiotage",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "stale",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 139,
+      "canonicalText": "allelomorph",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 140,
+      "canonicalText": "amaranth",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 141,
+      "canonicalText": "amoeba",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "A",
+            "variantLevel": 0
+          },
+          {
+            "profile": "B",
+            "variantLevel": 0
+          },
+          {
+            "profile": "D",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 142,
+      "canonicalText": "apex",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 143,
+      "canonicalText": "apple butter",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 144,
+      "canonicalText": "arrack",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 145,
+      "canonicalText": "autonomic nervous system",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 146,
+      "canonicalText": "avo",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "extra"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 147,
+      "canonicalText": "baht",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 148,
+      "canonicalText": "bellybutton",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 149,
+      "canonicalText": "bilocation",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 150,
+      "canonicalText": "box number",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 151,
+      "canonicalText": "absolutist",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 152,
+      "canonicalText": "abstractor",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 153,
+      "canonicalText": "acapnia",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 154,
+      "canonicalText": "acridness",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 155,
+      "canonicalText": "acrimony",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 156,
+      "canonicalText": "acrylate",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 157,
+      "canonicalText": "actinia",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 158,
+      "canonicalText": "actinometry",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 159,
+      "canonicalText": "actinomycin",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 160,
+      "canonicalText": "actress",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 161,
+      "canonicalText": "acute accent",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 162,
+      "canonicalText": "ad-lib",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 163,
+      "canonicalText": "adjudication",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 164,
+      "canonicalText": "adulterant",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 165,
+      "canonicalText": "aeromedicine",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 166,
+      "canonicalText": "agnation",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 167,
+      "canonicalText": "allograft",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 168,
+      "canonicalText": "amaryllis",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 169,
+      "canonicalText": "ant",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 170,
+      "canonicalText": "applejack",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 171,
+      "canonicalText": "ashcake",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "ospdadd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 172,
+      "canonicalText": "axon",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 173,
+      "canonicalText": "backwoods",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 174,
+      "canonicalText": "baksheesh",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 175,
+      "canonicalText": "balance sheet",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 176,
+      "canonicalText": "biceps",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 177,
+      "canonicalText": "blind side",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 178,
+      "canonicalText": "bridgehead",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 179,
+      "canonicalText": "abstainer",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 180,
+      "canonicalText": "abutter",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 181,
+      "canonicalText": "acariasis",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 182,
+      "canonicalText": "acrophobia",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 183,
+      "canonicalText": "acrylic acid",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 184,
+      "canonicalText": "actinian",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 185,
+      "canonicalText": "actinotherapy",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 186,
+      "canonicalText": "action painting",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 187,
+      "canonicalText": "actuality",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 188,
+      "canonicalText": "actuary",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 189,
+      "canonicalText": "adage",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 190,
+      "canonicalText": "adeptness",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 191,
+      "canonicalText": "adsorption",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 192,
+      "canonicalText": "aesthesia",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "2dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "B",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 193,
+      "canonicalText": "agar",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 194,
+      "canonicalText": "air mile",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 195,
+      "canonicalText": "alveolar ridge",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 196,
+      "canonicalText": "amnion",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 197,
+      "canonicalText": "anteater",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 198,
+      "canonicalText": "aqua vitae",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 199,
+      "canonicalText": "avocado pear",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 200,
+      "canonicalText": "balance of payments",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 201,
+      "canonicalText": "bandwidth",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 202,
+      "canonicalText": "barren",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 203,
+      "canonicalText": "belly button",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 204,
+      "canonicalText": "bile",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 205,
+      "canonicalText": "bomb site",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/compounds-auto",
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 206,
+      "canonicalText": "burg",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 207,
+      "canonicalText": "abattoir",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 208,
+      "canonicalText": "abuser",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 209,
+      "canonicalText": "acarophobia",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "2dicts"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 210,
+      "canonicalText": "accessary",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 211,
+      "canonicalText": "achievement",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 212,
+      "canonicalText": "acrylonitrile",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 213,
+      "canonicalText": "actinomyces",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 214,
+      "canonicalText": "action replay",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 215,
+      "canonicalText": "activeness",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 216,
+      "canonicalText": "addendum",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 217,
+      "canonicalText": "addict",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 218,
+      "canonicalText": "adding machine",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 219,
+      "canonicalText": "adequacy",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 220,
+      "canonicalText": "adieu",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 221,
+      "canonicalText": "aeration",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 222,
+      "canonicalText": "aesthesis",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "B",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 223,
+      "canonicalText": "agar-agar",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 224,
+      "canonicalText": "albedo",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 225,
+      "canonicalText": "alveolus",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 226,
+      "canonicalText": "anaconda",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 227,
+      "canonicalText": "antelope",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 228,
+      "canonicalText": "aquavit",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 229,
+      "canonicalText": "baba",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 230,
+      "canonicalText": "balance of trade",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 231,
+      "canonicalText": "barrio",
+      "evidence": {
+        "resolvedSize": 40,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 232,
+      "canonicalText": "baud",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 233,
+      "canonicalText": "bicuspid",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 234,
+      "canonicalText": "blackhead",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 235,
+      "canonicalText": "borscht circuit",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 236,
+      "canonicalText": "burgh",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 237,
+      "canonicalText": "academe",
+      "evidence": {
+        "resolvedSize": 60,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 238,
+      "canonicalText": "accommodator",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 239,
+      "canonicalText": "account payable",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 240,
+      "canonicalText": "acetaminophen",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 241,
+      "canonicalText": "acquittal",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 242,
+      "canonicalText": "actin",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "5d+2a",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 243,
+      "canonicalText": "actinomycete",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable",
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 244,
+      "canonicalText": "acylation",
+      "evidence": {
+        "resolvedSize": 80,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "enable"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 245,
+      "canonicalText": "adaptability",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 246,
+      "canonicalText": "addressee",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 247,
+      "canonicalText": "addressing machine",
+      "evidence": {
+        "resolvedSize": 70,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "moby"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 248,
+      "canonicalText": "adjective",
+      "evidence": {
+        "resolvedSize": 35,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3esl",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd",
+          "ukfreq"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 249,
+      "canonicalText": "adjuration",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "5d+2a",
+          "enable",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      },
+      "decision": null
+    },
+    {
+      "sequence": 250,
+      "canonicalText": "aerobatics",
+      "evidence": {
+        "resolvedSize": 50,
+        "sourceFiles": [
+          "data/scowl-pre.txt"
+        ],
+        "sourceTags": [
+          "12dicts",
+          "3of6",
+          "5d+2a",
+          "brif",
+          "enable",
+          "moby",
+          "ukacd"
+        ],
+        "spellings": [
+          {
+            "profile": "_",
+            "variantLevel": 0
+          }
+        ]
+      },
+      "suggestions": {
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      },
+      "decision": null
+    }
+  ]
+}

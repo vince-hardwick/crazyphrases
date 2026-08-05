@@ -1,14 +1,20 @@
 import { afterEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { chromium } from "playwright";
 
-import { createReviewWorkbenchServer } from "../tools/word-bank/review-workbench-server.js";
+import {
+  createExactGitCheckpoint,
+  createReviewWorkbenchServer,
+} from "../tools/word-bank/review-workbench-server.js";
 
 const resources = [];
+const execFileAsync = promisify(execFile);
 
 afterEach(async () => {
   await Promise.all(
@@ -213,6 +219,50 @@ describe("Word Bank review workbench server", () => {
     });
   });
 
+  it("prepares the next tranche before rendering an all-complete Register", async () => {
+    const fixture = await createCompletedSemanticGapFixture();
+    const server = await createReviewWorkbenchServer({
+      projectRoot: fixture.projectRoot,
+      reviewDataRoot: fixture.reviewDataRoot,
+      staticRoot: path.resolve("tools", "word-bank", "workbench"),
+      port: 0,
+      isGitCheckpointed: async () => true,
+      createGitCheckpoint: async () => ({ created: true }),
+      loadNounCatalogue: async () => ({
+        schemaVersion: 1,
+        entryKind: "noun",
+        candidates: [
+          catalogueCandidate("anchor", "common", "Made Objects"),
+          catalogueCandidate("lantern", "common", "Made Objects"),
+          catalogueCandidate("drum", "lessCommon", "Made Objects"),
+        ],
+      }),
+      nounPlanningOptions: { limit: 1 },
+    });
+    resources.push({ server, root: fixture.projectRoot });
+    const address = await server.listen();
+    const browser = await chromium.launch();
+    resources.push({ browser });
+    const page = await browser.newPage();
+    await page.goto(address.origin);
+
+    await page.getByRole("heading", { name: "noun-semantic-gap-002" }).waitFor();
+    assert.equal(
+      await page.getByText("noun · planned", { exact: true }).isVisible(),
+      true,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Start next tranche" }).isEnabled(),
+      true,
+    );
+    assert.equal(
+      await page
+        .getByText(/Starting another tranche requires the latest completed tranche/i)
+        .count(),
+      0,
+    );
+  });
+
   it("opens an additional process read-only and rejects its mutations", async () => {
     const fixture = await createFixture();
     const writer = await createReviewWorkbenchServer({
@@ -330,6 +380,154 @@ describe("Word Bank review workbench server", () => {
       ["noun-baseline.json", "noun-semantic-gap-001.json", "register.json"],
     );
   });
+
+  it("silently checkpoints an all-complete Register and prepares the next tranche", async () => {
+    const fixture = await createCompletedSemanticGapFixture();
+    const checkpoints = [];
+    const server = await createReviewWorkbenchServer({
+      projectRoot: fixture.projectRoot,
+      reviewDataRoot: fixture.reviewDataRoot,
+      port: 0,
+      isGitCheckpointed: async () => true,
+      createGitCheckpoint: async (checkpoint) => {
+        checkpoints.push(checkpoint);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return { created: true };
+      },
+      loadNounCatalogue: async () => ({
+        schemaVersion: 1,
+        entryKind: "noun",
+        candidates: [
+          catalogueCandidate("anchor", "common", "Made Objects"),
+          catalogueCandidate("lantern", "common", "Made Objects"),
+          catalogueCandidate("drum", "lessCommon", "Made Objects"),
+        ],
+      }),
+      nounPlanningOptions: { limit: 1 },
+    });
+    resources.push({ server, root: fixture.projectRoot });
+    const address = await server.listen();
+    let state = await getJson(`${address.origin}/api/state`);
+
+    const preparationBody = {
+      expectedIndexHash: state.hashes["register.json"],
+      expectedTrancheHash:
+        state.hashes["tranches/noun-semantic-gap-001.json"],
+    };
+    const [preparedState, duplicateState] = await Promise.all([
+      postJson(`${address.origin}/api/prepare-next`, preparationBody),
+      postJson(`${address.origin}/api/prepare-next`, preparationBody),
+    ]);
+    state = preparedState;
+
+    assert.deepEqual(
+      state.tranches.map(({ id, lifecycle }) => [id, lifecycle]),
+      [
+        ["noun-baseline", "complete"],
+        ["noun-semantic-gap-001", "complete"],
+        ["noun-semantic-gap-002", "planned"],
+      ],
+    );
+    assert.equal(state.startNextReady, true);
+    assert.deepEqual(duplicateState.tranches, state.tranches);
+    assert.deepEqual(
+      checkpoints.map(({ message, paths }) => ({
+        message,
+        paths: paths.map((candidate) => path.basename(candidate)).sort(),
+      })),
+      [
+        {
+          message: "Checkpoint completed noun semantic gap 001 review",
+          paths: ["noun-semantic-gap-001.json", "register.json"],
+        },
+        {
+          message: "Plan noun semantic gap 002 review tranche",
+          paths: ["noun-semantic-gap-002.json", "register.json"],
+        },
+      ],
+    );
+
+    state = await postJson(`${address.origin}/api/start-next`, {
+      expectedIndexHash: state.hashes["register.json"],
+    });
+    assert.equal(state.tranches.at(-1).lifecycle, "active");
+  });
+
+  it("creates an exact-path Git checkpoint without consuming unrelated staged work", async () => {
+    const projectRoot = await mkdtemp(
+      path.join(os.tmpdir(), "crazyphrases-exact-checkpoint-"),
+    );
+    resources.push({ root: projectRoot });
+    const reviewRoot = path.join(projectRoot, "tools", "word-bank", "review-data");
+    const trancheRoot = path.join(reviewRoot, "tranches");
+    await mkdir(trancheRoot, { recursive: true });
+    await writeFile(path.join(reviewRoot, "register.json"), "initial register\n");
+    await writeFile(path.join(trancheRoot, "completed.json"), "initial tranche\n");
+    await writeFile(path.join(projectRoot, "unrelated.txt"), "initial unrelated\n");
+    await git(projectRoot, "init");
+    await git(projectRoot, "config", "user.name", "Crazy Phrases Test");
+    await git(projectRoot, "config", "user.email", "test@crazyphrases.invalid");
+    await git(projectRoot, "add", ".");
+    await git(projectRoot, "commit", "-m", "Initial fixture");
+
+    const registerPath = path.join("tools", "word-bank", "review-data", "register.json");
+    const completedPath = path.join(
+      "tools",
+      "word-bank",
+      "review-data",
+      "tranches",
+      "completed.json",
+    );
+    const plannedPath = path.join(
+      "tools",
+      "word-bank",
+      "review-data",
+      "tranches",
+      "planned.json",
+    );
+    await writeFile(path.join(projectRoot, registerPath), "completed register\n");
+    await writeFile(path.join(projectRoot, completedPath), "completed tranche\n");
+    await writeFile(path.join(projectRoot, plannedPath), "planned tranche\n");
+    await writeFile(path.join(projectRoot, "unrelated.txt"), "staged unrelated\n");
+    await git(projectRoot, "add", "unrelated.txt");
+
+    const checkpoint = await createExactGitCheckpoint({
+      projectRoot,
+      paths: [registerPath, completedPath, plannedPath],
+      message: "Checkpoint exact review paths",
+    });
+
+    assert.equal(checkpoint.created, true);
+    assert.deepEqual(
+      (await git(projectRoot, "show", "--pretty=format:", "--name-only", "HEAD"))
+        .trim()
+        .split(/\r?\n/)
+        .sort(),
+      [
+        "tools/word-bank/review-data/register.json",
+        "tools/word-bank/review-data/tranches/completed.json",
+        "tools/word-bank/review-data/tranches/planned.json",
+      ],
+    );
+    assert.equal(
+      (await git(projectRoot, "diff", "--cached", "--name-only")).trim(),
+      "unrelated.txt",
+    );
+    assert.equal(
+      (
+        await git(
+          projectRoot,
+          "status",
+          "--porcelain",
+          "--",
+          registerPath,
+          completedPath,
+          plannedPath,
+        )
+      ).trim(),
+      "",
+    );
+  });
 });
 
 async function createFixture() {
@@ -356,6 +554,56 @@ async function createFixture() {
     })),
   });
   return { projectRoot, reviewDataRoot };
+}
+
+async function createCompletedSemanticGapFixture() {
+  const fixture = await createFixture();
+  const register = fixtureRegister();
+  register.catalogue.candidateCount = 3;
+  register.tranches[0].lifecycle = "complete";
+  register.tranches.push({
+    id: "noun-semantic-gap-001",
+    entryKind: "noun",
+    path: "tranches/noun-semantic-gap-001.json",
+    purpose: "semanticGap",
+    lifecycle: "complete",
+  });
+  const baselinePath = path.join(
+    fixture.reviewDataRoot,
+    "tranches",
+    "noun-baseline.json",
+  );
+  const baseline = JSON.parse(await readFile(baselinePath, "utf8"));
+  baseline.candidates = baseline.candidates.slice(0, 1);
+  baseline.candidates[0].decision = acceptedNounDecision("Made Objects");
+  await writeJson(baselinePath, baseline);
+  await writeJson(path.join(fixture.reviewDataRoot, "register.json"), register);
+  await writeJson(
+    path.join(
+      fixture.reviewDataRoot,
+      "tranches",
+      "noun-semantic-gap-001.json",
+    ),
+    {
+      schemaVersion: 1,
+      id: "noun-semantic-gap-001",
+      entryKind: "noun",
+      purpose: "semanticGap",
+      candidates: [
+        {
+          sequence: 1,
+          canonicalText: "lantern",
+          evidence: { resolvedSize: 40 },
+          suggestions: {
+            commonnessGrade: "common",
+            nounSemanticBand: "Made Objects",
+          },
+          decision: acceptedNounDecision("Made Objects"),
+        },
+      ],
+    },
+  );
+  return fixture;
 }
 
 function fixtureRegister() {
@@ -463,4 +711,12 @@ async function postJson(url, body, { expectedStatus = 200 } = {}) {
 
 async function writeJson(filePath, value) {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function git(projectRoot, ...args) {
+  const { stdout } = await execFileAsync("git", args, {
+    cwd: projectRoot,
+    windowsHide: true,
+  });
+  return stdout;
 }

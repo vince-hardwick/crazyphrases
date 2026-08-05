@@ -41,10 +41,38 @@ document.addEventListener("keydown", (event) => {
 });
 
 await refreshState();
+let initialPreparationError = null;
+
+try {
+  await prepareNextIfNeeded();
+} catch (error) {
+  initialPreparationError = error;
+}
+
 renderHome();
+if (initialPreparationError) showErrors([initialPreparationError.message]);
 
 async function refreshState() {
   state = await api("/api/state");
+}
+
+async function prepareNextIfNeeded() {
+  if (
+    state.mode !== "writable" ||
+    state.tranches.length === 0 ||
+    state.tranches.some((tranche) => tranche.lifecycle !== "complete")
+  ) {
+    return;
+  }
+
+  const completed = state.tranches.at(-1);
+  state = await api("/api/prepare-next", {
+    method: "POST",
+    body: {
+      expectedIndexHash: state.hashes["register.json"],
+      expectedTrancheHash: state.hashes[completed.path],
+    },
+  });
 }
 
 function renderHome({ searchResults = null, query = "" } = {}) {
@@ -54,7 +82,6 @@ function renderHome({ searchResults = null, query = "" } = {}) {
   errors = [];
   const active = state.tranches.find((tranche) => tranche.lifecycle === "active");
   const planned = state.tranches.find((tranche) => tranche.lifecycle === "planned");
-  const complete = state.tranches.filter((tranche) => tranche.lifecycle === "complete");
 
   app.innerHTML = `
     ${state.mode === "readOnly" ? `<section class="panel banner" role="status"><strong>Read-only.</strong> Another process holds the review-data write lock. Search and inspect freely; mutation controls are unavailable.</section>` : ""}
@@ -64,10 +91,10 @@ function renderHome({ searchResults = null, query = "" } = {}) {
           <h2>Review Register</h2>
           <p class="muted">Pinned noun Source Catalogue: ${escapeHtml(state.catalogue.id)} (${Number(state.catalogue.candidateCount).toLocaleString("en-GB")} candidates)</p>
         </div>
-        ${active ? state.activeCandidate ? `<button data-first-pending>First pending</button>` : `<button data-open-completion>Complete Tranche</button>` : planned ? `<button data-start-next ${state.mode === "readOnly" ? "disabled" : ""}>Start next tranche</button>` : ""}
+        ${active ? state.activeCandidate ? `<button data-first-pending>First pending</button>` : `<button data-open-completion>Complete Tranche</button>` : planned ? `<button data-start-next ${state.mode === "readOnly" || !state.startNextReady ? "disabled" : ""}>Start next tranche</button>` : ""}
       </div>
       ${state.tranches.map(renderTrancheCard).join("")}
-      ${complete.length > 0 ? `<p class="muted">Starting another tranche requires the latest completed tranche and this Register index to be committed locally. Unrelated changes do not block that checkpoint.</p>` : ""}
+      ${planned && !state.startNextReady ? `<p class="muted">Starting another tranche requires the latest completed tranche and this Register index to be committed locally. Unrelated changes do not block that checkpoint.</p>` : ""}
     </section>
     <section class="panel">
       <h2>Candidate search</h2>
@@ -241,7 +268,7 @@ function renderReview() {
         <p class="eyebrow">${escapeHtml(activeTranche.id)}</p>
         <h2>Every candidate has a valid persisted decision</h2>
         ${renderProgress(activeTranche.progress)}
-        <p>Completion changes curation/Register data only. It does not publish a shard, change the manifest, stage or commit Git state, or deploy.</p>
+        <p>Completion records the review, creates exact-path local Git checkpoints, and prepares the next planned tranche when none remains. It does not push, publish a shard, change the manifest, activate the next tranche, or deploy.</p>
         <div class="actions">
           <button type="button" class="secondary" data-home>Back to Register</button>
           <button type="button" data-complete ${state.mode === "readOnly" ? "disabled" : ""}>Complete Tranche</button>
@@ -462,7 +489,7 @@ async function completeTrancheAction() {
   const confirmed = await showConfirmationModal({
     title: "Complete this tranche?",
     message:
-      "Completion changes curation/Register data only. It does not commit, publish, change the manifest, or deploy.",
+      "Completion records the review. If no incomplete tranche remains, the workbench creates exact-path local Git checkpoints and prepares the next planned tranche without activating it. It does not push, publish, change the manifest, or deploy.",
     confirmLabel: "Complete Tranche",
   });
   if (!confirmed) return;
@@ -476,7 +503,16 @@ async function completeTrancheAction() {
         expectedTrancheHash: state.hashes[active.path],
       },
     });
+    let preparationError = null;
+
+    try {
+      await prepareNextIfNeeded();
+    } catch (error) {
+      preparationError = error;
+    }
+
     renderHome();
+    if (preparationError) showErrors([preparationError.message]);
   } catch (error) {
     showErrors([error.message]);
   }

@@ -146,7 +146,10 @@ the hosting runbook, and the deployment-surface regression test.
 The workbench is served by a loopback-only local process and reads the designated review
 files directly from the working tree. An explicit Save action validates a complete
 proposed write before replacing authoritative review data; failed validation leaves that
-data unchanged. The workbench cannot stage, commit, push, build or publish shards,
+data unchanged. The workbench has narrowly bounded local Git authority only when every
+registered tranche is complete: it may create exact-path commits for the completed
+tranche and matching Register state, then for the automatically planned successor and
+updated Register. It cannot include unrelated paths, push, build or publish shards,
 trigger deployment, or write outside the designated Noun Review Register and curation
 inputs.
 
@@ -271,10 +274,14 @@ Every successful **Save & Next** persists valid progress to the working tree, an
 partial progress may be committed externally at any time. Completing or recompleting a
 tranche creates a required local Git checkpoint for that tranche file and the matching
 register-index state. **Start next tranche** remains unavailable until those exact files
-are committed on the current branch. The workbench may read and display their Git state
-but cannot stage or commit them, and unrelated working-tree changes do not affect this
-gate. A commit checkpoint does not imply push, pull request, shard publication, or
-deployment.
+are committed on the current branch. When no active or planned tranche remains, the
+writable workbench silently creates that exact-path checkpoint, automatically plans the
+next deterministic semantic-gap tranche without activating it, and creates a second
+exact-path checkpoint for the new tranche and updated Register so it is ready to start.
+This continuation does not infer final allowlist approval or plan the remaining catalogue;
+that approval remains explicit. Unrelated staged and unstaged changes are excluded from
+both commits and do not affect the gate. A local checkpoint does not imply push, pull
+request, shard publication, or deployment.
 
 Focused validation must prove the pinned size-35-through-80 British/shared source
 profile, baseline carry-forward, duplicate exclusion, complete exactly-once catalogue
@@ -289,15 +296,16 @@ no statistical distribution test, phrase sample, semantic-distribution report, o
 candidate-form report is required.
 
 Completing a review tranche changes only the source-controlled register and curation
-data. It never builds or publishes a shard, changes the manifest, stages or commits Git
-state, or triggers deployment. A separately approved publication may incorporate
-accepted candidates from one or more completed tranches into a new cumulative immutable
-shard. Issue #245 publishes its approved noun baseline and semantic-gap outcome together
-with the reviewed adjective replacement; later completed tranches may accumulate until
-another publication is approved. Accepted-but-unpublished progress is derived by
-comparing completed curation with the manifest-selected shard rather than recorded in a
-second status ledger. Correcting a published decision affects only a later immutable
-shard and never rewrites an existing shard.
+data, plus the narrowly bounded local checkpoints and automatic successor planning above.
+It never builds or publishes a shard, changes the manifest, pushes, or triggers deployment.
+A separately approved publication may incorporate accepted candidates from one or more
+completed tranches into a new cumulative immutable shard. Issue #245 publishes its
+approved noun baseline and semantic-gap outcome together with the reviewed adjective
+replacement; later completed tranches may accumulate until another publication is
+approved. Accepted-but-unpublished progress is derived by comparing completed curation
+with the manifest-selected shard rather than recorded in a second status ledger.
+Correcting a published decision affects only a later immutable shard and never rewrites
+an existing shard.
 
 Implementation should introduce the production manifest/shard loader directly
 rather than treating a larger `assets/word-bank-seed.json` file as the primary

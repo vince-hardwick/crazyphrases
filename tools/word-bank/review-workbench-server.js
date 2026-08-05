@@ -22,11 +22,13 @@ export async function createReviewWorkbenchServer({
   staticRoot = path.join(projectRoot, "tools", "word-bank", "workbench"),
   port = 4177,
   isGitCheckpointed = defaultIsGitCheckpointed,
+  createGitCheckpoint = createExactGitCheckpoint,
   loadNounCatalogue = defaultLoadNounCatalogue,
   nounPlanningOptions = {},
 } = {}) {
   const store = await openReviewStore({ root: reviewDataRoot });
   let listening = false;
+  let preparationPromise = null;
   const httpServer = createServer(async (request, response) => {
     try {
       await routeRequest(request, response);
@@ -86,30 +88,18 @@ export async function createReviewWorkbenchServer({
       return;
     }
 
+    if (request.method === "POST" && url.pathname === "/api/prepare-next") {
+      assertWritable();
+      const body = await readJsonBody(request);
+      sendJson(response, 200, await prepareNextReviewTranche(body));
+      return;
+    }
+
     if (request.method === "POST" && url.pathname === "/api/start-next") {
       assertWritable();
       const body = await readJsonBody(request);
       const state = await loadReviewData();
-      const completedReference = [...state.index.data.tranches]
-        .reverse()
-        .find((reference) => reference.lifecycle === "complete");
-      const checkpointed = completedReference
-        ? await isGitCheckpointed({
-            projectRoot,
-            paths: [
-              ...new Set([
-                "register.json",
-                completedReference.path,
-                ...state.index.data.tranches.map((reference) => reference.path),
-              ]),
-            ].map((relativePath) =>
-              path.join(
-                path.relative(projectRoot, reviewDataRoot),
-                ...relativePath.split("/"),
-              ),
-            ),
-          })
-        : true;
+      const checkpointed = await isStartNextCheckpointed(state.index.data);
       const replacement = startNextTranche(state.index.data, { checkpointed });
       await store.save("register.json", replacement, {
         expectedHash: body.expectedIndexHash,
@@ -263,11 +253,17 @@ export async function createReviewWorkbenchServer({
     const activeTranche = activeReference
       ? state.tranches.get(activeReference.id).data
       : null;
+    const plannedReference = state.index.data.tranches.find(
+      (reference) => reference.lifecycle === "planned",
+    );
 
     return {
       mode: store.mode,
       catalogue: state.index.data.catalogue,
       tranches,
+      startNextReady: plannedReference
+        ? await isStartNextCheckpointed(state.index.data)
+        : false,
       activeCandidate: activeTranche
         ? createActiveCandidate(activeReference, activeTranche)
         : null,
@@ -281,6 +277,118 @@ export async function createReviewWorkbenchServer({
         ),
       },
     };
+  }
+
+  async function prepareNextReviewTranche(body) {
+    if (preparationPromise) {
+      return preparationPromise;
+    }
+
+    preparationPromise = prepareNextReviewTrancheOnce(body);
+
+    try {
+      return await preparationPromise;
+    } finally {
+      preparationPromise = null;
+    }
+  }
+
+  async function prepareNextReviewTrancheOnce(body) {
+    let state = await loadReviewData();
+    const incomplete = state.index.data.tranches.find(
+      (reference) => reference.lifecycle !== "complete",
+    );
+
+    if (incomplete) {
+      return readWorkbenchState();
+    }
+
+    assertExpectedHash(
+      state.index.hash,
+      body.expectedIndexHash,
+      "register.json changed outside the workbench",
+    );
+
+    const completedReference = state.index.data.tranches.at(-1);
+
+    if (!completedReference) {
+      throw new Error("There is no completed tranche to checkpoint.");
+    }
+
+    const completed = state.tranches.get(completedReference.id);
+    assertExpectedHash(
+      completed.hash,
+      body.expectedTrancheHash,
+      `${completedReference.path} changed outside the workbench`,
+    );
+
+    await createGitCheckpoint({
+      projectRoot,
+      paths: toProjectReviewPaths(["register.json", completedReference.path]),
+      message: `Checkpoint completed ${completedReference.id.replaceAll("-", " ")} review`,
+    });
+
+    state = await loadReviewData();
+    const catalogue = await loadNounCatalogue();
+    const planned = planNextNounSemanticGap({
+      catalogue,
+      index: state.index.data,
+      tranches: [...state.tranches.values()].map((candidate) => candidate.data),
+      ...nounPlanningOptions,
+    });
+    const plannedReference = planned.index.tranches.at(-1);
+    const savedTranche = await store.create(plannedReference.path, planned.tranche, {
+      validate: (candidate) => validateTrancheShape(candidate, plannedReference),
+    });
+    const savedIndex = await store.save("register.json", planned.index, {
+      expectedHash: state.index.hash,
+      validate: validateIndexShape,
+    });
+
+    assertExpectedHash(
+      (await store.load(plannedReference.path)).hash,
+      savedTranche.hash,
+      `${plannedReference.path} changed outside the workbench`,
+    );
+    assertExpectedHash(
+      (await store.load("register.json")).hash,
+      savedIndex.hash,
+      "register.json changed outside the workbench",
+    );
+
+    await createGitCheckpoint({
+      projectRoot,
+      paths: toProjectReviewPaths(["register.json", plannedReference.path]),
+      message: `Plan ${plannedReference.id.replaceAll("-", " ")} review tranche`,
+    });
+
+    return readWorkbenchState();
+  }
+
+  async function isStartNextCheckpointed(index) {
+    const completedReference = [...index.tranches]
+      .reverse()
+      .find((reference) => reference.lifecycle === "complete");
+
+    if (!completedReference) {
+      return true;
+    }
+
+    return isGitCheckpointed({
+      projectRoot,
+      paths: toProjectReviewPaths([
+        "register.json",
+        completedReference.path,
+        ...index.tranches.map((reference) => reference.path),
+      ]),
+    });
+  }
+
+  function toProjectReviewPaths(relativePaths) {
+    const relativeRoot = path.relative(projectRoot, reviewDataRoot);
+    return [...new Set(relativePaths)].map((relativePath) =>
+      path.join(relativeRoot, ...relativePath.split("/")),
+    );
   }
 
   async function searchCandidates(rawQuery) {
@@ -430,6 +538,53 @@ async function defaultIsGitCheckpointed({ projectRoot, paths }) {
     { cwd: projectRoot, windowsHide: true },
   );
   return stdout.trim() === "";
+}
+
+export async function createExactGitCheckpoint({ projectRoot, paths, message }) {
+  const exactPaths = [...new Set(paths)];
+
+  if (exactPaths.length === 0 || typeof message !== "string" || message.trim() === "") {
+    throw new Error("An exact path set and commit message are required.");
+  }
+
+  const { stdout: statusBefore } = await execFileAsync(
+    "git",
+    ["status", "--porcelain", "--untracked-files=all", "--", ...exactPaths],
+    { cwd: projectRoot, windowsHide: true },
+  );
+
+  if (statusBefore.trim() === "") {
+    return { created: false };
+  }
+
+  try {
+    await execFileAsync("git", ["add", "--", ...exactPaths], {
+      cwd: projectRoot,
+      windowsHide: true,
+    });
+    await execFileAsync(
+      "git",
+      ["commit", "--only", "-m", message, "--", ...exactPaths],
+      { cwd: projectRoot, windowsHide: true },
+    );
+  } catch (error) {
+    throw new Error(`Automatic local Git checkpoint failed: ${error.message}`);
+  }
+
+  const checkpointed = await defaultIsGitCheckpointed({
+    projectRoot,
+    paths: exactPaths,
+  });
+
+  if (!checkpointed) {
+    throw new Error("Automatic local Git checkpoint left review paths uncommitted.");
+  }
+
+  const { stdout: head } = await execFileAsync("git", ["rev-parse", "HEAD"], {
+    cwd: projectRoot,
+    windowsHide: true,
+  });
+  return { created: true, head: head.trim() };
 }
 
 async function defaultLoadNounCatalogue() {

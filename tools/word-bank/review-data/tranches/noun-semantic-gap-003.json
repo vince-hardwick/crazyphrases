@@ -26,7 +26,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 2,
@@ -50,7 +54,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 3,
@@ -74,7 +82,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 4,
@@ -100,7 +112,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 5,
@@ -124,7 +140,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 6,
@@ -148,7 +170,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 7,
@@ -172,7 +198,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 8,
@@ -198,7 +230,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 9,
@@ -224,7 +262,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 10,
@@ -248,7 +292,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 11,
@@ -275,7 +325,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 12,
@@ -301,7 +355,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 13,
@@ -327,7 +385,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 14,
@@ -353,7 +415,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 15,
@@ -383,7 +449,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 16,
@@ -409,7 +481,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 17,
@@ -433,7 +511,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 18,
@@ -458,7 +540,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 19,
@@ -484,7 +572,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 20,
@@ -508,7 +600,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 21,
@@ -533,7 +629,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 22,
@@ -559,7 +659,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 23,
@@ -586,7 +692,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 24,
@@ -612,7 +724,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": false,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 25,
@@ -636,7 +752,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": false,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 26,
@@ -668,7 +788,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 27,
@@ -692,7 +818,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 28,
@@ -718,7 +850,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 29,
@@ -744,7 +880,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 30,
@@ -773,7 +913,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 31,
@@ -798,7 +944,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 32,
@@ -822,7 +974,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 33,
@@ -846,7 +1004,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 34,
@@ -872,7 +1036,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 35,
@@ -896,7 +1064,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 36,
@@ -927,7 +1099,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 37,
@@ -953,7 +1131,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 38,
@@ -979,7 +1163,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 39,
@@ -1004,7 +1194,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 40,
@@ -1031,7 +1225,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 41,
@@ -1061,7 +1259,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 42,
@@ -1086,7 +1290,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 43,
@@ -1115,7 +1325,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 44,
@@ -1139,7 +1355,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 45,
@@ -1167,7 +1387,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 46,
@@ -1192,7 +1418,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 47,
@@ -1220,7 +1452,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 48,
@@ -1244,7 +1482,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 49,
@@ -1275,7 +1519,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 50,
@@ -1305,7 +1555,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 51,
@@ -1329,7 +1585,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 52,
@@ -1355,7 +1617,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 53,
@@ -1381,7 +1647,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 54,
@@ -1405,7 +1677,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 55,
@@ -1434,7 +1712,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 56,
@@ -1460,7 +1744,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 57,
@@ -1488,7 +1776,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 58,
@@ -1517,7 +1809,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 59,
@@ -1541,7 +1839,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 60,
@@ -1571,7 +1873,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 61,
@@ -1598,7 +1906,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": false,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 62,
@@ -1628,7 +1942,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 63,
@@ -1652,7 +1972,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 64,
@@ -1684,7 +2010,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 65,
@@ -1716,7 +2048,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 66,
@@ -1743,7 +2081,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 67,
@@ -1767,7 +2111,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": false,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 68,
@@ -1792,7 +2140,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 69,
@@ -1818,7 +2170,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 70,
@@ -1844,7 +2202,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 71,
@@ -1875,7 +2239,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 72,
@@ -1904,7 +2274,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 73,
@@ -1930,7 +2306,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 74,
@@ -1954,7 +2334,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 75,
@@ -1983,7 +2369,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 76,
@@ -2008,7 +2400,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 77,
@@ -2036,7 +2432,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 78,
@@ -2064,7 +2464,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 79,
@@ -2089,7 +2495,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 80,
@@ -2115,7 +2527,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 81,
@@ -2145,7 +2561,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 82,
@@ -2173,7 +2595,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 83,
@@ -2198,7 +2624,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 84,
@@ -2228,7 +2660,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 85,
@@ -2258,7 +2696,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 86,
@@ -2287,7 +2731,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 87,
@@ -2314,7 +2764,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 88,
@@ -2340,7 +2796,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 89,
@@ -2364,7 +2824,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 90,
@@ -2389,7 +2853,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 91,
@@ -2415,7 +2883,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 92,
@@ -2446,7 +2920,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 93,
@@ -2470,7 +2950,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 94,
@@ -2494,7 +2978,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 95,
@@ -2523,7 +3011,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 96,
@@ -2555,7 +3049,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 97,
@@ -2581,7 +3081,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 98,
@@ -2611,7 +3115,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 99,
@@ -2641,7 +3151,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 100,
@@ -2669,7 +3185,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 101,
@@ -2693,7 +3213,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 102,
@@ -2719,7 +3243,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 103,
@@ -2747,7 +3275,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 104,
@@ -2773,7 +3307,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 105,
@@ -2800,7 +3340,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 106,
@@ -2832,7 +3378,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 107,
@@ -2864,7 +3416,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 108,
@@ -2892,7 +3450,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 109,
@@ -2920,7 +3484,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 110,
@@ -2946,7 +3516,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 111,
@@ -2976,7 +3552,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 112,
@@ -3002,7 +3584,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 113,
@@ -3028,7 +3616,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 114,
@@ -3056,7 +3650,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 115,
@@ -3083,7 +3683,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 116,
@@ -3115,7 +3719,11 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 117,
@@ -3140,7 +3748,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 118,
@@ -3164,7 +3776,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 119,
@@ -3196,7 +3814,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 120,
@@ -3220,7 +3844,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 121,
@@ -3247,7 +3875,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 122,
@@ -3276,7 +3908,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 123,
@@ -3308,7 +3946,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 124,
@@ -3334,7 +3978,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 125,
@@ -3363,7 +4013,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 126,
@@ -3392,7 +4048,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 127,
@@ -3417,7 +4079,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 128,
@@ -3445,7 +4113,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 129,
@@ -3476,7 +4150,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 130,
@@ -3502,7 +4182,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 131,
@@ -3529,7 +4213,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 132,
@@ -3558,7 +4248,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 133,
@@ -3583,7 +4279,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 134,
@@ -3613,7 +4315,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 135,
@@ -3643,7 +4351,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 136,
@@ -3670,7 +4384,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 137,
@@ -3700,7 +4420,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 138,
@@ -3724,7 +4450,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 139,
@@ -3756,7 +4488,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 140,
@@ -3786,7 +4524,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 141,
@@ -3812,7 +4556,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": false,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 142,
@@ -3838,7 +4586,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 143,
@@ -3865,7 +4619,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 144,
@@ -3892,7 +4652,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 145,
@@ -3923,7 +4689,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 146,
@@ -3949,7 +4721,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 147,
@@ -3974,7 +4750,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 148,
@@ -4004,7 +4786,11 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 149,
@@ -4034,7 +4820,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 150,
@@ -4060,7 +4852,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 151,
@@ -4091,7 +4887,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 152,
@@ -4118,7 +4920,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 153,
@@ -4143,7 +4949,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 154,
@@ -4169,7 +4981,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 155,
@@ -4197,7 +5015,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 156,
@@ -4221,7 +5045,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 157,
@@ -4251,7 +5081,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 158,
@@ -4283,7 +5119,11 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 159,
@@ -4308,7 +5148,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 160,
@@ -4334,7 +5178,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 161,
@@ -4362,7 +5210,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 162,
@@ -4387,7 +5241,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 163,
@@ -4418,7 +5278,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 164,
@@ -4450,7 +5316,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 165,
@@ -4482,7 +5354,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 166,
@@ -4508,7 +5386,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 167,
@@ -4533,7 +5417,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 168,
@@ -4563,7 +5451,11 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 169,
@@ -4590,7 +5482,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 170,
@@ -4617,7 +5515,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 171,
@@ -4644,7 +5548,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 172,
@@ -4671,7 +5581,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 173,
@@ -4698,7 +5612,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 174,
@@ -4728,7 +5648,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 175,
@@ -4755,7 +5681,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 176,
@@ -4786,7 +5718,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 177,
@@ -4812,7 +5750,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 178,
@@ -4838,7 +5780,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 179,
@@ -4866,7 +5814,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 180,
@@ -4893,7 +5847,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 181,
@@ -4919,7 +5879,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 182,
@@ -4947,7 +5911,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 183,
@@ -4977,7 +5945,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 184,
@@ -5004,7 +5978,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 185,
@@ -5029,7 +6009,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 186,
@@ -5055,7 +6041,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 187,
@@ -5087,7 +6079,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 188,
@@ -5113,7 +6111,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 189,
@@ -5140,7 +6142,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 190,
@@ -5166,7 +6174,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 191,
@@ -5193,7 +6207,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 192,
@@ -5224,7 +6244,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 193,
@@ -5255,7 +6281,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": false,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 194,
@@ -5286,7 +6318,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 195,
@@ -5315,7 +6353,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 196,
@@ -5343,7 +6387,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": false,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 197,
@@ -5368,7 +6416,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 198,
@@ -5399,7 +6451,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 199,
@@ -5424,7 +6482,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 200,
@@ -5449,7 +6511,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 201,
@@ -5480,7 +6548,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 202,
@@ -5506,7 +6580,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 203,
@@ -5532,7 +6610,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 204,
@@ -5560,7 +6644,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 205,
@@ -5592,7 +6682,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 206,
@@ -5628,7 +6724,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 207,
@@ -5652,7 +6754,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 208,
@@ -5677,7 +6785,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 209,
@@ -5705,7 +6817,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 210,
@@ -5730,7 +6848,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 211,
@@ -5756,7 +6878,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 212,
@@ -5780,7 +6906,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 213,
@@ -5809,7 +6941,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 214,
@@ -5840,7 +6978,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 215,
@@ -5865,7 +7009,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 216,
@@ -5893,7 +7041,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 217,
@@ -5920,7 +7072,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 218,
@@ -5950,7 +7106,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      }
     },
     {
       "sequence": 219,
@@ -5976,7 +7138,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 220,
@@ -6001,7 +7167,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 221,
@@ -6025,7 +7197,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 222,
@@ -6051,7 +7227,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Food and Drink"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Food and Drink"
+      }
     },
     {
       "sequence": 223,
@@ -6084,7 +7266,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Places"
+      }
     },
     {
       "sequence": 224,
@@ -6115,7 +7303,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 225,
@@ -6143,7 +7337,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 226,
@@ -6174,7 +7374,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Body"
+      }
     },
     {
       "sequence": 227,
@@ -6204,7 +7410,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 228,
@@ -6228,7 +7438,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Places"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 229,
@@ -6258,7 +7472,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 230,
@@ -6282,7 +7502,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 231,
@@ -6314,7 +7538,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 232,
@@ -6345,7 +7575,11 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 233,
@@ -6369,7 +7603,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 234,
@@ -6400,7 +7638,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "People and Groups"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "People and Groups"
+      }
     },
     {
       "sequence": 235,
@@ -6429,7 +7673,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 236,
@@ -6461,7 +7711,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Ideas and Communication"
+      }
     },
     {
       "sequence": 237,
@@ -6495,7 +7751,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 238,
@@ -6521,7 +7783,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 239,
@@ -6547,7 +7813,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 240,
@@ -6577,7 +7849,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 241,
@@ -6603,7 +7881,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 242,
@@ -6627,7 +7909,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Ideas and Communication"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Measures and Relationships"
+      }
     },
     {
       "sequence": 243,
@@ -6655,7 +7943,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Actions and Events"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Actions and Events"
+      }
     },
     {
       "sequence": 244,
@@ -6681,7 +7975,13 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Made Objects"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Made Objects"
+      }
     },
     {
       "sequence": 245,
@@ -6713,7 +8013,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Feelings and Conditions"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "common",
+        "nounSemanticBand": "Feelings and Conditions"
+      }
     },
     {
       "sequence": 246,
@@ -6738,7 +8044,13 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Nature and Materials"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "rare",
+        "nounSemanticBand": "Nature and Materials"
+      }
     },
     {
       "sequence": 247,
@@ -6766,7 +8078,11 @@
         "commonnessGrade": "lessCommon",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 248,
@@ -6791,7 +8107,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Measures and Relationships"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 249,
@@ -6815,7 +8135,11 @@
         "commonnessGrade": "rare",
         "nounSemanticBand": "Body"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Reject"
+      }
     },
     {
       "sequence": 250,
@@ -6845,7 +8169,13 @@
         "commonnessGrade": "common",
         "nounSemanticBand": "Animals and Plants"
       },
-      "decision": null
+      "decision": {
+        "ukEnglishEligible": true,
+        "familyFriendly": true,
+        "curationDecision": "Accept",
+        "commonnessGrade": "lessCommon",
+        "nounSemanticBand": "Animals and Plants"
+      }
     }
   ]
 }

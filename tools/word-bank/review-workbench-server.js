@@ -29,6 +29,12 @@ export async function createReviewWorkbenchServer({
   const store = await openReviewStore({ root: reviewDataRoot });
   let listening = false;
   let preparationPromise = null;
+  let preparationStatus = {
+    status: "idle",
+    currentStep: 0,
+    totalSteps: 5,
+    message: "No tranche preparation is running.",
+  };
   const httpServer = createServer(async (request, response) => {
     try {
       await routeRequest(request, response);
@@ -78,6 +84,11 @@ export async function createReviewWorkbenchServer({
 
     if (request.method === "GET" && url.pathname === "/api/state") {
       sendJson(response, 200, await readWorkbenchState());
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/prepare-next-status") {
+      sendJson(response, 200, preparationStatus);
       return;
     }
 
@@ -311,10 +322,25 @@ export async function createReviewWorkbenchServer({
       return preparationPromise;
     }
 
+    setPreparationProgress(1, "Verifying the completed review data");
     preparationPromise = prepareNextReviewTrancheOnce(body);
 
     try {
-      return await preparationPromise;
+      const result = await preparationPromise;
+      preparationStatus = {
+        status: "complete",
+        currentStep: 5,
+        totalSteps: 5,
+        message: "The next planned tranche is ready",
+      };
+      return result;
+    } catch (error) {
+      preparationStatus = {
+        ...preparationStatus,
+        status: "failed",
+        message: error.message,
+      };
+      throw error;
     } finally {
       preparationPromise = null;
     }
@@ -349,6 +375,7 @@ export async function createReviewWorkbenchServer({
       `${completedReference.path} changed outside the workbench`,
     );
 
+    setPreparationProgress(2, "Creating the completed-tranche checkpoint");
     await createGitCheckpoint({
       projectRoot,
       paths: toProjectReviewPaths(["register.json", completedReference.path]),
@@ -356,6 +383,7 @@ export async function createReviewWorkbenchServer({
     });
 
     state = await loadReviewData();
+    setPreparationProgress(3, "Generating the next semantic-gap tranche");
     const catalogue = await loadNounCatalogue();
     const planned = planNextNounSemanticGap({
       catalogue,
@@ -364,6 +392,7 @@ export async function createReviewWorkbenchServer({
       ...nounPlanningOptions,
     });
     const plannedReference = planned.index.tranches.at(-1);
+    setPreparationProgress(4, "Saving the next planned tranche");
     const savedTranche = await store.create(plannedReference.path, planned.tranche, {
       validate: (candidate) => validateTrancheShape(candidate, plannedReference),
     });
@@ -383,6 +412,7 @@ export async function createReviewWorkbenchServer({
       "register.json changed outside the workbench",
     );
 
+    setPreparationProgress(5, "Creating the planned-tranche checkpoint");
     await createGitCheckpoint({
       projectRoot,
       paths: toProjectReviewPaths(["register.json", plannedReference.path]),
@@ -390,6 +420,15 @@ export async function createReviewWorkbenchServer({
     });
 
     return readWorkbenchState();
+  }
+
+  function setPreparationProgress(currentStep, message) {
+    preparationStatus = {
+      status: "running",
+      currentStep,
+      totalSteps: 5,
+      message,
+    };
   }
 
   async function isStartNextCheckpointed(index) {

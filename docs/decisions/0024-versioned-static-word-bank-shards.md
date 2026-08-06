@@ -276,6 +276,11 @@ existing active tranche but never starts a planned one. The deliberate pause bet
 tranches permits a review session to end or a completed tranche to be reopened for
 correction before another full tranche commitment begins.
 
+After the reviewer confirms tranche completion, the workbench keeps a blocking status
+dialog visible until the Register can be rendered again. It names the current save,
+validation, checkpoint, generation, and successor-save activity and shows the current
+step out of the complete task, so long-running catalogue planning never appears idle.
+
 Every successful **Save & Next** persists valid progress to the working tree, and active
 partial progress may be committed externally at any time. Completing or recompleting a
 tranche creates a required local Git checkpoint for that tranche file and the matching

@@ -308,6 +308,83 @@ describe("Word Bank review workbench server", () => {
     );
   });
 
+  it("shows live named progress while completing and preparing the next tranche", async () => {
+    const fixture = await createCompletedSemanticGapFixture();
+    const registerPath = path.join(fixture.reviewDataRoot, "register.json");
+    const register = JSON.parse(await readFile(registerPath, "utf8"));
+    register.tranches.at(-1).lifecycle = "active";
+    await writeJson(registerPath, register);
+
+    let releaseCompletedCheckpoint;
+    let completedCheckpointStarted;
+    const completedCheckpointGate = new Promise((resolve) => {
+      releaseCompletedCheckpoint = resolve;
+    });
+    const completedCheckpointSignal = new Promise((resolve) => {
+      completedCheckpointStarted = resolve;
+    });
+    let checkpointCount = 0;
+    const server = await createReviewWorkbenchServer({
+      projectRoot: fixture.projectRoot,
+      reviewDataRoot: fixture.reviewDataRoot,
+      staticRoot: path.resolve("tools", "word-bank", "workbench"),
+      port: 0,
+      isGitCheckpointed: async () => true,
+      createGitCheckpoint: async () => {
+        checkpointCount += 1;
+        if (checkpointCount === 1) {
+          completedCheckpointStarted();
+          await completedCheckpointGate;
+        }
+        return { created: true };
+      },
+      loadNounCatalogue: async () => ({
+        schemaVersion: 1,
+        entryKind: "noun",
+        candidates: [
+          catalogueCandidate("anchor", "common", "Made Objects"),
+          catalogueCandidate("lantern", "common", "Made Objects"),
+          catalogueCandidate("drum", "lessCommon", "Made Objects"),
+        ],
+      }),
+      nounPlanningOptions: { limit: 1 },
+    });
+    resources.push({ server, root: fixture.projectRoot });
+    const address = await server.listen();
+    const browser = await chromium.launch();
+    resources.push({ browser });
+    const page = await browser.newPage();
+    await page.goto(address.origin);
+
+    await page.getByRole("button", { name: "Complete Tranche" }).click();
+    await page.getByRole("button", { name: "Complete Tranche" }).click();
+    await page.getByRole("dialog", { name: "Complete this tranche?" })
+      .getByRole("button", { name: "Complete Tranche" })
+      .click();
+    await completedCheckpointSignal;
+
+    const progressDialog = page.getByRole("dialog", { name: "Completing tranche" });
+    try {
+      await progressDialog.waitFor({ timeout: 2_000 });
+      await progressDialog.getByText("Creating the completed-tranche checkpoint")
+        .waitFor({ timeout: 2_000 });
+      assert.equal(
+        await progressDialog.getByText("Creating the completed-tranche checkpoint").isVisible(),
+        true,
+      );
+      assert.equal(await progressDialog.getByText("Step 3 of 6").isVisible(), true);
+      assert.equal(
+        await progressDialog.getByRole("progressbar", { name: "Completion task progress" })
+          .getAttribute("value"),
+        "3",
+      );
+    } finally {
+      releaseCompletedCheckpoint();
+    }
+    await page.getByRole("heading", { name: "noun-semantic-gap-002" }).waitFor();
+    assert.equal(await progressDialog.count(), 0);
+  });
+
   it("opens an additional process read-only and rejects its mutations", async () => {
     const fixture = await createFixture();
     const writer = await createReviewWorkbenchServer({

@@ -56,7 +56,7 @@ async function refreshState() {
   state = await api("/api/state");
 }
 
-async function prepareNextIfNeeded() {
+async function prepareNextIfNeeded({ onProgress } = {}) {
   if (
     state.mode !== "writable" ||
     state.tranches.length === 0 ||
@@ -66,13 +66,36 @@ async function prepareNextIfNeeded() {
   }
 
   const completed = state.tranches.at(-1);
-  state = await api("/api/prepare-next", {
+  let polling = Boolean(onProgress);
+  const preparationRequest = api("/api/prepare-next", {
     method: "POST",
     body: {
       expectedIndexHash: state.hashes["register.json"],
       expectedTrancheHash: state.hashes[completed.path],
     },
   });
+  const progressRequest = polling
+    ? pollPreparationProgress(() => polling, onProgress)
+    : Promise.resolve();
+
+  try {
+    state = await preparationRequest;
+  } finally {
+    polling = false;
+    await progressRequest;
+  }
+}
+
+async function pollPreparationProgress(isPolling, onProgress) {
+  while (isPolling()) {
+    try {
+      const progress = await api("/api/prepare-next-status");
+      if (progress.status !== "idle") onProgress(progress);
+    } catch {
+      // The primary preparation request remains authoritative for failure reporting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 }
 
 function renderHome({ searchResults = null, query = "" } = {}) {
@@ -493,6 +516,11 @@ async function completeTrancheAction() {
     confirmLabel: "Complete Tranche",
   });
   if (!confirmed) return;
+  showCompletionProgress({
+    currentStep: 1,
+    totalSteps: 6,
+    message: "Saving the tranche completion",
+  });
   try {
     state = await api("/api/complete", {
       method: "POST",
@@ -506,16 +534,55 @@ async function completeTrancheAction() {
     let preparationError = null;
 
     try {
-      await prepareNextIfNeeded();
+      showCompletionProgress({
+        currentStep: 2,
+        totalSteps: 6,
+        message: "Verifying the completed review data",
+      });
+      await prepareNextIfNeeded({
+        onProgress: (progress) =>
+          showCompletionProgress({
+            currentStep: Math.min(progress.currentStep + 1, 6),
+            totalSteps: 6,
+            message: progress.message,
+          }),
+      });
     } catch (error) {
       preparationError = error;
     }
 
+    modalRoot.innerHTML = "";
     renderHome();
     if (preparationError) showErrors([preparationError.message]);
   } catch (error) {
+    modalRoot.innerHTML = "";
     showErrors([error.message]);
   }
+}
+
+function showCompletionProgress({ currentStep, totalSteps, message }) {
+  let dialog = modalRoot.querySelector("[data-completion-progress]");
+  if (!dialog) {
+    modalRoot.innerHTML = `
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal" role="dialog" aria-modal="true" aria-busy="true" aria-labelledby="completion-progress-title" data-completion-progress>
+          <h2 id="completion-progress-title">Completing tranche</h2>
+          <p role="status" aria-live="polite" data-completion-message></p>
+          <progress aria-label="Completion task progress" data-completion-bar></progress>
+          <p class="muted" data-completion-count></p>
+          <p class="muted">Keep this page open while the workbench saves the review and prepares the next tranche.</p>
+        </section>
+      </div>
+    `;
+    dialog = modalRoot.querySelector("[data-completion-progress]");
+  }
+
+  dialog.querySelector("[data-completion-message]").textContent = message;
+  const progress = dialog.querySelector("[data-completion-bar]");
+  progress.max = totalSteps;
+  progress.value = currentStep;
+  dialog.querySelector("[data-completion-count]").textContent =
+    `Step ${currentStep} of ${totalSteps}`;
 }
 
 async function resolveUnsavedChanges() {

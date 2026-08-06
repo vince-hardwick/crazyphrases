@@ -59,22 +59,39 @@ export async function createReviewWorkbenchServer({
         origin: `http://127.0.0.1:${address.port}`,
       };
     },
-    async close() {
-      if (listening) {
-        await new Promise((resolve, reject) =>
-          httpServer.close((error) => (error ? reject(error) : resolve())),
-        );
-        listening = false;
-      }
-      await store.close();
-    },
+    close: closeServer,
   };
 
   async function routeRequest(request, response) {
     const url = new URL(request.url, "http://127.0.0.1");
 
+    if (request.method === "GET" && url.pathname === "/api/health") {
+      sendJson(response, 200, {
+        service: "crazyphrases-word-bank-review",
+        pid: process.pid,
+        mode: store.mode,
+        projectRoot: path.resolve(projectRoot),
+        reviewDataRoot: path.resolve(reviewDataRoot),
+      });
+      return;
+    }
+
     if (request.method === "GET" && url.pathname === "/api/state") {
       sendJson(response, 200, await readWorkbenchState());
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/shutdown") {
+      assertWritable();
+      if (request.headers["x-review-owner-token"] !== store.ownerToken) {
+        throw new Error("The review writer shutdown token is invalid.");
+      }
+      sendJson(response, 200, { status: "stopping" });
+      setImmediate(() => {
+        void closeServer().catch((error) => {
+          console.error(`Review workbench shutdown failed: ${error.message}`);
+        });
+      });
       return;
     }
 
@@ -239,6 +256,16 @@ export async function createReviewWorkbenchServer({
     if (store.mode !== "writable") {
       throw new Error("This review workbench instance is read-only.");
     }
+  }
+
+  async function closeServer() {
+    if (listening) {
+      await new Promise((resolve, reject) =>
+        httpServer.close((error) => (error ? reject(error) : resolve())),
+      );
+      listening = false;
+    }
+    await store.close();
   }
 
   async function readWorkbenchState() {

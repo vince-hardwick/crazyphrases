@@ -45,6 +45,14 @@ describe("Word Bank review workbench server", () => {
     const address = await server.listen();
 
     assert.equal(address.host, "127.0.0.1");
+    const health = await getJson(`${address.origin}/api/health`);
+    assert.deepEqual(health, {
+      service: "crazyphrases-word-bank-review",
+      pid: process.pid,
+      mode: "writable",
+      projectRoot: path.resolve(fixture.projectRoot),
+      reviewDataRoot: path.resolve(fixture.reviewDataRoot),
+    });
     let state = await getJson(`${address.origin}/api/state`);
     assert.equal(state.mode, "writable");
     assert.deepEqual(state.tranches[0].progress, {
@@ -216,6 +224,43 @@ describe("Word Bank review workbench server", () => {
       activeLabel: "Back to Register",
       firstTabStopIsActive: true,
       scrollY: 0,
+    });
+  });
+
+  it("stops only with the expected writer token and releases its lock", async () => {
+    const fixture = await createFixture();
+    const server = await createReviewWorkbenchServer({
+      projectRoot: fixture.projectRoot,
+      reviewDataRoot: fixture.reviewDataRoot,
+      port: 0,
+      isGitCheckpointed: async () => true,
+    });
+    resources.push({ server, root: fixture.projectRoot });
+    const address = await server.listen();
+    const lockPath = path.join(fixture.reviewDataRoot, ".review.lock");
+    const lock = JSON.parse(await readFile(lockPath, "utf8"));
+
+    const refused = await fetch(`${address.origin}/api/shutdown`, {
+      method: "POST",
+      headers: { "x-review-owner-token": "not-the-owner" },
+    });
+    assert.equal(refused.status, 400);
+    assert.equal((await getJson(`${address.origin}/api/health`)).mode, "writable");
+
+    const stopped = await fetch(`${address.origin}/api/shutdown`, {
+      method: "POST",
+      headers: { "x-review-owner-token": lock.ownerToken },
+    });
+    assert.equal(stopped.status, 200);
+    assert.deepEqual(await stopped.json(), { status: "stopping" });
+
+    await waitUntil(async () => {
+      try {
+        await readFile(lockPath, "utf8");
+        return false;
+      } catch (error) {
+        return error?.code === "ENOENT";
+      }
     });
   });
 
@@ -719,4 +764,15 @@ async function git(projectRoot, ...args) {
     windowsHide: true,
   });
   return stdout;
+}
+
+async function waitUntil(predicate, timeoutMs = 2_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await predicate()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.fail(`Condition was not met within ${timeoutMs}ms.`);
 }

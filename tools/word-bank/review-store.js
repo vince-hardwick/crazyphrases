@@ -42,6 +42,7 @@ export async function openReviewStore({ root } = {}) {
 
   return {
     mode,
+    ownerToken: mode === "writable" ? ownerToken : null,
     root: resolvedRoot,
     async load(relativePath) {
       assertOpen(closed);

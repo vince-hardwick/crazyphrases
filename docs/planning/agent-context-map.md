@@ -61,6 +61,7 @@ For large documents, search for the relevant heading first and then read that se
 | Production Word Bank shard delivery | `docs/decisions/0024-versioned-static-word-bank-shards.md`, `docs/product-rules.md`, `docs/backlog.md` section `Production word-bank delivery` |
 | MVP seed Word Bank asset and rules | `assets/word-bank-seed.json`, `docs/product-rules.md` |
 | Production Word Bank assets and build pipeline | `assets/word-bank/manifest.json`, `assets/word-bank/shards/`, `tools/word-bank/`, `docs/decisions/0024-versioned-static-word-bank-shards.md` |
+| Local Word Bank review workbench startup, scheduled task, lock recovery, and maintenance | `docs/runbooks/word-bank-review-workbench.md`, `docs/decisions/0024-versioned-static-word-bank-shards.md` |
 | Deployment environments and promotion order | `docs/runbooks/cloudflare-dns-and-access.md`; for `gh workflow run`, `gh run view`, or other authenticated GitHub CLI commands, read `docs/runbooks/github-cli-auth-for-codex.md` first. |
 | Visible in-app browser verification | `docs/runbooks/in-app-browser-verification.md` |
 | Local static frontend smoke with in-app Codex Browser and Playwright | `docs/runbooks/in-app-browser-verification.md` - read the Local Static Site Fast Path before starting any local server or hidden Playwright run. |

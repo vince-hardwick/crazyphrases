@@ -72,6 +72,13 @@
       "path": "tranches/noun-semantic-gap-003.json",
       "purpose": "semanticGap",
       "lifecycle": "complete"
+    },
+    {
+      "id": "noun-semantic-gap-004",
+      "entryKind": "noun",
+      "path": "tranches/noun-semantic-gap-004.json",
+      "purpose": "semanticGap",
+      "lifecycle": "planned"
     }
   ]
 }

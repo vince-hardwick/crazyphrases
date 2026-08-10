@@ -45,9 +45,11 @@ The launcher accepts an existing process only when all of these agree:
 - the health PID and expected worktree lock PID.
 
 It fails closed when port 4177 belongs to another service or worktree. When no
-listener exists, unattended recovery is permitted only for a lock whose creation
-time predates the current Windows boot. A missing or same-boot writer still needs
-manual investigation and explicit recovery.
+listener exists, unattended recovery is permitted when the lock either predates
+the current Windows boot or has valid metadata whose recorded PID is definitely
+absent. Recovery rechecks PID liveness before removing the lock. Invalid metadata
+or a same-boot PID that is still running needs manual investigation and explicit
+recovery.
 
 For explicit manual stale-lock recovery, first confirm that no writer remains,
 then use the Windows command shim so PowerShell forwards the option separator:

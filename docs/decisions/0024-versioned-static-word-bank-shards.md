@@ -159,10 +159,12 @@ loaded by the workbench and refuses to overwrite an external edit. A complete re
 is validated before an atomic swap, so a partial or failed write never becomes
 authoritative. Recovering a stale lock requires explicit confirmation that no writable
 workbench process remains. An explicitly installed per-user Windows logon task may provide
-that confirmation automatically only when the expected port has no listener and the lock
-predates the current Windows boot. It accepts an existing writer only when loopback health,
-the resolved project and review-data roots, writable mode, and the lock PID all match; any
-other listener or a same-boot lock fails closed for manual investigation. A verified local
+that confirmation automatically only when the expected port has no listener and either the
+lock predates the current Windows boot or valid lock metadata names a PID that is no longer
+running. The recovery path rechecks PID liveness before removing the lock. It accepts an
+existing writer only when loopback health, the resolved project and review-data roots,
+writable mode, and the lock PID all match; any other listener, invalid lock metadata, or a
+same-boot PID that is still running fails closed for manual investigation. A verified local
 shutdown uses the lock's private owner token so the hidden writer can close cleanly and
 release its lock without weakening the single-writer boundary.
 

@@ -39,6 +39,7 @@ export async function ensureReviewWorkbench({
   startupTimeoutMs = 15_000,
   probePort = isTcpPortOpen,
   requestHealth = fetchReviewHealth,
+  isProcessRunning = defaultIsProcessRunning,
   launchServer = spawnReviewServer,
   wait = delay,
 } = {}) {
@@ -68,20 +69,22 @@ export async function ensureReviewWorkbench({
   }
 
   const existingLock = await readReviewLock(lockPath);
-  let recoverPreviousBootLock = false;
+  let recoverStaleLock = false;
   if (existingLock) {
-    if (!isLockFromPreviousBoot(existingLock, bootStartedAt)) {
+    const recordedWriterIsAbsent =
+      hasValidReviewLockMetadata(existingLock) && !isProcessRunning(existingLock.pid);
+    if (!isLockFromPreviousBoot(existingLock, bootStartedAt) && !recordedWriterIsAbsent) {
       throw new Error(
-        "The review lock was created during the current boot or has invalid metadata; use the explicit manual stale-lock recovery after confirming no writer remains.",
+        "The review lock belongs to a running process or has invalid metadata; use the explicit manual stale-lock recovery after confirming no writer remains.",
       );
     }
-    recoverPreviousBootLock = true;
+    recoverStaleLock = true;
   }
 
   const child = await launchServer({
     projectRoot: resolvedProjectRoot,
     port,
-    recoverPreviousBootLock,
+    recoverStaleLock,
   });
   const deadline = Date.now() + startupTimeoutMs;
 
@@ -117,7 +120,7 @@ export async function ensureReviewWorkbench({
   );
 }
 
-async function spawnReviewServer({ projectRoot, port, recoverPreviousBootLock }) {
+async function spawnReviewServer({ projectRoot, port, recoverStaleLock }) {
   const logRoot = path.join(projectRoot, "output", "word-bank-review");
   await mkdir(logRoot, { recursive: true });
   const outputHandle = openSync(path.join(logRoot, "server-output.log"), "a");
@@ -127,7 +130,7 @@ async function spawnReviewServer({ projectRoot, port, recoverPreviousBootLock })
     "--port",
     String(port),
   ];
-  if (recoverPreviousBootLock) {
+  if (recoverStaleLock) {
     args.push("--recover-stale-lock", "--confirm-no-writer");
   }
 
@@ -194,6 +197,25 @@ function samePath(left, right) {
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function defaultIsProcessRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
+function hasValidReviewLockMetadata(lock) {
+  return Boolean(
+    typeof lock?.ownerToken === "string" &&
+      lock.ownerToken.length > 0 &&
+      Number.isInteger(lock.pid) &&
+      lock.pid > 0 &&
+      Number.isFinite(Date.parse(lock.startedAt)),
+  );
 }
 
 function parseArgs(rawArgs) {

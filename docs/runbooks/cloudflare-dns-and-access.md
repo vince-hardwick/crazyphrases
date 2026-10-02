@@ -78,6 +78,78 @@ Record the allowed GitHub users or teams below once configured:
 | `dev` | Configured and tested; exact allow policy to be confirmed before public documentation is treated as complete |
 | `test` | Configured and tested; exact allow policy to be confirmed before public documentation is treated as complete |
 
+### AutoSSL validation through Access
+
+cPanel AutoSSL uses public files under `/.well-known/acme-challenge/` to
+prove control of each hostname before Let's Encrypt issues a certificate.
+Cloudflare Access must allow these validation requests to reach the origin.
+Returning an Access sign-in page prevents validation and can cause AutoSSL
+to renew a certificate without `dev.crazyphrases.com` and
+`test.crazyphrases.com`.
+
+The Access application `AutoSSL validation - dev and test` has the
+`Public AutoSSL challenge files only` policy, with action `Bypass` and
+Include selector `Everyone`. Its destinations are exactly:
+
+- `dev.crazyphrases.com/.well-known/acme-challenge/*`
+- `test.crazyphrases.com/.well-known/acme-challenge/*`
+
+The more specific paths take precedence over the existing `dev` and `test`
+applications. Their normal GitHub sign-in policies continue to protect all
+other application paths. Keep the public exception limited to temporary
+certificate-validation files; do not place application content or private
+data there. Do not exclude either hostname from AutoSSL or silence its
+warnings as a substitute for restoring coverage.
+
+To verify or repair renewal:
+
+1. In cPanel, open **SSL/TLS Certificates > Status** and inspect both
+   hostnames. An error mentioning the Cloudflare Access sign-in page means
+   the validation path is still protected.
+2. Check the challenge paths without an authenticated browser session.
+   A made-up challenge filename should return the origin's `404`, rather
+   than an Access redirect. A `404` proves reachability only; successful
+   AutoSSL issuance proves that a real validation file was served correctly.
+3. If the origin certificate has already lost either hostname, HTTPS
+   validation can return Cloudflare error `526` under Full (strict). With
+   explicit approval, use a temporary Configuration Rule with SSL mode
+   `Full`, limited to the expression below. Keep the zone in Full (strict).
+4. Run AutoSSL once the paths are reachable. Disable the temporary rule
+   immediately after the attempt, whether it succeeds or fails. A failed
+   attempt needs diagnosis before another temporary exception is enabled.
+5. Confirm both names show **AutoSSL Domain Validated**, check their expiry
+   dates, and verify the origin certificates directly with normal hostname
+   and trust checks enabled. Recheck challenge reachability with the
+   temporary rule disabled, and confirm normal dev/test URLs still require
+   Access sign-in. Complete an authenticated browser smoke of both sites.
+
+Temporary recovery rule expression:
+
+```text
+(http.host in {"dev.crazyphrases.com" "test.crazyphrases.com"} and starts_with(http.request.uri.path, "/.well-known/acme-challenge/") and http.request.method in {"GET" "HEAD"})
+```
+
+Full keeps the connection encrypted but temporarily omits the origin
+certificate validity check for matching requests. It is a recovery measure,
+not the normal renewal configuration. The permanent Access exception allows
+subsequent renewals while the existing origin certificates are still valid.
+If certificates lapse again, inspect the latest AutoSSL error before using
+the recovery procedure.
+
+Verification on 2 October 2026: AutoSSL restored both hostnames with a
+certificate expiring at 14:09:07 UTC on 31 December 2026. Direct origin TLS
+checks passed certificate-chain and hostname validation for both names.
+With the recovery rule disabled, both challenge probes returned `404` and
+both normal site URLs redirected unauthenticated requests to Access login.
+Public DNS returned the expected Cloudflare addresses. Authenticated Edge
+checks loaded Solo play on both sites and successfully opened and closed
+the How to play panel. Each site used matching version stamps for its
+application JavaScript and stylesheet.
+
+Cloudflare documents [path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/)
+and [Bypass policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/).
+cPanel documents [SSL/TLS Status and Run AutoSSL](https://docs.cpanel.net/cpanel/security/ssl-tls-status/).
+
 ## GitHub Environment Setup
 
 Create or update GitHub Environments:

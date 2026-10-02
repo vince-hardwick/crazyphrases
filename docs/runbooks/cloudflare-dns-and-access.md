@@ -141,8 +141,10 @@ certificate expiring at 14:09:07 UTC on 31 December 2026. Direct origin TLS
 checks passed certificate-chain and hostname validation for both names.
 With the recovery rule disabled, both challenge probes returned `404` and
 both normal site URLs redirected unauthenticated requests to Access login.
-Public DNS returned the expected Cloudflare addresses. Local DNS timeouts
-prevented an authenticated browser smoke; that check remains outstanding.
+Public DNS returned the expected Cloudflare addresses. Authenticated Edge
+checks loaded Solo play on both sites and successfully opened and closed
+the How to play panel. Each site used matching version stamps for its
+application JavaScript and stylesheet.
 
 Cloudflare documents [path precedence](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/)
 and [Bypass policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/).

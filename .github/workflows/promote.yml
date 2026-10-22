@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
+      - ".npmrc"
       - ".gitattributes"
       - ".gitignore"
       - ".github/**"
@@ -39,7 +40,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: ">=24.22.1 <25"
 
       - name: Verify site
         uses: ./.github/actions/verify-static-site
@@ -91,6 +92,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .npmrc
             .gitattributes
             .gitignore
             .github/**
@@ -152,6 +154,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .npmrc
             .gitattributes
             .gitignore
             .github/**

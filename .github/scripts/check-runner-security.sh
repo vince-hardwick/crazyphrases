@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This exception is only for explicitly requested manual recovery runs. It is
-# scoped to the repository owner as both original and triggering actor, plus
-# the approved workflow/ref pairs; automatic events must execute full checks.
+# This temporary exception is restricted to owner-triggered recovery runs and
+# exact workflow/ref pairs. All other events must execute the full checks.
 if [[ "${ALLOW_UNPATCHED_RUNNER:-false}" == "true" ]]; then
-  if [[ "${GITHUB_EVENT_NAME:-}" != "workflow_dispatch" ||
-        "${GITHUB_ACTOR:-}" != "vince-hardwick" ||
+  if [[ "${GITHUB_ACTOR:-}" != "vince-hardwick" ||
         "${GITHUB_TRIGGERING_ACTOR:-}" != "vince-hardwick" ]]; then
-    echo "::error::The runner guard override requires the owner to initiate and run the manual dispatch."
+    echo "::error::The runner guard override requires an owner-triggered approved recovery run."
     exit 1
   fi
-  case "${GITHUB_WORKFLOW:-}:${GITHUB_REF:-}" in
-    "CI:refs/heads/codex/runner-security-checks"|\
-    "CI:refs/heads/codex/hosting-security-hardening"|\
-    "CI:refs/heads/main"|\
-    "Deploy dev:refs/heads/codex/hosting-security-hardening"|\
-    "Promote website:refs/heads/main"|\
-    "FTPS preflight:refs/heads/main")
+  case "${GITHUB_EVENT_NAME:-}:${GITHUB_WORKFLOW:-}:${GITHUB_REF:-}:${GITHUB_HEAD_REF:-}" in
+    "workflow_dispatch:CI:refs/heads/codex/runner-security-checks:"|\
+    "workflow_dispatch:CI:refs/heads/codex/hosting-security-hardening:"|\
+    "workflow_dispatch:CI:refs/heads/main:"|\
+    "workflow_dispatch:Deploy dev:refs/heads/codex/hosting-security-hardening:"|\
+    "workflow_dispatch:Promote website:refs/heads/main:"|\
+    "workflow_dispatch:FTPS preflight:refs/heads/main:"|\
+    "pull_request:CI:refs/pull/255/merge:codex/runner-security-checks"|\
+    "pull_request:CI:refs/pull/256/merge:codex/hosting-security-hardening")
       echo "::warning::Owner-approved temporary runner guard override is active for ${GITHUB_WORKFLOW} on ${GITHUB_REF}."
       exit 0
       ;;
     *)
-      echo "::error::The runner guard override is not enabled for ${GITHUB_REF:-an unknown ref}."
+      echo "::error::The runner guard override is not enabled for this event, workflow or ref."
       exit 1
       ;;
   esac

@@ -62,9 +62,10 @@ external incident test hosts is therefore a deliberate dependency of CI.
 The repository owner explicitly authorised a temporary exception because the
 GitHub-hosted runner's bundled Node 24.21.0 failed this guard and the runner
 provider patch was not yet confirmed. The owner-approved pull-request checks
-are limited to CI on PR #255 (`codex/runner-security-checks`) and PR #256
-(`codex/hosting-security-hardening`). For those two exact PR numbers and head
-refs, CI uses the exception only when both `GITHUB_ACTOR` and
+are limited to CI on PR #255 (`codex/runner-security-checks`), PR #256
+(`codex/hosting-security-hardening`), and PR #257
+(`codex/recovered-stash-publication-20261023`). For those exact PR numbers and
+head refs, CI uses the exception only when both `GITHUB_ACTOR` and
 `GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`. The workflow guard checks both
 the PR merge ref and source branch so another pull request cannot inherit it.
 

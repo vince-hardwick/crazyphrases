@@ -91,10 +91,11 @@ test('owner can explicitly skip the guard only on the approved manual workflow/r
   }
 });
 
-test('owner-triggered PR checks can skip the guard only for PRs 255 and 256 on their approved head branches', () => {
+test('owner-triggered PR checks can skip the guard only for PRs 255, 256 and 257 on their approved head branches', () => {
   for (const options of [
     { ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks' },
     { ref: 'refs/pull/256/merge', headRef: 'codex/hosting-security-hardening' },
+    { ref: 'refs/pull/257/merge', headRef: 'codex/recovered-stash-publication-20261023' },
   ]) {
     const result = runGuard({ override: true, event: 'pull_request', workflow: 'CI', ...options });
     assert.equal(result.status, 0, JSON.stringify(options));
@@ -110,6 +111,8 @@ test('runner guard override rejects automatic events, other actors and unapprove
     { event: 'pull_request', ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks', actor: 'someone-else' },
     { event: 'pull_request', ref: 'refs/pull/256/merge', headRef: 'codex/hosting-security-hardening', triggeringActor: 'someone-else' },
     { event: 'pull_request', ref: 'refs/pull/257/merge', headRef: 'codex/runner-security-checks' },
+    { event: 'pull_request', ref: 'refs/pull/257/merge', headRef: 'codex/other-branch' },
+    { event: 'pull_request', ref: 'refs/pull/256/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { event: 'pull_request', ref: 'refs/pull/255/merge', headRef: 'codex/other-branch' },
     { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks' },
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },

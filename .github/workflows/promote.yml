@@ -8,6 +8,7 @@ on:
       - ".npmrc"
       - ".gitattributes"
       - ".gitignore"
+      - ".font-awesome.md"
       - ".github/**"
       - "AGENTS.md"
       - "CONTEXT.md"
@@ -18,6 +19,7 @@ on:
       - "package-lock.json"
       - "supabase/**"
       - "tests/**"
+      - "tools/**"
   workflow_dispatch:
     inputs:
       promote_production:
@@ -169,6 +171,7 @@ jobs:
             .npmrc
             .gitattributes
             .gitignore
+            .font-awesome.md
             .github/**
             AGENTS.md
             CONTEXT.md
@@ -179,6 +182,7 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
+            tools/**
 
   deploy-production:
     name: Deploy main to production
@@ -233,6 +237,7 @@ jobs:
             .npmrc
             .gitattributes
             .gitignore
+            .font-awesome.md
             .github/**
             AGENTS.md
             CONTEXT.md
@@ -243,3 +248,4 @@ jobs:
             package-lock.json
             supabase/**
             tests/**
+            tools/**

@@ -26,6 +26,7 @@ const requiredSourceOnlyExcludes = [
   ".npmrc",
   ".gitattributes",
   ".gitignore",
+  ".font-awesome.md",
   ".github/**",
   "AGENTS.md",
   "CONTEXT.md",
@@ -36,6 +37,7 @@ const requiredSourceOnlyExcludes = [
   "package-lock.json",
   "supabase/**",
   "tests/**",
+  "tools/**",
 ];
 
 const automaticDevDeploymentPaths = [".htaccess", "index.html", "assets/**"];

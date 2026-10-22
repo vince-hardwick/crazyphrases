@@ -80,7 +80,8 @@ All other recovery runs are limited to manually dispatched workflows with
 
 - CI on `codex/runner-security-checks`, `codex/hosting-security-hardening`, or
   `main`;
-- Deploy dev on `codex/hosting-security-hardening`;
+- Deploy dev on `codex/hosting-security-hardening` or, for this approved run,
+  `codex/recovered-stash-publication-20261023`;
 - Promote website or FTPS preflight on `main`.
 
 Noun-review branches, non-owner PR attempts, and every other workflow/ref/event

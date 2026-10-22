@@ -81,6 +81,7 @@ test('owner can explicitly skip the guard only on the approved manual workflow/r
     { workflow: 'CI', ref: 'refs/heads/codex/hosting-security-hardening' },
     { workflow: 'CI', ref: 'refs/heads/main' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/hosting-security-hardening' },
+    { workflow: 'Deploy dev', ref: 'refs/heads/codex/recovered-stash-publication-20261023' },
     { workflow: 'Promote website', ref: 'refs/heads/main' },
     { workflow: 'FTPS preflight', ref: 'refs/heads/main' },
   ];
@@ -117,6 +118,8 @@ test('runner guard override rejects automatic events, other actors and unapprove
     { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/257/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/runner-security-checks', event: 'workflow_dispatch' },
+    { workflow: 'CI', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch' },
+    { workflow: 'Deploy dev', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch', actor: 'someone-else' },
     { workflow: 'Promote website', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
     { workflow: 'FTPS preflight', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
   ]) {

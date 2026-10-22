@@ -14,6 +14,7 @@ if [[ "${ALLOW_UNPATCHED_RUNNER:-false}" == "true" ]]; then
     "workflow_dispatch:CI:refs/heads/codex/hosting-security-hardening:"|\
     "workflow_dispatch:CI:refs/heads/main:"|\
     "workflow_dispatch:Deploy dev:refs/heads/codex/hosting-security-hardening:"|\
+    "workflow_dispatch:Deploy dev:refs/heads/codex/recovered-stash-publication-20261023:"|\
     "workflow_dispatch:Promote website:refs/heads/main:"|\
     "workflow_dispatch:FTPS preflight:refs/heads/main:"|\
     "pull_request:CI:refs/pull/255/merge:codex/runner-security-checks"|\

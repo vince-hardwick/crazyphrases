@@ -1,6 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# This temporary exception is restricted to owner-triggered recovery runs and
+# exact workflow/ref pairs. All other events must execute the full checks.
+if [[ "${ALLOW_UNPATCHED_RUNNER:-false}" == "true" ]]; then
+  if [[ "${GITHUB_ACTOR:-}" != "vince-hardwick" ||
+        "${GITHUB_TRIGGERING_ACTOR:-}" != "vince-hardwick" ]]; then
+    echo "::error::The runner guard override requires an owner-triggered approved recovery run."
+    exit 1
+  fi
+  case "${GITHUB_EVENT_NAME:-}:${GITHUB_WORKFLOW:-}:${GITHUB_REF:-}:${GITHUB_HEAD_REF:-}" in
+    "workflow_dispatch:CI:refs/heads/codex/runner-security-checks:"|\
+    "workflow_dispatch:CI:refs/heads/codex/hosting-security-hardening:"|\
+    "workflow_dispatch:CI:refs/heads/main:"|\
+    "workflow_dispatch:Deploy dev:refs/heads/codex/hosting-security-hardening:"|\
+    "workflow_dispatch:Promote website:refs/heads/main:"|\
+    "workflow_dispatch:FTPS preflight:refs/heads/main:"|\
+    "pull_request:CI:refs/pull/255/merge:codex/runner-security-checks"|\
+    "pull_request:CI:refs/pull/256/merge:codex/hosting-security-hardening")
+      echo "::warning::Owner-approved temporary runner guard override is active for ${GITHUB_WORKFLOW} on ${GITHUB_REF}."
+      exit 0
+      ;;
+    *)
+      echo "::error::The runner guard override is not enabled for this event, workflow or ref."
+      exit 1
+      ;;
+  esac
+fi
+
 # JavaScript actions use the runner's executable, not the Node selected on PATH.
 pid="$PPID"
 runner_node=""

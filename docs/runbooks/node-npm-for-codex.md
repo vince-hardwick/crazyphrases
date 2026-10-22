@@ -57,6 +57,40 @@ verification to make deployment pass. The check detects and blocks an unsafe
 runner; it does not patch GitHub's managed executable. Availability of the
 external incident test hosts is therefore a deliberate dependency of CI.
 
+### Temporary owner-approved recovery exception (2026-10-22)
+
+The repository owner explicitly authorised a temporary exception because the
+GitHub-hosted runner's bundled Node 24.21.0 failed this guard and the runner
+provider patch was not yet confirmed. The owner-approved pull-request checks
+are limited to CI on PR #255 (`codex/runner-security-checks`) and PR #256
+(`codex/hosting-security-hardening`). For those two exact PR numbers and head
+refs, CI uses the exception only when both `GITHUB_ACTOR` and
+`GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`. The workflow guard checks both
+the PR merge ref and source branch so another pull request cannot inherit it.
+
+As a temporary exception to ADR 0009's feature-branch push checks, CI does not
+run a second `push` check for those two branches; their PR checks are the
+required review path. Other branch pushes retain the ordinary runner guard.
+
+All other recovery runs are limited to manually dispatched workflows with
+`allow_unpatched_runner: true`. The guard accepts them only when both
+`GITHUB_ACTOR` and `GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`, the event is
+`workflow_dispatch`, and the workflow/ref pair is one of the following:
+
+- CI on `codex/runner-security-checks`, `codex/hosting-security-hardening`, or
+  `main`;
+- Deploy dev on `codex/hosting-security-hardening`;
+- Promote website or FTPS preflight on `main`.
+
+Noun-review branches, non-owner PR attempts, and every other workflow/ref/event
+pair remain blocked. The exception skips the runner version and certificate
+probes; it is a temporary recovery measure, not evidence that the runner is
+safe. Preserve this guard, its workflow/ref restrictions, and the normal
+environment approval and test gates. After the specifically authorised
+recovery work is complete, disable the workflows again while awaiting provider
+confirmation of the runner patch. Remove the exception only after the compliant
+runner has been verified and the recovery work no longer depends on it.
+
 The check covers the workflow runner only. Hosting services, Cloudflare and
 other clients have separate runtimes and trust stores that need their own
 evidence. The incident probes do not establish that every possible certificate

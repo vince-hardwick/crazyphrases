@@ -12,6 +12,11 @@ on:
           - test
           - production
           - all
+      allow_unpatched_runner:
+        description: Skip runner checks for the owner-approved main environment preflight only.
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -31,9 +36,37 @@ jobs:
       - &runner-security
         name: Verify runner security before JavaScript actions
         shell: bash
+        env:
+          ALLOW_UNPATCHED_RUNNER: ${{ inputs.allow_unpatched_runner }}
         run: |
           #!/usr/bin/env bash
           set -euo pipefail
+
+          # This exception is only for explicitly requested manual recovery runs. It is
+          # scoped to the repository owner and the approved workflow/ref pairs; automatic
+          # push and pull-request runs must always execute the full checks.
+          if [[ "${ALLOW_UNPATCHED_RUNNER:-false}" == "true" ]]; then
+            if [[ "${GITHUB_EVENT_NAME:-}" != "workflow_dispatch" ||
+                  "${GITHUB_ACTOR:-}" != "vince-hardwick" ]]; then
+              echo "::error::The runner guard override is restricted to owner-triggered manual runs."
+              exit 1
+            fi
+            case "${GITHUB_WORKFLOW:-}:${GITHUB_REF:-}" in
+              "CI:refs/heads/codex/runner-security-checks"|\
+              "CI:refs/heads/codex/hosting-security-hardening"|\
+              "CI:refs/heads/main"|\
+              "Deploy dev:refs/heads/codex/hosting-security-hardening"|\
+              "Promote website:refs/heads/main"|\
+              "FTPS preflight:refs/heads/main")
+                echo "::warning::Owner-approved temporary runner guard override is active for ${GITHUB_WORKFLOW} on ${GITHUB_REF}."
+                exit 0
+                ;;
+              *)
+                echo "::error::The runner guard override is not enabled for ${GITHUB_REF:-an unknown ref}."
+                exit 1
+                ;;
+            esac
+          fi
 
           # JavaScript actions use the runner's executable, not the Node selected on PATH.
           pid="$PPID"

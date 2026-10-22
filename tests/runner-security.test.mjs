@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const shellPath = (path) => path.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`);
 
-function runGuard({ version = 'v24.22.1', affectedCurl = 60, validCurl = 0, nodeTls = 0, affectedNode = 'CERT_REVOKED', validNode = 'accepted', override = false, event = 'push', actor = 'vince-hardwick', ref = 'refs/heads/codex/runner-security-checks', workflow = 'CI' } = {}) {
+function runGuard({ version = 'v24.22.1', affectedCurl = 60, validCurl = 0, nodeTls = 0, affectedNode = 'CERT_REVOKED', validNode = 'accepted', override = false, event = 'push', actor = 'vince-hardwick', triggeringActor = 'vince-hardwick', ref = 'refs/heads/codex/runner-security-checks', workflow = 'CI' } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'runner-security-'));
   mkdirSync(join(root, 'bin'));
   mkdirSync(join(root, 'externals/node24/bin'), { recursive: true });
@@ -33,7 +33,7 @@ curl() { if [[ "\${*: -1}" == 'https://nodejs.org/' ]]; then return "$FAKE_VALID
       encoding: 'utf8',
       env: { ...process.env, BASH_ENV: shellPath(join(root, 'environment.sh')), FAKE_RUNNER_ROOT: shellPath(root), REAL_NODE: shellPath(process.execPath), FAKE_HTTPS: join(root, 'https.cjs'),
         FAKE_NODE_VERSION: version, FAKE_AFFECTED_CURL: String(affectedCurl), FAKE_VALID_CURL: String(validCurl), FAKE_NODE_TLS: String(nodeTls), FAKE_AFFECTED_NODE: affectedNode, FAKE_VALID_NODE: validNode,
-        ALLOW_UNPATCHED_RUNNER: String(override), GITHUB_EVENT_NAME: event, GITHUB_ACTOR: actor, GITHUB_REF: ref, GITHUB_WORKFLOW: workflow },
+        ALLOW_UNPATCHED_RUNNER: String(override), GITHUB_EVENT_NAME: event, GITHUB_ACTOR: actor, GITHUB_TRIGGERING_ACTOR: triggeringActor, GITHUB_REF: ref, GITHUB_WORKFLOW: workflow },
     });
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -95,6 +95,7 @@ test('runner guard override rejects automatic events, other actors and unapprove
   for (const options of [
     { event: 'pull_request' },
     { actor: 'someone-else', event: 'workflow_dispatch' },
+    { triggeringActor: 'someone-else', event: 'workflow_dispatch' },
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/runner-security-checks', event: 'workflow_dispatch' },
     { workflow: 'Promote website', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },

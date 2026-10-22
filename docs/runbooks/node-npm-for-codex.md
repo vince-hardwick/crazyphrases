@@ -27,6 +27,75 @@ sandbox behaviour.
 - `pnpm` is available through Corepack from the owner's toolchain; `corepack
   enable pnpm` was run on 2026-06-19 and `pnpm --version` returned `11.8.0`.
 
+## GitHub Actions runner security
+
+`actions/setup-node` selects Node for shell commands such as `npm test`. JavaScript
+actions, including checkout, setup-node itself and the FTPS deployment action,
+use a separate executable supplied by the GitHub runner. Updating the shell
+toolchain does not update that executable.
+
+Every workflow job starts with a Bash check before checkout or any other action.
+The check locates the active `Runner.Worker` process and its bundled Node 24,
+requires stable Node 24.22.1 or later within major 24, and tests certificate
+validation in both that executable and curl. Both published eMudhra incident
+test chains must be rejected for a certificate trust reason, while `nodejs.org`
+must remain reachable with valid HTTPS. A timeout, DNS failure, missing runtime
+or unrecognised result blocks the job; it does not establish protection.
+
+The canonical check is `.github/scripts/check-runner-security.sh`. It is also
+embedded in each workflow because repository files are unavailable before
+checkout. YAML aliases reuse the step within each workflow. The tests in
+`tests/runner-security.test.mjs` enforce that every job starts with the check and
+that every embedded copy matches the canonical script. Update them together.
+
+Use the **CI** workflow's manual dispatch, or its normal feature-branch push
+trigger, for a diagnostic that has no deployment step, environment or secrets.
+Its first step records the actual runner Node path/version and certificate
+results. If it fails, retain the log and resolve the provider runtime or trust
+store problem before retrying. Do not remove the check or disable certificate
+verification to make deployment pass. The check detects and blocks an unsafe
+runner; it does not patch GitHub's managed executable. Availability of the
+external incident test hosts is therefore a deliberate dependency of CI.
+
+### Temporary owner-approved recovery exception (2026-10-22)
+
+The repository owner explicitly authorised a temporary exception because the
+GitHub-hosted runner's bundled Node 24.21.0 failed this guard and the runner
+provider patch was not yet confirmed. The owner-approved pull-request checks
+are limited to CI on PR #255 (`codex/runner-security-checks`) and PR #256
+(`codex/hosting-security-hardening`). For those two exact PR numbers and head
+refs, CI uses the exception only when both `GITHUB_ACTOR` and
+`GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`. The workflow guard checks both
+the PR merge ref and source branch so another pull request cannot inherit it.
+
+As a temporary exception to ADR 0009's feature-branch push checks, CI does not
+run a second `push` check for those two branches; their PR checks are the
+required review path. Other branch pushes retain the ordinary runner guard.
+
+All other recovery runs are limited to manually dispatched workflows with
+`allow_unpatched_runner: true`. The guard accepts them only when both
+`GITHUB_ACTOR` and `GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`, the event is
+`workflow_dispatch`, and the workflow/ref pair is one of the following:
+
+- CI on `codex/runner-security-checks`, `codex/hosting-security-hardening`, or
+  `main`;
+- Deploy dev on `codex/hosting-security-hardening`;
+- Promote website or FTPS preflight on `main`.
+
+Noun-review branches, non-owner PR attempts, and every other workflow/ref/event
+pair remain blocked. The exception skips the runner version and certificate
+probes; it is a temporary recovery measure, not evidence that the runner is
+safe. Preserve this guard, its workflow/ref restrictions, and the normal
+environment approval and test gates. After the specifically authorised
+recovery work is complete, disable the workflows again while awaiting provider
+confirmation of the runner patch. Remove the exception only after the compliant
+runner has been verified and the recovery work no longer depends on it.
+
+The check covers the workflow runner only. Hosting services, Cloudflare and
+other clients have separate runtimes and trust stores that need their own
+evidence. The incident probes do not establish that every possible certificate
+chain or every client on a machine is protected.
+
 ## Current Machine Setup
 
 The desktop user's NVM for Windows configuration is:

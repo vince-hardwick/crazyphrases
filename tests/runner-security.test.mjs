@@ -146,6 +146,11 @@ test('every workflow job checks its own runner before any JavaScript action', ()
   }
   const ci = readFileSync('.github/workflows/ci.yml', 'utf8');
   assert.match(ci, /workflow_dispatch:/);
+  const pushTrigger = ci.match(/(?:^|\r?\n)  push:\r?\n([\s\S]*?)(?=\r?\n\S)/)?.[1] ?? '';
+  assert.match(pushTrigger, /!codex\/runner-security-checks/);
+  assert.match(pushTrigger, /!codex\/hosting-security-hardening/);
+  assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/runner-security-checks'));
+  assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/hosting-security-hardening'));
   for (const name of ['ci', 'deploy-dev', 'promote', 'ftps-preflight']) {
     const workflow = readFileSync(`.github/workflows/${name}.yml`, 'utf8').replaceAll('\r\n', '\n');
     assert.match(workflow, /allow_unpatched_runner:\n\s+description: Skip runner checks for the owner-approved/i);

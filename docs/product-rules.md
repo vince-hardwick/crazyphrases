@@ -1792,6 +1792,54 @@ any source suggestion without recording a reason. Each accepted noun has exactly
 Crazy Phrases-owned Noun Semantic Band; semantic references may suggest a band, but the
 operator resolves missing or ambiguous classifications without multi-band weighting.
 
+Noun curation judges familiarity against an ordinary contemporary UK adult audience.
+Family friendliness is a separate content decision for mixed-age family play with
+school-age children; children need not know every family-friendly candidate. Rare
+may include an uncommon but current name for an understandable ordinary object,
+creature, place, activity or idea. This does not admit arbitrary technical
+subdivisions merely because they describe something physical. Reject for obscurity
+when evidence converges on obsolete ordinary use or a narrow specialist vocabulary,
+very low general recognition or exposure, and no established general noun meaning.
+Missing evidence, low corpus frequency, a technical label or a short understandable
+definition alone cannot determine that decision. Public-facing mention alone does
+not establish general familiarity either.
+
+UK recognition estimates can guide grades: at least 95% suggests common, 75% to
+below 95% lessCommon, and 35% to below 75% rare. These are initial review guides,
+not measured product thresholds or compulsory classifications. Below 35% requires
+targeted assessment rather than automatic rejection. Check the noun meaning before
+using recognition of a spelling dominated by another part of speech. Strong
+recognition cannot be demoted solely for low corpus frequency. When recognition
+data is missing, a qualitative judgement may use contemporary noun contexts and
+lexical evidence; do not invent a recognition percentage. If evidence remains
+insufficient, the proposed decision remains unresolved.
+
+Family-friendly noun curation excludes profanity, slurs, explicit sexual terms,
+intimate reproductive anatomy or processes, graphic bodily material or violence,
+self-harm, and terms whose usual meanings centre on serious abuse. Ordinary body
+parts, neutral non-intimate health vocabulary, familiar family roles, and ordinary
+adventure or fantasy vocabulary may qualify. Negative feelings, religion, cultural
+origin and identity are not exclusion grounds. Assess meanings reasonably
+encountered today, including common British slang. An ordinary adult or offensive
+content meaning is sufficient for false even when another noun meaning is neutral; remote
+historical meanings need assessment rather than automatic false. Do not infer
+unsafe meanings from possible phrase combinations. Unknown safety must remain
+unresolved, and false is independent of Accept/Reject.
+
+UK-English eligibility applies to the exact spelling and noun meaning under the
+existing domain definition, including shared and borrowed vocabulary. Overseas
+origin or referent alone does not establish ineligibility. Read dictionary regional
+labels and variant notes as well as headings. Conflicting, US-only, dated,
+specialist or generic lexical evidence requires corroborating contemporary British
+contexts; a section heading or isolated occurrence cannot settle a conflict.
+Failure to find usage leaves the proposal unresolved rather than proving false.
+Repeated glossaries and overlapping frequency datasets are not independent
+corroboration. Evidence and explanations can remain in review research; this does
+not introduce required runtime rationales or per-candidate source metadata.
+
+These editorial boundaries do not change Source Catalogue admission, saved review
+decisions, semantic-reference rules, operator approval, or publication authority.
+
 Issue #245 applies the new commonness, UK-English eligibility, family-friendly review,
 immutable-shard, and weighted-selection requirements to the existing 114 adjective
 candidates, but does not otherwise broaden the adjective allowlist. It may remove an

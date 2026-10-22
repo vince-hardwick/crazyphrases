@@ -82,9 +82,13 @@ The optional second argument is the verified origin IP. It uses curl's
 `--resolve` to check the origin with the correct hostname and normal certificate
 validation. For protected dev/test, an Access redirect is not a passing check:
 use an authorised origin check and the authenticated visible browser. Check
-required asset hashes separately. If an exposed file was cached, an origin
-denial alone does not close its CDN copy: purge only the affected URLs when
-authorised, then repeat the public GET checks.
+required asset hashes separately. The host's NGINX cache can retain responses
+after Apache access rules change. Compare an ordinary origin request with a
+fresh query-string request; if only the fresh request is denied, clear the
+hosting cache through cPanel and repeat the ordinary request. An origin denial
+alone does not close a CDN copy: purge the affected source URLs or source-path
+prefixes when authorised, then repeat the public GET checks. Prefix purging also
+covers cached query-string variants without clearing runtime assets.
 
 The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
 

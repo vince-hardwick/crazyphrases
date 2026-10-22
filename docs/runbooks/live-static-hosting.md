@@ -22,6 +22,7 @@ Source-only paths must stay out of FTPS uploads:
 
 - `.gitattributes`
 - `.gitignore`
+- `.font-awesome.md`
 - `.github/`
 - `AGENTS.md`
 - `CONTEXT.md`
@@ -32,6 +33,7 @@ Source-only paths must stay out of FTPS uploads:
 - `package-lock.json`
 - `supabase/`
 - `tests/`
+- `tools/`
 
 The payload contract is protected by `.github/workflows/deploy-dev.yml`,
 `.github/workflows/promote.yml`, and
@@ -55,6 +57,38 @@ The live web root is the hosting account directory that currently displays `Inde
 - Do not add HTTP-only images, scripts, stylesheets, fonts, analytics, or embedded content.
 
 ## Cache Policy
+
+The deployed `.htaccess` disables directory listing and denies HTTP access to
+dotfiles, Markdown documents, package manifests and source-only directories.
+Keep `.well-known/` certificate-validation files available: the dotfile rule
+matches file names and does not deny the whole certificate-validation directory.
+These access rules supplement the upload exclusions; neither mechanism proves
+that older source-only files have been removed from the server.
+
+For an authorised cleanup, preserve the identified source-only leftovers in a
+private recovery directory outside every document root before removing them
+from the public tree. Retain the FTPS deployment state file for synchronisation,
+but deny HTTP access to it. Keep backups of `.htaccess` outside the web roots.
+Do not use a whole-tree deletion or reset that could remove dev/test or unrelated
+hosting files.
+
+Run the read-only access check after hosting changes:
+
+```bash
+bash .github/scripts/check-static-hosting.sh https://www.crazyphrases.com
+```
+
+The optional second argument is the verified origin IP. It uses curl's
+`--resolve` to check the origin with the correct hostname and normal certificate
+validation. For protected dev/test, an Access redirect is not a passing check:
+use an authorised origin check and the authenticated visible browser. Check
+required asset hashes separately. The host's NGINX cache can retain responses
+after Apache access rules change. Compare an ordinary origin request with a
+fresh query-string request; if only the fresh request is denied, clear the
+hosting cache through cPanel and repeat the ordinary request. An origin denial
+alone does not close a CDN copy: purge the affected source URLs or source-path
+prefixes when authorised, then repeat the public GET checks. Prefix purging also
+covers cached query-string variants without clearing runtime assets.
 
 The deployed `.htaccess` file sets no-store/no-cache headers for `index.html`. This keeps the HTML shell from being cached across deployments, so browsers and Cloudflare should revalidate the asset version URLs after each deployment.
 

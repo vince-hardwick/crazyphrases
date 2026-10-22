@@ -808,8 +808,28 @@ production promotion, or tracker closure has occurred. Issues #245, #246, and
 
 ## Current Known Hosted-State Notes
 
-- Current security advisor output has no database RLS/no-policy findings and no
-  authenticated-callable public `SECURITY DEFINER` RPC findings after
+- On 22 October 2026, the owner-authorised Supabase security upgrade completed
+  from PostgreSQL 17.6 / package 17.6.1.166 to 17.11 / package 17.11.0.003.
+  The shared dev/test/production backend returned `ACTIVE_HEALTHY` within about
+  nine minutes of the recorded 20:41:51 UTC start. The owner accepted up to one
+  hour of interruption and explicitly chose no independent backup for this
+  maintenance. The account remained on the Free plan; no paid service was added.
+- Before/after checks retained all 28 migrations, row counts for all 17
+  application tables, three Auth users and three Storage objects. Extension
+  versions and hashes of policies, table grants and application function
+  definitions were unchanged; RLS remained enabled on every application table.
+  These comparisons are not a complete data-content or recovery test.
+- Visible Personal Edge checks, as requested by the owner, passed in dev, test
+  and production for signed-in access, favourites, multiplayer lists and
+  profiles. The existing test-player solo batch restored, and the uploaded
+  vhCoder avatar rendered. No new game or profile-write fixtures were used.
+  Dev and production each emitted a one-second OAuth clock-skew warning during
+  successful sign-in; no console errors occurred. Returned Auth/API logs for
+  20:50-20:54 UTC showed only INFO and HTTP 200/302 responses. This is bounded
+  maintenance verification, not a full application regression or security audit.
+- Security advisors retain an INFO notice for the intentionally private
+  `private.word_bank_shard_registry` table having RLS without browser policies.
+  There are no authenticated-callable public `SECURITY DEFINER` RPC findings after
   `20260703163721 remediate_supabase_advisor_lints`. The remaining warning is
   the project-level Auth leaked-password-protection setting, which is recorded
   as a plan/cost-gated Auth configuration deferral in `docs/backlog.md`.

@@ -1,3 +1,5 @@
 # Keep generated Word Bank JSON byte-stable across Windows checkouts and build checks.
 assets/word-bank/*.json text eol=lf
 assets/word-bank/shards/*.json text eol=lf
+# Bash must remain executable by Git Bash after a Windows checkout.
+.github/scripts/*.sh text eol=lf

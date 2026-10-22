@@ -114,7 +114,7 @@ test('runner guard override rejects automatic events, other actors and unapprove
     { event: 'pull_request', ref: 'refs/pull/257/merge', headRef: 'codex/other-branch' },
     { event: 'pull_request', ref: 'refs/pull/256/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { event: 'pull_request', ref: 'refs/pull/255/merge', headRef: 'codex/other-branch' },
-    { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks' },
+    { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/257/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/runner-security-checks', event: 'workflow_dispatch' },
     { workflow: 'Promote website', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
@@ -152,8 +152,10 @@ test('every workflow job checks its own runner before any JavaScript action', ()
   const pushTrigger = ci.match(/(?:^|\r?\n)  push:\r?\n([\s\S]*?)(?=\r?\n\S)/)?.[1] ?? '';
   assert.match(pushTrigger, /!codex\/runner-security-checks/);
   assert.match(pushTrigger, /!codex\/hosting-security-hardening/);
+  assert.match(pushTrigger, /!codex\/recovered-stash-publication-20261023/);
   assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/runner-security-checks'));
   assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/hosting-security-hardening'));
+  assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/recovered-stash-publication-20261023'));
   for (const name of ['ci', 'deploy-dev', 'promote', 'ftps-preflight']) {
     const workflow = readFileSync(`.github/workflows/${name}.yml`, 'utf8').replaceAll('\r\n', '\n');
     assert.match(workflow, /allow_unpatched_runner:\n\s+description: Skip runner checks for the owner-approved/i);

@@ -70,7 +70,7 @@ head refs, CI uses the exception only when both `GITHUB_ACTOR` and
 the PR merge ref and source branch so another pull request cannot inherit it.
 
 As a temporary exception to ADR 0009's feature-branch push checks, CI does not
-run a second `push` check for those two branches; their PR checks are the
+run a second `push` check for those three branches; their PR checks are the
 required review path. Other branch pushes retain the ordinary runner guard.
 
 All other recovery runs are limited to manually dispatched workflows with

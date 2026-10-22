@@ -17,6 +17,7 @@ on:
       - "codex/**"
       - '!codex/runner-security-checks'
       - '!codex/hosting-security-hardening'
+      - '!codex/recovered-stash-publication-20261023'
       - "feature/**"
       - "fix/**"
       - "chore/**"

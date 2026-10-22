@@ -4,6 +4,10 @@ description: Verify static Crazy Phrases site files before CI or deployment.
 runs:
   using: composite
   steps:
+    - name: Require a patched Node 24 runtime
+      shell: bash
+      run: node .github/scripts/check-node.mjs --ci
+
     - name: Verify required site files exist
       shell: bash
       run: |

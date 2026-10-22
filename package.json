@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.23.4 <23 || >=24.22.1 <25"
+  },
   "scripts": {
-    "test": "node --test",
+    "test": "node .github/scripts/check-node.mjs && node --test",
     "word-bank:build": "node tools/word-bank/build-production-word-bank.mjs",
     "word-bank:check": "node tools/word-bank/build-production-word-bank.mjs --check"
   },

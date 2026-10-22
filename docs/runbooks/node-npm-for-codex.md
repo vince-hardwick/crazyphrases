@@ -8,6 +8,8 @@ sandbox behaviour.
 
 ## Agent Fast Path
 
+- Use a corrected stable Node release: 22.23.4 or later within major 22 for the existing local toolchain, or 24.22.1 or later within major 24. Run `node .github/scripts/check-node.mjs` before package retrieval; npm also enforces the package engine requirement. CI selects `>=24.22.1 <25` and runs the same check with `--ci` before installing dependencies. These minimums include the October 2026 certificate security fix; the older dated observations below are historical evidence, not supported baselines.
+
 - Do not rediscover the Node/NVM PATH issue. The sandbox can see
   `C:\Users\VinceHardwick\AppData\Local\nvm` and `C:\nvm4w\nodejs`, but cannot
   execute NVM-managed binaries there; direct execution failed with
@@ -34,7 +36,7 @@ $env:NVM_HOME = "C:\Users\VinceHardwick\AppData\Local\nvm"
 $env:NVM_SYMLINK = "C:\nvm4w\nodejs"
 ```
 
-Outside the Codex filesystem sandbox, the active versions are:
+The following records the June 2026 setup. Check current versions directly rather than treating this historical list as the supported baseline:
 
 ```powershell
 nvm version  # 1.2.2
@@ -51,8 +53,7 @@ Codex also has a bundled Node runtime under:
 C:\Users\VinceHardwick\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe
 ```
 
-Use the bundled Node executable for local no-network commands such as
-`node --test` when it is sufficient.
+Use a bundled Node executable only after it passes the runtime check above; its version is independent of the selected NVM installation.
 On 2026-06-19, that bundled Node `bin` directory was added to the
 Windows user-level `Path` as a sandbox-friendly fallback. Existing Codex desktop
 processes may keep their original inherited environment until the app is

@@ -119,6 +119,7 @@ test('runner guard override rejects automatic events, other actors and unapprove
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/runner-security-checks', event: 'workflow_dispatch' },
     { workflow: 'CI', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch' },
+    { workflow: 'Promote website', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch', actor: 'someone-else' },
     { workflow: 'Promote website', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
     { workflow: 'FTPS preflight', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },

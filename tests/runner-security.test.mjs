@@ -81,6 +81,7 @@ test('owner can explicitly skip the guard only on the approved manual workflow/r
     { workflow: 'CI', ref: 'refs/heads/codex/hosting-security-hardening' },
     { workflow: 'CI', ref: 'refs/heads/main' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/hosting-security-hardening' },
+    { workflow: 'Deploy dev', ref: 'refs/heads/codex/recovered-stash-publication-20261023' },
     { workflow: 'Promote website', ref: 'refs/heads/main' },
     { workflow: 'FTPS preflight', ref: 'refs/heads/main' },
   ];
@@ -91,10 +92,11 @@ test('owner can explicitly skip the guard only on the approved manual workflow/r
   }
 });
 
-test('owner-triggered PR checks can skip the guard only for PRs 255 and 256 on their approved head branches', () => {
+test('owner-triggered PR checks can skip the guard only for PRs 255, 256 and 257 on their approved head branches', () => {
   for (const options of [
     { ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks' },
     { ref: 'refs/pull/256/merge', headRef: 'codex/hosting-security-hardening' },
+    { ref: 'refs/pull/257/merge', headRef: 'codex/recovered-stash-publication-20261023' },
   ]) {
     const result = runGuard({ override: true, event: 'pull_request', workflow: 'CI', ...options });
     assert.equal(result.status, 0, JSON.stringify(options));
@@ -110,10 +112,15 @@ test('runner guard override rejects automatic events, other actors and unapprove
     { event: 'pull_request', ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks', actor: 'someone-else' },
     { event: 'pull_request', ref: 'refs/pull/256/merge', headRef: 'codex/hosting-security-hardening', triggeringActor: 'someone-else' },
     { event: 'pull_request', ref: 'refs/pull/257/merge', headRef: 'codex/runner-security-checks' },
+    { event: 'pull_request', ref: 'refs/pull/257/merge', headRef: 'codex/other-branch' },
+    { event: 'pull_request', ref: 'refs/pull/256/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { event: 'pull_request', ref: 'refs/pull/255/merge', headRef: 'codex/other-branch' },
-    { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/255/merge', headRef: 'codex/runner-security-checks' },
+    { event: 'pull_request', workflow: 'Deploy dev', ref: 'refs/pull/257/merge', headRef: 'codex/recovered-stash-publication-20261023' },
     { workflow: 'CI', ref: 'refs/heads/codex/issue245-review-ui-refinements', event: 'workflow_dispatch' },
     { workflow: 'Deploy dev', ref: 'refs/heads/codex/runner-security-checks', event: 'workflow_dispatch' },
+    { workflow: 'CI', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch' },
+    { workflow: 'Promote website', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch' },
+    { workflow: 'Deploy dev', ref: 'refs/heads/codex/recovered-stash-publication-20261023', event: 'workflow_dispatch', actor: 'someone-else' },
     { workflow: 'Promote website', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
     { workflow: 'FTPS preflight', ref: 'refs/heads/codex/hosting-security-hardening', event: 'workflow_dispatch' },
   ]) {
@@ -149,8 +156,10 @@ test('every workflow job checks its own runner before any JavaScript action', ()
   const pushTrigger = ci.match(/(?:^|\r?\n)  push:\r?\n([\s\S]*?)(?=\r?\n\S)/)?.[1] ?? '';
   assert.match(pushTrigger, /!codex\/runner-security-checks/);
   assert.match(pushTrigger, /!codex\/hosting-security-hardening/);
+  assert.match(pushTrigger, /!codex\/recovered-stash-publication-20261023/);
   assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/runner-security-checks'));
   assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/hosting-security-hardening'));
+  assert.ok(pushTrigger.indexOf('"codex/**"') < pushTrigger.indexOf('!codex/recovered-stash-publication-20261023'));
   for (const name of ['ci', 'deploy-dev', 'promote', 'ftps-preflight']) {
     const workflow = readFileSync(`.github/workflows/${name}.yml`, 'utf8').replaceAll('\r\n', '\n');
     assert.match(workflow, /allow_unpatched_runner:\n\s+description: Skip runner checks for the owner-approved/i);

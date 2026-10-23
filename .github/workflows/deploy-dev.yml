@@ -19,7 +19,7 @@ on:
         default: false
         type: boolean
       allow_unpatched_runner:
-        description: Skip runner checks for the owner-approved PR #256 dev deployment only.
+        description: Skip runner checks for the owner-approved PR #256 or PR #257 dev deployment only.
         required: false
         default: false
         type: boolean
@@ -56,10 +56,12 @@ jobs:
               "workflow_dispatch:CI:refs/heads/codex/hosting-security-hardening:"|\
               "workflow_dispatch:CI:refs/heads/main:"|\
               "workflow_dispatch:Deploy dev:refs/heads/codex/hosting-security-hardening:"|\
+              "workflow_dispatch:Deploy dev:refs/heads/codex/recovered-stash-publication-20261023:"|\
               "workflow_dispatch:Promote website:refs/heads/main:"|\
               "workflow_dispatch:FTPS preflight:refs/heads/main:"|\
               "pull_request:CI:refs/pull/255/merge:codex/runner-security-checks"|\
-              "pull_request:CI:refs/pull/256/merge:codex/hosting-security-hardening")
+              "pull_request:CI:refs/pull/256/merge:codex/hosting-security-hardening"|\
+              "pull_request:CI:refs/pull/257/merge:codex/recovered-stash-publication-20261023")
                 echo "::warning::Owner-approved temporary runner guard override is active for ${GITHUB_WORKFLOW} on ${GITHUB_REF}."
                 exit 0
                 ;;

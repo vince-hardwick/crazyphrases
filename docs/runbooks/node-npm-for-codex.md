@@ -62,14 +62,15 @@ external incident test hosts is therefore a deliberate dependency of CI.
 The repository owner explicitly authorised a temporary exception because the
 GitHub-hosted runner's bundled Node 24.21.0 failed this guard and the runner
 provider patch was not yet confirmed. The owner-approved pull-request checks
-are limited to CI on PR #255 (`codex/runner-security-checks`) and PR #256
-(`codex/hosting-security-hardening`). For those two exact PR numbers and head
-refs, CI uses the exception only when both `GITHUB_ACTOR` and
+are limited to CI on PR #255 (`codex/runner-security-checks`), PR #256
+(`codex/hosting-security-hardening`), and PR #257
+(`codex/recovered-stash-publication-20261023`). For those exact PR numbers and
+head refs, CI uses the exception only when both `GITHUB_ACTOR` and
 `GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`. The workflow guard checks both
 the PR merge ref and source branch so another pull request cannot inherit it.
 
 As a temporary exception to ADR 0009's feature-branch push checks, CI does not
-run a second `push` check for those two branches; their PR checks are the
+run a second `push` check for those three branches; their PR checks are the
 required review path. Other branch pushes retain the ordinary runner guard.
 
 All other recovery runs are limited to manually dispatched workflows with
@@ -79,7 +80,8 @@ All other recovery runs are limited to manually dispatched workflows with
 
 - CI on `codex/runner-security-checks`, `codex/hosting-security-hardening`, or
   `main`;
-- Deploy dev on `codex/hosting-security-hardening`;
+- Deploy dev on `codex/hosting-security-hardening` or, for this approved run,
+  `codex/recovered-stash-publication-20261023`;
 - Promote website or FTPS preflight on `main`.
 
 Noun-review branches, non-owner PR attempts, and every other workflow/ref/event

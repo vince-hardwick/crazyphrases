@@ -133,6 +133,13 @@ Scores use 1 = poor, 3 = workable, 5 = strong.
 
 ## Issue #245 Source Semantics Follow-up
 
+The [noun review automation pilot](noun-review-automation-pilot.md) evaluates
+independent familiarity and usage evidence, category suggestions and safety
+assessment for a proposed local UI workflow. Its initial experimental results
+remain research. The accepted editorial boundaries are in product rules, and
+[calibrated validation](noun-review-calibrated-validation.md) owns their fresh
+assessment evidence. Operator approval and publication boundaries still apply.
+
 The pinned ESDB revision describes `SIZE` as an approximate vocabulary-list
 tier, with larger values indicating less-common words. It is not a measured
 frequency or UK-audience familiarity score. Sizes 35 and 50 represent the

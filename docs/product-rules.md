@@ -1833,6 +1833,15 @@ labels and variant notes as well as headings. Conflicting, US-only, dated,
 specialist or generic lexical evidence requires corroborating contemporary British
 contexts; a section heading or isolated occurrence cannot settle a conflict.
 Failure to find usage leaves the proposal unresolved rather than proving false.
+When focused research supports Reject independently of UK eligibility, the
+reviewer may explicitly retain unresolved UK eligibility on that rejected row.
+The saved value is `null`, distinct from false or an omitted decision. The
+research record must explain the rejection and the unresolved eligibility;
+missing UK evidence alone is not a reason to reject. Family friendliness still
+requires an explicit true or false decision. Accept always requires UK eligibility
+true, and a rejected row never qualifies for a runtime shard. This exception
+allows a researched rejection to count towards tranche completion without
+inventing a regional judgement.
 Repeated glossaries and overlapping frequency datasets are not independent
 corroboration. Evidence and explanations can remain in review research; this does
 not introduce required runtime rationales or per-candidate source metadata.

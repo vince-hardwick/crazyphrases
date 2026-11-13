@@ -34,7 +34,7 @@ jobs:
         name: Verify runner security before JavaScript actions
         shell: bash
         env:
-          ALLOW_UNPATCHED_RUNNER: ${{ inputs.allow_unpatched_runner || (github.event_name == 'pull_request' && github.actor == 'vince-hardwick' && github.triggering_actor == 'vince-hardwick') }}
+          ALLOW_UNPATCHED_RUNNER: ${{ inputs.allow_unpatched_runner || false }}
         run: |
           #!/usr/bin/env bash
           set -euo pipefail

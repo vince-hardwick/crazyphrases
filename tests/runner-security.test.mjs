@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { runInNewContext } from 'node:vm';
 
 const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const shellPath = (path) => path.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`);
@@ -44,6 +45,22 @@ test('blocks an affected runner Node before it can make TLS requests', () => {
   const result = runGuard({ version: 'v24.21.0' });
   assert.equal(result.status, 1);
   assert.match(result.stdout + result.stderr, /require Node 24\.22\.1/);
+});
+
+test('ordinary owner PRs run the security checks without requesting a recovery override', () => {
+  const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
+  const expression = workflow.match(/ALLOW_UNPATCHED_RUNNER: \$\{\{ (.+) \}\}/)[1];
+  const override = Boolean(runInNewContext(expression, {
+    inputs: {},
+    github: { event_name: 'pull_request', actor: 'vince-hardwick', triggering_actor: 'vince-hardwick' },
+  }));
+  const context = { override, event: 'pull_request', ref: 'refs/pull/258/merge', headRef: 'codex/noun-review-unresolved-eligibility' };
+  const healthy = runGuard(context);
+  assert.equal(healthy.status, 0, healthy.stdout + healthy.stderr);
+  assert.match(healthy.stdout, /Runner Node: v24\.22\.1/);
+  const affected = runGuard({ ...context, version: 'v24.21.0' });
+  assert.equal(affected.status, 1);
+  assert.match(affected.stdout + affected.stderr, /require Node 24\.22\.1/);
 });
 
 test('blocks a trust store that accepts a compromised chain', () => {
@@ -144,7 +161,7 @@ test('every workflow job checks its own runner before any JavaScript action', ()
       '        shell: bash',
       '        env:',
       '          ALLOW_UNPATCHED_RUNNER: $' + (name === 'ci'
-        ? "{{ inputs.allow_unpatched_runner || (github.event_name == 'pull_request' && github.actor == 'vince-hardwick' && github.triggering_actor == 'vince-hardwick') }}"
+        ? '{{ inputs.allow_unpatched_runner || false }}'
         : '{{ inputs.allow_unpatched_runner }}'),
       '        run: |',
     ].join('\n');

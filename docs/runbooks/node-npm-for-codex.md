@@ -59,14 +59,22 @@ external incident test hosts is therefore a deliberate dependency of CI.
 
 ### Temporary owner-approved recovery exception (2026-10-22)
 
+CI was re-enabled on 13 November at the owner's request. The runner security
+step passed without an override in run `43430396478`. Ordinary pull requests
+now use the full guard; they no longer automatically request the historical
+recovery exception. Previously that request also reached unrelated owner PRs,
+which the guard correctly refused because they were outside its allowlist.
+Manual recovery inputs retain their existing restricted scope; enabling CI
+does not enable any deployment workflow or grant a new bypass.
+
 The repository owner explicitly authorised a temporary exception because the
 GitHub-hosted runner's bundled Node 24.21.0 failed this guard and the runner
 provider patch was not yet confirmed. The owner-approved pull-request checks
 are limited to CI on PR #255 (`codex/runner-security-checks`), PR #256
 (`codex/hosting-security-hardening`), and PR #257
 (`codex/recovered-stash-publication-20261023`). For those exact PR numbers and
-head refs, CI uses the exception only when both `GITHUB_ACTOR` and
-`GITHUB_TRIGGERING_ACTOR` are `vince-hardwick`. The workflow guard checks both
+head refs, CI previously requested the exception when both `GITHUB_ACTOR` and
+`GITHUB_TRIGGERING_ACTOR` were `vince-hardwick`. The workflow guard checks both
 the PR merge ref and source branch so another pull request cannot inherit it.
 
 As a temporary exception to ADR 0009's feature-branch push checks, CI does not

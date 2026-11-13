@@ -96,10 +96,11 @@ Noun-review branches, non-owner PR attempts, and every other workflow/ref/event
 pair remain blocked. The exception skips the runner version and certificate
 probes; it is a temporary recovery measure, not evidence that the runner is
 safe. Preserve this guard, its workflow/ref restrictions, and the normal
-environment approval and test gates. After the specifically authorised
-recovery work is complete, disable the workflows again while awaiting provider
-confirmation of the runner patch. Remove the exception only after the compliant
-runner has been verified and the recovery work no longer depends on it.
+environment approval and test gates. The workflows were disabled again after
+that recovery work while awaiting provider confirmation. The owner's subsequent
+13 November instruction re-enabled CI, with the compliant runner verified as
+described above; deployment workflows remain disabled. Remove the remaining
+manual exception only after confirming that recovery work no longer depends on it.
 
 The check covers the workflow runner only. Hosting services, Cloudflare and
 other clients have separate runtimes and trust stores that need their own

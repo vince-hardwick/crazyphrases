@@ -215,7 +215,13 @@ requires Commonness Grade plus Noun Semantic Band for a noun, or Commonness Grad
 adjective. An accepted candidate may be non-family-friendly and remain in curation, but
 only accepted, UK-English Eligible, family-friendly candidates qualify for the default
 runtime shard. `Reject` requires no grade or band and never qualifies for a runtime
-shard. Progress counts are derived from those valid decisions. A completed tranche is
+shard. A researched `Reject` may explicitly retain `ukEnglishEligible: null`
+when eligibility remains unresolved; an omitted field is invalid. This preserves
+uncertainty without blocking a justified rejection. Family friendliness remains
+an explicit boolean, and `Accept` still requires eligibility true. The research
+record owns the evidence and rejection rationale. The UI offers an explicit
+`Unresolved` eligibility choice with no default selection. Progress counts are
+derived from those valid decisions. A completed tranche is
 read-only unless the operator explicitly reopens it, which is permitted only when no
 other tranche is active and returns it to `active`.
 
